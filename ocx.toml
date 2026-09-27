@@ -1,0 +1,7 @@
+#:schema https://ocx.sh/schemas/project/v1.json
+# OCX project toolchain — managed by `ocx add` / `ocx remove`
+
+[tools]
+pnpm = "ocx.sh/pnpm/pnpm:11"
+task = "ocx.sh/go-task/task:3"
+node = "ocx.sh/nodejs/node:24"

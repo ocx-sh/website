@@ -1,0 +1,181 @@
+/* OCX design tokens · v1.2 — layer 1 of 3. Every site loads this first.
+ *
+ *   tokens.css       values only (this file) — no selectors that style anything
+ *   base.css         generator-agnostic components: header, prose, focus
+ *   <adapter>.css    maps one generator's native variables onto the tokens
+ *
+ * Distribute, don't copy: consume @ocx-sh/theme from npm. A vendored copy is
+ * a fork.
+ *
+ * Light = :root. Dark = every selector a supported generator uses:
+ *   .dark (VitePress/catalog) · [data-theme=dark] (Starlight) */
+
+:root,
+:root[data-theme='light'] {
+  /* Surfaces & borders */
+  --ocx-color-bg: #f6f7f9;
+  --ocx-color-surface: #ffffff;
+  --ocx-color-surface-subtle: #eff2f5;
+  --ocx-color-border: #e2e6ec;
+  --ocx-color-border-strong: #d5dae1;       /* planned/dashed cards, frames, kbd base */
+  --ocx-color-overlay: rgba(15, 18, 23, 0.55);
+
+  /* Foreground */
+  --ocx-color-fg: #1b2129;
+  --ocx-color-fg-muted: #4b5665;
+  --ocx-color-fg-subtle: #636e7f;
+  --ocx-color-on-accent: #1b2129;           /* ink on coral — 5.4:1 (white was 3.0:1). Same in dark; not flipped. */
+
+  /* Accent — coral is the ONLY interactive colour. */
+  --ocx-color-accent: #ff6047;
+  --ocx-color-accent-hover: #ff8570;
+  --ocx-color-accent-fg: #d11c00;           /* small text on light surfaces (5.4:1) */
+  --ocx-color-accent-tint: rgba(255, 96, 71, 0.10);
+  --ocx-color-accent-tint-border: rgba(255, 96, 71, 0.55);
+
+  /* Status */
+  --ocx-color-success: #0a7652;
+  --ocx-color-success-tint: rgba(14, 159, 110, 0.10);
+  --ocx-color-warning: #926512;
+  --ocx-color-warning-tint: rgba(250, 184, 51, 0.16);
+  --ocx-color-danger: #b42318;
+  --ocx-color-danger-tint: rgba(180, 35, 24, 0.08);
+  --ocx-color-keyword: #6a55ce;
+  --ocx-color-keyword-tint: rgba(111, 91, 208, 0.09);
+
+  /* Code */
+  --ocx-color-code-bg: #f6f8fa;
+  --ocx-color-code-fg: #1b2129;
+  --ocx-color-code-comment: var(--ocx-color-fg-subtle);
+  --ocx-color-code-keyword: var(--ocx-color-keyword);
+  --ocx-color-code-string: var(--ocx-color-success);
+  --ocx-color-code-number: var(--ocx-color-warning);
+  --ocx-color-code-function: var(--ocx-color-fg);
+  --ocx-color-code-variable: var(--ocx-color-fg-muted);
+  --ocx-color-code-deleted: var(--ocx-color-accent-fg);
+  --ocx-color-code-prompt: var(--ocx-color-accent);
+
+  /* Type — mono is the voice; sans where humans read sentences. */
+  --ocx-font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ocx-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* UI scale — chrome, nav, tables, cards. The ONLY sizes below 15px. */
+  --ocx-text-2xs: 10.5px;   /* mono caps: eyebrows, table heads, callout titles */
+  --ocx-text-xs: 11.5px;    /* mono: identifiers, metadata, chips, footer */
+  --ocx-text-sm: 12.5px;    /* mono: nav links, tabs */
+  --ocx-text-base: 13px;    /* sans: dense body, card descriptions, sidebar */
+  --ocx-text-md: 14.5px;    /* sans: card titles, buttons, landing card body */
+  --ocx-text-lg: 18px;      /* sans: hub lead, group headings */
+  --ocx-text-xl: 23px;
+  --ocx-text-2xl: 26px;
+
+  /* Prose scale — docs & reference bodies. */
+  --ocx-prose-body: 15.5px;
+  --ocx-prose-lh: 1.7;
+  --ocx-prose-h1: 34px;
+  --ocx-prose-h1-symbol: 30px;              /* mono h1 for an API symbol (Stardoc, mkdocstrings) */
+  --ocx-prose-h2: 24px;
+  --ocx-prose-h3: 19px;
+  --ocx-prose-h4: 16px;
+  --ocx-prose-code: 0.88em;
+  --ocx-prose-width: 760px;
+
+  /* Display scale — landing, hubs, single-page sites. */
+  --ocx-display-hero: clamp(48px, 7vw, 84px);/* landing hero band ONLY — one per site; tracking -0.035em */
+  --ocx-display-1: clamp(40px, 5vw, 60px);  /* 404 numeral, single-page h1 */
+  --ocx-display-2: clamp(28px, 3.2vw, 38px);/* landing h2, hub & install h1 */
+  --ocx-display-lead: 19px;
+
+  --ocx-font-weight-regular: 400;
+  --ocx-font-weight-medium: 500;
+  --ocx-font-weight-semibold: 600;
+  --ocx-font-weight-bold: 700;              /* sans only — mono never above 600 */
+
+  --ocx-tracking-display: -0.02em;          /* display-1/2, prose h1 */
+  --ocx-tracking-heading: -0.01em;          /* h2–h4, symbol h1 */
+  --ocx-tracking-caps: 0.08em;              /* EVERY mono uppercase label — one value */
+  --ocx-lh-heading: 1.25;
+  --ocx-lh-display: 1.08;
+
+  /* Shape — sharp system. Borders carry hierarchy; shadows only on floating things. */
+  --ocx-radius-sm: 0;                       /* chips, kbd, inline code */
+  --ocx-radius-md: 0;                       /* inputs, buttons, callouts, nav items */
+  --ocx-radius-lg: 2px;                     /* cards, code blocks, tables */
+  --ocx-radius-xl: 2px;                     /* hero terminal, floating palette */
+  --ocx-radius-full: 999px;                 /* status dot ONLY */
+  --ocx-border-width: 1px;
+  --ocx-border-width-emphasis: 1.5px;
+  --ocx-border-width-strong: 2px;
+  --ocx-border-width-marker: 3px;
+  --ocx-shadow-overlay: 0 4px 16px rgb(0 0 0 / 0.12);
+  --ocx-focus-ring: 2px solid var(--ocx-color-accent);
+  --ocx-focus-offset: 2px;
+
+  /* Space — 4px base */
+  --ocx-space-1: 2px;
+  --ocx-space-2: 4px;
+  --ocx-space-3: 8px;
+  --ocx-space-4: 12px;
+  --ocx-space-5: 16px;
+  --ocx-space-6: 24px;
+  --ocx-space-7: 32px;
+  --ocx-space-8: 40px;
+  --ocx-space-9: 48px;
+  --ocx-space-10: 64px;
+  --ocx-space-11: 80px;
+  --ocx-space-12: 112px;
+
+  /* Layout */
+  --ocx-header-height: 54px;
+  --ocx-subbar-height: 40px;                /* sub-site breadcrumb bar */
+  --ocx-sidebar-width: 260px;
+  --ocx-outline-width: 200px;
+  --ocx-page-max: 1400px;
+  --ocx-landing-max: 1152px;
+  --ocx-bp-outline: 1200px;                 /* reference only — media queries can't read vars */
+  --ocx-bp-drawer: 640px;
+
+  /* Motion */
+  --ocx-duration-fast: 0.1s;
+  --ocx-duration-enter: 0.12s;
+  --ocx-duration-base: 0.15s;
+  --ocx-duration-moderate: 0.2s;
+  --ocx-duration-slow: 0.3s;
+
+  /* Stacking */
+  --ocx-z-header: 30;
+  --ocx-z-drawer-backdrop: 40;
+  --ocx-z-drawer: 44;
+  --ocx-z-popover: 100;
+  --ocx-z-modal: 101;
+  --ocx-z-toast: 200;
+  --ocx-z-skip-link: 300;
+
+  color-scheme: light;
+}
+
+.dark,
+:root[data-theme='dark'] {
+  --ocx-color-bg: #0e1116;
+  --ocx-color-surface: #151a22;
+  --ocx-color-surface-subtle: #1c232d;
+  --ocx-color-border: #252d39;
+  --ocx-color-border-strong: #323b49;
+  --ocx-color-overlay: rgba(0, 0, 0, 0.6);
+  --ocx-color-fg: #e7ebf1;
+  --ocx-color-fg-muted: #9aa5b3;
+  --ocx-color-fg-subtle: #8b97a8;
+  --ocx-color-accent-fg: #ff6047;
+  --ocx-color-success: #3edea6;
+  --ocx-color-success-tint: rgba(62, 222, 166, 0.12);
+  --ocx-color-warning: #fab833;
+  --ocx-color-warning-tint: rgba(250, 184, 51, 0.10);
+  --ocx-color-danger: #ff7b6e;
+  --ocx-color-danger-tint: rgba(255, 123, 110, 0.10);
+  --ocx-color-keyword: #c0b3ff;
+  --ocx-color-keyword-tint: rgba(192, 179, 255, 0.10);
+  --ocx-color-code-bg: #14181f;
+  --ocx-color-code-fg: #c8d0da;
+  --ocx-shadow-overlay: 0 4px 16px rgb(0 0 0 / 0.45);
+  color-scheme: dark;
+}

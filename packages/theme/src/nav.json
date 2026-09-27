@@ -1,0 +1,154 @@
+{
+  "$schema": "https://ocx.sh/theme/v1/nav.schema.json",
+  "version": 3,
+  "brand": {
+    "wordmark": "ocx",
+    "logo": "/logo.svg",
+    "href": "/"
+  },
+  "sections": [
+    {
+      "id": "docs",
+      "label": "docs",
+      "href": "/docs/"
+    },
+    {
+      "id": "catalog",
+      "label": "catalog",
+      "href": "/catalog/"
+    },
+    {
+      "id": "ecosystem",
+      "label": "ecosystem",
+      "menu": [
+        {
+          "id": "integrations",
+          "label": "integrations",
+          "href": "/integrations/",
+          "all": "all integrations →"
+        },
+        {
+          "id": "apps",
+          "label": "apps",
+          "href": "/apps/",
+          "all": "all apps →"
+        }
+      ]
+    }
+  ],
+  "subsites": [
+    {
+      "id": "bazel",
+      "hub": "integrations",
+      "label": "bazel",
+      "href": "/integrations/bazel/",
+      "repo": "ocx-sh/rules_ocx",
+      "generator": "mdbook"
+    },
+    {
+      "id": "cmake",
+      "hub": "integrations",
+      "label": "cmake",
+      "href": "/integrations/cmake/",
+      "repo": "ocx-sh/find_ocx",
+      "generator": "mdbook"
+    },
+    {
+      "id": "python",
+      "hub": "integrations",
+      "label": "python",
+      "href": "/integrations/python/",
+      "repo": "ocx-sh/ocx-sdk-python",
+      "generator": "mkdocs-material"
+    },
+    {
+      "id": "setup",
+      "hub": "integrations",
+      "label": "github actions",
+      "href": "/integrations/setup-ocx/",
+      "repo": "ocx-sh/setup-ocx",
+      "generator": "astro"
+    },
+    {
+      "id": "mirror",
+      "hub": "apps",
+      "label": "mirror",
+      "href": "/apps/mirror/",
+      "repo": "ocx-sh/ocx-mirror",
+      "generator": "astro"
+    }
+  ],
+  "footer": [
+    {
+      "label": "discord",
+      "href": "https://discord.gg/mT2UCF8CVe"
+    },
+    {
+      "label": "roadmap",
+      "href": "/docs/roadmap/"
+    },
+    {
+      "label": "security",
+      "href": "/docs/security/"
+    }
+  ],
+  "actions": [
+    {
+      "id": "install",
+      "label": "install",
+      "href": "/install/",
+      "kind": "button"
+    },
+    {
+      "id": "github",
+      "label": "GitHub",
+      "href": "https://github.com/ocx-sh",
+      "kind": "icon"
+    }
+  ],
+  "menuItems": {
+    "integrations": {
+      "build": [
+        "bazel",
+        "cmake",
+        "gradle"
+      ],
+      "ci": [
+        "github-actions",
+        "gitlab-ci"
+      ],
+      "sdks": [
+        "python",
+        "java"
+      ],
+      "editors": [
+        "vscode"
+      ]
+    },
+    "apps": {
+      "publish": [
+        "mirror",
+        "indexbot"
+      ],
+      "browse": [
+        "catalog"
+      ],
+      "agents": [
+        "mcp",
+        "lore"
+      ]
+    }
+  },
+  "activeAlias": {
+    "integrations": "ecosystem",
+    "apps": "ecosystem"
+  },
+  "menuRules": "Fixed size: 620px wide, 168px rail, body height = tallest tab across all tabs, 76px detail strip. Rail items are click-to-switch tabs; each row has a → icon link to its hub page (also linked from the strip at rest). Items are names only and are the links; hover/focus previews their description in the display-only strip (default: the hub blurb). Planned items get no marker in the menu; the hub page labels them. Max 4 categories per tab, 6 items each (5 + \"n more →\").",
+  "menuItemFields": [
+    "name",
+    "meta (short mono tag)",
+    "desc (≤ 60 chars, one line)",
+    "category",
+    "planned?"
+  ]
+}

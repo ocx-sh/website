@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+# Run through the ocx toolchain: `ocx exec -- task <name>`.
+version: '3'
+
+tasks:
+  default:
+    cmds: [task --list]
+    silent: true
+
+  install:
+    desc: Install workspace dependencies
+    sources: [package.json, pnpm-lock.yaml, pnpm-workspace.yaml, '*/*/package.json']
+    generates: [node_modules/.modules.yaml]
+    cmds: [pnpm install --frozen-lockfile]
+
+  samples:
+    desc: Pull real docs from consumer repos into the Starlight example (gitignored)
+    cmds: ['node scripts/samples/fetch.ts {{.CLI_ARGS}}']
+
+  dev:
+    desc: Live-reload the Starlight example wearing the theme (http://localhost:4321/docs/)
+    deps: [install]
+    cmds:
+      - cmd: test -d examples/starlight/src/content/docs/samples || task samples
+      - pnpm --filter @ocx-sh/example-starlight dev
+
+  build:
+    desc: Build the Starlight example under its non-root base
+    deps: [install]
+    cmds: [pnpm --filter @ocx-sh/example-starlight build]
+
+  lint:
+    desc: ESLint over every TypeScript source
+    deps: [install]
+    cmds: [pnpm exec eslint --max-warnings 0 .]
+
+  typecheck:
+    desc: tsc over the workspace, astro check over the example
+    deps: [install]
+    cmds:
+      - pnpm exec tsc --noEmit
+      - pnpm --filter @ocx-sh/example-starlight check
+
+  test:
+    desc: Vitest (token contracts, nav, sample converter)
+    deps: [install]
+    cmds: [pnpm exec vitest run]
+
+  check:
+    desc: Every gate CI runs
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+      - task: build

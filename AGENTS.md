@@ -26,6 +26,16 @@ and open questions. Read it before any design or code change.** Research trail:
 - Quality bar: Lighthouse 100 in all four categories; shared components typed
   and tested (Vitest + Astro Container API, Playwright under a non-root `base`).
 
+## Commands
+
+Tools come from `ocx.toml`; run everything through it: `ocx exec -- task <name>`.
+
+- `task dev` — live-reload Starlight example at http://localhost:4321/docs/,
+  wearing `packages/theme` straight from source. Pulls samples on first run.
+- `task samples` — refresh real pages from consumer repos (`--offline` reuses
+  the cache in `.tmp/samples/`).
+- `task check` — the gate: lint, typecheck, test, build. CI calls only this.
+
 ## Agent config
 
 Skills and rules are installed by grim from `grimoire.toml`, pinned in

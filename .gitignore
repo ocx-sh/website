@@ -9,3 +9,6 @@ dist/
 
 # Local scratch: design exports and other inputs not meant for history.
 .tmp/
+# Pulled by `task samples`, never committed.
+examples/starlight/src/content/docs/samples/
+.task/

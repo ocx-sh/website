@@ -1,0 +1,139 @@
+/* OCX adapter · Astro Starlight · v1.2 — layer 3 of 3.
+ *
+ * astro.config.mjs
+ *   starlight({
+ *     customCss: [
+ *       '@fontsource/ibm-plex-sans/400.css', …500/600/700,
+ *       '@fontsource/ibm-plex-mono/400.css', …500/600,
+ *       './src/styles/ocx-tokens.css',
+ *       './src/styles/ocx-base.css',
+ *       './src/styles/ocx-starlight.css',
+ *     ],
+ *     components: { Header: './src/components/OcxHeader.astro' },
+ *   })
+ *   + ec.config.mjs (Expressive Code) from theme/astro/.
+ *
+ * Only native-variable mapping and Starlight-specific chrome live here. Prose
+ * comes from ocx-base.css. The selector list includes [data-theme='light'] so
+ * the mapping also beats Starlight < 0.34, which ships unlayered CSS. */
+
+:root, :root[data-theme='light'] {
+  --sl-font: var(--ocx-font-sans);
+  --sl-font-mono: var(--ocx-font-mono);
+  --sl-color-accent-low: var(--ocx-color-accent-tint);
+  --sl-color-accent: var(--ocx-color-accent);
+  --sl-color-accent-high: var(--ocx-color-accent-fg);
+  --sl-color-white: var(--ocx-color-fg);
+  --sl-color-gray-1: var(--ocx-color-fg);
+  --sl-color-gray-2: var(--ocx-color-fg-muted);
+  --sl-color-gray-3: var(--ocx-color-fg-subtle);
+  --sl-color-gray-4: var(--ocx-color-border-strong);
+  --sl-color-gray-5: var(--ocx-color-border);
+  --sl-color-gray-6: var(--ocx-color-surface-subtle);
+  --sl-color-gray-7: var(--ocx-color-surface);
+  --sl-color-black: var(--ocx-color-bg);
+  --sl-color-bg: var(--ocx-color-bg);
+  --sl-color-bg-nav: var(--ocx-color-surface);
+  --sl-color-bg-sidebar: var(--ocx-color-bg);
+  --sl-color-bg-inline-code: var(--ocx-color-surface-subtle);
+  --sl-color-bg-accent: var(--ocx-color-accent);
+  --sl-color-hairline: var(--ocx-color-border);
+  --sl-color-hairline-light: var(--ocx-color-border);
+  --sl-color-hairline-shade: var(--ocx-color-border);
+  --sl-color-text: var(--ocx-color-fg-muted);
+  --sl-color-text-accent: var(--ocx-color-accent-fg);
+  --sl-color-text-invert: var(--ocx-color-on-accent);
+  --sl-color-backdrop-overlay: var(--ocx-color-overlay);
+  --sl-color-green: var(--ocx-color-success);
+  --sl-color-green-low: var(--ocx-color-success-tint);
+  --sl-color-green-high: var(--ocx-color-success);
+  --sl-color-orange: var(--ocx-color-warning);
+  --sl-color-orange-low: var(--ocx-color-warning-tint);
+  --sl-color-orange-high: var(--ocx-color-warning);
+  --sl-color-red: var(--ocx-color-danger);
+  --sl-color-red-low: var(--ocx-color-danger-tint);
+  --sl-color-red-high: var(--ocx-color-danger);
+  --sl-color-purple: var(--ocx-color-keyword);
+  --sl-color-purple-low: var(--ocx-color-keyword-tint);
+  --sl-color-purple-high: var(--ocx-color-keyword);
+  --sl-color-blue: var(--ocx-color-keyword);
+  --sl-color-blue-low: var(--ocx-color-keyword-tint);
+  --sl-color-blue-high: var(--ocx-color-keyword);
+
+  --sl-text-base: var(--ocx-prose-body);
+  --sl-text-body: var(--ocx-prose-body);
+  --sl-text-xs: var(--ocx-text-xs);
+  --sl-text-sm: var(--ocx-text-sm);
+  --sl-text-lg: var(--ocx-text-lg);
+  --sl-text-xl: var(--ocx-text-xl);
+  --sl-text-2xl: var(--ocx-prose-h2);
+  --sl-text-3xl: var(--ocx-prose-h1);
+  --sl-text-4xl: var(--ocx-display-2);
+  --sl-text-5xl: var(--ocx-display-1);
+  --sl-text-h1: var(--ocx-prose-h1);
+  --sl-text-h2: var(--ocx-prose-h2);
+  --sl-text-h3: var(--ocx-prose-h3);
+  --sl-text-h4: var(--ocx-prose-h4);
+  --sl-text-code: var(--ocx-prose-code);
+  --sl-text-code-sm: 0.8em;
+  --sl-line-height: var(--ocx-prose-lh);
+  --sl-line-height-headings: var(--ocx-lh-heading);
+
+  --sl-nav-height: var(--ocx-header-height);
+  --sl-nav-pad-x: 0px;
+  --sl-nav-pad-y: 0px;
+  --sl-sidebar-width: var(--ocx-sidebar-width);
+  --sl-content-width: var(--ocx-prose-width);
+  --sl-shadow-sm: none;
+  --sl-shadow-md: none;
+  --sl-shadow-lg: var(--ocx-shadow-overlay);
+}
+
+/* Header: Starlight's <header class="header"> wraps OcxHeader.astro — let ours paint. */
+header.header { padding: 0; background: none; border: 0; box-shadow: none; }
+header.header .ocx-header { width: 100%; }
+header.header .ocx-header__menu { display: none; }      /* Starlight renders its own mobile toggle */
+/* Starlight's <site-search> button takes the .ocx-header__search look. */
+.ocx-header site-search > button {
+  box-sizing: border-box; width: clamp(220px, 30vw, 360px); max-width: none; height: 32px; padding: 0 var(--ocx-space-4); gap: var(--ocx-space-3);
+  background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg-subtle);
+  border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-md);
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-xs);
+}
+.ocx-header site-search > button:hover { border-color: var(--ocx-color-accent); color: var(--ocx-color-fg-subtle); }
+.ocx-header site-search kbd { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); background: var(--ocx-color-surface); border: var(--ocx-border-width) solid var(--ocx-color-border); border-bottom-width: var(--ocx-border-width-strong); border-radius: var(--ocx-radius-sm); }
+@media (max-width: 1080px) { .ocx-header site-search > button { width: 32px; padding: 0; justify-content: center; } .ocx-header site-search > button > :not(svg) { display: none; } }
+site-search dialog { border-radius: var(--ocx-radius-xl); border: var(--ocx-border-width) solid var(--ocx-color-border); }
+
+/* Sidebar & outline */
+.sidebar-pane { border-inline-end: var(--ocx-border-width) solid var(--ocx-color-border); }
+.right-sidebar { border-inline-start: none; }
+.sidebar-content .large, .sidebar-content summary .large {
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600;
+  letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; color: var(--ocx-color-fg-subtle);
+}
+.sidebar-content a { font-size: var(--ocx-text-md); color: var(--ocx-color-fg-muted); border-radius: var(--ocx-radius-md); }
+.sidebar-content a[aria-current='page'] { color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); font-weight: 500; }
+.right-sidebar-panel h2 { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600; letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; color: var(--ocx-color-fg-subtle); }
+starlight-toc a { border-inline-start: var(--ocx-border-width-strong) solid var(--ocx-color-border); font-size: var(--ocx-text-sm); }
+starlight-toc a[aria-current='true'] { color: var(--ocx-color-accent-fg); border-inline-start-color: var(--ocx-color-accent); background: none; }
+
+/* Asides → .ocx-callout shape */
+.starlight-aside { border: var(--ocx-border-width) solid var(--ocx-color-border); border-inline-start-width: var(--ocx-border-width-marker); border-radius: var(--ocx-radius-md); background: var(--ocx-color-surface); }
+.starlight-aside__title { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600; letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
+.starlight-aside--note { border-inline-start-color: var(--ocx-color-keyword); }
+.starlight-aside--tip { border-inline-start-color: var(--ocx-color-success); }
+.starlight-aside--caution { border-inline-start-color: var(--ocx-color-warning); }
+.starlight-aside--danger { border-inline-start-color: var(--ocx-color-danger); }
+
+/* Buttons, cards, tabs, badges */
+.sl-link-button { border-radius: var(--ocx-radius-md); font-size: var(--ocx-text-md); }
+.sl-link-button.primary { background: var(--ocx-color-accent); border-color: var(--ocx-color-accent); color: var(--ocx-color-on-accent); font-weight: 600; }
+.sl-link-button.primary:hover { background: var(--ocx-color-accent-hover); border-color: var(--ocx-color-accent-hover); }
+.sl-link-button.secondary, .sl-link-button.minimal { border: var(--ocx-border-width) solid var(--ocx-color-border); color: var(--ocx-color-fg); background: var(--ocx-color-surface); }
+.sl-link-button.secondary:hover { border-color: var(--ocx-color-accent); }
+.card, .sl-link-card { border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg); background: var(--ocx-color-surface); box-shadow: none; }
+.card:hover, .sl-link-card:hover { border-color: var(--ocx-color-accent); }
+starlight-tabs [role='tab'] { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); }
+starlight-tabs [role='tab'][aria-selected='true'] { color: var(--ocx-color-accent-fg); border-color: var(--ocx-color-accent); }
+.sl-badge { font-family: var(--ocx-font-mono); border-radius: var(--ocx-radius-sm); }
