@@ -27,5 +27,6 @@ and open questions. Read it before any design or code change.** Research trail:
 
 ## Agent config
 
-Skills and rules are vendored by grim from `grimoire.toml`, pinned in
-`grimoire.lock`, and not committed. After cloning run `grim install`.
+Skills and rules are installed by grim from `grimoire.toml`, pinned in
+`grimoire.lock`, and committed. Change them with `grim add` / `grim update`,
+never by hand-editing the installed copies.

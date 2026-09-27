@@ -3,10 +3,6 @@ dist/
 .astro/
 .agents/worktrees/
 
-# Vendored by `grim install` from grimoire.toml, pinned in grimoire.lock.
-.agents/skills/
-.claude/skills/
-.claude/rules/
-.opencode/
+# Per-session agent telemetry, not config.
 .claude/state/
 .serena/
