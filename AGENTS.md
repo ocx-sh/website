@@ -12,7 +12,8 @@ npm.
 
 **[HANDOVER.md](HANDOVER.md) holds the settled decisions, repo layout, phases
 and open questions. Read it before any design or code change.** Research trail:
-`docs/research/`.
+`docs/research/`. Local design draft export (gitignored, may be absent):
+`.tmp/design/`.
 
 ## Working here
 

@@ -6,3 +6,6 @@ dist/
 # Per-session agent telemetry, not config.
 .claude/state/
 .serena/
+
+# Local scratch: design exports and other inputs not meant for history.
+.tmp/
