@@ -86,6 +86,8 @@ describe('require-dist.mjs', () => {
   it('C-071: task is on PATH in CI (the `css` wiring test must not skip there)', () => {
     if (process.env.CI) expect(hasTask).toBe(true);
   });
+  // CI=true makes task colour its log lines; the prefix match needs them plain.
+  const noColor = { ...process.env, NO_COLOR: '1' };
   it.skipIf(!hasTask)(
     'C-071: `css` runs require-dist first over every app dist on disk (skipped: task not on PATH)',
     () => {
@@ -93,7 +95,7 @@ describe('require-dist.mjs', () => {
         .map((d) => `examples/${d}`)
         .concat('site')
         .filter((d) => existsSync(join(root, d, 'package.json')));
-      const r = spawnSync('task', ['--dry', 'css'], { cwd: root, encoding: 'utf8' });
+      const r = spawnSync('task', ['--dry', 'css'], { cwd: root, encoding: 'utf8', env: noColor });
       expect(r.status).toBe(0);
       const first = (r.stdout + r.stderr).split('\n').find((l) => l.startsWith('task: [css] '));
       expect(first?.slice('task: [css] '.length).trim().split(/\s+/)).toEqual([
@@ -122,7 +124,7 @@ describe('require-dist.mjs', () => {
         .map((d) => `examples/${d}`)
         .concat('site')
         .filter((d) => existsSync(join(root, d, 'package.json')));
-      const r = spawnSync('task', ['--dry', 'e2e'], { cwd: root, encoding: 'utf8' });
+      const r = spawnSync('task', ['--dry', 'e2e'], { cwd: root, encoding: 'utf8', env: noColor });
       expect(r.status).toBe(0);
       expect(firstCommand('e2e', r)).toEqual(['node', 'scripts/require-dist.mjs', ...apps.map((a) => `${a}/dist`)]);
     },
@@ -135,7 +137,7 @@ describe('require-dist.mjs', () => {
         .map((d) => `examples/${d}`)
         .concat('site')
         .filter((d) => existsSync(join(root, d, 'package.json')));
-      const r = spawnSync('task', ['--dry', 'lighthouse'], { cwd: root, encoding: 'utf8' });
+      const r = spawnSync('task', ['--dry', 'lighthouse'], { cwd: root, encoding: 'utf8', env: noColor });
       expect(r.status).toBe(0);
       expect(firstCommand('lighthouse', r)).toEqual([
         'node',
