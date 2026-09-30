@@ -7,7 +7,10 @@ prose: true
 toaster: true
 ---
 
+import '@ocx-sh/theme/starlight.css?story';
 import CopyButton from '@ocx-sh/theme/components/CopyButton.astro';
+
+{/* The code fence's Expressive Code frame and copy button are themed by the theme's Starlight sheet; `?story` keeps that import out of Starlight's shared bundle. */}
 
 <CopyButton value="ocx install ocx.sh/nodejs/node:24" label="install command" />
 
