@@ -198,6 +198,28 @@ const html = items.map((item, i) => node(item, [i])).join('');
     .ocx-tree-view :global([data-part='branch-indicator'][data-state='open']) {
       rotate: 90deg;
     }
+    /* Branch open/close: the disclosure pattern (ui/disclosure.css). Zag sets the UA `[hidden]`;
+       `display` and `height` transition around that flip. Live roots only, so a branch rendered
+       open is final at first paint. Height needs `interpolate-size` (Chromium); elsewhere it fades. */
+    .ocx-tree-view[data-zag-state='live'] :global([data-part='branch-content']) {
+      interpolate-size: allow-keywords;
+      overflow: clip;
+      overflow-clip-margin: var(--ocx-space-2);
+      transition:
+        height var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        display var(--ocx-duration-moderate) allow-discrete;
+    }
+    .ocx-tree-view[data-zag-state='live'] :global([data-part='branch-content'][hidden]) {
+      height: 0;
+      opacity: 0;
+    }
+    .ocx-tree-view[data-zag-state='live'] :global([data-part='branch-content']:not([hidden])) {
+      @starting-style {
+        height: 0;
+        opacity: 0;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
       .ocx-tree-view :global([data-part='branch-indicator']) {
         transition: none;

@@ -154,6 +154,17 @@ describe('C-268 Tag label and stamp stay unchanged', () => {
     expect(html).not.toMatch(/<svg|<button/);
   });
 
+  it('R5 colours fade on base; a chip enters only under a live TagsInput root; the focus ring never animates', () => {
+    expect(/\.ocx-ui-tag\s*\{([^}]*)\}/.exec(css)?.[1]).not.toMatch(/transition/); // passive chips never change
+    const live = /\.ocx-ui-tag:is\(\[data-variant='filter'\], \[data-removable\]\) \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(live).toMatch(/color var\(--ocx-duration-base\) var\(--ocx-ease-out\)/);
+    expect(live).toMatch(/border-color var\(--ocx-duration-base\)/);
+    expect(css).toMatch(
+      /\[data-zag-root='tags-input'\]\[data-zag-state='live'\] \.ocx-ui-tag \{[^}]*scale var\(--ocx-duration-base\)[^}]*@starting-style \{\s*opacity: 0;\s*scale: var\(--ocx-scale-enter\);/,
+    );
+    expect(css).not.toMatch(/transition:[^;]*(outline|all)\b/);
+  });
+
   it('a label keeps display:inline-block; only filter and removable chips are flex', () => {
     expect(/\.ocx-ui-tag\s*\{([^}]*)\}/.exec(css)?.[1]).toContain('display: inline-block');
     expect(css).toMatch(/\[data-variant='filter'\],\s*\.ocx-ui-tag\[data-removable\]\s*\{[^}]*inline-flex/);

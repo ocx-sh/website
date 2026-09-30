@@ -8,6 +8,7 @@
 import { collection, connect as comboConnect, machine as comboMachine } from '@zag-js/combobox';
 import { connect, machine } from '@zag-js/tags-input';
 import { filterItems, highlight, match } from './fuzzy.mjs';
+import { leave } from './motion.mjs';
 import { emit } from './zag-runtime.mjs';
 
 // The combobox machine too: TagsInput.astro renders the closed popup from it (D-Z17). Named, not
@@ -175,7 +176,7 @@ function paintInput(ctx) {
     },
     onkeydown: (/** @type {KeyboardEvent} */ e) => {
       if (e.defaultPrevented || e.isComposing) return;
-      const chip = !!ctx.root.querySelector('[data-part="item-preview"][data-highlighted]');
+      const chip = !!ctx.root.querySelector('[data-part="item-preview"][data-highlighted]:not([data-disabled])');
       if (c && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
         if (chip) toTags(e, 'ArrowDown'); // leaves the chips (tags-input's ↓), then opens the list
         return c.onkeydown?.(e);
@@ -251,15 +252,26 @@ function paintPopup(ctx, api, put) {
   paintInput(ctx);
 }
 
+/** `el`, or the first sibling after it that is not leaving. @param {Element | null} el */
+const live = (el) => {
+  while (el?.hasAttribute('data-leaving')) el = el.nextElementSibling;
+  return el;
+};
+
 /**
- * One chip per value, in order: SSR chips are kept, new ones come from the pool or the template.
+ * One chip per value, in order: SSR chips are kept, new ones come from the pool or the template. A
+ * removed chip leaves through leave() (C-302) and then joins the pool. While it leaves, its preview
+ * carries `data-disabled`: Zag maps a chip to its value by its index among
+ * `[data-part=item-preview]:not([data-disabled])`, so a leaving chip must drop out of that list at
+ * once. The order checks skip leaving chips too: moving a live chip re-inserts it, which would
+ * replay its enter transition.
  * @param {Ctx} ctx @param {import('@zag-js/tags-input').Api} api @param {import('./zag.mjs').Spread} spread
  */
 function paintChips(ctx, api, spread) {
   const control = /** @type {HTMLElement} */ (ctx.input.parentElement);
   const template = /** @type {HTMLTemplateElement} */ (ctx.root.querySelector('template[data-ocx-chip]'));
   const have = new Map(
-    [...control.querySelectorAll(':scope > [data-part="item"]')].map((el) => [
+    [...control.querySelectorAll(':scope > [data-part="item"]:not([data-leaving])')].map((el) => [
       /** @type {HTMLElement} */ (el).dataset.value,
       /** @type {HTMLElement} */ (el),
     ]),
@@ -273,8 +285,8 @@ function paintChips(ctx, api, spread) {
       /** @type {HTMLElement} */ (/** @type {Element} */ (template.content.firstElementChild).cloneNode(true));
     have.delete(value);
     if (!prev) {
-      if (control.firstElementChild !== el) control.prepend(el);
-    } else if (prev.nextElementSibling !== el) prev.after(el);
+      if (live(control.firstElementChild) !== el) control.prepend(el);
+    } else if (live(prev.nextElementSibling) !== el) prev.after(el);
     prev = el;
     const item = { index, value };
     const text = at(el, '[data-part="item-text"]');
@@ -286,8 +298,14 @@ function paintChips(ctx, api, spread) {
     spread(at(el, '.ocx-ui-tag__remove'), api.getItemDeleteTriggerProps(item));
   });
   for (const el of have.values()) {
-    el.remove();
-    ctx.pool.push(el);
+    const preview = at(el, '[data-part="item-preview"]');
+    preview.setAttribute('data-disabled', '');
+    void leave(el).then(() => {
+      el.inert = false;
+      el.removeAttribute('data-leaving');
+      preview.removeAttribute('data-disabled');
+      ctx.pool.push(el);
+    });
   }
 }
 

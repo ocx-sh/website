@@ -245,7 +245,8 @@ test.describe('C-210 search dialog', () => {
     const size = await resolveBlockSize(page, 'var(--ocx-control-lg)');
     expect(await clear.boundingBox()).toMatchObject({ width: size, height: size });
     await clear.hover();
-    expect(await computed(clear, 'color')).toBe(await resolve(page, 'color', 'var(--ocx-color-fg)'));
+    const fg = await resolve(page, 'color', 'var(--ocx-color-fg)');
+    await expect.poll(() => computed(clear, 'color')).toBe(fg); // the hover ink fades in
     await clear.focus();
     await page.keyboard.press('Tab');
     await page.keyboard.press('Shift+Tab');

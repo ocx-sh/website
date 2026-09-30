@@ -2,6 +2,7 @@
 // styles, the remove button's accessible name, and filter-on contrast in both schemes.
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 import { computed, resolve } from './tokens.ts';
 
 // The `states` story holds every variant; `default` is the label and stamp pair.
@@ -9,7 +10,11 @@ const STORY = '/docs/stories/tag/';
 const PAGE = `${STORY}states/`;
 const on = 'main .ocx-ui-tag[data-variant="filter"][aria-pressed="true"]';
 const off = 'main .ocx-ui-tag[data-variant="filter"][aria-pressed="false"]:not(:disabled)';
-const setTheme = (page: Page, t: string) => page.evaluate((v) => (document.documentElement.dataset['theme'] = v), t);
+/** Flips the scheme and waits out the chips' colour fades (R5), so computed colours are final. */
+const setTheme = async (page: Page, t: string) => {
+  await page.evaluate((v) => (document.documentElement.dataset['theme'] = v), t);
+  await settle(page);
+};
 
 for (const theme of ['light', 'dark'])
   for (const path of [`${STORY}default/`, PAGE])
@@ -71,9 +76,9 @@ test('Tag: aria-pressed alone flips the look (no class, no JS)', async ({ page }
   const chip = page.locator(`main .ocx-ui-tag[data-variant="filter"][data-value="${value}"]`);
   await chip.evaluate((el) => el.setAttribute('aria-pressed', 'true'));
   await expect(chip.locator('.ocx-ui-tag__check')).toBeVisible();
-  expect(await computed(chip, 'border-top-color')).toBe(
-    await resolve(page, 'border-top-color', 'var(--ocx-color-accent)'),
-  );
+  // Polled: the chip fades border-color over --ocx-duration-base, so a one-shot read lands mid-transition.
+  const want = await resolve(page, 'border-top-color', 'var(--ocx-color-accent)');
+  await expect.poll(() => computed(chip, 'border-top-color')).toBe(want);
 });
 
 test('Tag: the filter chip is a focusable button with a square focus ring', async ({ page }) => {
@@ -101,6 +106,7 @@ test('Tag: the remove button is named by removeLabel, square, and inside the chi
   expect(inside).toBe(true);
   expect(await computed(remove, 'color')).toBe(await resolve(page, 'color', 'var(--ocx-color-fg-subtle)'));
   await remove.hover();
+  await settle(page);
   expect(await computed(remove, 'color')).toBe(await resolve(page, 'color', 'var(--ocx-color-fg)'));
   await remove.focus();
   await page.keyboard.press('Shift+Tab');

@@ -102,6 +102,17 @@ describe('C-180 CopyButton SSR (C-130 a, b)', () => {
     expect(css).toMatch(/\[data-copied\]/);
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(/i);
   });
+
+  it('R5 both labels share one grid cell: the hidden one only fades, so the button keeps the "copied" width', async () => {
+    await render({ value: 'x' });
+    const labels = document.querySelector('.ocx-copy__labels');
+    expect([...(labels?.children ?? [])].map((el) => el.getAttribute('data-part'))).toEqual(['indicator', 'indicator']);
+    const css = /<style[^>]*>([\s\S]*)<\/style>/.exec(source('../src/components/CopyButton.astro'))?.[1] ?? '';
+    expect(css).toMatch(/\.ocx-copy__labels > \* \{[^}]*grid-area: 1 \/ 1;/);
+    expect(css).toMatch(/\.ocx-copy__labels > \[hidden\] \{\s*opacity: 0;\s*visibility: hidden;/);
+    expect(css).toMatch(/opacity var\(--ocx-duration-moderate\) var\(--ocx-ease-in-out\)/);
+    expect(css).not.toMatch(/display: none/);
+  });
 });
 
 describe('C-130k CopyButton Props', () => {

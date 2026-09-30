@@ -92,6 +92,10 @@
     border: var(--ocx-border-width) solid var(--ocx-color-border);
     border-radius: var(--ocx-radius-md);
     scrollbar-width: none;
+    /* Hover and the copied success edge fade; the focus outline stays instant. */
+    transition:
+      color var(--ocx-duration-base) var(--ocx-ease-out),
+      border-color var(--ocx-duration-base) var(--ocx-ease-out);
   }
   .ocx-cmdbar__field::-webkit-scrollbar {
     display: none;
@@ -150,6 +154,7 @@
     color: var(--ocx-color-fg-subtle);
     background: var(--ocx-color-surface);
     box-shadow: calc(-1 * var(--ocx-space-4)) 0 var(--ocx-space-4) var(--ocx-color-surface);
+    transition: color var(--ocx-duration-base) var(--ocx-ease-out);
   }
   .ocx-cmdbar__field:hover .ocx-cmdbar__icons {
     color: var(--ocx-color-fg);
@@ -193,6 +198,10 @@
   }
   .ocx-cmdbar .ocx-cmdbar__action :is(a, button) {
     block-size: var(--ocx-control-2xl);
+    transition:
+      color var(--ocx-duration-base) var(--ocx-ease-out),
+      background-color var(--ocx-duration-base) var(--ocx-ease-out),
+      border-color var(--ocx-duration-base) var(--ocx-ease-out);
     border-start-start-radius: 0;
     border-end-start-radius: 0;
   }

@@ -163,11 +163,21 @@ sl-sidebar-state-persist { display: contents; }
 }
 /* The group's chunk failed to load: its links stay reachable (as a native <details> never lost them). */
 #starlight__sidebar [data-zag-root='collapsible'][data-zag-state='error'] > [data-part='content'][hidden] { display: block; }
+/* Open and close: the disclosure pattern (ui/disclosure.css). The list grows while it fades in and on
+ * close shrinks and fades before the UA `[hidden]` display lands. Live groups only: a group opened by
+ * SSR or the pre-paint restore is final on first paint. Height needs `interpolate-size` (Chromium). */
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content'] {
+  interpolate-size: allow-keywords; overflow: clip; overflow-clip-margin: var(--ocx-space-2);
+  transition: height var(--ocx-duration-moderate) var(--ocx-ease-in-out), opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out), display var(--ocx-duration-moderate) allow-discrete;
+}
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content'][hidden] { height: 0; opacity: 0; }
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content']:not([hidden]) { @starting-style { height: 0; opacity: 0; } }
 .sidebar-content [data-part='trigger']:focus-visible { outline: var(--ocx-focus-ring); outline-offset: calc(var(--ocx-focus-offset) * -1); }
 .sidebar-content a {
   display: block; padding: var(--ocx-space-3) var(--ocx-space-4); line-height: 1.4; text-decoration: none;
   font-family: var(--ocx-font-sans); font-size: var(--ocx-text-base); font-weight: var(--ocx-font-weight-regular);
   color: var(--ocx-color-fg-muted); border-radius: var(--ocx-radius-md);
+  transition: color var(--ocx-duration-base);
 }
 .sidebar-content :is(a, .group-label, [data-part='trigger']) > .sl-badge { margin-inline-start: 0.25em; }
 /* Entry badges: Starlight's small Badge on the --sl-badge-* mapping above. */
@@ -224,6 +234,9 @@ starlight-toc a {
   font-size: var(--ocx-text-sm); color: var(--ocx-color-fg-muted);
 }
 starlight-toc a:hover { color: var(--ocx-color-fg); }
+/* The marker and the hover ink fade once the reader scrolls or points at the outline (Search.astro's
+ * script sets `data-live` then): the init pass that marks the first entry stays a snap (D-R7 c). */
+starlight-toc[data-live] a { transition: color var(--ocx-duration-base), border-inline-start-color var(--ocx-duration-base); }
 starlight-toc a[aria-current='true'] { color: var(--ocx-color-accent-fg); border-inline-start-color: var(--ocx-color-focus); background: none; }
 mobile-starlight-toc .toggle { border-radius: var(--ocx-radius-md); }
 
@@ -429,6 +442,16 @@ starlight-file-tree :is(summary, a, .tree-entry) { border-radius: var(--ocx-radi
  * inline), so the section rule moves from the h2 to the wrapper. */
 .sl-markdown-content .sl-heading-wrapper.level-h2 { margin: var(--ocx-prose-h2-margin); padding-top: var(--ocx-prose-h2-pad); border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
 .sl-markdown-content .sl-heading-wrapper > h2 { margin: 0; padding-top: 0; border-top: 0; }
+
+/* Theme switch (D-R9): theme-toggle.mjs flips the scheme inside a view transition, a root crossfade
+ * on the moderate duration (0s under reduced motion, so the switch is an instant flip).
+ * `data-ocx-theme-switch` is set around the flip: every control's own colour fade would otherwise play
+ * over (or, without the API, instead of) the crossfade. `!important` because a component's
+ * `transition` outranks this rule on specificity, and the attribute lives only while the switch runs. */
+:root[data-ocx-theme-switch] *, :root[data-ocx-theme-switch] *::before, :root[data-ocx-theme-switch] *::after { transition: none !important; }
+::view-transition-old(root), ::view-transition-new(root) {
+  animation-duration: var(--ocx-duration-moderate); animation-timing-function: var(--ocx-ease-in-out);
+}
 
 /* Starlight isolates .main-pane, which traps an open Dialog or Drawer (z-index modal/drawer) under
  * the static sidebar and the header. Lift the isolation only while one is open in the content. */

@@ -133,6 +133,7 @@ export default defineConfig({
               items: [
                 { label: 'Overview', link: '/components/iconography/' },
                 { label: 'Icon', link: '/components/iconography/icon/' },
+                { label: 'Logo', link: '/components/iconography/logo/' },
                 { label: 'Catalog', link: '/components/iconography/catalog/' },
                 { label: 'OS icons', link: '/components/iconography/os/' },
                 { label: 'Platform icons', link: '/components/platform-icons/' },

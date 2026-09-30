@@ -2,6 +2,14 @@
  * component and inlined by the toast chunk. Tokens only; accent is deliberately not a tone.
  * A consumer moves a determinate ring with `style="--_value:N"` (unitless 0-100) on the root plus
  * `aria-valuenow`; without `--_value` the fill's own `stroke-dasharray` attribute (SSR) stands. */
+/* Registered (a number), so the value itself transitions where it is set and the fill follows: Chrome
+   did not reliably start a transition on a property computed from a changed custom property. Same
+   rule in range.css. */
+@property --_value {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
 @layer ocx {
   .ocx-ui-progress-circle {
     display: inline-flex;
@@ -53,6 +61,12 @@
   }
   .ocx-ui-progress-circle__ring [data-part='fill'] {
     stroke: var(--_tone);
+  }
+  /* A new value glides on the slow duration: the arc (stroke-dasharray) and its opacity follow it.
+     Only where the value is set, or an inheriting ring would ease an already easing value again. */
+  .ocx-ui-progress-circle[style*='--_value'],
+  .ocx-ui-progress-circle__ring[style*='--_value'] {
+    transition: --_value var(--ocx-duration-slow) var(--ocx-ease-out);
   }
   /* Consumer-driven value (see the header). Opacity hides the square-cap dot a 0-length dash paints. */
   .ocx-ui-progress-circle[style*='--_value'] [data-state='determinate'] [data-part='fill'],

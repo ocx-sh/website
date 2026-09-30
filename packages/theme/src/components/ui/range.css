@@ -1,6 +1,14 @@
 /* Meter and Slider (C-266, C-270): the track look they share, plus the slider's own parts.
    Imported from each component's frontmatter, so the whole body sits in @layer ocx. Tokens only.
    The head row (label + value text) and the field column come from field.css / the field class. */
+/* Registered (a number), so the value itself transitions where it is set and the fill follows: Chrome
+   did not reliably start a transition on a property computed from a changed custom property. Same
+   rule in progress-circle.css. */
+@property --_value {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
 @layer ocx {
   .ocx-ui-meter__head,
   .ocx-ui-slider__head {
@@ -26,9 +34,11 @@
     background: var(--ocx-color-border);
   }
 
-  /* Meter: a fill whose width is the clamped percent SSR wrote into --_value. */
+  /* Meter: a full-width fill scaled from inline-start to the clamped percent SSR wrote into --_value
+     (the same box as a percent width at first paint); a new value glides there on the slow duration. */
   .ocx-ui-meter {
     --_tone: var(--ocx-color-fg-muted);
+    transition: --_value var(--ocx-duration-slow) var(--ocx-ease-out);
   }
   .ocx-ui-meter[data-tone='success'] {
     --_tone: var(--ocx-color-success);
@@ -47,8 +57,12 @@
   }
   .ocx-ui-meter__fill {
     block-size: 100%;
-    inline-size: calc(var(--_value) * 1%);
     background: var(--_tone);
+    scale: calc(var(--_value) / 100) 1;
+    transform-origin: left;
+  }
+  .ocx-ui-meter__fill:dir(rtl) {
+    transform-origin: right;
   }
 
   /* Slider. The thumb edge and the range are non-text UI, so they take the thin-marker token

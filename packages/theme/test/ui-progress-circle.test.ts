@@ -116,4 +116,13 @@ describe('C-265 ProgressCircle SSR', () => {
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(/i);
     expect(css).not.toMatch(/--ocx-color-accent/);
   });
+
+  it('R5 a value change glides on slow ease-out where the value is set; the arc and opacity follow', () => {
+    const css = readFileSync(new URL('../src/components/ui/progress-circle.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/@property --_value \{\s*syntax: '<number>';\s*inherits: true;/);
+    expect(css).toMatch(
+      /\.ocx-ui-progress-circle\[style\*='--_value'\],\s*\.ocx-ui-progress-circle__ring\[style\*='--_value'\] \{\s*transition: --_value var\(--ocx-duration-slow\) var\(--ocx-ease-out\);/,
+    );
+    expect(css).not.toMatch(/transition:[^;]*stroke-dasharray/);
+  });
 });

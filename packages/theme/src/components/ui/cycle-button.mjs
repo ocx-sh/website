@@ -1,7 +1,8 @@
 // CycleButton: one delegated click listener advances every cycle button to its next state (wrapping).
 // SSR already carries the final state; `data-cycle` lists the states (`[value, label]`, in order), one
 // glyph each (`.ocx-ui-cycle-button__state`, same order), the current one `__current`. No machine,
-// so Enter and Space work natively.
+// so Enter and Space work natively. The first click sets `data-live`, under which the glyphs
+// crossfade (cycle-button.css); `setValue` alone never does, so a state set before paint stays instant.
 
 /**
  * The states and the index of `value` (-1 when unknown).
@@ -53,8 +54,10 @@ export function onClick(event) {
     button.dispatchEvent(
       new Custom('ocx:cycle-button:change', { detail: { value, previous }, bubbles: true, cancelable: true }),
     )
-  )
+  ) {
+    button.toggleAttribute('data-live', true);
     setValue(button, value);
+  }
 }
 
 /** Idempotent: the same listener added twice is one listener. @param {Document} [doc] */

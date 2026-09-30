@@ -102,9 +102,11 @@ const id = nextUiId('data-table');
               {sortable ? (
                 <button type="button" data-ocx-sort={key}>
                   {label}
-                  <Icon name="sort" size="sm" />
-                  <Icon name="sort-asc" size="sm" />
-                  <Icon name="sort-desc" size="sm" />
+                  <span class="ocx-data-table__sort">
+                    <Icon name="sort" size="sm" />
+                    <Icon name="sort-asc" size="sm" />
+                    <Icon name="sort-desc" size="sm" />
+                  </span>
                 </button>
               ) : (
                 label
@@ -321,23 +323,42 @@ const id = nextUiId('data-table');
       outline: var(--ocx-focus-ring);
       outline-offset: var(--ocx-focus-offset-inset);
     }
-    /* Three icons per header, CSS shows the one matching aria-sort (no JS): unsorted in the control
-       line colour, sorted in the header's ink. */
-    :where(.ocx-data-table__table) th svg {
+    /* Three icons per header stacked in one grid cell; CSS shows the one matching aria-sort (no JS):
+       unsorted in the control line colour, sorted in the header's ink. The cell never changes size;
+       once live the swap crossfades. */
+    :where(.ocx-data-table__table) th .ocx-data-table__sort {
+      display: grid;
       flex: none;
+    }
+    :where(.ocx-data-table__table) th svg {
+      grid-area: 1 / 1;
       color: var(--ocx-color-border-control);
     }
     :where(.ocx-data-table__table) th svg[data-icon='sort-asc'],
     :where(.ocx-data-table__table) th svg[data-icon='sort-desc'],
     :where(.ocx-data-table__table) th[aria-sort] svg[data-icon='sort'] {
-      display: none;
+      opacity: 0;
     }
     :where(.ocx-data-table__table) th[aria-sort] svg {
       color: currentColor;
     }
     :where(.ocx-data-table__table) th[aria-sort='ascending'] svg[data-icon='sort-asc'],
     :where(.ocx-data-table__table) th[aria-sort='descending'] svg[data-icon='sort-desc'] {
-      display: block;
+      opacity: 1;
+    }
+    /* Motion (C-302), only once data-table.mjs set `data-live` on a first sort, filter or page change:
+       the glyphs crossfade, and rows shown by a filter or a page fade in. A sort that only moves rows
+       does not animate (D-R8). */
+    .ocx-data-table[data-live] th svg {
+      transition: opacity var(--ocx-duration-base);
+    }
+    .ocx-data-table[data-live] tbody tr {
+      transition: opacity var(--ocx-duration-enter) var(--ocx-ease-out);
+    }
+    .ocx-data-table[data-live] tbody tr:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+      }
     }
 
     .ocx-data-table__foot {

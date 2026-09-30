@@ -110,6 +110,7 @@
     background: transparent;
     border-radius: var(--ocx-radius-md);
     cursor: default;
+    transition: background-color var(--ocx-duration-fast);
   }
   /* The label sits in column 2 whether or not a checkmark occupies column 1. */
   .ocx-ui-option__label {
@@ -186,6 +187,7 @@
     border: var(--ocx-border-width) solid var(--ocx-color-border);
     border-radius: var(--ocx-radius-md);
     cursor: pointer;
+    transition: border-color var(--ocx-duration-base);
   }
   /* Trigger icon: the selected option's, before its text. */
   .ocx-ui-select__glyph {
@@ -206,6 +208,10 @@
   .ocx-ui-select__control:is(:focus-visible, [aria-expanded='true']) {
     outline: none;
     border-color: var(--ocx-color-focus);
+  }
+  /* The keyboard focus border is the focus indicator: it lands at once (D-R7 g); open by pointer fades. */
+  .ocx-ui-select__control:focus-visible {
+    transition: none;
   }
   .ocx-ui-select__control[aria-invalid='true'] {
     border-color: var(--ocx-color-danger);
@@ -228,6 +234,10 @@
     stroke-linecap: round;
     stroke-linejoin: round;
     pointer-events: none;
+  }
+  /* Open chevron: only a live machine flips it, so an SSR-open select renders final. */
+  [data-zag-state='live'] .ocx-ui-select__icon {
+    transition: rotate var(--ocx-duration-base) var(--ocx-ease-out);
   }
   .ocx-ui-select__icon * {
     vector-effect: non-scaling-stroke;

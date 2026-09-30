@@ -1,38 +1,232 @@
 ---
-// Skeleton: static placeholder bars that reserve the final box (no-flicker rule).
-// Decorative only; pair it with a <Loader> for the announcement. No animation.
+// Skeleton: placeholder bars that reserve the final box (no-flicker rule). Decorative only; pair it
+// with a <Loader> for the announcement. One component, variants by prop (D-R4): the primitives
+// `text` (default), `circle`, `rect` and the composites `card`, `list`, `table`, `code`, `terminal`.
+// Each composite takes its block size from the same classes and tokens as the real component
+// (D-R5): `.ocx-card`, the List row, the DataTable cells, the Expressive Code frame, the Terminal
+// chrome and player; the swap story and e2e hold them to ±1px. A faint sweep crosses every bar
+// (shimmer, still under reduced motion: it stands still there, D-R6); `animated={false}` turns it off.
+// Styles: the text primitive and the sweep in skeleton.css (loaded by base.css), the variants below.
 export interface Props {
-  /** Number of text lines to reserve (each one line-height tall). */
+  variant?: 'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal';
+  /** Bars to reserve for `text`, `code` and `terminal` (each one line-height tall). */
   lines?: number;
+  /** Rows of a `list` or `table` (a table's head row comes on top). */
+  rows?: number;
+  /** Columns of a `table`. */
+  columns?: number;
+  /** Diameter of a `circle`, on Avatar's scale. */
+  size?: 'sm' | 'md' | 'lg';
+  /** Aspect ratio of a `rect`, `width / height`. */
+  ratio?: string;
+  /** The sweep across the bars. */
+  animated?: boolean;
   class?: string;
 }
 
-const { lines = 3, class: className } = Astro.props;
+const {
+  variant = 'text',
+  lines = 3,
+  rows = 3,
+  columns = 3,
+  size = 'sm',
+  ratio = '16 / 9',
+  animated = true,
+  class: className,
+} = Astro.props;
+// Written into `style`, so it is checked: a number over a number.
+if (!/^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/.test(ratio)) throw new Error(`Skeleton: invalid ratio "${ratio}"`);
+
+const count = (n: number) => Array.from({ length: n });
+const style = {
+  text: `--_lines: ${lines}`,
+  code: `--_lines: ${lines}`,
+  terminal: `--_lines: ${lines}`,
+  list: `--_rows: ${rows}`,
+  table: `--_rows: ${rows}; --_cols: ${columns}`,
+  rect: `--_ratio: ${ratio}`,
+  circle: undefined,
+  card: undefined,
+}[variant];
 ---
 
-<span class:list={['ocx-ui-skeleton', className]} aria-hidden="true" style={`--_lines: ${lines}`}>
-  {Array.from({ length: lines }, () => (
+<span
+  class:list={['ocx-ui-skeleton', variant === 'card' && 'ocx-card', className]}
+  aria-hidden="true"
+  style={style}
+  data-variant={variant === 'text' ? undefined : variant}
+  data-size={variant === 'circle' ? size : undefined}
+  data-animated={animated ? undefined : 'false'}
+>
+  {variant === 'card' ? (
+    <>
+      <span class="ocx-ui-skeleton__line" />
+      <span class="ocx-ui-skeleton__line" />
+    </>
+  ) : variant === 'list' ? (
+    count(rows).map(() => (
+      <span class="ocx-ui-skeleton__row">
+        <span class="ocx-ui-skeleton__line" />
+      </span>
+    ))
+  ) : variant === 'table' ? (
+    count(rows + 1).map((_, r) => (
+      <span class="ocx-ui-skeleton__tr" data-head={r === 0 ? '' : undefined}>
+        {count(columns).map(() => (
+          <span class="ocx-ui-skeleton__cell">
+            <span class="ocx-ui-skeleton__line" />
+          </span>
+        ))}
+      </span>
+    ))
+  ) : variant === 'terminal' ? (
+    <>
+      <span class="ocx-ui-skeleton__chrome">
+        <span class="ocx-ui-skeleton__line" />
+      </span>
+      <span class="ocx-ui-skeleton__body">
+        {count(lines).map(() => (
+          <span class="ocx-ui-skeleton__line" />
+        ))}
+      </span>
+    </>
+  ) : variant === 'circle' || variant === 'rect' ? (
     <span class="ocx-ui-skeleton__line" />
-  ))}
+  ) : (
+    count(lines).map(() => <span class="ocx-ui-skeleton__line" />)
+  )}
 </span>
 
 <style>
   @layer ocx {
-    /* Reserves the final box at first paint: lines × line-height, nothing moves when content lands. */
-    .ocx-ui-skeleton {
+    /* Primitives. */
+    .ocx-ui-skeleton[data-variant='circle'] {
+      --_size: var(--ocx-control-sm);
+      display: inline-flex;
+    }
+    .ocx-ui-skeleton[data-variant='circle'][data-size='md'] {
+      --_size: var(--ocx-control-lg);
+    }
+    .ocx-ui-skeleton[data-variant='circle'][data-size='lg'] {
+      --_size: var(--ocx-control-2xl);
+    }
+    .ocx-ui-skeleton[data-variant='circle'] > .ocx-ui-skeleton__line {
+      inline-size: var(--_size);
+      block-size: var(--_size);
+      border-radius: var(--ocx-radius-full);
+    }
+    .ocx-ui-skeleton[data-variant='rect'] {
+      display: block;
+    }
+    .ocx-ui-skeleton[data-variant='rect'] > .ocx-ui-skeleton__line {
+      inline-size: 100%;
+      block-size: auto;
+      aspect-ratio: var(--_ratio);
+    }
+
+    /* Composites: a bar sits in a 1lh row (0.2lh above and below), as a line of text does. */
+    .ocx-ui-skeleton:is(
+      [data-variant='card'],
+      [data-variant='list'],
+      [data-variant='table'],
+      [data-variant='code'],
+      [data-variant='terminal']
+    ) {
+      --_m: 0.2lh;
+    }
+    /* Card: the .ocx-card box (class on the root); a title bar over one line of text. */
+    .ocx-ui-skeleton[data-variant='card'] > .ocx-ui-skeleton__line:first-child {
+      inline-size: 40%; /* ponytail: raw until a skeleton token exists */
+    }
+    /* List: the List's content box and row (base.css-free copy of the same tokens). */
+    .ocx-ui-skeleton[data-variant='list'] {
+      --_bar: var(--ocx-color-border);
       display: flex;
       flex-direction: column;
-      justify-content: space-around;
-      block-size: calc(var(--_lines) * 1lh);
-    }
-    .ocx-ui-skeleton__line {
-      display: block;
-      block-size: 0.6lh; /* ponytail: bar inside its line box, raw fraction until a skeleton token exists */
+      gap: var(--ocx-space-1);
+      padding: var(--ocx-space-2);
+      font-size: var(--ocx-text-sm);
       background: var(--ocx-color-surface-subtle);
-      border-radius: var(--ocx-radius-sm);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
     }
-    .ocx-ui-skeleton__line:last-child {
-      inline-size: 60%; /* ponytail: ragged last line, raw until a skeleton token exists */
+    .ocx-ui-skeleton__row {
+      display: block;
+      padding: var(--ocx-space-2) var(--ocx-space-3);
+    }
+    /* Table: the DataTable region, head row and cells. */
+    .ocx-ui-skeleton[data-variant='table'] {
+      display: flex;
+      flex-direction: column;
+      overflow: clip;
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-heading);
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    .ocx-ui-skeleton__tr {
+      display: grid;
+      grid-template-columns: repeat(var(--_cols), minmax(0, 1fr));
+      border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .ocx-ui-skeleton__tr:last-child {
+      border-block-end: 0;
+    }
+    .ocx-ui-skeleton__cell {
+      display: block;
+      padding: var(--ocx-space-4) var(--ocx-space-5);
+    }
+    .ocx-ui-skeleton__tr[data-head] {
+      --_bar: var(--ocx-color-border);
+      font-size: var(--ocx-text-2xs);
+      background: var(--ocx-color-surface-subtle);
+    }
+    .ocx-ui-skeleton__tr[data-head] > .ocx-ui-skeleton__cell {
+      padding: var(--ocx-space-3) var(--ocx-space-5);
+    }
+    /* Code: the Expressive Code frame: code padding, code size and code line height. */
+    .ocx-ui-skeleton[data-variant='code'] {
+      --_bar: var(--ocx-color-border);
+      display: flex;
+      flex-direction: column;
+      padding: var(--ocx-space-5);
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-code);
+      background: var(--ocx-color-code-bg);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    /* Terminal: the Terminal frame: title bar, then the player area at the Terminal's own min-height
+       (control-xl + 2 × control-3xl at the default 3 lines, one control-3xl more per line). */
+    .ocx-ui-skeleton[data-variant='terminal'] {
+      --_bar: var(--ocx-color-border);
+      display: flex;
+      flex-direction: column;
+      overflow: clip;
+      background: var(--ocx-color-code-bg);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    .ocx-ui-skeleton__chrome {
+      display: flex;
+      justify-content: center;
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      font-size: var(--ocx-text-sm);
+      line-height: var(--ocx-lh-heading);
+      background: var(--ocx-color-surface-subtle);
+    }
+    .ocx-ui-skeleton__chrome > .ocx-ui-skeleton__line {
+      inline-size: 30%; /* ponytail: the title, raw until a skeleton token exists */
+    }
+    .ocx-ui-skeleton__body {
+      display: flex;
+      flex-direction: column;
+      min-block-size: calc(var(--ocx-control-xl) + (var(--_lines) - 1) * var(--ocx-control-3xl));
+      padding: var(--ocx-space-4);
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-code);
+      border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
     }
   }
 </style>

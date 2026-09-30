@@ -78,6 +78,10 @@ const iconSlot = items.some((it) => it.icon);
       align-items: center;
       gap: var(--ocx-space-2);
     }
+    /* A popover is never open at load, so the chevron needs no live gate. */
+    .ocx-ui-menu :global(.ocx-ui-menu__chevron) {
+      transition: rotate var(--ocx-duration-base) var(--ocx-ease-out);
+    }
     .ocx-ui-menu:has(:popover-open) :global(.ocx-ui-menu__chevron) {
       rotate: 180deg;
     }
@@ -121,6 +125,7 @@ const iconSlot = items.some((it) => it.icon);
       text-decoration: none;
       white-space: nowrap;
       border-radius: var(--ocx-radius-md);
+      transition: background-color var(--ocx-duration-fast);
     }
     /* Leading icon (or its empty slot): the label's colour, one icon wide. */
     .ocx-ui-menu__item > :global(.ocx-ui-menu__icon) {

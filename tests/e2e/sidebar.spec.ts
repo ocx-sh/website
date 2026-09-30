@@ -48,6 +48,8 @@ test('C-230 APG disclosure: a click before start opens on that click; Enter and 
 test('S-109: an expanded group and the scroll position come back on the next page before first paint', async ({
   page,
 }) => {
+  // Instant open: the scroll is read at once, not while the group is still growing.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 260 });
   await page.goto(LONG);
   await trigger(page, 'Gallery').click();
@@ -84,6 +86,8 @@ test('S-109: an expanded group and the scroll position come back on the next pag
 });
 
 test('C-230: axe reports no violations with every group open', async ({ page }) => {
+  // Instant open: axe would measure contrast on a list still fading in.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(LONG);
   for (const name of ['Gallery', 'Deep']) {
     await trigger(page, name).click();

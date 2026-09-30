@@ -1674,3 +1674,280 @@ G8 (command-bar) starts only after the in-flight CommandBar change has landed.
 8. Lighthouse audits ~150–200 more pages; a cold full run grows from ~2 to ~6–7 min
    (the cache makes reruns cheap). Accept, or gate story pages on a sample?
 9. Fixed canvas heights, scrolling inside the canvas at narrow widths, and no auto-resize. OK?
+
+## Refinement 2026-09-30: logo, skeletons, motion
+
+> Owner (optional, once everything else is met): "adding new common components, especially logo
+> and more skeletons, and ensuring all transition changes have animations."
+
+**Verdict.** Three additions and no new mechanism:
+- a `Logo` component that inlines the existing `logo.svg` untouched;
+- `Skeleton` variants built from the one primitive, with a shimmer that stops under reduced motion;
+- a motion pass that gives every state change that snaps today a token-driven transition, using
+  the patterns already in `overlay.css` and `disclosure.css`.
+
+Contract IDs are C-300…C-302 and tasks are R1…R6. No budget cap goes up.
+
+### Decisions
+
+- **D-R1 The logo is never redrawn.** `ui/Logo.astro` inlines `src/logo.svg?raw` the way
+  `Header.astro` does today. Colour comes from CSS only: `path { fill: … }` beats the
+  presentation attribute, so the file stays byte-identical and the favicon keeps serving it. The
+  hard rule from AGENTS.md applies: no agent edits the paths or the `fill` attribute.
+- **D-R2 The wordmark is text, not artwork.** The mark plus `nav.json`'s `brand.wordmark` is set in
+  `--ocx-font-mono`, semibold and lowercase, at 0.7× the mark height (the Header's current rule).
+  No wordmark SVG exists, and none gets drawn.
+- **D-R3 The Header adopts Logo only at equal weight.** Logo renders exactly the Header's brand
+  markup: `<a class="… ocx-header__brand" href aria-label>`, then the svg with
+  `width`/`height`/`aria-hidden`, then `<span>`. The brand CSS moves out of `Header.astro` into
+  Logo. If a built content page's HTML gzip grows by more than 16 B, Header keeps its inline copy
+  and the PR says why. The Header renders
+  `<Logo class="ocx-header__brand" href={nav.brand.href} wordmark={nav.brand.wordmark} label="ocx home" size="m" />`,
+  so `base.css`'s existing `.ocx-header__brand` rules (flex, gap, colour, `--ocx-icon-lg` mark)
+  still apply unchanged; `base.css` is not edited for the Logo (R6 owns it in this wave).
+  - *Spec Delta / outcome 2026-09-30:* the fallback applies; the Header keeps its inline brand
+    copy. Rendering `<Logo>` put Logo's `is:global` CSS into the tiny shared chunk Astro inlines
+    into every page (the `@layer ocx` inline style grew 758 → 2025 B raw, 306 → 700 B gz), so
+    the HTML gzip grew far past 16 B: `/docs/components/` 13834 → 14353, `cards/` 14011 → 14371,
+    `iconography/catalog/` 13946 → 14326, all over C-112's 14200 cap, with Lighthouse
+    performance 0.99 on the first two. With the inline copy back: 14107, 14157, 14093. Logo
+    stays an exported component for its own page and stories.
+- **D-R4 One Skeleton, variants by prop.** A `variant` prop covers the primitives (`text`,
+  `circle`, `rect`) and composites built from them (`card`, `list`, `table`, `code`, `terminal`),
+  all in one file. There is no `SkeletonGroup` and no preset component: one import and one props
+  table.
+- **D-R5 Each composite reserves the real component's box.** Every composite takes its block size
+  from the same tokens and classes as its counterpart (`.ocx-card`, List row, DataTable row,
+  Terminal frame, code frame). A swap story renders the two side by side, and e2e asserts equal
+  block sizes (±1 px).
+- **D-R6 Shimmer replaces "No animation".** Each bar's `::after` sweeps a gradient with
+  `translate` (compositor only, never `background-position`), inside
+  `@media (prefers-reduced-motion: no-preference)` like the Loader. `animated={false}` opts out.
+  In forced colours the bars are `GrayText` and the sweep is hidden.
+- **D-R7 Motion contract (C-302).** Every animated state change follows these rules:
+  - (a) Durations and easings read `--ocx-duration-*` and `--ocx-ease-*` only. There is no
+    `transition: all` and no raw ms/s.
+  - (b) Animate transform, opacity and colour. Size is animated only where the existing
+    `interpolate-size` disclosure pattern already does it (height).
+  - (c) First paint is final. Any rule that can match at load, meaning `@starting-style` or a
+    state set by `mount`, sits under `[data-zag-state='live']`, or under `[data-live]` for
+    non-Zag scripts, which set the attribute on first interaction and never at init. Plain
+    hover-only colour transitions need no gate.
+  - (d) Reduced motion is already handled by the token zeroing in `tokens.css`. An infinite
+    animation also sits inside `prefers-reduced-motion: no-preference`.
+  - (e) Forced-colours blocks are not touched.
+  - (f) Exit animations use `display`/`overlay` with `allow-discrete` when the node stays in the
+    DOM. A node the script removes leaves through `leave(el)` (C-302 helper, WAAPI fade and
+    scale on `--ocx-duration-base`, instant when the token is 0).
+  - (g) Focus rings never animate.
+- **D-R8 Deliberately not animated:**
+  - slider thumb and range while dragging (the fill would lag the pointer);
+  - DataTable sort reorder (FLIP needs JS per row);
+  - Tabs panel exit (the panels would have to stack, which changes layout);
+  - the Loader's enter (an SSR-visible Loader would fade in on load; only its exit fades);
+  - the Avatar image arriving over its initials (a load, not a state change; a fade delays the
+    final look);
+  - the header nav's `aria-current` underline (it changes only across page loads).
+- **D-R9 Theme switch.** `theme-toggle.mjs` applies the theme inside
+  `document.startViewTransition` when it exists, as a root crossfade on
+  `--ocx-duration-moderate`. While the switch runs, `:root[data-ocx-theme-switch]` sets
+  `transition: none` on descendants, so per-control colour fades do not play over the crossfade.
+  Browsers without the API flip at once, as today; they set the same attribute around the flip
+  (removed on the next animation frame), or every control would fade its colours on its own.
+
+### Component contracts
+
+- ADDED **C-300 Logo** (`ui/Logo.astro`). Props:
+  - `wordmark?: string | false`, default `false`: the mark only; a string shows that text beside
+    it.
+  - `size?: 's' | 'm' | 'l' | 'xl'`, default `m`. The mark sizes are `--ocx-icon-md` (14 px),
+    `--ocx-icon-lg` (20 px, equal to the Header's `calc(--ocx-space-5 + --ocx-space-2)`),
+    `--ocx-control-2xl` (38 px) and `calc(--ocx-control-3xl * 2)` (84 px). The svg carries the
+    matching `width`/`height` attributes (14, 20, 38, 84), so its box is reserved before CSS loads;
+    a unit test pins attributes to tokens.
+  - `tone?: 'brand' | 'current'`, default `brand`: `fill: var(--ocx-color-accent)` or
+    `currentColor`; `CanvasText` in forced colours.
+  - `href?: string`: renders an `<a>`, otherwise a `<span>`.
+  - `label?: string`, default `'ocx'`: the accessible name. It goes in `aria-label` on the link,
+    or with `role="img"` on the span. An empty string makes the logo decorative (`aria-hidden`).
+    The svg is always `aria-hidden` and `focusable="false"`.
+  - `class`.
+
+  There is no JS and no Zag. It is exported through `./components/*.astro`.
+- MODIFIED **C-301 Skeleton**:
+  - `variant?: 'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal'`,
+    default `text`, which keeps today's output.
+  - `lines?: number` for text, code and terminal.
+  - `rows?: number` for list and table (default 3); `columns?: number` for table (default 3).
+  - `size?: 'sm' | 'md' | 'lg'` for circle, Avatar's scale.
+  - `ratio?: string` for rect, default `'16 / 9'`. It must match
+    `^\d+(\.\d+)?\s*/\s*\d+(\.\d+)?$`, otherwise it throws, because it is written into `style`.
+  - `animated?: boolean`, default `true`.
+  - `class`.
+
+  The root is still `aria-hidden` with no role. Pair it with a Loader, as before.
+- ADDED **C-302 Motion contract** (D-R7). `ui/motion.mjs` exports `leave(el)`: it sets
+  `inert` and `data-leaving`, reads the computed `--ocx-duration-base` and `--ocx-ease-out`
+  (`s` or `ms` parsed to ms), and removes the node at once when the duration is 0; otherwise it
+  runs `el.animate({ opacity: [1, 0], scale: [1, 0.96] }, { duration, easing })` and removes the
+  node on finish. It returns a promise that resolves after removal. A renderer that diffs its
+  children by key (TagsInput, TagGroup) skips `[data-leaving]` nodes, so a leaving chip never
+  counts as a live item. Not exported from the package: internal to `components/`.
+
+### Motion audit (2026-09-30, `packages/theme/src`)
+
+Verified against the tree at `c6645d8` by grepping every `transition`, `animation` and
+`@starting-style` rule and every state selector (`:hover`, `[data-state]`, `aria-*`,
+`[data-highlighted]`, `[hidden]`, `:popover-open`) per file.
+
+Already animated, no change: overlays (Popover, ActionMenu, Select, Menu, Combobox and TagsInput
+popups), Tooltip, Hint, Dialog, AlertDialog, ConfirmDialog, Drawer, the search dialog, the
+mobile drawer and scrim, Accordion and Collapsible panels, the Tree details and row hover, the
+TreeView, Terminal, Accordion and Collapsible chevrons, toasts, Choice/Switch, the Expressive
+Code and CommandBar copy feedback, the Terminal title-bar hover, the DependencyExplorer toggle,
+PlatformIcons, FeatureSection reveals, and hover on the header nav, header search trigger,
+header install link, cards, link cards and pager, prose links and Link.
+
+Two animations read a raw easing keyword (`ease`, `ease-out`) against D-R7 (a):
+`PlatformIcons.astro` (the icon enter) and `FeatureSection.astro` (reveal and settle). R4
+swaps them for `--ocx-ease-out` so its guard test passes on the whole tree.
+
+These snap today and get a fix:
+
+| Family | State change | Fix | Task |
+|---|---|---|---|
+| Header | ecosystem trigger chevron on menu open; `.sl-menu-button` hover and open | chevron `rotate` base ease-out, live (the navigation-menu root); colour and `background-color` base | R1 |
+| Tabs | trigger colour + underline on select | `color`, `border-bottom-color` base | R3 |
+| Tabs | panel shown | live `@starting-style` opacity 0 → 1, enter | R3 |
+| Pagination | current page, hover | `color`, `background-color`, `border-color` base | R3 |
+| Toc (theme) | active marker on scroll | `color`, `border-inline-start-color` base | R3 |
+| TreeView | branch content open/close | disclosure pattern (height, opacity, display allow-discrete), live | R3 |
+| Accordion, Collapsible | trigger hover colour | `color` base (the chevron already rotates) | R3 |
+| List | hover, selected, multi check box | `background-color` fast, check `background-color`/`border-color` base | R3 |
+| DataTable | rows shown by filter/page; sort glyph swap | live `@starting-style` opacity on `tr:not([hidden])`; glyphs stacked in one cell and crossfaded | R3 |
+| Select | chevron on open | `rotate` base ease-out | R4 |
+| Menu | chevron on open; item highlight | `rotate` base; item `background-color` fast | R4 |
+| ActionMenu, option rows | highlight | `background-color` fast | R4 |
+| Button, ToggleButton | hover, pressed | `color`, `background-color`, `border-color` base | R4 |
+| InputGroup, Select control, Input | open and hover border | `border-color` base; focus rings stay instant (D-R7 g) | R4 |
+| SearchField | clear button shows and hides with the value | `opacity` + `visibility` base | R4 |
+| Breadcrumbs | hover, overflow open | colour base | R4 |
+| Tag, TagGroup, TagsInput | hover/on and highlighted chip; chip added; chip removed | colour base; live `@starting-style` opacity + scale; `leave()` | R5 |
+| CopyButton | copy/copied label swap, success colour | labels stacked in one grid cell and crossfaded (CommandBar pattern), colour moderate; the button now reserves the wider "copied" width, so it no longer jumps on copy | R5 |
+| CommandBar | copy, action and field hover | colour and `border-color` base | R5 |
+| CycleButton | glyph swap | glyphs stacked; opacity + `rotate`/`scale` crossfade under `[data-live]` | R5 |
+| Terminal | start overlay hides; play/pause and fullscreen glyphs; start button hover | overlay fades out (display allow-discrete); glyphs crossfaded, live; `background-color` base | R5 |
+| Meter | value change | fill at full width, `scale: calc(var(--_value) / 100) 1` from inline-start, `scale` slow | R5 |
+| ProgressCircle | value change | `stroke-dasharray`, `opacity` slow ease-out | R5 |
+| Loader | hidden when done | exit fade only (opacity + display allow-discrete) | R5 |
+| DependencyExplorer | rows shown by filter or after load | `@starting-style` opacity on `tr:not([hidden])`, only under `.ocx-deps__table:not([aria-busy])` (busy at first paint) | R5 |
+| Ecosystem mega menu | open/close; hub panel switch; blurb and preview swap | fade + translate as `overlay.css`; panels crossfade (opacity + visibility), live; blurb/preview `@starting-style` fade | R6 |
+| Sidebar groups | open/close | disclosure pattern on `[data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content']` | R6 |
+| Search | trigger hover, result hover, clear hover | colour and `border-color` base | R6 |
+| Header tools, eyebrow, chips (`base.css`) | `.ocx-header__tool`, `.ocx-eyebrow a`, `.ocx-chip--toggle`, panel rail and category hovers | colour, `background-color`, `border-color` base | R6 |
+| Starlight TOC | `aria-current` marker | `color`, `border-inline-start-color` base | R6 |
+| Sidebar, footer, mobile sections, TOC links | hover | colour base | R6 |
+| Prose `<details>` | open/close | `::details-content` block size + `content-visibility` allow-discrete (the TreeNode pattern) | R6 |
+| Theme toggle | page scheme flip | D-R9 | R6 |
+
+### Parallelization (R-wave, after GATE)
+
+The file sets are strictly disjoint, so all six run in parallel. Each task writes its own test
+files. The e2e specs duplicate an 8-line `getAnimations()` probe rather than share a helper,
+because a shared helper would make the tasks depend on each other.
+
+| Task | Scope | Hard |
+|---|---|---|
+| R1 | Logo component, stories, doc page, sidebar entry, skills; Header adoption (D-R3) and the Header's own motion rows | yes |
+| R2 | Skeleton variants and shimmer, stories, swap e2e | |
+| R3 | Motion: Tabs, Pagination, Toc, TreeView, List, DataTable, Accordion and Collapsible trigger hover | yes |
+| R4 | Motion: overlay chevrons and highlights, Button, ToggleButton (and ToggleGroup through it), fields, SearchField, Breadcrumbs, the raw-easing fixes, the motion-token guard test, the theming skill's motion rules | yes |
+| R5 | Motion: `ui/motion.mjs` (`leave()`), tags, CopyButton, CommandBar, CycleButton, Terminal, Meter, ProgressCircle, Loader, DependencyExplorer rows | yes |
+| R6 | Motion: mega menu, sidebar, Starlight TOC, footer, mobile sections, Search, `base.css` chrome, prose details, theme view transition | yes |
+
+**File ownership.** A file not listed is read-only for every R task. A shared spec that goes red
+(`cascade`, `a11y`, `budgets`, `hydration`, `stories`, `components-index`, `images-blocked`,
+`ui-consistency`, `smoke`, `iconography`, `zag-slider`, `ui-shared-sheet`, the showcase tests) is reported to the orchestrator, never edited. Paths
+are relative to `packages/theme/` (`src/`, `test/`) or the repo root (`tests/`, `examples/`,
+`skills/`).
+
+- **R1:** NEW `src/components/ui/Logo.astro`; `src/starlight/Header.astro`; NEW
+  `test/ui-logo.test.ts`; `test/header.test.ts`; NEW `tests/e2e/components-logo.spec.ts`; NEW
+  `examples/starlight/src/content/docs/components/iconography/logo.mdx`; NEW
+  `examples/starlight/src/stories/iconography/logo/{default,states}.mdx`;
+  `examples/starlight/astro.config.mjs` (the wave's only sidebar edit);
+  `skills/ocx-theme-components/SKILL.md`; `skills/ocx-theme-components/references/content-navigation.md`;
+  `skills/ocx-theme-setup/SKILL.md`.
+- **R2:** `src/components/ui/Skeleton.astro`; `test/ui-status.test.ts`;
+  `tests/e2e/ui-status.spec.ts`; NEW `tests/e2e/components-skeleton.spec.ts`;
+  `examples/starlight/src/content/docs/components/skeleton.mdx`;
+  `examples/starlight/src/stories/skeleton/{default,states}.mdx` and NEW
+  `examples/starlight/src/stories/skeleton/{variants,swap}.mdx`;
+  `skills/ocx-theme-components/references/data-feedback.md`.
+- **R3:** `src/components/{Tabs,Pagination,Toc,TreeView,Collapsible,AccordionItem}.astro`;
+  `src/components/ui/{List,DataTable}.astro`; `src/components/ui/data-table.mjs`;
+  `test/{code-tabs,components-collections,ui-list,components-data-table,components-accordion,components-collapsible,chrome-misc,toc-probe,tree-view-outside-click}.test.ts`;
+  `tests/e2e/{tables-tabs,zag-tabs,zag-collections,zag-toc,zag-list,zag-disclosure,components-data-table-sort,tree-view-outside-click}.spec.ts`;
+  NEW `tests/e2e/motion-collections.spec.ts`.
+- **R4:** `src/components/ui/{overlay,button,toggle-button,field,breadcrumbs}.css`;
+  `src/components/ui/{Menu,ActionMenu,Select,Combobox,SearchField,Breadcrumbs}.astro`;
+  `src/components/{PlatformIcons,FeatureSection}.astro`; NEW `test/motion-tokens.test.ts`;
+  `test/{ui-overlay,ui-zag-overlay,ui-field,ui-field-addons,ui-field-addons.dom,ui-form,ui-toggle-button,ui-toggle-button.dom,ui-breadcrumbs,ui-search-field,ui-search-field.dom,components-platform-icons,components-feature-section,components-toggle-group}.test.ts`;
+  `tests/e2e/{ui-overlay,zag-overlay,ui-field,ui-field-addons,ui-form,zag-form,ui-toggle-button,breadcrumbs,ui-search-field,components-platform-icons,components-feature-section}.spec.ts`;
+  NEW `tests/e2e/motion-controls.spec.ts`; `skills/ocx-theme-theming/SKILL.md`.
+- **R5:** NEW `src/components/ui/motion.mjs`; `src/components/ui/{tag,command-bar,cycle-button,progress-circle,loader}.css`;
+  `src/components/ui/range.css` (the `.ocx-ui-meter*` rules only);
+  `src/components/ui/{Tag,TagGroup,TagsInput}.astro`;
+  `src/components/ui/{tag-group,cycle-button}.mjs`; `src/components/ui/tags-input.zag.mjs`;
+  `src/components/{CopyButton,Terminal}.astro`; `src/components/terminal.mjs`;
+  `src/components/dependency-explorer.css`; NEW `test/ui-motion.dom.test.ts`;
+  `test/{ui-tag,ui-tag-group,ui-tag-group.dom,ui-tags-input,ui-tags-input.dom,components-copy,components-copy-live,ui-command-bar,ui-command-bar.dom,ui-cycle-button,ui-cycle-button.dom,components-terminal,ui-meter,ui-progress-circle,components-dependency-explorer}.test.ts`;
+  `tests/e2e/{ui-tag,zag-tag-group,zag-tags-input,zag-copy,ui-command-bar,ui-cycle-button,components-terminal,ui-meter,ui-progress-circle,components-dependency-explorer,components-dependency-explorer-defer}.spec.ts`;
+  NEW `tests/e2e/motion-feedback.spec.ts`.
+- **R6:** `src/base.css`; `src/starlight/{starlight.css,theme-toggle.mjs}`;
+  `src/starlight/{Search,Sidebar,TableOfContents,Footer,MobileMenuFooter,ThemeSelect}.astro`;
+  `src/components/EcosystemMenu.astro`;
+  `test/{sidebar,search,chrome,chrome-weight,theme-select}.test.ts`;
+  `tests/e2e/{header,sidebar,mobile,search-dialog}.spec.ts`; NEW `tests/e2e/motion-chrome.spec.ts`;
+  `skills/ocx-theme-setup/references/plugin-behaviour.md`.
+
+**Motion probe** (each motion spec copies it): after the state change, read
+`document.getAnimations()` filtered to the target subtree and expect at least one
+`CSSTransition`/`CSSAnimation`/`Animation` whose `transitionProperty` or effect names the
+property from the audit row; with `page.emulateMedia({ reducedMotion: 'reduce' })` expect the
+state to be final in the same frame; and on a fresh load expect `getAnimations()` empty for the
+component before any interaction (first paint is final).
+
+After the wave, run `task check`, then `task e2e`, `task lighthouse` and `task visual` one at a
+time. Visual baselines change only on the Logo and Skeleton stories and on the CopyButton,
+which now reserves its "copied" width. A changed chrome baseline is a bug, because every motion
+rule is gated and first paint must be final.
+
+### Spec Deltas (refinement)
+
+- ADDED C-300 Logo; MODIFIED C-301 Skeleton (variants, shimmer); ADDED C-302 motion contract and
+  `ui/motion.mjs`.
+- MODIFIED the Skeleton file comment: "No animation" becomes "shimmer, still under reduced
+  motion".
+- MODIFIED `cycle-button.css`: the swap is still final at first paint, and it animates only
+  under `[data-live]`.
+- ADDED the sidebar entry `Iconography › Logo` (about 60 B gzip on every example page, inside
+  the current headroom; `task e2e`'s budget spec confirms it, and no budget value changes).
+- MODIFIED the Header brand: rendered by `ui/Logo.astro`, same markup and accessible name
+  ("ocx home").
+- MODIFIED CopyButton: both labels share one grid cell, so its width is the "copied" width at
+  first paint (visual baseline changes once).
+- MODIFIED `PlatformIcons.astro` and `FeatureSection.astro`: easing `ease`/`ease-out` becomes
+  `var(--ocx-ease-out)` (D-R7 a).
+
+### Design questions (refinement, for the PR)
+
+1. Should the shimmer be on by default (`animated` defaults to `true`)? That puts it on the
+   DependencyExplorer's loading state too.
+2. D-R3: adopt Logo in the Header only at equal weight (16 B), or accept a small byte cost for
+   the de-duplication?
+3. D-R9: theme switch as a view-transition crossfade, or keep the instant flip?
+4. D-R8: are the six exclusions (slider drag, sort reorder, tab panel exit, Loader enter, Avatar
+   image arrival, nav `aria-current` underline) fine?
+5. CopyButton: reserve the wider "copied" width (no jump on copy, slightly wider button), or
+   keep today's width and crossfade without stacking?

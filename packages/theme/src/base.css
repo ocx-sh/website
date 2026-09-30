@@ -14,6 +14,7 @@
 @import './components/ui/breadcrumbs.css';
 @import './components/ui/button.css';
 @import './components/ui/loader.css';
+@import './components/ui/skeleton.css';
 
 /* Metric fallbacks for IBM Plex: shown until the web font swaps in, sized so the
  * swap does not shift layout. Every local() in a set shares one advance-width
@@ -111,6 +112,12 @@
 }
 .ocx-header__tool:hover { color: var(--ocx-color-fg); }
 .ocx-header__menu { display: none; }
+/* Hover and state inks fade on the base duration (D-R7): colour, fill and border only, so the focus
+ * ring (outline) stays instant. None of these states is set at load, so no gate is needed. */
+.ocx-header__tool, .ocx-header__menu-trigger, .ocx-eyebrow a, .ocx-chip--toggle,
+.ocx-header__panel-rail-row > a, .ocx-header__panel-rail button, .ocx-header__panel-cats a {
+  transition: color var(--ocx-duration-base), background-color var(--ocx-duration-base), border-color var(--ocx-duration-base);
+}
 
 /* Breakpoints query the header's own box, not the viewport: the parent of
  * .ocx-header (whatever the generator wraps it in) is the container. */
@@ -227,6 +234,17 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
 :is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :is(strong, b) { color: var(--ocx-color-fg); font-weight: var(--ocx-font-weight-semibold); }
 :is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) dt { color: var(--ocx-color-fg); font-weight: var(--ocx-font-weight-semibold); }
 :is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) dd { margin-inline-start: 0; padding-inline-start: var(--ocx-space-6); }
+
+/* Prose disclosure: <details> opens and closes by growing its content box (the TreeNode pattern).
+ * `content-visibility` (allow-discrete) keeps the closing content painted until the box has shrunk;
+ * a <details> rendered open is final on first paint (an initial style never transitions). Height
+ * needs `interpolate-size` (Chromium); elsewhere it snaps. Components' own details (.not-content) keep theirs. */
+:is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) { interpolate-size: allow-keywords; }
+:is(.ocx-prose, .sl-markdown-content) details:not(.not-content *)::details-content {
+  block-size: 0; overflow: clip; overflow-clip-margin: var(--ocx-space-2);
+  transition: block-size var(--ocx-duration-moderate) var(--ocx-ease-in-out), content-visibility var(--ocx-duration-moderate) allow-discrete;
+}
+:is(.ocx-prose, .sl-markdown-content) details[open]:not(.not-content *)::details-content { block-size: auto; }
 
 /* Callout — every generator's admonition maps onto this shape in its adapter. */
 .ocx-callout { padding: var(--ocx-space-4) var(--ocx-space-5); background: var(--ocx-color-surface); border: var(--ocx-border-width) solid var(--ocx-color-border); border-inline-start: var(--ocx-border-width-marker) solid var(--ocx-color-keyword); border-radius: var(--ocx-radius-md); }

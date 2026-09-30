@@ -191,7 +191,20 @@ describe('DataTable SSR: first paint is final', () => {
     const s = style('ui/DataTable.astro');
     expect(s).toMatch(/@layer ocx\s*\{/);
     expect(s).toMatch(/var\(--ocx-color-hover\)/);
-    expect(s).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(|opacity/i);
+    expect(s).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(/i);
+    // Opacity only shows or hides (the glyph crossfade, the row fade-in), never dims a colour.
+    expect(s).not.toMatch(/opacity:\s*0?\.\d/);
+  });
+
+  it('motion (C-302): glyphs share one grid cell; fades only under [data-live], on tokens', () => {
+    const s = style('ui/DataTable.astro').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(s).toMatch(/\.ocx-data-table__sort \{\s*display: grid;/);
+    expect(s).toMatch(/th svg \{\s*grid-area: 1 \/ 1;/);
+    for (const rule of s.match(/[^{}]*\{[^{}]*transition[^{}]*\}/g) ?? []) {
+      expect(rule).toMatch(/^\s*\.ocx-data-table\[data-live\]/);
+      expect(rule).toMatch(/transition: opacity var\(--ocx-duration-(base|enter)\)/);
+    }
+    expect(s).toMatch(/\.ocx-data-table\[data-live\] tbody tr:not\(\[hidden\]\) \{\s*@starting-style/);
   });
 });
 
@@ -200,8 +213,10 @@ describe('DataTable live', () => {
     const root = await place({});
     const pager = vi.fn();
     bind(root, pager);
+    expect(root.hasAttribute('data-live')).toBe(false);
     const size = root.querySelector<HTMLButtonElement>('button[data-ocx-sort="size"]');
     size?.click();
+    expect(root.hasAttribute('data-live')).toBe(true);
     expect(visible(root)).toEqual(['ninja', 'nodejs', 'uv', 'cmake', 'python']);
     expect(root.querySelector('th[data-ocx-key="size"]')?.getAttribute('aria-sort')).toBe('ascending');
     size?.click();
@@ -219,8 +234,10 @@ describe('DataTable live', () => {
     bind(root, pager);
     const input = root.querySelector<HTMLInputElement>('input[data-ocx-filter]');
     if (!input) throw new Error('no filter');
+    expect(root.hasAttribute('data-live')).toBe(false);
     input.value = 'runtime';
     input.dispatchEvent(new Event('input'));
+    expect(root.hasAttribute('data-live')).toBe(true);
     expect(visible(root)).toEqual(['nodejs', 'python']);
     expect(status(root)).toBe('2 of 5 rows');
     expect(pager).toHaveBeenLastCalledWith(2);
@@ -263,6 +280,8 @@ describe('DataTable live', () => {
     if (input) input.value = 'uv';
     bind(root);
     expect(visible(root)).toEqual(['uv']);
+    // Not an interaction: the rows arrange without the fade.
+    expect(root.hasAttribute('data-live')).toBe(false);
   });
 
   it('pages follow ocx:pagination:change from the live Pagination', async () => {
@@ -276,9 +295,11 @@ describe('DataTable live', () => {
     if (!nav) throw new Error('no pagination');
     const handle = mount(nav, { load: () => Promise.resolve(pagination as unknown as ZagModule), trigger: 'manual' });
     await handle.start();
+    expect(root.hasAttribute('data-live')).toBe(false);
     nav.querySelector<HTMLButtonElement>('[data-part="next-trigger"]')?.click();
     await tick();
     expect(visible(root)).toEqual(['nodejs', 'python']);
+    expect(root.hasAttribute('data-live')).toBe(true);
     nav.querySelector<HTMLButtonElement>('[data-index="3"]')?.click();
     await tick();
     expect(visible(root)).toEqual(['uv']);

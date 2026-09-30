@@ -19,7 +19,7 @@ replaces the theme's for that slot only.
 | `Footer` | `nav.json` footer links, licence and copyright line |
 | `PageTitle` | Breadcrumb trail (the `breadcrumbs` option) and the H1 |
 | `TableOfContents` | Adds "edit this page" and "report an issue" links |
-| `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu |
+| `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu. A switch crossfades the page (a view transition, `--ocx-duration-moderate`); under reduced motion, or without the API, it flips at once |
 | `ThemeProvider` | Inline pre-paint theme script, no markup |
 | `MobileMenuFooter` | Icon theme toggle inside the mobile menu |
 | `MarkdownContent` | Wraps every page body |
@@ -31,7 +31,8 @@ replaces the theme's for that slot only.
 Overriding `Search`: the warning text names the fix. Copy the `<script>`
 block of the theme's `starlight/Search.astro` into your override. Without it
 the header nav and the mobile menu fall back to native popovers, nested
-sidebar groups render open and no toast ever shows.
+sidebar groups render open, no toast ever shows and the outline's current
+marker never fades.
 
 Chrome overrides you write must not import a styled Starlight component: its
 stylesheet would inline into every page. Style Starlight markup from your own

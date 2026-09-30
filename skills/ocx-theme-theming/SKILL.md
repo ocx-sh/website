@@ -93,7 +93,18 @@ container.
 
 Use `--ocx-duration-*` and `--ocx-ease-*`. `tokens.css` zeroes them under
 `prefers-reduced-motion: reduce`, so a transition built on them needs no
-media query of its own.
+media query of its own. The motion contract (C-302):
+
+- Tokens only: no raw `ms`/`s` (except `0s`), no `ease`/`cubic-bezier()`
+  keyword, and never `transition: all`. `linear` is for infinite loops.
+- Animate `transform`, `opacity` and colour, not size.
+- First paint is final. A rule that can match at load (`@starting-style`, a
+  state set on mount) sits under `[data-zag-state='live']`, or `[data-live]`
+  for a plain script. A hover-only colour fade needs no gate.
+- Exit with `display`/`overlay` plus `allow-discrete` when the node stays in
+  the DOM; a node the script removes leaves through the internal `leave()`.
+- Focus rings, and a field's focus border, never animate.
+- `motion-tokens.test.ts` fails on any break under `packages/theme/src`.
 
 ## Adding or changing a token
 

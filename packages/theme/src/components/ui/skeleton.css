@@ -1,0 +1,53 @@
+/* Skeleton base (Skeleton.astro): the text primitive, the bar and its sweep. In base.css, not the
+   component: the DependencyExplorer paints skeletons in its first viewport, where one more stylesheet
+   request put LCP a round trip later (Lighthouse perf 0.99). The variants stay in the component. */
+@layer ocx {
+  /* Reserves the final box at first paint: lines × line-height, nothing moves when content lands. */
+  .ocx-ui-skeleton:not([data-variant]) {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    block-size: calc(var(--_lines) * 1lh);
+  }
+  .ocx-ui-skeleton__line {
+    position: relative;
+    overflow: clip;
+    display: block;
+    block-size: 0.6lh; /* ponytail: bar inside its line box, raw fraction until a skeleton token exists */
+    margin-block: var(--_m, 0);
+    background: var(--_bar, var(--ocx-color-surface-subtle));
+    border-radius: var(--ocx-radius-sm);
+  }
+  .ocx-ui-skeleton__line:last-child {
+    inline-size: 60%; /* ponytail: ragged last line, raw until a skeleton token exists */
+  }
+  /* The sweep: a gradient parked off the bar's start, moved with `translate` (compositor only) and
+     clipped by the bar. Parked, it shows nothing: the still frame under reduced motion. */
+  .ocx-ui-skeleton__line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, var(--ocx-color-hover), transparent);
+    translate: -100% 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ocx-ui-skeleton:not([data-animated='false']) .ocx-ui-skeleton__line::after {
+      animation: ocx-ui-skeleton-sweep calc(var(--ocx-duration-slow) * 5) linear infinite;
+    }
+  }
+  @keyframes ocx-ui-skeleton-sweep {
+    to {
+      translate: 100% 0;
+    }
+  }
+  /* Forced colours drop backgrounds: bars in GrayText, no sweep. */
+  @media (forced-colors: active) {
+    .ocx-ui-skeleton__line {
+      forced-color-adjust: none;
+      background: GrayText;
+    }
+    .ocx-ui-skeleton__line::after {
+      display: none;
+    }
+  }
+}

@@ -6,9 +6,15 @@
     align-items: center;
     gap: var(--ocx-space-4);
     color: var(--ocx-color-fg-muted);
+    /* Exit only (D-R8): done, it fades out while display (allow-discrete) holds it. An SSR-visible
+       Loader has no enter, or it would fade in on load. */
+    transition:
+      opacity var(--ocx-duration-base) var(--ocx-ease-out),
+      display var(--ocx-duration-base) allow-discrete;
   }
   .ocx-ui-loader[hidden] {
     display: none;
+    opacity: 0;
   }
   .ocx-ui-loader[data-size='s'] {
     gap: var(--ocx-space-3);

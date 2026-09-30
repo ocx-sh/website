@@ -3,6 +3,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoLeak } from './helpers/leak.ts';
+import { settle } from './helpers/settle.ts';
 
 test.skip(({ isMobile }) => isMobile, 'desktop (chromium) project only');
 
@@ -32,15 +33,19 @@ async function live(root: Locator) {
   await expect(root).toHaveAttribute('data-zag-state', 'live');
 }
 
-/** C-130c: the region with its chunk blocked vs. after live, pointer parked and focus dropped. */
+/**
+ * C-130c: the region with its chunk blocked vs. after live, focus dropped. The machine starts from a
+ * synthetic `pointerenter` (the mount trigger), not a real hover: the pointer would leave a hover ink
+ * fade (C-302) behind that a slow runner still paints when the pointer moves away.
+ */
 async function expectFirstPaintFinal(page: Page, path: string, chunk: RegExp, root: (p: Page) => Locator) {
   await page.route(chunk, (r) => r.abort());
   await page.goto(path);
   const before = await root(page).screenshot({ animations: 'disabled', caret: 'hide' });
   await page.unroute(chunk);
   await page.goto(path);
-  await live(root(page));
-  await page.mouse.move(0, 0);
+  await root(page).dispatchEvent('pointerenter');
+  await expect(root(page)).toHaveAttribute('data-zag-state', 'live');
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   const after = await root(page).screenshot({ animations: 'disabled', caret: 'hide' });
   expect(after.equals(before), 'pixel-exact first paint').toBe(true);
@@ -97,6 +102,8 @@ test.describe('Tabs', () => {
     for (const pick of [undefined, 'PowerShell']) {
       await live(demo(page));
       if (pick) await tab(demo(page), pick).click();
+      // The trigger colours and the panel fade in (C-302): axe reads the end state.
+      await settle(page);
       const { violations } = await new AxeBuilder({ page }).include('#story').analyze();
       expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
     }

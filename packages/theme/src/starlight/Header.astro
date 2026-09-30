@@ -25,6 +25,8 @@ const install = nav.actions.find((a) => a.id === 'install');
 {/* The nav's `mount` runs in Search.astro's every-page script: a script of its own was one more
 early request, which cost Lighthouse performance (0.99) on pages whose LCP waits on a body stylesheet. */}
 <div class="ocx-header" data-ocx-active={active}>
+  {/* D-R3 fallback: an inline copy, not <Logo>. Logo's global CSS would inline into every page
+  and push the HTML past the first-RTT window (plan_zag-adoption.md, Refinement D-R3). */}
   <a class="ocx-header__brand" href={nav.brand.href} aria-label="ocx home">
     <Fragment set:html={logo.replace('<svg ', '<svg width="20" height="20" aria-hidden="true" ')} />
     <span>{nav.brand.wordmark}</span>
@@ -193,6 +195,13 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
     .ocx-header:has(.ocx-mega:popover-open) .ocx-header__nav button {
       color: var(--ocx-color-accent-fg);
     }
+    .ocx-header:has(.ocx-mega:popover-open) .ocx-header__nav button svg {
+      rotate: 180deg;
+    }
+    /* D-R7 c: the chevron turns only once the nav is live, so first paint is final. */
+    .ocx-header__sections[data-zag-state='live'] .ocx-header__nav button svg {
+      transition: rotate var(--ocx-duration-base) var(--ocx-ease-out);
+    }
 
     .ocx-header__install {
       display: inline-flex;
@@ -254,6 +263,9 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
       background: transparent;
       border-radius: var(--ocx-radius-md);
       box-shadow: none;
+      transition:
+        color var(--ocx-duration-base),
+        background-color var(--ocx-duration-base);
     }
     .sl-menu-button:hover {
       color: var(--ocx-color-fg);

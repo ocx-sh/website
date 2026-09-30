@@ -78,6 +78,15 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
   // for every CycleButton on the page, so neither ThemeSelect nor CycleButton ships a script.
   wireThemeToggles();
 
+  // The outline's marker fades only after the reader scrolls or points at it (starlight.css,
+  // D-R7 c): the TOC's init pass, which marks the first entry, stays a snap.
+  const tocs = document.querySelectorAll<HTMLElement>('starlight-toc');
+  const tocLive = () => tocs.forEach((toc) => (toc.dataset['live'] = ''));
+  if (tocs.length) {
+    addEventListener('scroll', tocLive, { once: true, passive: true });
+    tocs[0]?.addEventListener('pointerover', tocLive, { once: true });
+  }
+
   type Api = { open: boolean; setOpen: (open: boolean) => void };
 
   // The header section nav (Header.astro, C-192) mounts here, in the header's one early script: a
@@ -503,6 +512,18 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
         scale: var(--ocx-scale-enter);
       }
     }
+    /* Hover inks fade (D-R7): the trigger's colour and border, a result's fill (its outline is also
+       the focus indicator, so it stays instant, D-R7 g). */
+    site-search button[data-open-modal] {
+      transition:
+        color var(--ocx-duration-base),
+        border-color var(--ocx-duration-base);
+    }
+    #starlight__search :is(.pagefind-ui__result-title, .pagefind-ui__result-nested) {
+      transition:
+        color var(--ocx-duration-base),
+        background-color var(--ocx-duration-base);
+    }
     site-search .ocx-search__dev {
       margin: auto;
       text-align: center;
@@ -594,6 +615,9 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
       border: var(--ocx-border-width) solid transparent;
       border-radius: var(--ocx-radius-md);
       outline: none;
+      transition:
+        color var(--ocx-duration-base),
+        border-color var(--ocx-duration-base);
     }
     #starlight__search .pagefind-ui__search-clear:hover {
       color: var(--ocx-color-fg);

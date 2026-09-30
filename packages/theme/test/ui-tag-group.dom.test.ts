@@ -2,7 +2,7 @@
 // TagGroup removal script (C-272, selectionMode none): a remove click or Backspace/Delete dispatches a
 // cancelable ocx:tag-group:remove {value}; not prevented, the <li> goes and focus moves next, else
 // previous, else to the group root.
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { install } from '../src/components/ui/tag-group.mjs';
 
 beforeAll(() => install());
@@ -60,6 +60,28 @@ describe('TagGroup removal', () => {
 
   it('a disabled neighbour is skipped as a focus target', () => {
     const { root, remove } = place('a', 'b!');
+    remove('a').click();
+    expect(document.activeElement).toBe(root);
+  });
+
+  it('a removed chip leaves through leave(): inert and data-leaving, and no longer a focus target', () => {
+    const { root, remove } = place('a', 'b', 'c');
+    const real = window.getComputedStyle.bind(window);
+    const spy = vi.spyOn(window, 'getComputedStyle').mockImplementation((el) =>
+      Object.assign(Object.create(real(el)) as CSSStyleDeclaration, {
+        getPropertyValue: (p: string) => (p === '--ocx-duration-base' ? '0.15s' : ''),
+      }),
+    );
+    const leaving = remove('b').closest('li')!;
+    leaving.animate = () => ({ finished: new Promise(() => {}) }) as unknown as Animation;
+    remove('b').click();
+    spy.mockRestore();
+    expect(leaving.isConnected).toBe(true);
+    expect(leaving.inert).toBe(true);
+    expect(leaving.hasAttribute('data-leaving')).toBe(true);
+    expect(document.activeElement).toBe(remove('c'));
+    remove('c').click();
+    expect(document.activeElement).toBe(remove('a'));
     remove('a').click();
     expect(document.activeElement).toBe(root);
   });

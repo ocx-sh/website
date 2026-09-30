@@ -80,13 +80,19 @@ file listing.
 | `ui/Meter.astro` | A value in a known range, `role="meter"` | `label` (required), `value` (required), `min`, `max`, `format`, `valueText`, `tone` `neutral`/`success`/`warning`/`danger`, `size`, `hideLabel` |
 | `ui/ProgressCircle.astro` | Task progress, `role="progressbar"` | `label` (required), `value` 0 to 100 (absent = indeterminate), `size` `s`/`m`/`l`, `tone`, `showValue` |
 | `ui/Loader.astro` | The announced loading state of a region | `label`, `size` `s`/`m` |
-| `ui/Skeleton.astro` | Placeholder bars that reserve the final box | `lines` |
+| `ui/Skeleton.astro` | Placeholder bars that reserve the final box | `variant` (`text` default, `circle`, `rect`, `card`, `list`, `table`, `code`, `terminal`), `lines`, `rows`, `columns`, `size` `sm`/`md`/`lg`, `ratio`, `animated` |
 
 None of these take the accent colour. Move a determinate ring by setting
 `aria-valuenow` and `style="--_value:N"` on its root. `Loader` is rendered
 from the start so its live region exists; swap its label text to report
 progress, hide it when the content lands, and set `aria-busy` on the region
-you fill. Pair a `Skeleton` with a `Loader` for the announcement.
+you fill. Pair a `Skeleton` with a `Loader` for the announcement. One
+`Skeleton` covers every placeholder: `lines` (text, code, terminal), `rows` (list,
+table), `columns` (table), `size` (circle, on Avatar's scale), `ratio` (rect,
+`'16 / 9'`, anything but `w / h` throws). A composite reserves the real
+component's block size, so nothing moves when the content lands. A faint
+sweep crosses the bars and stands still under reduced motion; `animated={false}`
+stops it.
 
 ## Toast
 

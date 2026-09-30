@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-// The header shows one sort icon at a time, chosen by CSS from aria-sort (no JS decides it).
+// The header shows one sort icon at a time, chosen by CSS from aria-sort (no JS decides it). The
+// three share one grid cell (crossfaded once live), so the cell never changes size.
 test('DataTable: the sort icon follows the header aria-sort', async ({ page }) => {
   await page.goto('/docs/stories/data-table/default/');
   const table = page.locator('#story [data-ocx-data-table]');
@@ -9,15 +10,18 @@ test('DataTable: the sort icon follows the header aria-sort', async ({ page }) =
     th
       .locator('svg')
       .evaluateAll((svgs) =>
-        svgs.filter((svg) => getComputedStyle(svg).display !== 'none').map((svg) => svg.getAttribute('data-icon')),
+        svgs.filter((svg) => getComputedStyle(svg).opacity === '1').map((svg) => svg.getAttribute('data-icon')),
       );
+  const cell = () => th.locator('.ocx-data-table__sort').evaluate((el) => [el.clientWidth, el.clientHeight]);
+  const box = await cell();
   expect(await shown()).toEqual(['sort']);
   await th.locator('button').click();
   await expect(th).toHaveAttribute('aria-sort', 'ascending');
-  expect(await shown()).toEqual(['sort-asc']);
+  await expect.poll(shown).toEqual(['sort-asc']);
   await th.locator('button').click();
   await expect(th).toHaveAttribute('aria-sort', 'descending');
-  expect(await shown()).toEqual(['sort-desc']);
+  await expect.poll(shown).toEqual(['sort-desc']);
+  expect(await cell()).toEqual(box);
 });
 
 // The filter is a SearchField (C-274): its clear button and Escape empty it like typing would, so

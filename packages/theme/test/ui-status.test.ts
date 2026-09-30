@@ -27,11 +27,13 @@ async function render(c: Component, props: Record<string, unknown>, slot?: strin
 }
 
 const style = (name: string) => {
-  // Tag and Loader look is the shared ui/*.css; the others keep a scoped <style>.
-  if (name === 'Tag' || name === 'Loader')
-    return readFileSync(new URL(`../src/components/ui/${name.toLowerCase()}.css`, import.meta.url), 'utf8');
+  // Tag and Loader look is the shared ui/*.css; Skeleton's base too (skeleton.css), its variants and
+  // the others keep a scoped <style>.
+  const css = () => readFileSync(new URL(`../src/components/ui/${name.toLowerCase()}.css`, import.meta.url), 'utf8');
+  if (name === 'Tag' || name === 'Loader') return css();
   const src = readFileSync(new URL(`../src/components/ui/${name}.astro`, import.meta.url), 'utf8');
-  return /<style[^>]*>([\s\S]*)<\/style>/.exec(src)?.[1] ?? '';
+  const scoped = /<style[^>]*>([\s\S]*)<\/style>/.exec(src)?.[1] ?? '';
+  return name === 'Skeleton' ? css() + scoped : scoped;
 };
 
 describe('WP14a ui styles (all status primitives)', () => {
@@ -180,25 +182,126 @@ describe('WP14a Loader', () => {
 });
 
 describe('WP14a Skeleton', () => {
+  const skel = async (props: Record<string, unknown> = {}) =>
+    (await render(Skeleton, props)).doc.querySelector('.ocx-ui-skeleton');
+  const bars = (el: Element | null) => el?.querySelectorAll('.ocx-ui-skeleton__line').length;
+
   it('WP14a Skeleton: span.ocx-ui-skeleton[aria-hidden] with 3 lines and --_lines by default', async () => {
-    const s = (await render(Skeleton, {})).doc.querySelector('.ocx-ui-skeleton');
+    const s = await skel();
     expect(s?.tagName).toBe('SPAN');
     expect(s?.getAttribute('aria-hidden')).toBe('true');
     expect(s?.getAttribute('style')).toMatch(/--_lines:\s*3/);
-    expect(s?.querySelectorAll('.ocx-ui-skeleton__line')).toHaveLength(3);
+    expect(bars(s)).toBe(3);
+  });
+
+  it('WP14a Skeleton: the default output is the text variant: no data attributes, no role', async () => {
+    const s = await skel();
+    expect(s?.getAttributeNames().filter((n) => !n.startsWith('data-astro'))).toEqual([
+      'class',
+      'aria-hidden',
+      'style',
+    ]);
+    expect(s?.className).toMatch(/^ocx-ui-skeleton( astro-\w+)?$/);
+    expect(s?.outerHTML).toBe((await skel({ variant: 'text' }))?.outerHTML);
   });
 
   it('WP14a Skeleton: lines and class props reach the markup', async () => {
-    const s = (await render(Skeleton, { lines: 5, class: 'extra' })).doc.querySelector('.ocx-ui-skeleton');
-    expect(s?.querySelectorAll('.ocx-ui-skeleton__line')).toHaveLength(5);
+    const s = await skel({ lines: 5, class: 'extra' });
+    expect(bars(s)).toBe(5);
     expect(s?.getAttribute('style')).toMatch(/--_lines:\s*5/);
     expect(s?.classList.contains('extra')).toBe(true);
   });
 
-  it('WP14a Skeleton: reserves calc(--_lines × 1lh), bars surface-subtle, static (no animation)', () => {
+  it.each([
+    ['text', { lines: 4 }, 4],
+    ['circle', {}, 1],
+    ['rect', {}, 1],
+    ['card', {}, 2],
+    ['list', { rows: 5 }, 5],
+    ['table', { rows: 2, columns: 4 }, 12],
+    ['code', { lines: 6 }, 6],
+    ['terminal', { lines: 2 }, 3],
+  ])('WP14a Skeleton: variant %s renders %i bars', async (variant, props, n) => {
+    const s = await skel({ variant, ...props });
+    expect(bars(s)).toBe(n);
+    expect(s?.getAttribute('data-variant')).toBe(variant === 'text' ? null : variant);
+    expect(s?.getAttribute('aria-hidden')).toBe('true');
+    expect(s?.hasAttribute('role')).toBe(false);
+  });
+
+  it('WP14a Skeleton: rows and columns shape a table (head row on top), rows a list, lines a code block', async () => {
+    const table = await skel({ variant: 'table', rows: 2, columns: 4 });
+    expect(table?.querySelectorAll('.ocx-ui-skeleton__tr')).toHaveLength(3);
+    expect(table?.querySelectorAll('.ocx-ui-skeleton__tr[data-head]')).toHaveLength(1);
+    expect(table?.querySelector('.ocx-ui-skeleton__tr')?.querySelectorAll('.ocx-ui-skeleton__cell')).toHaveLength(4);
+    expect(table?.getAttribute('style')).toMatch(/--_rows:\s*2;\s*--_cols:\s*4/);
+    expect((await skel({ variant: 'list', rows: 4 }))?.querySelectorAll('.ocx-ui-skeleton__row')).toHaveLength(4);
+    expect(bars(await skel({ variant: 'code', lines: 7 }))).toBe(7);
+  });
+
+  it('WP14a Skeleton: the card is the .ocx-card box, the circle takes Avatar size and a rect its ratio', async () => {
+    expect((await skel({ variant: 'card' }))?.classList.contains('ocx-card')).toBe(true);
+    expect((await skel({ variant: 'circle' }))?.getAttribute('data-size')).toBe('sm');
+    expect((await skel({ variant: 'circle', size: 'lg' }))?.getAttribute('data-size')).toBe('lg');
+    expect((await skel({ variant: 'rect' }))?.getAttribute('style')).toMatch(/--_ratio:\s*16 \/ 9/);
+    expect((await skel({ variant: 'rect', ratio: '2.5/1' }))?.getAttribute('style')).toMatch(/--_ratio:\s*2.5\/1/);
+  });
+
+  it.each(['16:9', '16 / 9; color: red', 'auto', '', '1 / 0 /', '-1 / 2', 'calc(1) / 2'])(
+    'WP14a Skeleton: an invalid ratio (%j) throws',
+    async (ratio) => {
+      await expect(render(Skeleton, { variant: 'rect', ratio })).rejects.toThrow(/ratio/);
+    },
+  );
+
+  it('WP14a Skeleton: animated=false sets the off attribute, the default sets none', async () => {
+    expect((await skel({ animated: false }))?.getAttribute('data-animated')).toBe('false');
+    expect((await skel({ variant: 'card', animated: false }))?.getAttribute('data-animated')).toBe('false');
+    expect((await skel())?.hasAttribute('data-animated')).toBe(false);
+  });
+
+  it.each(['text', 'circle', 'rect', 'card', 'list', 'table', 'code', 'terminal'])(
+    'WP14a Skeleton: variant %s still ships zero client JS',
+    async (variant) => {
+      expect((await render(Skeleton, { variant })).html).not.toMatch(/<script/i);
+    },
+  );
+
+  it('WP14a Skeleton: text reserves calc(--_lines × 1lh), bars surface-subtle', () => {
     const s = style('Skeleton');
     expect(s).toMatch(/block-size:\s*calc\(var\(--_lines\)\s*\*\s*1lh\)/);
     expect(s).toContain('var(--ocx-color-surface-subtle)');
-    expect(s).not.toMatch(/animation|@keyframes/);
+  });
+
+  it('WP14a Skeleton: the sweep is a translate on ::after, inside no-preference, linear, on a token duration', () => {
+    const s = style('Skeleton');
+    expect(s).toMatch(/\.ocx-ui-skeleton__line\s*\{[^}]*position:\s*relative;[^}]*overflow:\s*clip/);
+    expect(s).toMatch(/__line::after\s*\{[^}]*translate:\s*-100% 0/);
+    expect(s).not.toMatch(/background-position/);
+    const media = /\n( *)@media \(prefers-reduced-motion: no-preference\)\s*\{([\s\S]*?)\n\1\}/.exec(s)?.[2] ?? '';
+    expect(media).toMatch(/animation:\s*ocx-ui-skeleton-sweep calc\(var\(--ocx-duration-slow\) \* 5\) linear infinite/);
+    expect(media).toContain(":not([data-animated='false'])");
+    // Nothing animates outside that block.
+    expect(s.replace(media, '').match(/animation:/g)).toBeNull();
+    expect(s).toMatch(/@keyframes ocx-ui-skeleton-sweep\s*\{\s*to\s*\{\s*translate:\s*100% 0/);
+  });
+
+  it('WP14a Skeleton: code and terminal bars use the Expressive Code tokens the theme sets (drift guard)', () => {
+    const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+    const starlight = read('../src/starlight/starlight.css');
+    const ec = read('../src/starlight/ec.mjs');
+    expect(starlight).toMatch(/--ec-codeFontSize:\s*var\(--ocx-text-base\)/);
+    expect(starlight).toMatch(/--ec-codePadBlk:\s*var\(--ocx-space-5\)/);
+    expect(ec).toMatch(/codeLineHeight:\s*'1\.75'/);
+    const code = /\[data-variant='code'\]\s*\{([^}]*)\}/.exec(style('Skeleton'))?.[1] ?? '';
+    expect(code).toContain('padding: var(--ocx-space-5)');
+    expect(code).toContain('font-size: var(--ocx-text-base)');
+    expect(code).toContain('line-height: var(--ocx-lh-code)');
+  });
+
+  it('WP14a Skeleton: forced colours draw bars in GrayText and hide the sweep', () => {
+    const forced = /\n( *)@media \(forced-colors: active\)\s*\{([\s\S]*?)\n\1\}/.exec(style('Skeleton'))?.[2] ?? '';
+    expect(forced).toMatch(/background:\s*GrayText/);
+    expect(forced).toMatch(/::after\s*\{\s*display:\s*none/);
   });
 });

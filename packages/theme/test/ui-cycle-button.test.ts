@@ -113,7 +113,17 @@ describe('cycle-button.css', () => {
   it('shows only the current state and sits in @layer ocx', () => {
     expect(css.trimStart().startsWith('/*')).toBe(true);
     expect(css).toContain('@layer ocx {');
-    expect(css).toMatch(/__state:not\(\.ocx-ui-cycle-button__current\)\s*{\s*display: none/);
+    // Stacked in one cell, the others opacity 0 (not display none): first paint is final either way.
+    expect(css).toMatch(/\.ocx-ui-cycle-button__state \{\s*grid-area: 1 \/ 1;/);
+    expect(css).toMatch(/__state:not\(\.ocx-ui-cycle-button__current\)\s*{\s*opacity: 0;/);
+    expect(css.replace(/\/\*[\s\S]*?\*\//g, '')).not.toMatch(/display: none/);
+  });
+
+  it('animates the swap only under [data-live] (D-R7 c), on tokens', () => {
+    const transitions = [...css.matchAll(/([^{}]+)\{[^{}]*transition:/g)].map((m) => m[1]!.trim());
+    expect(transitions).toEqual(['.ocx-ui-cycle-button[data-live] .ocx-ui-cycle-button__state']);
+    expect(css).toMatch(/opacity var\(--ocx-duration-moderate\) var\(--ocx-ease-in-out\)/);
+    expect(css).not.toMatch(/\d+m?s\b/);
   });
 
   it('is tokens only: no raw colour, no px', () => {

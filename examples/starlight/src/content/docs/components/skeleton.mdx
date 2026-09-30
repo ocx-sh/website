@@ -6,7 +6,11 @@ description: The placeholder that reserves the final box so nothing moves when c
 import PropsTable from '../../../components/showcase/PropsTable.astro';
 import Stories from '../../../components/showcase/Stories.astro';
 
-A skeleton is decorative, so pair it with a [Loader](../loader/) for the announcement.
+A skeleton is decorative, so pair it with a [Loader](../loader/) for the announcement. One
+component covers the primitives (`text`, `circle`, `rect`) and the composites (`card`, `list`,
+`table`, `code`, `terminal`), which reserve the same block size as the component they stand in
+for. A faint sweep crosses every bar; it stays still under `prefers-reduced-motion: reduce`,
+and `animated={false}` turns it off.
 
 ## Stories
 
@@ -17,7 +21,13 @@ A skeleton is decorative, so pair it with a [Loader](../loader/) for the announc
 <PropsTable
   of="ui/Skeleton.astro"
   rows={[
-    { name: 'lines', type: 'number', default: '3', description: 'Text lines to reserve, each one line-height tall.' },
+    { name: 'variant', type: "'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal'", default: "'text'", description: 'Which placeholder: a primitive, or a composite that reserves the real component’s box.' },
+    { name: 'lines', type: 'number', default: '3', description: 'Bars of a text, code or terminal skeleton, each one line-height tall.' },
+    { name: 'rows', type: 'number', default: '3', description: 'Rows of a list or table (a table’s head row comes on top).' },
+    { name: 'columns', type: 'number', default: '3', description: 'Columns of a table.' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'sm'", description: 'Diameter of a circle, on the Avatar scale.' },
+    { name: 'ratio', type: 'string', default: "'16 / 9'", description: 'Aspect ratio of a rect, as `width / height`; anything else throws.' },
+    { name: 'animated', type: 'boolean', default: 'true', description: 'The sweep across the bars; false leaves them still.' },
     { name: 'class', type: 'string', description: 'Extra class on the root.' },
   ]}
 />

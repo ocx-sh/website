@@ -6,6 +6,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { examplePages, STORIES_DIR } from '../budgets.mjs';
 import { expectNoLeak } from './helpers/leak.ts';
 import { lifetime } from './helpers/toast.ts';
+import { settle } from './helpers/settle.ts';
 
 const PAGE = '/docs/stories/copy-button/default/';
 const STATES = '/docs/stories/copy-button/states/';
@@ -237,6 +238,7 @@ test('C-130d keyboard: Enter copies, Alt+T focuses the toasts, Escape dismisses'
 test('C-130e axe is clean on the copy story, idle and with a toast open', async ({ page }) => {
   await page.goto(PAGE);
   const axe = async () => {
+    await settle(page); // the copied label crossfades (R5); axe blends a fading label's colours
     const { violations } = await new AxeBuilder({ page })
       .include('#story')
       .include('[data-zag-root="toast"]')

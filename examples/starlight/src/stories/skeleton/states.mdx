@@ -1,7 +1,7 @@
 ---
 title: States
-description: One line and the default three lines, each one line-height tall.
-height: 216
+description: One line, the default three lines and the sweep switched off; each line is one line-height tall.
+height: 370
 order: 1
 block: true
 ---
@@ -13,4 +13,5 @@ import State from '../../components/showcase/State.astro';
 <StateGrid wide>
   <State label="lines=1"><div style="inline-size: 100%"><Skeleton lines={1} /></div></State>
   <State label="lines=3"><div style="inline-size: 100%"><Skeleton /></div></State>
+  <State label="animated=false"><div style="inline-size: 100%"><Skeleton animated={false} /></div></State>
 </StateGrid>

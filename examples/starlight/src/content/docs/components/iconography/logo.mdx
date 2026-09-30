@@ -1,0 +1,30 @@
+---
+title: Logo
+description: The ocx mark inlined from the theme's logo.svg, with an optional text wordmark, in four token sizes.
+---
+
+import PropsTable from '../../../../components/showcase/PropsTable.astro';
+import Stories from '../../../../components/showcase/Stories.astro';
+
+`<Logo>` inlines the theme's `logo.svg` byte for byte, so the mark paints with the page and its
+box is reserved by `width` and `height` before any CSS loads. Colour comes from CSS only: the
+accent, or the text colour with `tone="current"`. The wordmark is text in the mono font, never
+artwork. The header's brand link renders through it.
+
+## Stories
+
+<Stories of="iconography/logo" />
+
+## Props
+
+<PropsTable
+  of="ui/Logo.astro"
+  rows={[
+    { name: 'wordmark', type: 'string | false', default: 'false', description: 'Text beside the mark: mono, semibold, lowercase, 0.7× the mark. False shows the mark only.' },
+    { name: 'size', type: "'s' | 'm' | 'l' | 'xl'", default: "'m'", description: 'Mark edge: 14, 20, 38 or 84px (--ocx-icon-md, --ocx-icon-lg, --ocx-control-2xl, twice --ocx-control-3xl).' },
+    { name: 'tone', type: "'brand' | 'current'", default: "'brand'", description: 'Mark fill: the accent, or the text colour. CanvasText in forced colours.' },
+    { name: 'href', type: 'string', description: 'Renders a link; otherwise a span.' },
+    { name: 'label', type: 'string', default: "'ocx'", description: 'Accessible name: aria-label on the link, role=img on the span. An empty string makes the logo decorative (aria-hidden); a link needs one.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

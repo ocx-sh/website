@@ -21,6 +21,11 @@
     background: var(--ocx-color-surface);
     border: var(--ocx-border-width) solid var(--ocx-color-border);
     cursor: pointer;
+    /* Hover and pressed ink fade; the focus ring (outline) stays instant (D-R7 g). */
+    transition:
+      color var(--ocx-duration-base),
+      background-color var(--ocx-duration-base),
+      border-color var(--ocx-duration-base);
   }
   .ocx-ui-toggle-button[data-size='s'] {
     block-size: var(--ocx-control-lg);

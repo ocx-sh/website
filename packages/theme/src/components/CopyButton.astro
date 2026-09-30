@@ -33,10 +33,12 @@ const api = ssrApi(machine, connect, { ...props, id });
   {...ssrAttrs(api.getRootProps())}
 >
   <Button size="s" {...ssrAttrs(triggerProps(api, label))}>
-    <span {...ssrAttrs(api.getIndicatorProps({ copied: false }))}>copy</span>
-    <span class="ocx-copy__done" {...ssrAttrs(api.getIndicatorProps({ copied: true }))}>
-      <Icon name="check" size="sm" />
-      copied
+    <span class="ocx-copy__labels">
+      <span {...ssrAttrs(api.getIndicatorProps({ copied: false }))}>copy</span>
+      <span class="ocx-copy__done" {...ssrAttrs(api.getIndicatorProps({ copied: true }))}>
+        <Icon name="check" size="sm" />
+        copied
+      </span>
     </span>
   </Button>
 </div>
@@ -52,17 +54,36 @@ const api = ssrApi(machine, connect, { ...props, id });
     .ocx-copy {
       display: inline-flex;
     }
-    .ocx-copy__done {
+    /* Both labels share one grid cell (the CommandBar pattern): the button is the "copied" width from
+       first paint, so it never jumps, and the labels crossfade. Zag's `hidden` on the inactive one
+       only hides it; it still sizes the cell. */
+    .ocx-copy__labels {
+      display: inline-grid;
+      place-items: center;
+    }
+    .ocx-copy__labels > * {
+      grid-area: 1 / 1;
       display: inline-flex;
       align-items: center;
       gap: calc(var(--ocx-space-2) + var(--ocx-space-1)); /* sheet 6px; no token */
+      transition:
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        visibility var(--ocx-duration-moderate) var(--ocx-ease-in-out);
     }
-    .ocx-copy__done[hidden] {
-      display: none;
+    .ocx-copy__labels > [hidden] {
+      opacity: 0;
+      visibility: hidden;
     }
     .ocx-copy :global(.ocx-icon) {
       inline-size: var(--ocx-icon-ms);
       block-size: var(--ocx-icon-ms);
+    }
+    /* The success colour fades in and out with the labels; hover keeps the Button's base duration. */
+    .ocx-copy :global(.ocx-ui-button[data-part='trigger']) {
+      transition:
+        color var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        border-color var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        background-color var(--ocx-duration-base) var(--ocx-ease-out);
     }
     /* Copied: success border and text for the machine's timeout (design c-code), over hover. */
     .ocx-copy :global(.ocx-ui-button[data-part='trigger'][data-copied]) {

@@ -108,6 +108,39 @@ describe('C-024 toggle behaviour', () => {
     expect(setItem).toHaveBeenCalled();
     expect(win.document.documentElement.dataset.theme).toBe('dark');
   });
+
+  it('D-R9: a view transition wraps the flip, and the switch attribute holds until it finishes', async () => {
+    const win = windowWith(await renderHtml('ThemeSelect'), 'light');
+    const root = win.document.documentElement;
+    root.style.setProperty('--ocx-duration-moderate', '0.2s');
+    let update: (() => void) | undefined;
+    let finish: () => void = () => {};
+    const finished = new Promise<void>((resolve) => (finish = resolve));
+    Object.assign(win.document, {
+      startViewTransition: (cb: () => void) => ((update = cb), { ready: Promise.resolve(), finished }),
+    });
+    wireThemeToggles(win.document);
+    toggleButton(win.document).click();
+    expect(root.dataset.theme).toBe('light'); // the flip waits for the old snapshot
+    expect(root.dataset.ocxThemeSwitch).toBe('');
+    update?.();
+    expect(root.dataset.theme).toBe('dark');
+    finish();
+    await finished;
+    await Promise.resolve();
+    expect(root.dataset.ocxThemeSwitch).toBeUndefined();
+  });
+
+  it('D-R9: with the motion tokens zeroed (reduced motion) the flip is instant and leaves no attribute', async () => {
+    const win = windowWith(await renderHtml('ThemeSelect'), 'light');
+    const startViewTransition = vi.fn();
+    Object.assign(win.document, { startViewTransition });
+    wireThemeToggles(win.document);
+    toggleButton(win.document).click();
+    expect(win.document.documentElement.dataset.theme).toBe('dark');
+    expect(startViewTransition).not.toHaveBeenCalled();
+    expect(win.document.documentElement.dataset.ocxThemeSwitch).toBeUndefined();
+  });
 });
 
 describe('C-024 markup', () => {

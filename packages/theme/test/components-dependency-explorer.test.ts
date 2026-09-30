@@ -322,4 +322,11 @@ describe('Z11 DependencyExplorer on Zag (C-220, C-221)', () => {
     expect(mjs).toMatch(/import\('\.\/collapsible\.zag\.mjs'\)/);
     expect(mjs).not.toMatch(/@zag-js\//);
   });
+
+  it('R5 rows a filter shows fade in, never the load (busy at first paint, no focus in the explorer)', () => {
+    const css = readFileSync(new URL('../src/components/dependency-explorer.css', import.meta.url), 'utf8');
+    expect(css).toMatch(
+      /\.ocx-deps:focus-within \.ocx-deps__table:not\(\[aria-busy\]\) tr:not\(\[hidden\]\) \{\s*transition: opacity var\(--ocx-duration-base\) var\(--ocx-ease-out\);\s*@starting-style \{\s*opacity: 0;/,
+    );
+  });
 });

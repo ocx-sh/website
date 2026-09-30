@@ -149,8 +149,9 @@ test('C-191 clicking a rail tab switches the hub panel and the strip blurb', asy
   await expect(panel(page, 'integrations')).toBeHidden();
   await expect(blurb('apps')).toBeVisible();
   await expect(blurb('integrations')).toBeHidden();
-  // Panels share one cell: switching hubs never resizes the menu.
-  expect((await menu(page).boundingBox())?.height).toBe(height);
+  // Panels share one cell: switching hubs never resizes the menu (close: the open slide may still
+  // be moving the box, which rounds its height in the last float digits).
+  expect((await menu(page).boundingBox())?.height).toBeCloseTo(height ?? NaN, 2);
 });
 
 test('C-191 hover/focus on an item shows its desc in the strip', async ({ page }) => {

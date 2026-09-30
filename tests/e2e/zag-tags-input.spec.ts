@@ -26,9 +26,11 @@ const freeRoot = (page: Page) =>
 const listbox = (page: Page, name = 'Topics') => page.getByRole('listbox', { name, exact: true });
 /** A suggestion row by value (its name also holds the marked label and the meta). */
 const option = (page: Page, value: string) => root(page).locator(`[role="option"][data-value="${value}"]`);
-/** The chip texts of a root, in order. */
-const chips = (r: Locator) => r.locator('.ocx-ui-input-group > [data-part="item"] [data-part="item-text"]');
-const highlightedChip = (r: Locator) => r.locator('[data-part="item-preview"][data-highlighted]');
+/** The chip texts of a root, in order; a removed chip still fading out (leave(), C-302) is none. */
+const chips = (r: Locator) =>
+  r.locator('.ocx-ui-input-group > [data-part="item"]:not([data-leaving]) [data-part="item-text"]');
+const highlightedChip = (r: Locator) =>
+  r.locator('[data-part="item"]:not([data-leaving]) > [data-part="item-preview"][data-highlighted]');
 const live = (r: Locator) => expect(r).toHaveAttribute('data-zag-state', 'live');
 /** Every EventLog line, newest first. */
 const log = (page: Page) => demo(page).locator('.showcase-log__items > li');
@@ -209,6 +211,7 @@ test.describe('S-112 C-273 behaviour', () => {
     await expect(highlightedChip(r)).toHaveText('cli');
     await page.keyboard.press('ArrowRight');
     await expect(highlightedChip(r)).toHaveText('rust');
+    await settle(page); // the highlight edge fades in on the base token (R5)
     // The chip is the preview's parent. Not `{ has: highlightedChip(r) }`: `has` runs the inner
     // locator's whole chain (root included) inside the chip, which never matches.
     const border = await highlightedChip(r)

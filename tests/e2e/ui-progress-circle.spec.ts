@@ -70,7 +70,7 @@ test('C-265 a determinate 40 draws a 40 dash and follows --_value', async ({ pag
     e.setAttribute('aria-valuenow', '75');
     e.style.setProperty('--_value', '75');
   });
-  expect(await dash()).toBe(75);
+  await expect.poll(dash, { message: 'the arc moves on the slow token (R5)' }).toBe(75);
 });
 
 test('C-265 the box is reserved: size does not depend on the value', async ({ page }) => {

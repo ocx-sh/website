@@ -79,10 +79,19 @@ describe('CycleButton script', () => {
     expect(current()).toBe('b');
   });
 
+  it('the first click sets data-live (the crossfade gate); setValue alone never does', () => {
+    const { button } = place();
+    setValue(button, 'b');
+    expect(button.hasAttribute('data-live')).toBe(false);
+    button.click();
+    expect(button.hasAttribute('data-live')).toBe(true);
+  });
+
   it('a cancelled change event keeps the state', () => {
     const { button, events, current } = place();
     button.addEventListener('ocx:cycle-button:change', (e) => e.preventDefault());
     button.click();
+    expect(button.hasAttribute('data-live')).toBe(false);
     expect(current()).toBe('a');
     expect(button.dataset['value']).toBe('a');
     expect(events).toHaveLength(1);

@@ -1,10 +1,33 @@
 /* CycleButton (CycleButton.astro): the Button look comes from `.ocx-ui-button` (button.css); this
    sheet only swaps the state glyphs. Imported from the component's frontmatter, so the body sits
-   in @layer ocx. Every state's glyph is in the markup and CSS shows the current one: the swap is
-   instant, and a page that decides the state before paint (the theme switch) restyles it without
-   script. The name and the next-state hint are the button's aria-label (cycle-button.mjs keeps it). */
+   in @layer ocx. Every state's glyph is in the markup, stacked in one grid cell, and CSS shows the
+   current one: the other glyphs are opacity 0 and hidden, not `display: none`, so the swap is still final at
+   first paint and a page that decides the state before paint (the theme switch) restyles it without
+   script. It animates only under `[data-live]` (cycle-button.mjs sets it on the first click): an
+   opacity plus rotate/scale crossfade; the text label swaps instantly. The name and the next-state
+   hint are the button's aria-label (cycle-button.mjs keeps it). */
 @layer ocx {
+  .ocx-ui-button.ocx-ui-cycle-button:not([hidden]) {
+    display: inline-grid;
+    grid-auto-flow: column;
+  }
+  .ocx-ui-cycle-button__state {
+    grid-area: 1 / 1;
+  }
   .ocx-ui-cycle-button__state:not(.ocx-ui-cycle-button__current) {
-    display: none;
+    opacity: 0;
+    visibility: hidden;
+    rotate: -90deg;
+    scale: 0.5;
+  }
+  .ocx-ui-cycle-button[data-live] .ocx-ui-cycle-button__state {
+    transition:
+      opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      visibility var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      rotate var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      scale var(--ocx-duration-moderate) var(--ocx-ease-in-out);
+  }
+  .ocx-ui-cycle-button__label {
+    grid-row: 1;
   }
 }

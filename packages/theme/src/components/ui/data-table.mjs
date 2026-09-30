@@ -102,7 +102,12 @@ export function bind(root, pager) {
     [...view.order, ...[...trs.keys()].filter((i) => !matched.has(i))].forEach((index, at) => {
       const tr = /** @type {HTMLTableRowElement} */ (trs[index]);
       tr.hidden = !shown.has(index);
-      if (tbody.children[at] !== tr) tbody.insertBefore(tr, tbody.children[at] ?? empty);
+      if (tbody.children[at] === tr) return;
+      // moveBefore keeps the row's style, so a sorted row does not replay the fade-in (D-R8).
+      // ponytail: without it (older engines) a moved row re-inserts and fades once.
+      const ref = tbody.children[at] ?? empty;
+      if ('moveBefore' in tbody) tbody.moveBefore(tr, ref);
+      else /** @type {Node} */ (tbody).insertBefore(tr, ref);
     });
     if (empty instanceof HTMLElement) empty.hidden = view.order.length > 0;
     for (const th of heads) {
@@ -122,16 +127,29 @@ export function bind(root, pager) {
     pager?.(count);
   };
 
+  // Motion (C-302): the root goes `data-live` on the first sort, filter or page change, never here at
+  // init, so a restored filter below re-arranges without a fade and first paint stays final.
+  const live = () => {
+    d['live'] = '';
+  };
+
   root.addEventListener('click', (event) => {
     const button = /** @type {Element | null} */ (event.target)?.closest?.('button[data-ocx-sort]');
     if (!button) return;
+    live();
     const key = button.getAttribute('data-ocx-sort') ?? '';
     d['ocxDirection'] = d['ocxSort'] === key && d['ocxDirection'] !== 'descending' ? 'descending' : 'ascending';
     d['ocxSort'] = key;
     restart();
   });
-  input?.addEventListener('input', restart);
-  root.addEventListener('ocx:pagination:change', () => void apply());
+  input?.addEventListener('input', () => {
+    live();
+    restart();
+  });
+  root.addEventListener('ocx:pagination:change', () => {
+    live();
+    apply();
+  });
   // A query typed before this module loaded: arrange for it now.
   if (input instanceof HTMLInputElement && input.value !== input.defaultValue) restart();
 }

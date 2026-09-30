@@ -1,0 +1,29 @@
+---
+title: Variants
+description: Every variant, the primitives (text, circle, rect) and the composites (card, list, table, code, terminal), each with its own props.
+height: 1100
+order: 2
+block: true
+---
+
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid wide>
+  <State label="text, lines=2"><div style="inline-size: 100%"><Skeleton variant="text" lines={2} /></div></State>
+  <State label="circle, sm, md, lg">
+    <div style="display: flex; gap: 12px; align-items: center">
+      <Skeleton variant="circle" size="sm" />
+      <Skeleton variant="circle" size="md" />
+      <Skeleton variant="circle" size="lg" />
+    </div>
+  </State>
+  <State label="rect, ratio 16 / 9"><div style="inline-size: 100%"><Skeleton variant="rect" /></div></State>
+  <State label="rect, ratio 3 / 1"><div style="inline-size: 100%"><Skeleton variant="rect" ratio="3 / 1" /></div></State>
+  <State label="card"><div style="inline-size: 100%"><Skeleton variant="card" /></div></State>
+  <State label="list, rows=3"><div style="inline-size: 100%"><Skeleton variant="list" /></div></State>
+  <State label="table, rows=2, columns=3"><div style="inline-size: 100%"><Skeleton variant="table" rows={2} /></div></State>
+  <State label="code, lines=4"><div style="inline-size: 100%"><Skeleton variant="code" lines={4} /></div></State>
+  <State label="terminal, lines=3"><div style="inline-size: 100%"><Skeleton variant="terminal" /></div></State>
+</StateGrid>

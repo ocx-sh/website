@@ -17,6 +17,28 @@
     border: var(--ocx-border-width) solid transparent;
     border-radius: var(--ocx-radius-sm);
   }
+  /* The chips that change state (filter hover/on, the TagsInput highlight) fade their colours; the
+     focus outline stays instant. Passive label and stamp chips never change, so they carry none. */
+  .ocx-ui-tag:is([data-variant='filter'], [data-removable]) {
+    transition:
+      color var(--ocx-duration-base) var(--ocx-ease-out),
+      background-color var(--ocx-duration-base) var(--ocx-ease-out),
+      border-color var(--ocx-duration-base) var(--ocx-ease-out);
+  }
+  /* A chip TagsInput adds after its machine started fades and scales in. Only under the live root,
+     so SSR chips never animate on load; a removed chip leaves through leave() (motion.mjs). */
+  [data-zag-root='tags-input'][data-zag-state='live'] .ocx-ui-tag {
+    transition:
+      color var(--ocx-duration-base) var(--ocx-ease-out),
+      background-color var(--ocx-duration-base) var(--ocx-ease-out),
+      border-color var(--ocx-duration-base) var(--ocx-ease-out),
+      opacity var(--ocx-duration-base) var(--ocx-ease-out),
+      scale var(--ocx-duration-base) var(--ocx-ease-out);
+    @starting-style {
+      opacity: 0;
+      scale: var(--ocx-scale-enter);
+    }
+  }
   .ocx-ui-tag[data-tone='keyword'] {
     --_tone: var(--ocx-color-keyword);
     --_tint: var(--ocx-color-keyword-tint);
@@ -106,6 +128,7 @@
     border: 0;
     border-radius: var(--ocx-radius-sm);
     cursor: pointer;
+    transition: color var(--ocx-duration-base) var(--ocx-ease-out);
   }
   .ocx-ui-tag__remove:hover {
     color: var(--ocx-color-fg);

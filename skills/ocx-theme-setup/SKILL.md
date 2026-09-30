@@ -132,7 +132,8 @@ The VitePress catalog uses `@ocx-sh/theme/vitepress` (CSS-only adapter) plus
 `@ocx-sh/theme/fonts.css` (plain `@font-face`, since it has no Astro Fonts API).
 Header data for a non-Starlight site: `@ocx-sh/theme/nav.json` and the helpers
 in `@ocx-sh/theme/nav`; the logo is `@ocx-sh/theme/logo.svg` (inline it, never
-an `<img>`). No mdBook or MkDocs adapter exists.
+an `<img>`). On an Astro page, render it with `@ocx-sh/theme/components/ui/Logo.astro`
+instead. No mdBook or MkDocs adapter exists.
 
 ## Keep the theme current
 

@@ -110,6 +110,9 @@ const restore =
       border-bottom: var(--ocx-border-width-strong) solid transparent;
       cursor: pointer;
       scroll-snap-align: start;
+      transition:
+        color var(--ocx-duration-base),
+        border-bottom-color var(--ocx-duration-base);
     }
     .ocx-tabs > [data-part='list'] > [data-part='trigger']:hover {
       color: var(--ocx-color-fg);
@@ -129,6 +132,16 @@ const restore =
     }
     .ocx-tabs > [data-part='content'] {
       margin-top: var(--ocx-space-5);
+    }
+    /* The panel shown fades in; live roots only, so the SSR panel is final at first paint. No exit
+       fade (D-R8): the leaving panel would have to stack with the new one. */
+    .ocx-tabs[data-zag-state='live'] > [data-part='content'] {
+      transition: opacity var(--ocx-duration-enter) var(--ocx-ease-out);
+    }
+    .ocx-tabs[data-zag-state='live'] > [data-part='content']:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+      }
     }
     /* Around a lone code frame the strip and the frame read as one panel. */
     .ocx-tabs:has(> [data-part='content'] > .expressive-code:only-child) > [data-part='list'] {

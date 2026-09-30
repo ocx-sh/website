@@ -115,6 +115,26 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
       font-family: var(--ocx-font-sans);
       overflow: hidden;
     }
+    /* Enter and exit as ui/overlay.css: a fade and a few px slide down from the header. The popover
+       starts closed on every load, so nothing here can play at first paint; `display`/`overlay`
+       (allow-discrete) keep the panel in the top layer until the exit fade ends. */
+    .ocx-mega {
+      transition:
+        opacity var(--ocx-duration-base) var(--ocx-ease-out),
+        translate var(--ocx-duration-base) var(--ocx-ease-out),
+        display var(--ocx-duration-base) allow-discrete,
+        overlay var(--ocx-duration-base) allow-discrete;
+    }
+    .ocx-mega:not(:popover-open) {
+      opacity: 0;
+      translate: 0 calc(var(--ocx-space-2) * -1);
+    }
+    .ocx-mega:popover-open {
+      @starting-style {
+        opacity: 0;
+        translate: 0 calc(var(--ocx-space-2) * -1);
+      }
+    }
     /* Progressive enhancement: right-align to the ecosystem trigger. */
     @supports (anchor-name: --x) {
       .ocx-header__nav [data-ocx-section='ecosystem'] {
@@ -210,6 +230,14 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
     }
     .ocx-mega__panel[hidden] {
       visibility: hidden;
+      opacity: 0;
+    }
+    /* A hub switch crossfades the stacked panels (visibility holds the old one visible until it has
+       faded). Live nav only: the SSR panel is final on first paint. */
+    .ocx-header__sections[data-zag-state='live'] .ocx-mega__panel {
+      transition:
+        opacity var(--ocx-duration-base) var(--ocx-ease-in-out),
+        visibility var(--ocx-duration-base);
     }
     .ocx-mega__panel:focus-visible {
       outline: var(--ocx-focus-ring);
@@ -322,6 +350,13 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
     }
     .ocx-mega__item:is(:hover, :focus-within) .ocx-mega__preview {
       display: grid;
+    }
+    /* The strip's blurb (hub switch, panel open) and an item's preview fade in as they appear. */
+    .ocx-header__sections[data-zag-state='live'] :is(.ocx-mega__blurb, .ocx-mega__preview) {
+      transition: opacity var(--ocx-duration-base) var(--ocx-ease-out);
+      @starting-style {
+        opacity: 0;
+      }
     }
     .ocx-mega__preview-head {
       display: flex;

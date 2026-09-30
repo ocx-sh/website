@@ -216,6 +216,7 @@ if (slot) for (const item of ordered) rich.set(item.value, await Astro.slots.ren
       border-radius: var(--ocx-radius-sm);
       cursor: pointer;
       user-select: none;
+      transition: background-color var(--ocx-duration-fast);
     }
     .ocx-list [data-part='item']:hover {
       background: var(--ocx-color-hover);
@@ -247,6 +248,9 @@ if (slot) for (const item of ordered) rich.set(item.value, await Astro.slots.ren
       height: var(--ocx-icon-xs);
       border: var(--ocx-border-width-strong) solid var(--ocx-color-border-strong);
       border-radius: var(--ocx-radius-sm);
+      transition:
+        background-color var(--ocx-duration-base),
+        border-color var(--ocx-duration-base);
     }
     .ocx-list [aria-multiselectable='true'] [data-part='item'][aria-selected='true']::before {
       background: var(--ocx-color-accent);

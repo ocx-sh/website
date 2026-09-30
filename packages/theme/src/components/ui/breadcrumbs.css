@@ -50,6 +50,13 @@
   .ocx-ui-crumbs [aria-current='page'] {
     color: var(--ocx-color-fg);
   }
+  /* Link hover and the fold button's hover/open ink fade (Link itself fades only its underline). */
+  .ocx-ui-crumbs :is(a, .ocx-ui-crumbs__more > button) {
+    transition:
+      color var(--ocx-duration-base),
+      background-color var(--ocx-duration-base),
+      text-decoration-color var(--ocx-duration-base);
+  }
   .ocx-ui-crumbs .ocx-icon {
     margin-inline-end: var(--ocx-space-2);
   }

@@ -4,6 +4,8 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoLeak } from './helpers/leak.ts';
+import { repaint } from './helpers/repaint.ts';
+import { settle } from './helpers/settle.ts';
 import { activate, MANUAL_ROOT, ZAG_ROOT } from './helpers/zag.ts';
 
 // The `default` story of each, and the `states` stories the specs below reach for (naming contract).
@@ -42,6 +44,9 @@ async function firstPaint(page: Page, path: string, chunk: RegExp, pick: (p: Pag
   await live(root);
   await page.mouse.move(0, 0);
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  // A full paint: a live TreeView clips its open branches (the disclosure motion), and Chromium
+  // anti-aliases the tree's corner a shade differently when it repaints only the removed focus ring.
+  await repaint(page);
   const after = await root.screenshot({ animations: 'disabled' });
   expect(Buffer.compare(before, after), `${path}: first paint differs from the live default state`).toBe(0);
 }
@@ -272,6 +277,8 @@ test.describe('C-130e axe and images', () => {
         await page.goto(path);
         await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
         const check = async (when: string) => {
+          // Colours fade on the theme flip and on state changes (C-302): axe reads the end state.
+          await settle(page);
           const { violations } = await new AxeBuilder({ page }).include('main').analyze();
           expect(
             violations.map((v) => `${when} ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`),

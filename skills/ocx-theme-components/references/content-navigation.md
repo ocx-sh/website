@@ -1,12 +1,13 @@
 # Content and navigation
 
 You loaded this file because a page shows a terminal recording, a landing
-block, keys, a breadcrumb trail, an in-page table of contents or an icon.
+block, keys, a breadcrumb trail, an in-page table of contents, an icon or the
+logo.
 Import path prefix: `@ocx-sh/theme/components/`.
 
 Contents: [Terminal](#terminal) · [FeatureSection](#featuresection) ·
 [Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Toc](#toc) · [Icon](#icon) ·
-[Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
+[Logo](#logo) · [Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
 
 ## Terminal
 
@@ -65,6 +66,16 @@ Event `ocx:toc:change`.
 from assistive tech), `size` `xs` 10, `sm` 11, `md` 14, `lg` 20. It inlines
 the SVG in `currentColor`. The registry and how to add an icon: the
 `ocx-theme-icons` skill at `../ocx-theme-icons/SKILL.md`.
+
+## Logo
+
+**`ui/Logo.astro`** inlines the theme's `logo.svg` unchanged. `wordmark`
+(text beside the mark, mono and lowercase; default `false`, the mark only),
+`size` `s` 14, `m` 20 (default), `l` 38, `xl` 84, `tone` `brand` (accent,
+default) or `current` (text colour), `href` (a link; otherwise a span),
+`label` (default `'ocx'`; an empty string makes it decorative, a link needs
+one), `class`. The header's brand renders through it. Never redraw the mark,
+edit its paths or its `fill`, or draw a wordmark SVG: colour comes from CSS.
 
 ## Chrome
 

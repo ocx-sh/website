@@ -112,6 +112,15 @@
     }
   }
 
+  /* Rows a filter shows fade in. Never the load: the table is aria-busy at first paint, and the swap
+     that ends the load happens with focus elsewhere; filtering needs focus in the explorer. */
+  .ocx-deps:focus-within .ocx-deps__table:not([aria-busy]) tr:not([hidden]) {
+    transition: opacity var(--ocx-duration-base) var(--ocx-ease-out);
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     .ocx-deps .ocx-deps__toggle svg {
       transition: transform var(--ocx-duration-base);

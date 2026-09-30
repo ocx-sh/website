@@ -56,6 +56,19 @@ describe('C-023 Header sections', () => {
     expect((await render(Header)).querySelector('.ocx-header')).not.toBeNull();
   });
 
+  it('D-R3 fallback: Header keeps its inline brand copy, not <Logo>: a link, the 20px mark, the wordmark', async () => {
+    const brand = (await render(Header)).querySelector('.ocx-header > .ocx-header__brand');
+    expect(brand?.tagName).toBe('A');
+    expect(brand?.classList.contains('ocx-logo')).toBe(false);
+    expect(brand?.getAttribute('href')).toBe(nav.brand.href);
+    expect(brand?.getAttribute('aria-label')).toBe('ocx home');
+    const [svg, word] = [...(brand?.children ?? [])];
+    expect(svg?.getAttribute('width')).toBe('20');
+    expect(svg?.getAttribute('aria-hidden')).toBe('true');
+    expect(word?.tagName).toBe('SPAN');
+    expect(word?.textContent).toBe(nav.brand.wordmark);
+  });
+
   it.each(nav.sections.map((s) => [s.id, s] as const))(
     'C-190: section %s is a Link item or the Trigger of an Item whose Content is a popover',
     async (_, s) => {

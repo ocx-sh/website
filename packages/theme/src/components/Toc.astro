@@ -81,6 +81,9 @@ const api = ssrApi(machine, connect, { ...props, id, items: entries.map((e) => e
       color: var(--ocx-color-fg-muted);
       text-decoration: none;
       border-inline-start: var(--ocx-border-width-strong) solid var(--ocx-color-border);
+      transition:
+        color var(--ocx-duration-base),
+        border-inline-start-color var(--ocx-duration-base);
     }
     .ocx-toc [data-part='link']:hover {
       color: var(--ocx-color-fg);

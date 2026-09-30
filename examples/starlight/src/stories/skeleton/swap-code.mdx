@@ -1,0 +1,32 @@
+---
+title: Swap, code and terminal
+description: The code and terminal composites beside the component each stands in for; both boxes have the same block size, so nothing moves when the content lands.
+height: 330
+order: 4
+block: true
+---
+
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+import Terminal from '@ocx-sh/theme/components/Terminal.astro';
+
+{/* A story page loads no Starlight CSS, so the theme's Expressive Code sizes (starlight.css) are restated for the fence, in the ocx layer the css gate requires. */}
+<style>{`@layer ocx { [data-swap='code'] .expressive-code { --ec-codeFontSize: var(--ocx-text-base); --ec-codePadBlk: var(--ocx-space-5); --ec-codePadInl: var(--ocx-space-5); } }`}</style>
+
+<div style="display: grid; gap: 24px">
+  <div data-swap="code" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="code" /></div>
+    <div data-role="real">
+
+```toml
+[tools]
+node = "24"
+uv = "0.10"
+```
+
+    </div>
+  </div>
+  <div data-swap="terminal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="terminal" /></div>
+    <div data-role="real"><Terminal src="/casts/fixture/getting-started-install.cast" title="Installing a package" /></div>
+  </div>
+</div>

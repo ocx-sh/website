@@ -45,6 +45,7 @@
     border: var(--ocx-border-width) solid var(--ocx-color-border);
     border-radius: var(--ocx-radius-md);
     appearance: none;
+    transition: border-color var(--ocx-duration-base);
   }
   .ocx-ui-input::placeholder {
     color: var(--ocx-color-fg-subtle);
@@ -54,6 +55,7 @@
   .ocx-ui-input:focus {
     border-color: var(--ocx-color-focus);
     outline: none;
+    transition: none; /* the focus border is the focus indicator: it lands at once (D-R7 g) */
   }
   .ocx-ui-input[aria-invalid='true'] {
     border-color: var(--ocx-color-danger);
@@ -113,6 +115,8 @@
     background: var(--ocx-color-surface);
     border: var(--ocx-border-width) solid var(--ocx-color-border);
     border-radius: var(--ocx-radius-md);
+    /* Open (Zag's control part) and invalid borders fade; focus lands at once (below). */
+    transition: border-color var(--ocx-duration-base);
   }
   .ocx-ui-input-group:has(> :where(.ocx-ui-button, .ocx-ui-stepper):last-child) {
     padding-inline-end: var(--ocx-space-3);
@@ -151,6 +155,7 @@
   /* Declared after the danger border: focus wins, the user must see where they type. */
   .ocx-ui-input-group:focus-within {
     border-color: var(--ocx-color-focus);
+    transition: none; /* focus lands at once (D-R7 g) */
   }
   /* Zag's control part (Select, Combobox): an open popup keeps the focus border while focus sits in the list. */
   .ocx-ui-input-group[data-part='control'][data-state='open'] {

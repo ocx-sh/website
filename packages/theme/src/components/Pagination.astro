@@ -94,6 +94,10 @@ const Tag = href == null ? 'button' : 'a';
       border: var(--ocx-border-width) solid var(--ocx-color-border);
       border-radius: var(--ocx-radius-md);
       cursor: pointer;
+      transition:
+        color var(--ocx-duration-base),
+        background-color var(--ocx-duration-base),
+        border-color var(--ocx-duration-base);
     }
     .ocx-pagination :is([data-part='item'], [data-part='prev-trigger'], [data-part='next-trigger']):hover {
       color: var(--ocx-color-fg);

@@ -104,6 +104,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/Breadcrumbs.astro` | A breadcrumb trail outside the page title | [content](references/content-navigation.md) |
 | `Toc.astro` | Scroll-spy table of contents inside a page | [content](references/content-navigation.md) |
 | `ui/Icon.astro` | One registry icon, inline | [content](references/content-navigation.md) |
+| `ui/Logo.astro` | The ocx mark, optionally with its wordmark or as a link | [content](references/content-navigation.md) |
 | `EcosystemMenu.astro` | Header chrome only: the ecosystem mega-menu. Never place it in a page | [content](references/content-navigation.md) |
 
 `toast(title, options?)` from `@ocx-sh/theme/toast` shows a notification; see

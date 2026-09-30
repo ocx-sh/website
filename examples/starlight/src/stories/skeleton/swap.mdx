@@ -1,0 +1,47 @@
+---
+title: Swap
+description: The card, list and table composites beside the component each stands in for; both boxes have the same block size, so nothing moves when the content lands.
+height: 540
+order: 3
+block: true
+---
+
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+import DataTable from '@ocx-sh/theme/components/ui/DataTable.astro';
+import List from '@ocx-sh/theme/components/ui/List.astro';
+
+export const items = [
+  { value: 'gcc', label: 'gcc', meta: '14.2' },
+  { value: 'clang', label: 'clang', meta: '19.1' },
+  { value: 'zig', label: 'zig', meta: '0.14' },
+];
+export const columns = [
+  { key: 'name', label: 'Package', mono: true },
+  { key: 'version', label: 'Version', mono: true },
+  { key: 'kind', label: 'Kind' },
+];
+export const rows = [
+  { name: 'cmake', version: '3.31.6', kind: 'build system' },
+  { name: 'gcc', version: '14.2.0', kind: 'compiler' },
+  { name: 'jq', version: '1.7.1', kind: 'tool' },
+];
+
+<div style="display: grid; gap: 24px">
+  <div data-swap="card" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="card" /></div>
+    <div data-role="real">
+      <div class="ocx-card">
+        <strong>docs</strong>
+        <span>Guides and reference.</span>
+      </div>
+    </div>
+  </div>
+  <div data-swap="list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="list" /></div>
+    <div data-role="real"><List label="Toolchain" items={items} /></div>
+  </div>
+  <div data-swap="table" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="table" /></div>
+    <div data-role="real"><DataTable caption="Packages" columns={columns} rows={rows} filter={false} /></div>
+  </div>
+</div>

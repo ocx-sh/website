@@ -52,9 +52,21 @@ const disabled = Boolean(rest.disabled);
 
 <style is:global>
   @layer ocx {
-    /* Empty, disabled, or no script to clear with: nothing to show. */
-    .ocx-ui-search-field:has(.ocx-ui-input-group__input:is(:placeholder-shown, :disabled, :read-only))
-      .ocx-ui-search-field__clear {
+    /* The clear button fades with the value; its box stays reserved, so typing never reflows. */
+    .ocx-ui-search-field .ocx-ui-search-field__clear {
+      transition:
+        color var(--ocx-duration-base),
+        background-color var(--ocx-duration-base),
+        border-color var(--ocx-duration-base),
+        opacity var(--ocx-duration-base),
+        visibility var(--ocx-duration-base);
+    }
+    .ocx-ui-search-field:has(.ocx-ui-input-group__input:placeholder-shown) .ocx-ui-search-field__clear {
+      visibility: hidden;
+      opacity: 0;
+    }
+    /* Disabled, read-only, or no script to clear with: nothing to show, ever. */
+    .ocx-ui-search-field:has(.ocx-ui-input-group__input:is(:disabled, :read-only)) .ocx-ui-search-field__clear {
       display: none;
     }
     @media (scripting: none) {

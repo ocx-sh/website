@@ -82,6 +82,15 @@ describe('Terminal chevron and start overlay styles', () => {
     expect(rule('.ocx-terminal__start')).toMatch(/inset: 0 0 var\(--ocx-control-xl\)/);
     expect(rule('.ocx-terminal__start')).toMatch(/place-items: center/);
   });
+
+  it('R5 the overlay fades out (display allow-discrete); the control glyphs crossfade only when live', () => {
+    expect(rule('.ocx-terminal__start')).toMatch(/opacity var\(--ocx-duration-base\) var\(--ocx-ease-out\)/);
+    expect(rule('.ocx-terminal__start')).toMatch(/display var\(--ocx-duration-base\) allow-discrete/);
+    expect(rule('.ocx-terminal__start[hidden]')).toMatch(/display: none;\s*opacity: 0;/);
+    expect(rule('.ocx-terminal__start-button')).toMatch(/transition: color var\(--ocx-duration-base\)/);
+    expect(src).toMatch(/\.ocx-terminal\[data-live\] \.ocx-terminal__controls svg \{\s*transition:/);
+    expect(src).not.toMatch(/__(pause|play|fs|fs-exit)-icon[^{]*\{\s*display:/);
+  });
 });
 
 // ── markup ──────────────────────────────────────────────────────────────── //

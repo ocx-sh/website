@@ -123,4 +123,18 @@ describe('C-266 Meter', () => {
     expect(css).toMatch(/var\(--ocx-track-size\)/);
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(/i);
   });
+
+  it('R5 the fill is full width, scaled from inline-start to the value, which moves on the slow token', () => {
+    const css = readFileSync(new URL('../src/components/ui/range.css', import.meta.url), 'utf8');
+    const fill = /\.ocx-ui-meter__fill \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(fill).toMatch(/scale: calc\(var\(--_value\) \/ 100\) 1;/);
+    expect(fill).toMatch(/transform-origin: left;/);
+    expect(fill).not.toMatch(/inline-size|transition/);
+    // The registered value glides where it is set; the fill follows it.
+    expect(css).toMatch(/@property --_value \{\s*syntax: '<number>';\s*inherits: true;/);
+    expect(css).toMatch(/\.ocx-ui-meter \{[^}]*transition: --_value var\(--ocx-duration-slow\) var\(--ocx-ease-out\);/);
+    expect(css).toMatch(/\.ocx-ui-meter__fill:dir\(rtl\) \{\s*transform-origin: right;/);
+    // Slider stays unanimated while dragging (D-R8).
+    expect(css).not.toMatch(/\.ocx-ui-slider[^{]*\{[^}]*transition/);
+  });
 });

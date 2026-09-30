@@ -122,9 +122,9 @@ const { title, flip = false } = Astro.props;
       /* The live site's in-focus brand border and glow, settling to rest. */
       .ocx-feature[data-revealed] {
         transition:
-          opacity var(--_reveal) ease-out,
-          transform var(--_reveal) ease-out;
-        animation: ocx-feature-settle calc(var(--_reveal) * 2) ease-out;
+          opacity var(--_reveal) var(--ocx-ease-out),
+          transform var(--_reveal) var(--ocx-ease-out);
+        animation: ocx-feature-settle calc(var(--_reveal) * 2) var(--ocx-ease-out);
       }
     }
 

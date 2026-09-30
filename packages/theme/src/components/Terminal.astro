@@ -227,6 +227,11 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       display: grid;
       place-items: center;
       cursor: pointer;
+      /* Exit only: it fades out on the first play (display allow-discrete holds it meanwhile) and is
+         never shown again, so it has no enter. */
+      transition:
+        opacity var(--ocx-duration-base) var(--ocx-ease-out),
+        display var(--ocx-duration-base) allow-discrete;
     }
     /* A bare accent play mark (owner: no button box, no rounding): the Lucide play glyph filled, with
      * mitred joins so its corners stay sharp. */
@@ -238,6 +243,7 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       background: none;
       border: 0;
       cursor: pointer;
+      transition: color var(--ocx-duration-base) var(--ocx-ease-out);
     }
     .ocx-terminal__start-button:hover {
       color: var(--ocx-color-accent-hover);
@@ -252,7 +258,11 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       fill: currentColor;
       stroke-linejoin: miter;
     }
-    .ocx-terminal__start[hidden],
+    .ocx-terminal__start[hidden] {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
     .ocx-terminal__player .ap-overlay-start {
       display: none;
     }
@@ -362,19 +372,33 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       color: var(--ocx-color-fg-subtle);
       white-space: nowrap;
     }
+    /* Play/pause and fullscreen/exit: both glyphs stacked in one cell, the inactive one opacity 0.
+       They crossfade only under the root's `data-live` (terminal.mjs, once the controls are wired). */
+    .ocx-terminal__controls :is(.ocx-terminal__play, .ocx-terminal__fullscreen):not([hidden]) {
+      display: inline-grid;
+    }
+    .ocx-terminal__controls :is(.ocx-terminal__play, .ocx-terminal__fullscreen) > svg {
+      grid-area: 1 / 1;
+    }
     .ocx-terminal__play .ocx-terminal__pause-icon,
-    .ocx-terminal__controls[data-state='playing'] .ocx-terminal__play-icon {
-      display: none;
-    }
-    .ocx-terminal__controls[data-state='playing'] .ocx-terminal__pause-icon {
-      display: inline;
-    }
+    .ocx-terminal__controls[data-state='playing'] .ocx-terminal__play-icon,
     .ocx-terminal__fullscreen .ocx-terminal__fs-exit-icon,
     .ocx-terminal__controls[data-fullscreen] .ocx-terminal__fs-icon {
-      display: none;
+      opacity: 0;
+      visibility: hidden;
+      scale: 0.5;
     }
+    .ocx-terminal__controls[data-state='playing'] .ocx-terminal__pause-icon,
     .ocx-terminal__controls[data-fullscreen] .ocx-terminal__fs-exit-icon {
-      display: inline;
+      opacity: 1;
+      visibility: visible;
+      scale: 1;
+    }
+    .ocx-terminal[data-live] .ocx-terminal__controls svg {
+      transition:
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        visibility var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+        scale var(--ocx-duration-moderate) var(--ocx-ease-in-out);
     }
 
     /* Fullscreen: the whole card fills the screen, the player area grows into the freed space. */

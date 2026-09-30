@@ -91,6 +91,9 @@ const api = ssrApi(machine, connect, { ...props, id });
       cursor: pointer;
       /* On the base rule, not only :focus-visible: the ring's geometry is part of the look. */
       outline-offset: var(--ocx-focus-offset-inset);
+      transition:
+        color var(--ocx-duration-base),
+        background-color var(--ocx-duration-base);
     }
     .ocx-collapsible__label {
       flex: 1;

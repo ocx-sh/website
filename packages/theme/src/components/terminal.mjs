@@ -233,6 +233,8 @@ function wireControls(root, player) {
   });
 
   controls.hidden = false;
+  // Only now may the control glyphs crossfade (Terminal.astro): never at init (D-R7 c).
+  root.toggleAttribute('data-live', true);
 }
 
 /**

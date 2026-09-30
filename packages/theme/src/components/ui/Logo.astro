@@ -1,0 +1,91 @@
+---
+// Logo (C-300): the ocx mark, `src/logo.svg` inlined byte for byte so it paints with the page, and an
+// optional text wordmark (D-R2). Never redrawn (D-R1): colour comes from CSS only, `path { fill }`
+// beating the file's presentation attribute. No JS.
+import logo from '../../logo.svg?raw';
+
+export interface Props {
+  /** Text beside the mark (mono, semibold, lowercase, 0.7× the mark). `false` shows the mark only. */
+  wordmark?: string | false;
+  /** Mark edge: s 14 · m 20 · l 38 · xl 84 px. */
+  size?: 's' | 'm' | 'l' | 'xl';
+  /** `brand` fills the mark with the accent; `current` with the text colour. */
+  tone?: 'brand' | 'current';
+  /** Renders a link; otherwise a span. */
+  href?: string;
+  /** Accessible name. An empty string makes the logo decorative (aria-hidden). */
+  label?: string;
+  class?: string;
+}
+
+// The width/height attributes reserve the box before CSS; the CSS below reads the matching token.
+const PX = { s: 14, m: 20, l: 38, xl: 84 } as const;
+const { wordmark = false, size = 'm', tone = 'brand', href, label = 'ocx', class: className } = Astro.props;
+const px = PX[size];
+if (!px) throw new Error(`Logo: unknown size "${String(size)}"`);
+const svg = logo.replace('<svg ', `<svg width="${px}" height="${px}" aria-hidden="true" focusable="false" `);
+if (href && !label) throw new Error('Logo: a linked logo needs a label');
+const Tag = href ? 'a' : 'span';
+// Defaults carry no attribute: the default logo stays as light as possible.
+const attrs = {
+  href,
+  role: href || !label ? undefined : ('img' as const),
+  'aria-label': label || undefined,
+  'aria-hidden': label ? undefined : ('true' as const),
+  'data-size': size === 'm' ? undefined : size,
+  'data-tone': tone === 'brand' ? undefined : tone,
+};
+---
+
+<Tag class:list={['ocx-logo', className]} {...attrs}>
+  <Fragment set:html={svg} />
+  {wordmark && <span>{wordmark}</span>}
+</Tag>
+
+<style is:global>
+  @layer ocx {
+    /* :where(): a consumer class overrides the box and colour. */
+    :where(.ocx-logo) {
+      --_mark: var(--ocx-icon-lg);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      color: inherit;
+      text-decoration: none;
+    }
+    .ocx-logo[data-size='s'] {
+      --_mark: var(--ocx-icon-md);
+    }
+    .ocx-logo[data-size='l'] {
+      --_mark: var(--ocx-control-2xl);
+    }
+    .ocx-logo[data-size='xl'] {
+      --_mark: calc(var(--ocx-control-3xl) * 2);
+    }
+    .ocx-logo > svg {
+      flex-shrink: 0;
+      width: var(--_mark);
+      height: var(--_mark);
+    }
+    .ocx-logo path {
+      fill: var(--ocx-color-accent);
+    }
+    .ocx-logo[data-tone='current'] path {
+      fill: currentColor;
+    }
+    /* (0,1,2): beats a consumer's `.brand span` rule whatever the sheet order. */
+    .ocx-logo > svg + span {
+      font-family: var(--ocx-font-mono);
+      font-size: calc(var(--_mark) * 0.7);
+      font-weight: var(--ocx-font-weight-semibold);
+      line-height: 1; /* no line-height token yet (WP3) */
+      text-transform: lowercase;
+    }
+    @media (forced-colors: active) {
+      .ocx-logo path {
+        forced-color-adjust: none;
+        fill: CanvasText;
+      }
+    }
+  }
+</style>

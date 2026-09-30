@@ -265,6 +265,15 @@ describe('CommandBar styles (command-bar.css)', () => {
     expect(css).toMatch(/\.ocx-cmdbar__copy\[data-copied\] \.ocx-cmdbar__idle \{[^}]*opacity: 0/);
   });
 
+  it('R5 field, icons and action hover fade colour and border on base; the focus outline stays instant', () => {
+    expect(css).toMatch(
+      /\.ocx-cmdbar__field \{[^}]*transition:\s*color var\(--ocx-duration-base\) var\(--ocx-ease-out\),\s*border-color var\(--ocx-duration-base\)/,
+    );
+    expect(css).toMatch(/\.ocx-cmdbar__icons \{[^}]*transition: color var\(--ocx-duration-base\)/);
+    expect(css).toMatch(/\.ocx-cmdbar__action :is\(a, button\) \{[^}]*background-color var\(--ocx-duration-base\)/);
+    expect(css).not.toMatch(/transition:[^;]*(outline|all)\b/);
+  });
+
   it('accent is not used (focus, success and hover tokens only)', () => {
     expect(css).not.toMatch(/--ocx-color-accent/);
   });
