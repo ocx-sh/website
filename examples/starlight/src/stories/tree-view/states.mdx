@@ -1,0 +1,51 @@
+---
+title: States
+description: Collapsed, expanded and selected, with icons and descriptions, and with disabled nodes.
+height: 760
+order: 1
+block: true
+---
+
+import TreeView from '@ocx-sh/theme/components/TreeView.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const store = [
+  {
+    value: 'packages',
+    label: 'packages/',
+    children: [
+      { value: 'cmake', label: 'cmake/', children: [{ value: 'cmake-3.31', label: '3.31.6' }] },
+      { value: 'ninja', label: 'ninja/', children: [{ value: 'ninja-1.12', label: '1.12.1' }] },
+    ],
+  },
+  { value: 'layers', label: 'layers/', children: [{ value: 'sha256', label: 'sha256/' }] },
+  { value: 'index', label: 'index/', children: [{ value: 'ocx.sh', label: 'ocx.sh' }] },
+  { value: 'config', label: 'config.toml' },
+];
+export const described = [
+  {
+    value: 'home',
+    label: '~/.ocx/',
+    icon: '🏠',
+    description: 'the ocx home',
+    selectable: false,
+    children: [
+      { value: 'meta', label: 'metadata.json', description: 'declared env vars' },
+      { value: 'bin', label: 'bin/', children: [{ value: 'cmake', label: 'cmake', icon: '🚀' }] },
+      { value: 'src', label: 'src/', selectable: false, children: [{ value: 'main', label: 'main.rs' }] },
+    ],
+  },
+];
+export const locked = [
+  { value: 'state', label: 'state/', children: [{ value: 'projects', label: 'projects/' }] },
+  { value: 'locks', label: 'locks/', disabled: true, children: [{ value: 'lock', label: 'install.lock' }] },
+  { value: 'temp', label: 'temp/', disabled: true },
+];
+
+<StateGrid wide>
+  <State label="collapsed, not selectable"><TreeView label="collapsed" items={store} /></State>
+  <State label="expanded, selected"><TreeView label="selected" items={store} expanded={['packages', 'cmake']} value="cmake-3.31" selectable /></State>
+  <State label="icons, descriptions, per-node selectable"><TreeView label="described" items={described} expanded={['home', 'bin']} selectable /></State>
+  <State label="disabled nodes"><TreeView label="disabled" items={locked} expanded={['state']} /></State>
+</StateGrid>

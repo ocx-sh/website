@@ -1,0 +1,12 @@
+{
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/.astro/**",
+    ".tmp/**",
+    ".agents/**",
+    ".claude/**",
+    ".opencode/**",
+    "tests/fixtures/**"
+  ],
+  "rules": { "typescript/no-floating-promises": "error" }
+}

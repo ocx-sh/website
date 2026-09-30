@@ -1,0 +1,42 @@
+---
+title: Input group
+description: The text field box around a start slot, the control and an end slot, for icons, addons and buttons.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+The [Input](../input/) box with slots. Put a control with the class `ocx-ui-input-group__input`
+in the default slot; focus, danger and disabled are drawn from that control's own state. For the
+common case, give `Input` a `start` or `end` slot instead. It ships no JavaScript. A bare `type="number"` control shows no spin buttons (arrow keys still step it); for the Decrease / Increase stepper use `Input`.
+
+## Stories
+
+<Stories of="input-group" />
+
+## Props
+
+<PropsTable
+  of="ui/InputGroup.astro"
+  rows={[
+    {
+      name: 'disabled',
+      type: 'boolean',
+      default: 'false',
+      description: 'Greyed box; also derived from a disabled group input.',
+    },
+    {
+      name: 'invalid',
+      type: 'boolean',
+      default: 'false',
+      description: 'Danger border; also derived from an aria-invalid control.',
+    },
+    {
+      name: 'wrap',
+      type: 'boolean',
+      default: 'false',
+      description: 'Children wrap onto rows (chips before the control).',
+    },
+    { name: 'rest → <div>', type: 'HTMLAttributes', description: 'Every other attribute goes to the box.' },
+  ]}
+/>

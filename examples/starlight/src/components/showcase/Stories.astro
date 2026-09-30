@@ -1,0 +1,118 @@
+---
+// C-125 `<Stories of="<slug>" />`: every story of a component, stacked (D-SB2), each a lazy iframe
+// canvas on its story page with a no-JS toolbar (D-SB3): Light/Dark links target the canvas by
+// name, width radios resize it through `:has()`, Open leaves for the story page, and Code is a
+// closed `<details>` whose lazy iframe loads `#code` only when opened. Reads raw sources only.
+// D-SB10 (the pilot measured it): every iframe element is a browsing context, and the search dialog
+// (Zag) touches each one; native lazy loading also fetched every canvas of the Tabs page (Chrome's
+// lazy distance spans it). Measured 6.64 MiB heap against the 5 MiB cap. So only the first canvas is
+// an iframe in the HTML; the others are created when their reserved box comes on screen (an
+// IntersectionObserver, no root margin), and the Code iframe when its `<details>` first opens.
+// Without JS, `<noscript>` iframes do both natively. The script is inline (no request) and carries
+// no comments (inline JS ships as is). Known limit: a Light/Dark click on a canvas not created yet
+// opens a tab; the toolbar and its box come on screen together.
+import { getEntry } from 'astro:content';
+import { snippet, storiesOf, storyRoute } from './stories.mjs';
+
+interface Props {
+  /** The component page's path under `components/`, which is also its story directory. */
+  of: string;
+}
+const { of } = Astro.props;
+const raws = import.meta.glob<string>('../../stories/**/*.mdx', { query: '?raw', import: 'default', eager: true });
+const stories = storiesOf(of, raws);
+if (!stories.length) throw new Error(`<Stories of="${of}">: no stories in src/stories/${of}/`);
+const component = (await getEntry('docs', `components/${of}`))?.data.title ?? of;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const WIDTHS = [
+  ['390', '390'],
+  ['768', '768'],
+  ['full', 'Full'],
+] as const;
+---
+
+<nav class="story-chips not-content" aria-label={`${component} stories`}>
+  {stories.map((s) => (
+    <a href={`#story-${s.name}`}>{s.meta.title}</a>
+  ))}
+</nav>
+{stories.map((s, i) => {
+  const route = storyRoute(s.id, base);
+  const frame = `c-${of.replaceAll('/', '-')}-${s.name}`;
+  const label = `${component}: ${s.meta.title}`;
+  return (
+    <figure class="story not-content" id={`story-${s.name}`} style={`--story-h:${s.meta.height}px`}>
+      <figcaption>
+        <h3>{s.meta.title}</h3>
+        {s.meta.description && <p>{s.meta.description}</p>}
+      </figcaption>
+      <div class="story__bar">
+        <a href={`${route}?theme=light`} target={frame}>
+          Light
+        </a>
+        <a href={`${route}?theme=dark`} target={frame}>
+          Dark
+        </a>
+        <fieldset>
+          <legend class="sr-only">Width</legend>
+          {WIDTHS.map(([value, text]) => (
+            <label>
+              <input type="radio" name={`w-${frame}`} value={value} checked={value === 'full'} />
+              {text}
+            </label>
+          ))}
+        </fieldset>
+        <a href={route} target="_blank" rel="noopener">
+          Open<span class="sr-only"> in a new tab</span>
+        </a>
+      </div>
+      {i === 0 ? (
+        <div class="story__stage">
+          <iframe name={frame} src={route} title={label} loading="lazy" height={s.meta.height} />
+        </div>
+      ) : (
+        <div class="story__stage" data-src={route} data-name={frame} data-title={label}>
+          <noscript>
+            <iframe name={frame} src={route} title={label} loading="lazy" height={s.meta.height} />
+          </noscript>
+        </div>
+      )}
+      <details
+        class="story__code"
+        style={`--code-lines:${snippet(s.raw).split('\n').length}`}
+        data-code={`${route}#code`}
+        data-title={`${label} code`}
+      >
+        <summary>Code</summary>
+        <noscript>
+          <iframe loading="lazy" src={`${route}#code`} title={`${label} code`} />
+        </noscript>
+      </details>
+    </figure>
+  );
+})}
+<script is:inline>
+  {
+    const frame = (box, src, attrs) => {
+      const f = document.createElement('iframe');
+      Object.assign(f, attrs, { src });
+      box.append(f);
+    };
+    const o = new IntersectionObserver((es) => {
+      for (const { isIntersecting: on, target: s } of es)
+        if (on) {
+          o.unobserve(s);
+          frame(s, s.dataset.src, { name: s.dataset.name, title: s.dataset.title });
+        }
+    });
+    for (const s of document.querySelectorAll('.story__stage[data-src]')) o.observe(s);
+    addEventListener(
+      'toggle',
+      ({ target: d }) => {
+        if (d.open && d.dataset?.code && !d.querySelector('iframe'))
+          frame(d, d.dataset.code, { title: d.dataset.title });
+      },
+      true,
+    );
+  }
+</script>

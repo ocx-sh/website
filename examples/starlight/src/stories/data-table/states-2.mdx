@@ -1,0 +1,40 @@
+---
+title: More states
+description: Sorted descending, filtered, no match, no rows, a later page, and a table without a filter or a sortable column.
+height: 980
+order: 2
+block: true
+---
+
+import DataTable from '@ocx-sh/theme/components/ui/DataTable.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+export const columns = [
+  { key: 'name', label: 'Package', mono: true },
+  { key: 'kind', label: 'Kind' },
+  { key: 'size', label: 'Size (MB)', numeric: true },
+];
+
+export const packages = [
+  { name: 'bazel', kind: 'build system', size: 61 },
+  { name: 'buf', kind: 'tool', size: 32 },
+  { name: 'clang', kind: 'compiler', size: 412 },
+  { name: 'cmake', kind: 'build system', size: 52 },
+];
+
+export const compilers = [
+  { name: 'bazel', kind: 'build system', size: 61 },
+  { name: 'clang', kind: 'compiler', size: 412 },
+  { name: 'gcc', kind: 'compiler', size: 298 },
+  { name: 'zig', kind: 'compiler', size: 48 },
+];
+
+<StateGrid wide>
+  <State label="sorted, size descending"><DataTable caption="Packages by size" columns={columns} rows={packages.slice(0, 3)} sort={{ key: 'size', direction: 'descending' }} /></State>
+  <State label="filtered"><DataTable caption="Packages, filtered" columns={columns} rows={compilers} query="compiler" /></State>
+  <State label="empty: no match"><DataTable caption="Packages, no match" columns={columns} rows={packages.slice(0, 2)} query="cobol" /></State>
+  <State label="empty: no rows"><DataTable caption="No packages" columns={columns} rows={[]} empty="No packages installed yet." /></State>
+  <State label="paged, page 2"><DataTable caption="Packages, page 2" columns={columns} rows={packages.slice(0, 4)} pageSize={2} page={2} /></State>
+  <State label="no filter, one column unsortable"><DataTable caption="Packages, fixed kind" columns={columns.map((c) => (c.key === 'kind' ? { ...c, sortable: false } : c))} rows={packages.slice(0, 3)} filter={false} /></State>
+</StateGrid>

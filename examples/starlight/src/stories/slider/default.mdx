@@ -1,0 +1,10 @@
+---
+title: Slider
+description: A single-thumb slider from 1 to 16; arrow keys and drags log ocx:slider:input and ocx:slider:change.
+height: 270
+log: true
+---
+
+import Slider from '@ocx-sh/theme/components/ui/Slider.astro';
+
+<Slider label="Concurrent downloads" value={4} min={1} max={16} name="downloads" />

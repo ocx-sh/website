@@ -1,0 +1,48 @@
+---
+title: Breadcrumbs
+description: The mono trail above every page title, current page last, with the middle folding into an ellipsis on narrow widths and no client JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+The trail sits above the page title on every docs page: section, sidebar groups, then
+the current page in the text colour. A group without a page of its own is plain text. The slash
+between segments is drawn by CSS and never read out.
+
+Below 480px of width, a trail of more than three items keeps the first and the last two and folds
+the rest into an ellipsis button. Its native popover lists them; Escape or an outside click closes
+it. A label longer than the cap truncates and keeps its full text in a tooltip.
+
+## Stories
+
+<Stories of="breadcrumbs" />
+
+## Starlight
+
+The theme plugin renders the trail from the sidebar. There is no root crumb by default. Turn the trail off, or add a root crumb:
+
+```js
+ocxTheme({ breadcrumbs: false });
+ocxTheme({ breadcrumbs: { root: { label: 'home', href: '/' } } });
+```
+
+Splash pages get no trail, nor does a page whose trail would be itself alone.
+
+## Props
+
+<PropsTable
+  of="ui/Breadcrumbs.astro"
+  rows={[
+    {
+      name: 'items',
+      type: '{ label, href?, icon? }[]',
+      required: true,
+      description:
+        'Outermost first; the last is the current page and never a link. Without href an item is plain text.',
+    },
+    { name: 'label', type: 'string', default: "'Breadcrumbs'", description: 'Accessible name of the nav landmark.' },
+    { name: 'id', type: 'string', default: 'generated', description: 'Id of the folded-items popover.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

@@ -1,0 +1,21 @@
+---
+// Starlight `PageTitle` override: the breadcrumb trail (computed by the route middleware; optional root →
+// section → sidebar groups → this page) immediately before the H1, no divider (C-025). No trail on
+// splash pages or when it would hold the current page alone.
+import Breadcrumbs from '../components/ui/Breadcrumbs.astro';
+import type { OcxRouteData } from './route-middleware.mjs';
+
+const route: OcxRouteData = Astro.locals.starlightRoute;
+const trail = route.ocxTrail ?? [];
+---
+
+{trail.length > 1 && <Breadcrumbs items={trail} class="ocx-page-trail" />}
+<h1 id="_top">{route.entry.data.title}</h1>
+
+<style is:global>
+  @layer ocx {
+    .ocx-page-trail {
+      margin: 0 0 var(--ocx-space-3);
+    }
+  }
+</style>

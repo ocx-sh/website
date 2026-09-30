@@ -1,0 +1,23 @@
+---
+title: Selectable per node
+description: A Node's selectable wins over the tree's, so here the directories opt out and only toggle while files select.
+height: 210
+order: 3
+block: true
+---
+
+import Tree from '@ocx-sh/theme/components/Tree.astro';
+import Node from '@ocx-sh/theme/components/TreeNode.astro';
+import Description from '@ocx-sh/theme/components/TreeDescription.astro';
+
+<Tree selectable>
+  <Node name="project/" selectable={false}>
+    <Description slot="description">directory: toggles, never selected</Description>
+    <Node name="ocx.toml">
+      <Description slot="description">file: selectable</Description>
+    </Node>
+    <Node name="src/" selectable={false}>
+      <Node name="main.rs" />
+    </Node>
+  </Node>
+</Tree>

@@ -1,0 +1,10 @@
+node_modules/
+**/dist/
+**/.astro/
+.tmp/
+.agents/
+.claude/
+.opencode/
+pnpm-lock.yaml
+tests/fixtures/
+packages/theme/test/fixtures/

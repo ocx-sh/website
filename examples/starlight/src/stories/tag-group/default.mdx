@@ -1,0 +1,17 @@
+---
+title: Filter chips
+description: Chips that filter by several values at once; toggle one and its change event lands in the log.
+height: 200
+log: true
+---
+
+import TagGroup from '@ocx-sh/theme/components/ui/TagGroup.astro';
+
+export const platforms = [
+  { value: 'linux', label: 'linux' },
+  { value: 'macos', label: 'macos' },
+  { value: 'windows', label: 'windows' },
+  { value: 'freebsd', label: 'freebsd' },
+];
+
+<TagGroup label="Platforms" selectionMode="multiple" items={platforms} />

@@ -1,0 +1,17 @@
+---
+title: Licence table with state controls
+description: Searchable licence table of the crates in the ocx binary; the buttons reload it 2 s slower, with no rows, or with bad data.
+height: 1750
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import DependencyExplorer from '@ocx-sh/theme/components/DependencyExplorer.astro';
+import DepsControls from '../../components/showcase/DepsControls.astro';
+
+{/* The explorer's error aside is styled by the theme's Starlight sheet. `?story` makes that import
+a module of its own: imported bare, the sheet split off Starlight's shared bundle into a chunk of its
+own, one more render-blocking request on every docs page (breadcrumbs performance 0.99). */}
+
+<DepsControls />
+<DependencyExplorer />

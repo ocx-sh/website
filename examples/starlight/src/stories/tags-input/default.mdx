@@ -1,0 +1,21 @@
+---
+title: Picked from a list
+description: An entry's topics from a fixed list (allowCreate off); type "kub" and press Enter, or type text outside the list to see it rejected.
+height: 340
+log: true
+---
+
+import TagsInput from '@ocx-sh/theme/components/ui/TagsInput.astro';
+
+export const topics = [
+  { value: 'k8s', label: 'kubernetes', meta: '312' },
+  { value: 'docker', label: 'docker', meta: '287' },
+  { value: 'cli', label: 'cli', meta: '954' },
+  { value: 'python', label: 'python', meta: '508' },
+  { value: 'rust', label: 'rust', meta: '377' },
+  { value: 'security', label: 'security', meta: '120' },
+];
+
+<div style="inline-size: min(100%, calc(var(--ocx-space-12) * 4))">
+  <TagsInput label="Topics" suggestions={topics} value={['cli', 'rust']} placeholder="Add a topic" name="topics" />
+</div>

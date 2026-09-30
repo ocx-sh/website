@@ -1,0 +1,13 @@
+---
+// Starlight `PageFrame` override: renders Starlight's default unchanged (C-107). The mobile drawer
+// (C-231) drives Starlight's pane as it stands: `#starlight__sidebar` stays a popover (the JS-off
+// path), its element drops `popover` at ≥ 50em and makes `.main-frame` inert while it is open
+// (mobile-menu.zag.mjs). Each slot Starlight's Page fills is forwarded by name.
+import Default from '@astrojs/starlight/components/PageFrame.astro';
+---
+
+<Default {...Astro.props}>
+  <slot name="header" slot="header" />
+  <slot name="sidebar" slot="sidebar" />
+  <slot />
+</Default>

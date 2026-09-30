@@ -1,0 +1,45 @@
+---
+title: Tabs
+description: Starlight-compatible tabs on Zag, with shell icons and synced groups.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Every group with the same `syncKey` follows a pick in any of them, and the choice survives a reload.
+
+## Stories
+
+<Stories of="tabs" />
+
+## Props
+
+<PropsTable
+  of="Tabs.astro"
+  rows={[
+    { name: 'syncKey', type: 'string', description: 'Groups with the same key switch together; the choice is stored as starlight-synced-tabs__<key>.' },
+    { name: 'zag', type: 'ZagProps<tabs.Props>', description: 'Zag tabs machine props, data only.' },
+  ]}
+/>
+
+<PropsTable
+  of="TabItem.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Tab text; synced groups match on it.' },
+    { name: 'icon', type: "'shell' | 'powershell' | 'nushell' | 'fish' | 'elvish' | 'cmd'", description: 'Shell icon before the label.' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:tabs:change` | `{ value }`, the slug of the selected label | A group selects another tab, or follows a synced one. |
+
+## Keyboard
+
+APG tabs with automatic activation: the tab list is one Tab stop.
+
+- <kbd>←</kbd> <kbd>→</kbd> select the previous or next tab, wrapping at the ends.
+- <kbd>Home</kbd> <kbd>End</kbd> select the first or last tab.
+- <kbd>Tab</kbd> moves into the selected panel.

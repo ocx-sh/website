@@ -1,0 +1,39 @@
+---
+title: Popover
+description: A trigger and a floating panel on Zag popover that closes on Escape or an outside click.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A panel of free content next to its trigger. Escape or a click outside closes it and returns
+focus to the trigger. The trigger names the panel.
+
+## Stories
+
+<Stories of="popover" />
+
+## Props
+
+<PropsTable
+  of="ui/Popover.astro"
+  rows={[
+    { name: 'placement', type: 'Placement', default: "'bottom-start'", description: 'Panel side and alignment relative to the trigger.' },
+    { name: 'modal', type: 'boolean', default: 'false', description: 'Trap focus in the panel and hide the page from assistive tech while open.' },
+    { name: 'zag', type: 'ZagProps<popover.Props>', description: 'Zag machine props passed through verbatim.' },
+  ]}
+/>
+
+Slots: `trigger` (the trigger button's content) and the default slot (the panel).
+
+## Events
+
+- `ocx:popover:change` `{ open }`: the panel opens or closes.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Enter, Space | On the trigger: toggle the panel. |
+| Tab | Move through the panel's content; leaving it closes a non-modal panel. |
+| Escape | Close the panel; focus returns to the trigger. |

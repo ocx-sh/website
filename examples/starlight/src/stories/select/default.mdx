@@ -1,0 +1,18 @@
+---
+title: Select
+description: A labelled select-only combobox; choosing an option logs ocx:select:change.
+height: 300
+log: true
+---
+
+import Select from '@ocx-sh/theme/components/ui/Select.astro';
+
+export const platforms = [
+  { value: 'linux/amd64', label: 'linux/amd64' },
+  { value: 'linux/arm64', label: 'linux/arm64' },
+  { value: 'darwin/arm64', label: 'darwin/arm64' },
+  { value: 'windows/amd64', label: 'windows/amd64' },
+  { value: 'freebsd/amd64', label: 'freebsd/amd64', disabled: true },
+];
+
+<Select label="Platform" options={platforms} value="linux/amd64" />

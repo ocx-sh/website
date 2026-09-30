@@ -1,0 +1,19 @@
+{
+  "name": "ocx-theme-pack-smoke-fixture",
+  "private": true,
+  "type": "module",
+  "description": "C-032 pack-smoke fixture: a minimal Astro+Starlight consumer of the packed @ocx-sh/theme tarball. Copied to a mktemp sandbox and installed with --ignore-scripts by scripts/pack-smoke.mjs; never a pnpm workspace member (see pnpm-workspace.yaml globs).",
+  "scripts": {
+    "check": "astro check",
+    "build": "astro build"
+  },
+  "dependencies": {
+    "@ocx-sh/theme": "*",
+    "astro": "7.3.5",
+    "@astrojs/starlight": "0.42.4"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3"
+  }
+}

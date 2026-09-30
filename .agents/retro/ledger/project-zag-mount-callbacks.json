@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T043248Z-d51fea07.json"
+  ],
+  "first_seen": "2026-09-28T04:32:48Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:38Z",
+    "by": "packages/theme/src/components/ui/zag.mjs",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-zag-mount-callbacks",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T04:32:48Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Zag mount() lacks callbacks and loses the triggering interaction",
+  "v": 1,
+  "versions": []
+}

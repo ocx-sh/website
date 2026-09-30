@@ -1,0 +1,38 @@
+---
+title: Cascade probe
+description: >-
+  C-028 fixture — proves an unlayered consumer rule beats the theme's
+  `@layer ocx`, and that a dead selector has no effect, in a real browser
+  (tests/e2e/cascade.spec.ts). The "theme beats Starlight" case is asserted
+  on any OTHER page (e.g. /docs/), because this page's own consumer override
+  below always wins there and would mask it.
+---
+
+This page exists only for `tests/e2e/cascade.spec.ts`. It is not linked from
+navigation. Real DOM target: the page header (`header.header`).
+
+- Theme (`packages/theme/src/starlight/starlight.css`, `@layer ocx`):
+  `header.header { padding: 0; background: none; border: 0; box-shadow: none; }`
+  — `background: none` resolves `background-color` to transparent.
+- Starlight itself (`@astrojs/starlight/dist/components/PageFrame.astro`,
+  `@layer starlight.core`, registered BEFORE `@layer ocx`):
+  `.header { ...; background-color: var(--sl-color-bg-nav); ... }`.
+- This page's own rule below is unlayered, so it beats `@layer ocx` too,
+  giving `header.header` a third, distinct `background-color` here only.
+
+<div class="probe-dead-selector-control">dead-selector control (stays UA default)</div>
+
+<style>{`
+  /* Unlayered (no @layer wrapper) — wins over @layer ocx's header.header
+     rule regardless of layer order (C-028). Written as a single JS
+     template-literal expression, not literal '{ }' text: MDX compiles
+     <style> children as JSX, so a literal CSS block breaks the build
+     (curly braces read as a JSX expression boundary). This keeps the tag a
+     plain, unscoped <style> in the built HTML — verified by
+     tests/e2e/cascade.spec.ts reading the actual computed style. */
+  header.header { background-color: rgb(4, 5, 6); }
+
+  /* Dead selector: the control is a <div>, so span.<class> never matches it.
+     Were the type selector ignored, the control would turn rgb(9, 9, 9). */
+  span.probe-dead-selector-control { background-color: rgb(9, 9, 9); }
+`}</style>

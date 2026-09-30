@@ -1,0 +1,40 @@
+---
+title: Copy button
+description: Copies a value and confirms it with a toast; code block copy buttons toast too.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Click copy: the value goes to the clipboard, the button reads "copied" for 1.5 s, and a toast
+confirms it bottom-right for 2.5 s. Every copy control in the theme toasts, including the copy
+button of a code block. The toaster loads on the first toast; three toasts stack at most.
+
+## Stories
+
+<Stories of="copy-button" />
+
+## Props
+
+<PropsTable
+  of="CopyButton.astro"
+  rows={[
+    { name: 'value', type: 'string', required: true, description: 'Text written to the clipboard.' },
+    { name: 'label', type: 'string', description: 'Named in the toast instead of the value ("Copied <label>").' },
+    { name: 'zag', type: 'ZagProps<clipboard.Props>', default: '{}', description: 'Zag clipboard machine props, e.g. timeout (default 1500 ms).' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:clipboard:copy` | `{ value }` | The value is on the clipboard. |
+| `ocx:clipboard:error` | `{ value }` | The browser refused the write. |
+| `ocx:toast` | `{ title, tone? }` | After either: "Copied …", or "Copy failed" with `tone: "danger"`. Any script may dispatch it. |
+
+## Keyboard
+
+- <kbd>Enter</kbd> or <kbd>Space</kbd> on the button: copy (a native button).
+- <kbd>Alt</kbd> + <kbd>T</kbd>: move focus to the toasts; <kbd>Tab</kbd> reaches each one.
+- <kbd>Escape</kbd> on a focused toast: dismiss it.

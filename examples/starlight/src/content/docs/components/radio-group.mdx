@@ -1,0 +1,38 @@
+---
+title: RadioGroup
+description: A labelled set of native radios, one choice, on the Zag radio group.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Native radios sharing one `name`: arrow keys and form submit are the browser's, before any script
+runs. The Zag machine loads on first hover or focus and reports the checked value.
+
+## Stories
+
+<Stories of="radio-group" />
+
+## Props
+
+<PropsTable
+  of="ui/RadioGroup.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Group label, the radiogroup accessible name.' },
+    { name: 'name', type: 'string', required: true, description: 'Form field name shared by the radios.' },
+    { name: 'items', type: '{ value, label, disabled? }[]', required: true, description: 'The radios.' },
+    { name: 'value', type: 'string', description: 'Checked value.' },
+    { name: 'orientation', type: "'horizontal' | 'vertical'", default: "'vertical'", description: 'Stacking direction.' },
+    { name: 'zag', type: 'ZagProps<radio-group.Props>', description: 'Zag machine props.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:radio-group:change` `{ value }`: Another radio is checked.
+
+## Keyboard
+
+- <kbd>Tab</kbd>: Moves focus to the checked radio (else the first).
+- <kbd>↓</kbd> <kbd>→</kbd> / <kbd>↑</kbd> <kbd>←</kbd>: Checks the next / previous radio, skipping disabled ones.
+- <kbd>Space</kbd>: Checks the focused radio.

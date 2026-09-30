@@ -1,0 +1,51 @@
+---
+title: DataTable
+description: The DataTable, with sorting by column, a text filter and pages.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A `DataTable` takes rows from the page and adds sorting by column, a text filter and pages. The
+server renders its rows in their final order, so the first paint is the final one; the sort and
+filter code loads on the first hover, focus or touch. For a static table, write Markdown:
+[Tables](../tables/).
+
+## Stories
+
+<Stories of="data-table" />
+
+## Props
+
+<PropsTable
+  of="ui/DataTable.astro"
+  rows={[
+    { name: 'caption', type: 'string', required: true, description: 'What the table lists: the visually hidden caption and the scroll region name.' },
+    { name: 'columns', type: 'Column[]', required: true, description: '{ key, label, sortable? (default true), numeric? (end-aligned, tabular figures), mono? (identifiers) }.' },
+    { name: 'rows', type: 'Record<string, string | number>[]', required: true, description: 'One object per row, keyed by column key.' },
+    { name: 'pageSize', type: 'number', description: 'Rows per page; without it every match shows and there is no pagination.' },
+    { name: 'filter', type: 'boolean', default: 'true', description: 'Text filter above the table (case-insensitive, every cell).' },
+    { name: 'sort', type: "{ key: string; direction?: 'ascending' | 'descending' }", description: 'Initial sort.' },
+    { name: 'query', type: 'string', default: "''", description: 'Initial filter text.' },
+    { name: 'page', type: 'number', default: '1', description: 'Initial page, from 1.' },
+    { name: 'empty', type: 'string', default: "'No rows match the filter.'", description: 'Shown when no row matches.' },
+  ]}
+/>
+
+## Events
+
+The table fires none of its own; its pagination's event bubbles out of it.
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:pagination:change` | `{ page: number }` | The page changes, by the pager or by a sort or filter (back to page 1). |
+
+## Keyboard
+
+A native table with buttons in the sortable headers (`aria-sort` on the sorted one), a search field
+and the pagination landmark.
+
+- <kbd>Tab</kbd>: Filter field, then each sort button, the scroll region, then the page controls.
+- <kbd>Enter</kbd> / <kbd>Space</kbd> on a header: Sort by it ascending; again, descending.
+- Typing in the filter: Rows narrow as you type; the row count below the table is announced.
+- <kbd>Escape</kbd> in the filter, or its clear button: Empties it and shows every row.

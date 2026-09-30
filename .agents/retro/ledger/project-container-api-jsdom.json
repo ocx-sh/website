@@ -1,0 +1,26 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T012027Z-d09da919.json",
+    "20260928T044530Z-93fce468.json"
+  ],
+  "first_seen": "2026-09-28T01:20:27Z",
+  "fixed": {
+    "at": "2026-09-28T17:52:14Z",
+    "by": "779cf80",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-container-api-jsdom",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T06:50:00Z",
+  "occurrences": 2,
+  "scope": "project",
+  "severity": "low",
+  "status": "fixed",
+  "title": "Astro Container API cannot render under the vitest jsdom environment",
+  "v": 1,
+  "versions": []
+}

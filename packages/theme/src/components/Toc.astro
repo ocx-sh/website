@@ -1,0 +1,103 @@
+---
+// Scroll-spy table of contents on Zag `toc` (C-201): marks the heading being read (toc-probe.mjs).
+// Plain anchor links work before the machine starts, which happens when the Toc scrolls into view
+// (the only `visible` trigger, D-Z11). Starlight's own TOC is not this component.
+import type { Props as TocMachineProps } from '@zag-js/toc';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+import { connect, machine } from './toc.zag.mjs';
+
+interface Props {
+  /** One entry per heading: its element id, text and level (2 for an h2). */
+  items: { id: string; label: string; depth: number }[];
+  /** Heading of the list, its accessible name. */
+  label?: string;
+  /** Zag machine props (data only); `autoScroll` defaults to false here. */
+  zag?: ZagProps<Omit<TocMachineProps, 'items' | 'activeIds'>>;
+}
+
+const { items, label = 'On this page', zag = {} } = Astro.props;
+const id = nextUiId('toc');
+// autoScroll calls scrollIntoView on the active entry, which scrolls the page when the Toc sits in flow.
+const props = { autoScroll: false, ...zag };
+const entries = items.map((item) => ({ ...item, zag: { value: item.id, depth: item.depth } }));
+const api = ssrApi(machine, connect, { ...props, id, items: entries.map((e) => e.zag) });
+---
+
+<nav
+  class="ocx-toc not-content"
+  data-zag-root="toc"
+  data-zag-id={id}
+  data-zag-trigger="visible"
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(props)}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <p {...ssrAttrs(api.getTitleProps())}>{label}</p>
+  <ul {...ssrAttrs(api.getListProps())}>
+    {entries.map((item) => {
+      const p = { item: item.zag };
+      return (
+        <li {...ssrAttrs(api.getItemProps(p))}>
+          <a href={`#${item.id}`} {...ssrAttrs(api.getLinkProps(p))}>
+            {item.label}
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+</nav>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="toc"]'))
+    mount(root, { load: () => import('./toc.zag.mjs'), trigger: 'visible' });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-toc [data-part='title'] {
+      margin: 0 0 var(--ocx-space-3);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-toc [data-part='list'] {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    /* The outline of the Starlight TOC (mock #1b): a square 2px rule per entry, one step of
+       indent per level below h2; the active entry gets the focus-coloured rule and coral text. */
+    .ocx-toc [data-part='link'] {
+      display: block;
+      padding-block: var(--ocx-space-2);
+      padding-inline: calc(var(--ocx-space-4) * (max(var(--depth, 2), 2) - 1)) var(--ocx-space-3);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-muted);
+      text-decoration: none;
+      border-inline-start: var(--ocx-border-width-strong) solid var(--ocx-color-border);
+    }
+    .ocx-toc [data-part='link']:hover {
+      color: var(--ocx-color-fg);
+    }
+    /* Nested entries (h3+) read as a lower tier: smaller and lighter than the top-level h2 rows,
+       on top of the indent and guide rule above. */
+    .ocx-toc li:not([data-depth='2']) > [data-part='link'] {
+      font-size: var(--ocx-text-xs);
+      font-weight: var(--ocx-font-weight-regular);
+    }
+    .ocx-toc [data-part='link'][data-active] {
+      color: var(--ocx-color-accent-fg);
+      border-inline-start-color: var(--ocx-color-focus);
+    }
+    .ocx-toc [data-part='link']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(-1 * var(--ocx-border-width-strong));
+    }
+  }
+</style>

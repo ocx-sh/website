@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T001449Z-805f249d.json"
+  ],
+  "first_seen": "2026-09-28T00:14:49Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:11Z",
+    "by": "c67b122",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-samples-in-budget-dist",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T00:14:49Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Gitignored samples cache inflates htmlGz budgets in the main checkout",
+  "v": 1,
+  "versions": []
+}

@@ -1,0 +1,14 @@
+---
+title: Toggle button
+description: A text toggle and a pressed icon-only toggle; each press logs ocx:toggle-button:change.
+height: 270
+log: true
+---
+
+import ToggleButton from '@ocx-sh/theme/components/ui/ToggleButton.astro';
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+
+<ToggleButton value="hidden">Show hidden</ToggleButton>
+<ToggleButton value="pin" iconOnly aria-label="Pin version" pressed>
+  <Icon name="pin" />
+</ToggleButton>

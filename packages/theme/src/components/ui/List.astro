@@ -1,0 +1,316 @@
+---
+// List (C-250) on Zag listbox, loaded on first hover or focus: APG listbox (the list is one tab stop,
+// arrows move an active descendant, Home/End, typeahead), single or multiple selection, groups,
+// disabled rows, horizontal or grid layout, an empty state. Rows are card rows (label, description,
+// meta) or anything a function slot renders: `<List items={…}>{(item) => <Card … />}</List>`. A row
+// is an option: no interactive content inside (links, buttons), its children are presentational.
+// `async` (C-251) makes the page the data source: the first page renders here, "Load more" follows
+// `cursor`, and the page answers `ocx:list:fetch` (see async-list.zag.mjs). A static list never
+// loads the async chunk.
+import type { Props as ListboxMachineProps } from '@zag-js/listbox';
+import { nextUiId } from './ids.mjs';
+import { connect, machine, toCollection } from './listbox.zag.mjs';
+import type { ListItem } from './listbox.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+
+export type { ListItem };
+export type { ListFetchDetail, ListFilterDetail, ListPage, ListSortDetail } from './async-list.zag.mjs';
+// Ours, or controlled: a JSON value with no updater would freeze the live list.
+type Owned =
+  | 'collection'
+  | 'selectionMode'
+  | 'orientation'
+  | 'defaultValue'
+  | 'value'
+  | 'highlightedValue'
+  | 'defaultHighlightedValue';
+export interface Props {
+  items: ListItem[];
+  /** Accessible name, shown above the list. */
+  label: string;
+  selectionMode?: 'single' | 'multiple';
+  /** Selected value(s). */
+  value?: string | string[];
+  orientation?: 'vertical' | 'horizontal';
+  /** Columns of a grid layout (arrows move in two dimensions); groups are for lists. */
+  columns?: number;
+  /** Text shown when there are no rows. */
+  empty?: string;
+  /** Data comes from the page's `ocx:list:fetch` handler (C-251); `items` is the first page, `group` ignored. */
+  async?: boolean;
+  /** The next page's cursor when `async`: "Load more" shows while there is one. */
+  cursor?: string;
+  /** Zag machine props (data only). */
+  zag?: ZagProps<Omit<ListboxMachineProps, Owned>>;
+}
+
+const {
+  items,
+  label,
+  selectionMode = 'single',
+  value,
+  orientation = 'vertical',
+  columns = 0,
+  empty = 'Nothing to show.',
+  async = false,
+  cursor,
+  zag = {},
+} = Astro.props;
+const id = nextUiId('list');
+// Rows of a group render together, groups in first-seen order (keyboard order = DOM order).
+const groups = new Map<string | undefined, ListItem[]>();
+// An async list is flat: its loaded rows replace SSR ones, and a group wrapper would stay behind empty.
+for (const item of items) {
+  const group = async ? undefined : item.group;
+  groups.set(group, [...(groups.get(group) ?? []), item]);
+}
+const ordered = [...groups.values()].flat();
+const selected = value === undefined ? [] : [value].flat();
+const props = {
+  ...zag,
+  ...(selectionMode !== 'single' && { selectionMode }),
+  ...(orientation !== 'vertical' && { orientation }),
+  ...(selected.length > 0 && { defaultValue: selected }),
+};
+const api = ssrApi(machine, connect, { ...props, id, collection: toCollection(ordered, columns) });
+const slot = Astro.slots.has('default');
+const rich = new Map<string, string>();
+if (slot) for (const item of ordered) rich.set(item.value, await Astro.slots.render('default', [item]));
+---
+
+<div
+  class="ocx-list not-content"
+  data-zag-root="listbox"
+  data-zag-id={id}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(props)}
+  data-ocx-async={async ? (cursor ?? '') : undefined}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <p {...ssrAttrs(api.getLabelProps())}>{label}</p>
+  <div {...ssrAttrs(api.getContentProps())}>
+    {[...groups].map(([group, rows], g) => {
+      const list = rows.map((item) => (
+        <div {...ssrAttrs(api.getItemProps({ item }))} data-label={slot ? item.label : undefined}>
+          {slot ? (
+            <Fragment set:html={rich.get(item.value)} />
+          ) : (
+            <>
+              <span {...ssrAttrs(api.getItemTextProps({ item }))}>{item.label}</span>
+              {item.description && <span class="ocx-list__desc">{item.description}</span>}
+              {item.meta && <span class="ocx-list__meta">{item.meta}</span>}
+            </>
+          )}
+        </div>
+      ));
+      return group === undefined ? (
+        list
+      ) : (
+        <div {...ssrAttrs(api.getItemGroupProps({ id: `g${g}` }))} data-ocx-group={`g${g}`}>
+          <span {...ssrAttrs(api.getItemGroupLabelProps({ htmlFor: `g${g}` }))}>{group}</span>
+          {list}
+        </div>
+      );
+    })}
+  </div>
+  <p class="ocx-list__empty">{empty}</p>
+  {async && (
+    <div class="ocx-list__footer">
+      <p class="ocx-list__status" role="status" />
+      <button type="button" class="ocx-list__retry" hidden>
+        Retry
+      </button>
+      <button type="button" class="ocx-list__more" hidden={cursor === undefined}>
+        Load more
+      </button>
+    </div>
+  )}
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="listbox"]')) {
+    const async = root.hasAttribute('data-ocx-async');
+    const handle = mount(root, {
+      load: () => (async ? import('./async-list.zag.mjs') : import('./listbox.zag.mjs')),
+    });
+    // A command sent before the machine is live (a filter box outside the list) starts it and is
+    // delivered once live; the live machine handles it on the root itself.
+    if (async)
+      for (const type of ['ocx:list:filter', 'ocx:list:sort', 'ocx:list:reload'])
+        root.addEventListener(type, (e) => {
+          if (root.dataset['zagState'] === 'live') return;
+          const { detail } = e as CustomEvent;
+          void handle.start().then(() => {
+            if (root.dataset['zagState'] === 'live') root.dispatchEvent(new CustomEvent(type, { detail }));
+          });
+        });
+  }
+</script>
+
+<style is:global>
+  @layer ocx {
+    .ocx-list {
+      margin-block: var(--ocx-space-5);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg);
+    }
+    .ocx-list > [data-part='label'] {
+      margin: 0 0 var(--ocx-space-2);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-list > [data-part='content'] {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-1);
+      padding: var(--ocx-space-2);
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    /* Inset: an outset ring on the radius-lg box grows round corners. */
+    .ocx-list > [data-part='content']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    .ocx-list > [data-part='content'][data-orientation='horizontal'] {
+      flex-direction: row;
+      overflow-x: auto;
+    }
+    .ocx-list > [data-part='content'][data-layout='grid'] {
+      display: grid;
+      grid-template-columns: repeat(var(--column-count), minmax(0, 1fr));
+    }
+    /* Kept while focused: a filter that empties the list must not drop focus to the body. */
+    .ocx-list > [data-part='content'][data-empty]:not(:focus) {
+      display: none;
+    }
+    .ocx-list [data-part='item-group'] {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-1);
+    }
+    .ocx-list [data-part='item-group-label'] {
+      padding: var(--ocx-space-2) var(--ocx-space-3) var(--ocx-space-1);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      color: var(--ocx-color-fg-subtle);
+    }
+    /* A card row: label and meta on one line, the description under them. */
+    .ocx-list [data-part='item'] {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: baseline;
+      column-gap: var(--ocx-space-3);
+      min-height: var(--ocx-control-sm);
+      padding: var(--ocx-space-2) var(--ocx-space-3);
+      border-radius: var(--ocx-radius-sm);
+      cursor: pointer;
+      user-select: none;
+    }
+    .ocx-list [data-part='item']:hover {
+      background: var(--ocx-color-hover);
+    }
+    .ocx-list [data-part='item'][data-highlighted] {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(-1 * var(--ocx-border-width-strong));
+    }
+    .ocx-list [data-part='item'][aria-selected='true'] {
+      /* fg, not accent-fg: coral text on the tint over surface-subtle misses 4.5:1 in light. */
+      background: var(--ocx-color-accent-tint);
+    }
+    .ocx-list [data-part='item'][data-disabled] {
+      color: var(--ocx-color-fg-subtle);
+      cursor: default;
+    }
+    .ocx-list [data-part='item-text'] {
+      font-weight: var(--ocx-font-weight-medium);
+    }
+    /* Multiple selection: a check box drawn in the row's leading edge. */
+    .ocx-list [aria-multiselectable='true'] [data-part='item'] {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+    .ocx-list [aria-multiselectable='true'] [data-part='item']::before {
+      content: '';
+      grid-row: span 2;
+      align-self: center;
+      width: var(--ocx-icon-xs);
+      height: var(--ocx-icon-xs);
+      border: var(--ocx-border-width-strong) solid var(--ocx-color-border-strong);
+      border-radius: var(--ocx-radius-sm);
+    }
+    .ocx-list [aria-multiselectable='true'] [data-part='item'][aria-selected='true']::before {
+      background: var(--ocx-color-accent);
+      border-color: var(--ocx-color-accent);
+    }
+    .ocx-list .ocx-list__desc {
+      grid-column: -3 / -1;
+      color: var(--ocx-color-fg-muted);
+      font-size: var(--ocx-text-xs);
+    }
+    .ocx-list .ocx-list__meta {
+      grid-row: 1;
+      grid-column: -2;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-list__empty {
+      display: none;
+      margin: 0;
+      padding: var(--ocx-space-4);
+      color: var(--ocx-color-fg-muted);
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) dashed var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    [data-part='content'][data-empty]:not([aria-busy='true']) + .ocx-list__empty {
+      display: block;
+    }
+    .ocx-list__footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--ocx-space-3);
+      margin-block-start: var(--ocx-space-2);
+    }
+    .ocx-list__footer:not(:has(button:not([hidden]))):has(.ocx-list__status:empty) {
+      display: none;
+    }
+    .ocx-list__status {
+      margin: 0 auto 0 0;
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-list__footer button {
+      min-height: var(--ocx-control-sm);
+      padding-inline: var(--ocx-space-4);
+      font: inherit;
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border-strong);
+      border-radius: var(--ocx-radius-md);
+      cursor: pointer;
+    }
+    .ocx-list__footer button:hover {
+      border-color: var(--ocx-color-hover-border);
+    }
+    .ocx-list__footer button:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+    @media (forced-colors: active) {
+      .ocx-list [aria-selected='true'] {
+        outline: var(--ocx-border-width) solid Highlight;
+      }
+    }
+  }
+</style>

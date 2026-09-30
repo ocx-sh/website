@@ -1,0 +1,11 @@
+---
+title: Checkbox and switch
+description: A checkbox and a switch on one native input; toggling logs ocx:checkbox:change and ocx:switch:change.
+height: 220
+log: true
+---
+
+import Choice from '@ocx-sh/theme/components/ui/Choice.astro';
+
+<Choice label="include yanked" name="yanked" checked />
+<Choice type="switch" label="clean env" name="clean" />

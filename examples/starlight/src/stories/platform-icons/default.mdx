@@ -1,0 +1,16 @@
+---
+title: Shells and platforms
+description: setup.ocx.sh serves a separate installer per shell; hover a glyph for its native tooltip.
+height: 310
+prose: true
+---
+
+import PlatformIcons from '@ocx-sh/theme/components/PlatformIcons.astro';
+
+| Shell                                  | Installer URL         | Platforms                                                    |
+| -------------------------------------- | --------------------- | ------------------------------------------------------------ |
+| POSIX `sh` (bash, zsh, ash, ksh, dash) | `setup.ocx.sh/sh`     | <PlatformIcons platforms={['linux', 'darwin']} />            |
+| PowerShell                             | `setup.ocx.sh/pwsh`   | <PlatformIcons platforms={['windows', 'linux', 'darwin']} /> |
+| Nushell                                | `setup.ocx.sh/nu`     | <PlatformIcons platforms={['linux', 'darwin', 'windows']} /> |
+| fish                                   | `setup.ocx.sh/fish`   | <PlatformIcons platforms={['linux', 'darwin']} />            |
+| Elvish                                 | `setup.ocx.sh/elvish` | <PlatformIcons platforms={['linux', 'darwin', 'windows']} /> |

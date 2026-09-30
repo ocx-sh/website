@@ -1,0 +1,21 @@
+---
+// C-032: type-checks the tarball's shipped types (the .d.mts, and the hand-written .d.ts of ./nav
+// and ./icons, the JSDoc-emitted .d.mts of ./toast) under astro/tsconfigs/strictest (`astro check`). Not rendered; its only job is to compile.
+import ocxTheme from '@ocx-sh/theme/starlight';
+import { ICONS, type IconName } from '@ocx-sh/theme/icons';
+import { activeSection } from '@ocx-sh/theme/nav';
+import nav from '@ocx-sh/theme/nav.json';
+import { toast } from '@ocx-sh/theme/toast';
+
+const plugin: ReturnType<typeof ocxTheme> = ocxTheme();
+const section: string = activeSection(nav, '/docs/');
+const icon: IconName = 'check';
+const viewBox: string = ICONS[icon].viewBox;
+// Never runs (Probe is not rendered): each overload, dismiss and promise, checked only.
+const toastId: string = toast('Saved', { tone: 'error', action: { label: 'Undo', event: 'demo:undo' } });
+const legacyId: string | undefined = toast(new EventTarget(), { title: 'Copied' });
+toast.dismiss(legacyId ?? toastId);
+const settled: number = await toast.promise(Promise.resolve(1), { loading: '', success: '', error: '' });
+---
+
+<p data-plugin={plugin.name} data-icon={viewBox} data-settled={settled}>{section}</p>

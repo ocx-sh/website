@@ -1,0 +1,17 @@
+---
+title: ConfirmDialog
+description: A ConfirmDialog popped by an event from a button elsewhere on the page.
+height: 340
+log: true
+---
+
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import ConfirmDialog from '@ocx-sh/theme/components/ui/ConfirmDialog.astro';
+
+<Button onclick="document.dispatchEvent(new CustomEvent('ocx:dialog:open', { detail: { id: 'confirm-demo-dialog' } }))">Remove…</Button>
+<ConfirmDialog
+  id="confirm-demo-dialog"
+  title="Remove package"
+  message="The package leaves this project's lock file."
+  confirmLabel="Remove"
+/>

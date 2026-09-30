@@ -1,0 +1,52 @@
+---
+title: States
+description: The name is the current label plus a hidden hint naming the next state; hover is neutral, disabled is flat. Tab to a button for its focus ring.
+height: 420
+order: 1
+block: true
+---
+
+import CycleButton from '@ocx-sh/theme/components/ui/CycleButton.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const twoState = [
+  { value: 'light', label: 'Light', icon: 'sun' },
+  { value: 'dark', label: 'Dark', icon: 'moon' },
+];
+export const threeState = [
+  { value: 'light', label: 'Light', icon: 'sun' },
+  { value: 'dark', label: 'Dark', icon: 'moon' },
+  { value: 'auto', label: 'Auto', icon: 'monitor' },
+];
+export const sort = [
+  { value: 'asc', label: 'Ascending', icon: 'sort-asc' },
+  { value: 'desc', label: 'Descending', icon: 'sort-desc' },
+];
+
+<StateGrid>
+  <State label="two states">
+    <CycleButton states={twoState} />
+  </State>
+  <State label="three states">
+    <CycleButton states={threeState} value="dark" />
+  </State>
+  <State label="sort direction">
+    <CycleButton states={sort} />
+  </State>
+  <State label="sort direction, descending">
+    <CycleButton states={sort} value="desc" />
+  </State>
+  <State label="ghost">
+    <CycleButton states={sort} variant="ghost" />
+  </State>
+  <State label="size=s">
+    <CycleButton states={sort} size="s" />
+  </State>
+  <State label="with label">
+    <CycleButton states={sort} iconOnly={false} />
+  </State>
+  <State label="disabled">
+    <CycleButton states={sort} disabled />
+  </State>
+</StateGrid>

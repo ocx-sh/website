@@ -1,0 +1,65 @@
+---
+// Link (HeroUI Link anatomy, our look): the prose link on tokens, for use outside prose. Native <a>, no JS.
+// Styles: link.css, loaded by base.css (the breadcrumb trail puts a Link on every page).
+import type { HTMLAttributes } from 'astro/types';
+import Icon from './Icon.astro';
+
+export interface Props extends HTMLAttributes<'a'> {
+  href: string;
+  /** always = quiet underline at rest · hover = underline on hover only · none = never (a non-colour cue is then yours to give). */
+  underline?: 'always' | 'hover' | 'none';
+  /** accent = the prose link ink · neutral = muted, for footers and meta. */
+  tone?: 'accent' | 'neutral';
+  /** Appends the external icon. Default: an absolute http(s) URL off `Astro.site` (any absolute one when `site` is unset). */
+  external?: boolean;
+  /** target="_blank" with rel noopener noreferrer; never implied by `external`. */
+  newTab?: boolean;
+  class?: string;
+}
+
+const {
+  href,
+  underline = 'always',
+  tone = 'accent',
+  external,
+  newTab = false,
+  role,
+  target,
+  rel,
+  class: className,
+  ...rest
+} = Astro.props;
+
+/** Absolute http(s) URL whose origin differs from the site (any, without a site). */
+const offSite = (href: string) => {
+  if (!/^https?:\/\//i.test(href)) return false;
+  try {
+    return !Astro.site || new URL(href).origin !== Astro.site.origin;
+  } catch {
+    return false;
+  }
+};
+const showExternal = external ?? offSite(href);
+// A disabled link drops its href (as Button does): an <a> without one takes no focus and cannot navigate.
+const disabled = String(rest['aria-disabled']) === 'true';
+---
+
+<a
+  class:list={['ocx-ui-link', className]}
+  data-underline={underline}
+  data-tone={tone}
+  {...rest}
+  href={disabled ? undefined : href}
+  role={disabled ? 'link' : role}
+  target={newTab ? '_blank' : target}
+  rel={newTab ? 'noopener noreferrer' : rel}
+>
+  <slot />
+  {showExternal && (
+    <span class="ocx-ui-link__end">
+      &#8288;
+      <Icon name="external" size="sm" label="(external)" />
+    </span>
+  )}
+  {newTab && <span class="ocx-ui-link__sr"> (opens in a new tab)</span>}
+</a>

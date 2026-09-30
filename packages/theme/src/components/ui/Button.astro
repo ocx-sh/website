@@ -1,0 +1,38 @@
+---
+// Button (design c-button). Renders <a> when `href` is set, else <button type="button">.
+// Styles: button.css, loaded by base.css (most composites render a Button: no extra stylesheet request).
+import type { HTMLAttributes } from 'astro/types';
+
+interface Common {
+  /** primary = coral fill (one per view) · secondary = surface + hairline · ghost = text only. */
+  variant?: 'primary' | 'secondary' | 'ghost';
+  /** s = 30 mono · m = 38 · l = 42. */
+  size?: 's' | 'm' | 'l';
+}
+/** Square button holding only an icon; the type requires its accessible name. */
+type IconOnly = { iconOnly: true; 'aria-label': string } | { iconOnly?: false };
+type AsButton = Common &
+  IconOnly &
+  Omit<HTMLAttributes<'button'>, 'type'> & { href?: undefined; type?: 'button' | 'submit' | 'reset' };
+type AsLink = Common & IconOnly & HTMLAttributes<'a'> & { href: string };
+export type Props = AsButton | AsLink;
+
+const { variant = 'secondary', size = 'm', iconOnly = false, class: className, ...rest } = Astro.props;
+const Tag = rest.href === undefined ? 'button' : 'a';
+const type = Tag === 'button' ? ((rest as AsButton).type ?? 'button') : undefined;
+// A disabled link drops its href: an <a> without one takes no focus and cannot navigate.
+const disabledLink = Tag === 'a' && String(rest['aria-disabled']) === 'true';
+---
+
+<Tag
+  class:list={['ocx-ui-button', className]}
+  data-variant={variant}
+  data-size={size}
+  data-icon-only={iconOnly ? '' : undefined}
+  {...rest}
+  type={type}
+  href={disabledLink ? undefined : rest.href}
+  role={disabledLink ? 'link' : rest.role}
+>
+  <slot />
+</Tag>

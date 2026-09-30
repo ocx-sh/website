@@ -1,0 +1,279 @@
+---
+// TagsInput (C-273, the owner's "search field with discardable chips") on Zag tags-input plus a
+// combobox child for suggestions (D-P8), loaded on first interaction. Typing filters the
+// suggestions; Enter, the delimiter or a paste adds a suggestion, or new text when `allowCreate`.
+// Chips are Tag primitives; new ones clone the inert template at the end (D-P9).
+import type { Props as TagsInputMachineProps } from '@zag-js/tags-input';
+import type { ComboboxOption } from './Combobox.astro';
+import Icon from './Icon.astro';
+import InputGroup from './InputGroup.astro';
+import Label from './Label.astro';
+import Tag from './Tag.astro';
+import { nextUiId } from './ids.mjs';
+import type { MatchMode } from './combobox.zag.mjs';
+import {
+  CREATE,
+  combobox,
+  connect,
+  inputAttrs,
+  labelOf,
+  machine,
+  removeLabel,
+  toCollection,
+} from './tags-input.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './field.css';
+import './tag.css';
+// overlay.css (the popup) is not imported here: the client script links it when the machine loads.
+// As a stylesheet of the page it was one more request before first paint, and the popup is closed until then.
+
+export interface Props {
+  label: string;
+  hideLabel?: boolean;
+  /** Help text below the field. */
+  hint?: string;
+  /** Error text; replaces the hint and marks the field invalid. */
+  error?: string;
+  /** The tags (suggestion values, or free text). */
+  value?: string[];
+  /** The valid list; typing filters it and a chip shows the label of its value. */
+  suggestions?: ComboboxOption[];
+  /** Whether text outside `suggestions` becomes a tag. Default: true without suggestions, false with. */
+  allowCreate?: boolean;
+  /** How typed text matches a suggestion's label. */
+  matchMode?: MatchMode;
+  /** Most tags; at the limit the input takes no more text. */
+  max?: number;
+  /** Key that adds the typed text, and the separator a paste is split on. */
+  delimiter?: string;
+  /** Shown while there are no tags. */
+  placeholder?: string;
+  /** Form field name (the tags, joined by ", "). */
+  name?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  /** Text shown when the typed text matches no suggestion. */
+  empty?: string;
+  /** Zag tags-input machine props. */
+  zag?: ZagProps<TagsInputMachineProps>;
+  class?: string;
+}
+
+const {
+  label,
+  hideLabel = false,
+  hint,
+  error,
+  value = [],
+  suggestions = [],
+  allowCreate = suggestions.length === 0,
+  matchMode = 'fuzzy',
+  max,
+  delimiter = ',',
+  placeholder,
+  name,
+  disabled = false,
+  readOnly = false,
+  empty = 'No match',
+  zag,
+  class: className,
+} = Astro.props;
+const zagId = nextUiId('tags-input');
+const message = error ?? hint;
+const msgId = message ? `${zagId}-msg` : undefined;
+// Machine data props travel in data-zag-props; readDom adds the chips, typed text and callbacks.
+const own = {
+  ...(max !== undefined && { max }),
+  delimiter,
+  ...(placeholder && { placeholder }),
+  ...(name && { name }),
+  ...(disabled && { disabled: true }),
+  ...(readOnly && { readOnly: true }),
+  ...(error && { invalid: true }),
+  blurBehavior: 'clear' as const,
+  editable: false,
+  ...zag,
+};
+const rules = { suggestions, allowCreate, max, matchMode };
+const tags = ssrApi(machine, connect, {
+  ...own,
+  id: zagId,
+  defaultValue: value,
+  translations: { ...zag?.translations, deleteTagTriggerLabel: (v: string) => removeLabel(labelOf(suggestions, v)) },
+});
+const ids = {
+  input: `tags-input:${zagId}:input`,
+  control: `tags-input:${zagId}:control`,
+  label: `tags-input:${zagId}:label`,
+};
+const atMax = max !== undefined && value.length >= max;
+// Same props as the client child (tags-input.zag.mjs render); the popup starts closed.
+const combo = suggestions.length
+  ? ssrApi(combobox.machine, combobox.connect, {
+      id: zagId,
+      ids,
+      value: [],
+      inputBehavior: 'autohighlight',
+      selectionBehavior: 'clear',
+      closeOnSelect: false,
+      allowCustomValue: true,
+      disabled,
+      invalid: Boolean(error),
+      readOnly: readOnly || atMax,
+      positioning: { strategy: 'fixed' },
+      collection: toCollection('', value, rules),
+    })
+  : undefined;
+const createItem = { value: CREATE, label: '' };
+const item = (v: string, index: number) => ({ index, value: v });
+---
+
+<div
+  class:list={['ocx-ui-field', 'ocx-ui-tags-input', className]}
+  data-zag-root="tags-input"
+  data-zag-id={zagId}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(own)}
+  data-ocx-allow-create={allowCreate ? '' : undefined}
+  data-ocx-match-mode={matchMode}
+  data-max={atMax ? '' : undefined}
+  data-invalid={error ? '' : undefined}
+  {...ssrAttrs(tags.getRootProps())}
+>
+  <Label hidden={hideLabel} {...ssrAttrs(tags.getLabelProps())}>
+    {label}
+  </Label>
+  <InputGroup wrap {...ssrAttrs(tags.getControlProps())}>
+    {value.map((v, i) => (
+      <Tag
+        variant="label"
+        removable
+        removeLabel={removeLabel(labelOf(suggestions, v))}
+        removeProps={ssrAttrs(tags.getItemDeleteTriggerProps(item(v, i)))}
+        {...ssrAttrs(tags.getItemProps(item(v, i)))}
+      >
+        <span class="ocx-ui-tags-input__preview" {...ssrAttrs(tags.getItemPreviewProps(item(v, i)))}>
+          <span {...ssrAttrs(tags.getItemTextProps(item(v, i)))}>{labelOf(suggestions, v)}</span>
+        </span>
+      </Tag>
+    ))}
+    <input
+      class="ocx-ui-input-group__input ocx-ui-tags-input__input"
+      aria-describedby={msgId}
+      {...ssrAttrs(inputAttrs(tags.getInputProps(), combo?.getInputProps(), atMax))}
+    />
+  </InputGroup>
+  <input {...ssrAttrs(tags.getHiddenInputProps())} />
+  {message && (
+    <p class="ocx-ui-field__msg" id={msgId}>
+      {message}
+    </p>
+  )}
+  {combo && (
+    <div class="ocx-ui-tags-input__positioner" {...ssrAttrs(combo.getPositionerProps())}>
+      <div class="ocx-ui-overlay ocx-ui-tags-input__popup">
+        <ul class="ocx-ui-tags-input__list" {...ssrAttrs(combo.getContentProps())}>
+          {suggestions.map((s) => (
+            <li
+              class="ocx-ui-option"
+              {...ssrAttrs(combo.getItemProps({ item: s }))}
+              hidden={!combo.collection.has(s.value)}
+            >
+              <span class="ocx-ui-option__label" {...ssrAttrs(combo.getItemTextProps({ item: s }))}>
+                {s.label}
+              </span>
+              {s.meta && <span class="ocx-ui-option__meta">{s.meta}</span>}
+            </li>
+          ))}
+          <li
+            class="ocx-ui-option ocx-ui-tags-input__create"
+            {...ssrAttrs(combo.getItemProps({ item: createItem }))}
+            hidden
+          >
+            <Icon name="plus" class="ocx-ui-tags-input__plus" />
+            <span class="ocx-ui-option__label" {...ssrAttrs(combo.getItemTextProps({ item: createItem }))} />
+          </li>
+        </ul>
+        <p class="ocx-ui-tags-input__empty" hidden={combo.collection.size > 0}>
+          {empty}
+        </p>
+      </div>
+    </div>
+  )}
+  <template data-ocx-chip>
+    <Tag variant="label" removable removeLabel="Remove">
+      <span class="ocx-ui-tags-input__preview" data-scope="tags-input" data-part="item-preview">
+        <span data-scope="tags-input" data-part="item-text"></span>
+      </span>
+    </Tag>
+  </template>
+</div>
+
+<script>
+  import overlay from './overlay.css?url';
+  import { mount } from './zag.mjs';
+
+  // The popup's sheet loads with the machine, in parallel, and the machine starts once it has (or
+  // failed): the popup is never open unstyled. A stylesheet, not text in the chunk: CSS in JS counted
+  // toward the page's script budget (C-112).
+  let css: Promise<unknown> | undefined;
+  const sheet = () =>
+    (css ??= new Promise((done) =>
+      document.head.append(
+        Object.assign(document.createElement('link'), {
+          rel: 'stylesheet',
+          href: overlay,
+          onload: done,
+          onerror: done,
+        }),
+      ),
+    ));
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tags-input"]'))
+    mount(root, { load: () => Promise.all([import('./tags-input.zag.mjs'), sheet()]).then(([m]) => m), replay: false });
+</script>
+
+<style is:global>
+  @layer ocx {
+    /* The text grows into the row's rest; below ~8ch it wraps under the chips. */
+    .ocx-ui-tags-input .ocx-ui-tags-input__input {
+      min-inline-size: 8ch;
+      min-block-size: calc(var(--ocx-control-2xl) - 2 * (var(--ocx-space-2) + var(--ocx-border-width)));
+      padding-inline: var(--ocx-space-2);
+    }
+    .ocx-ui-tags-input .ocx-ui-tags-input__input:read-only:not(:disabled) {
+      cursor: default;
+    }
+    /* Backspace or ← onto a chip highlights it: the focus colour, drawn on the chip's own border. */
+    .ocx-ui-tags-input .ocx-ui-tag:has(> [data-part='item-preview'][data-highlighted]) {
+      border-color: var(--ocx-color-focus);
+      /* Outlines survive forced colours; a border colour does not. */
+      outline: var(--ocx-focus-ring);
+      outline-offset: 0;
+    }
+    .ocx-ui-tags-input__preview {
+      cursor: default;
+    }
+
+    /* Popup: the Combobox surface; overlay.css hides and animates it with Zag's content. */
+    .ocx-ui-tags-input__list {
+      max-block-size: calc(var(--ocx-space-12) * 4);
+      margin: 0;
+      padding: 0;
+      overflow-y: auto;
+      list-style: none;
+    }
+    .ocx-ui-tags-input__plus {
+      grid-column: 1;
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-ui-tags-input__empty {
+      margin: 0;
+      padding: var(--ocx-space-4);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-subtle);
+      border: var(--ocx-border-width) dashed var(--ocx-color-border-strong);
+    }
+  }
+</style>

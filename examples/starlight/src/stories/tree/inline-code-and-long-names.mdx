@@ -1,0 +1,49 @@
+---
+title: Inline code and long names
+description: Descriptions keep inline code, and long names wrap instead of widening the page.
+height: 450
+order: 2
+block: true
+---
+
+import Tree from '@ocx-sh/theme/components/Tree.astro';
+import Node from '@ocx-sh/theme/components/TreeNode.astro';
+import Description from '@ocx-sh/theme/components/TreeDescription.astro';
+
+<Tree>
+  <Node name="~/.ocx/index/" icon="🏷️" open>
+    <Node name="ocx.sh/" icon="📁" open-icon="📂" open>
+      <Description slot="description">one subtree per source — the local index collection</Description>
+      <Node name="c/index.json" icon="📄">
+        <Description slot="description">catalog — <code>ns/pkg → sha256(root)</code></Description>
+      </Node>
+      <Node name="p/{ns}/{pkg}.json" icon="📄">
+        <Description slot="description">root document — repository pointer, tags, publisher status</Description>
+      </Node>
+      <Node name="p/{ns}/{pkg}/o/sha256/{hex}.json" icon="📄">
+        <Description slot="description">dispatch object, named by its own digest</Description>
+      </Node>
+    </Node>
+  </Node>
+</Tree>
+
+<Tree>
+  <Node name="{home}/" icon="🧰" open>
+    <Description slot="description"><code>$OCX_HOME/toolchain/</code> for the global tier, <code>{'{project}'}/.ocx/toolchain/</code> for a project</Description>
+    <Node name=".gitignore" icon="📄">
+      <Description slot="description">a single <code>*</code> line, kept present by the renderer</Description>
+    </Node>
+    <Node name="active" icon="➡️">
+      <Description slot="description">link to <code>shells/default/</code>, the <code>PATH</code>-facing name: export <code>active/bin</code></Description>
+    </Node>
+    <Node name="links/" icon="📁" open-icon="📂" open>
+      <Description slot="description">every name you declared lives under here</Description>
+      <Node name="{group}/" icon="📁" open-icon="📂" open>
+        <Description slot="description">one directory per selected group; the default group is <code>default/</code></Description>
+        <Node name="{entry}" icon="➡️">
+          <Description slot="description">directory link to a package root — an NTFS junction on Windows</Description>
+        </Node>
+      </Node>
+    </Node>
+  </Node>
+</Tree>

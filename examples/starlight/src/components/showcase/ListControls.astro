@@ -1,0 +1,49 @@
+---
+// C-251 / S-111: controls of the async List demo that follows them. They answer its
+// `ocx:list:fetch` from local data (catalog.mjs, fetched lazily, a short delay per page) and send
+// it commands: a filter box, a sort toggle, and a switch that fails the next load (error + Retry).
+---
+
+<div class="showcase-actions" data-list-controls data-delay="600">
+  <input
+    type="search"
+    class="showcase-action"
+    placeholder="Filter packages"
+    aria-label="Filter packages"
+    data-list="filter"
+  />
+  <button type="button" class="showcase-action" data-list="sort" aria-pressed="false">
+    Sort Z–A
+  </button>
+  <button type="button" class="showcase-action" data-list="fail" aria-pressed="false">
+    Fail next load
+  </button>
+</div>
+
+<script>
+  import type { ListFetchDetail, ListFilterDetail, ListSortDetail } from '@ocx-sh/theme/components/ui/List.astro';
+
+  for (const box of document.querySelectorAll<HTMLElement>('[data-list-controls]')) {
+    const list = box.parentElement?.querySelector<HTMLElement>('[data-ocx-async]');
+    const [filter, sort, fail] = ['filter', 'sort', 'fail'].map((k) =>
+      box.querySelector<HTMLElement>(`[data-list="${k}"]`)!,
+    );
+    if (!list || !filter || !sort || !fail) continue;
+    const pressed = (el: HTMLElement) => el.getAttribute('aria-pressed') === 'true';
+    const send = (type: string, detail: ListFilterDetail | ListSortDetail) =>
+      list.dispatchEvent(new CustomEvent(type, { detail }));
+    list.addEventListener('ocx:list:fetch', (e) => {
+      const request = (e as CustomEvent<ListFetchDetail>).detail;
+      const options = { delay: Number(box.dataset['delay']), fail: pressed(fail) };
+      fail.setAttribute('aria-pressed', 'false');
+      // respondWith-style: answer synchronously, with a promise of the page.
+      request.respond(import('./catalog.mjs').then(({ page }) => page(request, options)));
+    });
+    filter.addEventListener('input', () => send('ocx:list:filter', { text: (filter as HTMLInputElement).value }));
+    sort.addEventListener('click', () => {
+      sort.setAttribute('aria-pressed', String(!pressed(sort)));
+      send('ocx:list:sort', { column: 'label', direction: pressed(sort) ? 'descending' : 'ascending' });
+    });
+    fail.addEventListener('click', () => fail.setAttribute('aria-pressed', String(!pressed(fail))));
+  }
+</script>

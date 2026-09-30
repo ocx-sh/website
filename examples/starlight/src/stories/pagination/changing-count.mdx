@@ -1,0 +1,19 @@
+---
+title: Changing count
+description: A filter that resizes the pages with ocx:pagination:set; the page count follows the matching rows.
+height: 470
+order: 2
+prose: true
+---
+
+import DataTable from '@ocx-sh/theme/components/ui/DataTable.astro';
+
+An owner that filters its items resizes the pages with `ocx:pagination:set`. Type in the filter:
+the page count follows the matching rows (see <a href="../../../components/tables/" target="_top">Tables</a>).
+
+<DataTable
+  caption="Pagination count demo"
+  columns={[{ key: 'n', label: 'Item', numeric: true }, { key: 'word', label: 'Word' }]}
+  rows={Array.from({ length: 30 }, (_, i) => ({ n: i + 1, word: ['alpha', 'beta', 'gamma', 'delta'][i % 4] }))}
+  pageSize={5}
+/>

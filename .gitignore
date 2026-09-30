@@ -12,3 +12,12 @@ dist/
 # Pulled by `task samples`, never committed.
 examples/starlight/src/content/docs/samples/
 .task/
+# task lighthouse reports (scripts/lighthouse.mjs).
+.lighthouseci/
+test-results/
+playwright-report/
+# Fetched by `task samples` (ocx.sh recordings); only the committed fixture stays.
+examples/starlight/public/casts/*
+!examples/starlight/public/casts/fixture/
+# Vitest JSON reporter output (rtk wrapper).
+.vitest/

@@ -1,0 +1,27 @@
+---
+// C-120: filter field above the component index. Without a script the field is hidden by
+// `@media (scripting: none)` (a CSS test, so it is final at first paint and nothing shifts when the
+// script attaches) and the full list shows. The count is server-rendered; the script only rewrites
+// it, and only after typing, so nothing is announced on load. Logic: component-filter.mjs, which also
+// loads the gallery thumbnails (D-SB9). Styles: showcase.css (a sheet of their own was a fifth
+// render-blocking request on the gallery, Lighthouse performance 0.99). No transition anywhere.
+import { getCollection } from 'astro:content';
+import SearchField from '@ocx-sh/theme/components/ui/SearchField.astro';
+import { componentPages } from './pages.mjs';
+
+const total = componentPages(await getCollection('docs')).length;
+---
+
+<div class="component-filter not-content" data-component-filter>
+  <SearchField label="Filter components" autocomplete="off" />
+  <p aria-live="polite" data-count>
+    {total} components
+  </p>
+</div>
+
+<script>
+  import { installFilter, installThumbs } from './component-filter.mjs';
+
+  installFilter();
+  installThumbs();
+</script>

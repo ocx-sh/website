@@ -1,0 +1,181 @@
+---
+// SBOM viewer (WP13.4, port of ocx DependencyExplorer.vue): fetches `dependencies.json` on load;
+// search + license filter (AND), per-row expand keyed `name@version`, 3 summary stats, loading /
+// error / empty states. Rows are built at runtime with DOM APIs and textContent only (never an
+// HTML-string sink). Each expandable row is a Zag `collapsible` (C-220, collapsible.zag.mjs, loaded
+// on the row's first hover/focus); its detail is filled on first open. Row styles ship with the
+// runtime module (dependency-explorer.css), not in the page: nothing at first paint needs them.
+// ponytail: no copy action (the Vue original has none; a CopyButton per row costs ~650 B gz of page
+// HTML, see the plan's Z11 design question); add one once Button/CopyButton styles can load lazily.
+// No CLS: the summary, controls and table head paint final; skeletons hold the stat values, the
+// Loader holds the count line, and one placeholder row per row the SBOM will render (C-221, capped
+// at 12) holds the table body.
+import { base } from 'astro:config/client';
+import { withBase } from './base-url.mjs';
+import { reserveRows } from './dependency-explorer.mjs';
+import Loader from './ui/Loader.astro';
+import SearchField from './ui/SearchField.astro';
+import Select from './ui/Select.astro';
+import Skeleton from './ui/Skeleton.astro';
+
+interface Props {
+  /** URL of the dependencies JSON; defaults to `data/dependencies.json` under the site base. */
+  src?: string;
+}
+
+const { src = withBase('/data/dependencies.json', base) } = Astro.props;
+const reserve = await reserveRows(src);
+
+// First-paint styles, inline before the markup rather than a bundled sheet: as a file they were one
+// more request before LCP, and past ~16 of those Lighthouse's simulation (six HTTP/1.1 connections)
+// queued LCP a round trip later (perf 0.99). Unprocessed, hence minified; set:text escapes HTML
+// specials, so the rules avoid `<`, `>`, `&` and quotes.
+const CSS = `@layer ocx{${[
+  '.ocx-deps{margin:var(--ocx-space-5) 0;font-size:var(--ocx-text-md);color:var(--ocx-color-fg)}',
+  '.ocx-deps [hidden]{display:none}',
+  // No-JS: nothing would ever load; the noscript aside stands alone.
+  '@media (scripting:none){.ocx-deps__body{display:none}}',
+  '.ocx-deps__summary{display:flex;flex-wrap:wrap;gap:var(--ocx-space-5);margin-bottom:var(--ocx-space-5)}',
+  // Fact cards are base.css .ocx-card; only the fill-the-row sizing is ours (two classes: wins over
+  // .ocx-card whatever the sheet order).
+  '.ocx-deps .ocx-deps__stat{flex:1;min-width:calc(var(--ocx-space-12) + var(--ocx-space-3));gap:var(--ocx-space-1)}',
+  '.ocx-deps__stat-value{font-size:var(--ocx-text-lg);font-weight:var(--ocx-font-weight-semibold);line-height:var(--ocx-lh-heading)}',
+  '.ocx-deps__stat-label,.ocx-deps__count{font-size:var(--ocx-text-sm);color:var(--ocx-color-fg-muted)}',
+  '.ocx-deps__controls{display:flex;gap:var(--ocx-space-4);margin-bottom:var(--ocx-space-4)}',
+  '.ocx-deps .ocx-deps__search{flex:1}',
+  '.ocx-deps__count{margin:0 0 var(--ocx-space-3)}',
+  // Top-aligned, so the Loader's line is exactly the count text's line (no shift on swap).
+  '.ocx-deps__count .ocx-ui-loader{vertical-align:top}',
+  '.ocx-deps__scroll{overflow-x:auto}',
+  // Fixed layout: the head paints final. Auto layout re-widths the columns when the rows land,
+  // which shifts the head (CLS). Name takes what the others leave.
+  '.ocx-deps table{width:100%;table-layout:fixed;border-collapse:collapse}',
+  '.ocx-deps th:nth-child(2){width:var(--ocx-space-12)}',
+  '.ocx-deps th.ocx-deps__wide{width:calc(var(--ocx-space-12) * 1.5)}',
+  '.ocx-deps th{padding:var(--ocx-space-3) var(--ocx-space-4);text-align:start;font-size:var(--ocx-text-xs);' +
+    'font-weight:var(--ocx-font-weight-semibold);letter-spacing:var(--ocx-tracking-caps);text-transform:uppercase;' +
+    'white-space:nowrap;color:var(--ocx-color-fg-muted);border-bottom:var(--ocx-border-width-strong) solid var(--ocx-color-border)}',
+  // Placeholder and data rows share this box, so one placeholder is one row's pitch (C-221).
+  '.ocx-deps td{padding:var(--ocx-space-3) var(--ocx-space-4);vertical-align:top;border-bottom:var(--ocx-border-width) solid var(--ocx-color-border)}',
+  // An SBOM with no rows reserves the empty state instead (C-221); it shows once loaded.
+  '.ocx-deps__scroll:has([aria-busy])+.ocx-deps__empty{visibility:hidden}',
+  '.ocx-deps__empty{margin:0;padding:var(--ocx-space-7);text-align:center;color:var(--ocx-color-fg-muted)}',
+  // Narrow screens: width < 40rem, the theme's drawer breakpoint (--ocx-bp-drawer).
+  '@media not all and (min-width:40rem){.ocx-deps__controls{flex-direction:column}.ocx-deps__summary{gap:var(--ocx-space-3)}' +
+    '.ocx-deps__stat{min-width:0;flex-basis:calc(50% - var(--ocx-space-2))}.ocx-deps .ocx-deps__wide{display:none}}',
+].join('')}}`;
+---
+
+<style is:inline set:text={CSS} />
+
+<div class="ocx-deps not-content" data-src={src}>
+  <noscript>
+    <div class="starlight-aside starlight-aside--danger" role="alert">
+      <p class="starlight-aside__title" aria-hidden="true">
+        JavaScript required
+      </p>
+      <div class="starlight-aside__content">
+        <p>This dependency list needs JavaScript to load.</p>
+      </div>
+    </div>
+  </noscript>
+  <div class="ocx-deps__error starlight-aside starlight-aside--danger" role="alert" hidden>
+    <p class="starlight-aside__title" aria-hidden="true">
+      Error
+    </p>
+    <div class="starlight-aside__content">
+      <p class="ocx-deps__error-msg"></p>
+    </div>
+  </div>
+  <div class="ocx-deps__body">
+    <div class="ocx-deps__summary">
+      {['Dependencies', 'Licenses', 'Generated'].map((label) => (
+        <div class="ocx-card ocx-deps__stat">
+          <span class="ocx-deps__stat-value">
+            <Skeleton lines={1} />
+          </span>
+          <span class="ocx-deps__stat-label">{label}</span>
+        </div>
+      ))}
+    </div>
+    <div class="ocx-deps__controls">
+      <SearchField
+        class="ocx-deps__search"
+        label="Search dependencies"
+        placeholder="Search dependencies…"
+        autocomplete="off"
+      />
+      <Select label="License" hideLabel options={[{ value: '', label: 'All licenses' }]} />
+    </div>
+    <p class="ocx-deps__count" aria-live="polite">
+      <Loader size="s" label="Loading dependency data…" />
+    </p>
+    <div class="ocx-deps__scroll">
+      <table class="ocx-deps__table" aria-busy="true">
+        <thead>
+          <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Version</th>
+            <th scope="col" class="ocx-deps__wide">
+              License
+            </th>
+            <th scope="col" class="ocx-deps__wide">
+              Links
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: reserve }, () => (
+            <tr class="ocx-deps__loading">
+              {/* Two cells, the second a wide one: a colspan="4" cell would add the two columns narrow
+              screens hide, and the table would re-lay its columns (CLS) when the data rows land. */}
+              <td colspan="2">
+                <Skeleton lines={1} />
+              </td>
+              <td colspan="2" class="ocx-deps__wide">
+                <Skeleton lines={1} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="ocx-deps__empty" hidden={reserve > 0}>
+      No dependencies match the current filters.
+    </p>
+  </div>
+</div>
+
+<script>
+  // A dynamic import keeps the module out of the page HTML (Vite inlines a script under 4 KB). It
+  // starts at idle after load, or on the first input if that comes sooner: started at
+  // DOMContentLoaded, its chained request landed before LCP in Lighthouse's simulation and cost a
+  // round trip (perf 0.99). The placeholder rows hold the box meanwhile. An `ocx:deps:load` sent
+  // before the mount is held and replayed after it, so an early reload is never lost.
+  const roots = [...document.querySelectorAll<HTMLElement>('.ocx-deps')];
+  const INPUT = ['pointerover', 'focusin', 'touchstart', 'keydown'];
+  const held = new Map<EventTarget, unknown>();
+  const hold = (e: Event) => {
+    if (e.currentTarget) held.set(e.currentTarget, (e as CustomEvent).detail);
+  };
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    for (const type of INPUT) removeEventListener(type, start, true);
+    void import('./dependency-explorer.mjs').then(({ mountExplorer }) =>
+      roots.forEach((root) => {
+        root.removeEventListener('ocx:deps:load', hold);
+        void mountExplorer(root);
+        if (held.has(root)) root.dispatchEvent(new CustomEvent('ocx:deps:load', { detail: held.get(root) }));
+      }),
+    );
+  };
+  if (roots.length) {
+    for (const root of roots) root.addEventListener('ocx:deps:load', hold);
+    for (const type of INPUT) addEventListener(type, start, { capture: true, passive: true });
+    const idle = () => (window.requestIdleCallback ?? setTimeout)(start);
+    if (document.readyState === 'complete') idle();
+    else addEventListener('load', idle, { once: true });
+  }
+</script>

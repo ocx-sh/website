@@ -1,0 +1,151 @@
+---
+// Tabs (C-150, design c-tabs "code selection"): Starlight-compatible <Tabs> on Zag `tabs`.
+// The panels come from the rendered <TabItem> slot; the tab list, the selection and the
+// underline are SSR, final at first paint (C-130c). A `syncKey` group restores the stored
+// choice with an inline script before paint and syncs its peers once live (C-151).
+import type { Props as TabsMachineProps } from '@zag-js/tabs';
+import { tabPanels } from '../starlight/tab-icons.mjs';
+import type { TabIcon } from './TabItem.astro';
+import { connect, machine, selectTab } from './tabs.zag.mjs';
+import Icon from './ui/Icon.astro';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+
+export interface Props {
+  /** Groups with the same key switch together, and the choice is remembered across pages. */
+  syncKey?: string;
+  /** Zag `tabs` machine props (data only). */
+  zag?: ZagProps<TabsMachineProps>;
+}
+
+const { syncKey, zag } = Astro.props;
+const { items, html } = tabPanels(await Astro.slots.render('default'));
+// Values are id-safe slugs (Zag builds part ids from them); synced groups match on labels.
+const seen = new Map<string, number>();
+const values = items.map(({ label }) => {
+  const slug =
+    label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '') || 'tab';
+  const n = (seen.get(slug) ?? 0) + 1;
+  seen.set(slug, n);
+  return n > 1 ? `${slug}-${n}` : slug;
+});
+const id = nextUiId('tabs');
+const props = { defaultValue: values[0], ...zag };
+const api = ssrApi(machine, connect, { id, ...props });
+const panels = html((i) => ssrAttrs(api.getContentProps({ value: values[i] ?? '' })));
+const storageKey = JSON.stringify(`starlight-synced-tabs__${syncKey}`).replace(/</g, '\\u003c');
+// ponytail: the function source repeats per synced group (gzip folds the copies); the
+// no-JS reload e2e catches a build transform that breaks its toString.
+const restore =
+  syncKey !== undefined &&
+  `(${selectTab.toString()})(document.currentScript.parentElement,(()=>{try{return localStorage.getItem(${storageKey})}catch{}})())`;
+---
+
+<div
+  class="ocx-tabs"
+  data-zag-root="tabs"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(props)}
+  data-sync-key={syncKey}
+  {...ssrAttrs(api.getRootProps())}
+>
+  {items.length > 0 && (
+    <div class="not-content" {...ssrAttrs(api.getListProps())}>
+      {items.map(({ label, icon }, i) => (
+        <button {...ssrAttrs(api.getTriggerProps({ value: values[i] ?? '' }))}>
+          {icon && <Icon name={icon as TabIcon} />}
+          {label}
+        </button>
+      ))}
+    </div>
+  )}
+  <Fragment set:html={panels} />
+  {restore && <script is:inline set:html={restore} />}
+</div>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tabs"]'))
+    mount(root, { load: () => import('./tabs.zag.mjs') });
+</script>
+
+<style is:global>
+  @layer ocx {
+    /* Underlines, never boxes: selected = accent-fg + a strong coral line (design c-tabs). */
+    .ocx-tabs > [data-part='list'] {
+      display: flex;
+      gap: var(--ocx-space-1);
+      /* `overflow-x: auto` alone computes `overflow-y: auto` too (CSS Overflow §3): a
+       * fraction-of-a-pixel vertical overflow from line-height rounding or the focus
+       * ring then draws a vertical scrollbar the list must never have. Pin it shut. */
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      /* The rule is an inset shadow, not a border, so the triggers' underlines overlay it inside the
+       * padding box: a trigger pulled over a border by a negative margin overflows the box by that
+       * margin (scrollHeight > clientHeight) even with overflow hidden. */
+      box-shadow: inset 0 calc(-1 * var(--ocx-border-width)) 0 var(--ocx-color-border);
+    }
+    .ocx-tabs > [data-part='list'] > [data-part='trigger'] {
+      display: flex;
+      flex: none;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      margin: 0;
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      font-weight: var(--ocx-font-weight-regular);
+      line-height: var(--ocx-lh-heading);
+      white-space: nowrap;
+      color: var(--ocx-color-fg-subtle);
+      background: none;
+      border: 0;
+      border-bottom: var(--ocx-border-width-strong) solid transparent;
+      cursor: pointer;
+      scroll-snap-align: start;
+    }
+    .ocx-tabs > [data-part='list'] > [data-part='trigger']:hover {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-tabs > [data-part='list'] > [data-part='trigger'][data-selected] {
+      color: var(--ocx-color-accent-fg);
+      font-weight: var(--ocx-font-weight-medium);
+      border-bottom-color: var(--ocx-color-accent);
+    }
+    .ocx-tabs > [data-part='list'] > [data-part='trigger']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(-1 * var(--ocx-border-width-strong));
+    }
+    .ocx-tabs > [data-part='content']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+    .ocx-tabs > [data-part='content'] {
+      margin-top: var(--ocx-space-5);
+    }
+    /* Around a lone code frame the strip and the frame read as one panel. */
+    .ocx-tabs:has(> [data-part='content'] > .expressive-code:only-child) > [data-part='list'] {
+      padding: var(--ocx-space-2) var(--ocx-space-3) 0;
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-bottom: 0;
+      border-radius: var(--ocx-radius-lg) var(--ocx-radius-lg) 0 0;
+      box-shadow: none;
+    }
+    .ocx-tabs:has(> [data-part='content'] > .expressive-code:only-child) > [data-part='content'] {
+      margin-top: 0;
+    }
+    .ocx-tabs > [data-part='content'] > .expressive-code:only-child .frame pre {
+      border-top: 0;
+      border-start-start-radius: 0;
+      border-start-end-radius: 0;
+    }
+  }
+</style>

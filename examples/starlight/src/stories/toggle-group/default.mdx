@@ -1,0 +1,17 @@
+---
+title: Platform
+description: A single choice among four always-visible options.
+height: 176
+log: true
+---
+
+import ToggleGroup from '@ocx-sh/theme/components/ToggleGroup.astro';
+
+export const platforms = [
+  { value: 'linux', label: 'linux' },
+  { value: 'macos', label: 'macos' },
+  { value: 'windows', label: 'windows' },
+  { value: 'freebsd', label: 'freebsd' },
+];
+
+<ToggleGroup label="Platform" items={platforms} value="macos" />

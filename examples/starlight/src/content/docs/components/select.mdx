@@ -1,0 +1,42 @@
+---
+title: Select
+description: A labelled select-only combobox with option metadata, on the Zag select.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A button that opens a listbox of options, on the Zag select (loaded on first hover or focus). A
+hidden native `<select>` carries the value into forms; options appended to it at runtime join the
+list. The `start` and `end` slots put a control inside the box, such as a sort-direction toggle.
+
+## Stories
+
+<Stories of="select" />
+
+## Props
+
+<PropsTable
+  of="ui/Select.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Accessible name, shown as the visible label unless hideLabel.' },
+    { name: 'hideLabel', type: 'boolean', default: 'false', description: 'Keep the label for assistive tech only.' },
+    { name: 'options', type: '{ value, label, meta?, disabled? }[]', default: '[]', description: 'Build-time options; append <option value data-meta> to the hidden <select> for more at runtime.' },
+    { name: 'value', type: 'string', default: 'first enabled option', description: 'Selected value.' },
+    { name: 'zag', type: 'ZagProps<select.Props>', description: 'Zag machine props.' },
+    { name: 'rest → <select>', type: 'HTMLAttributes', description: 'name, required, form, disabled and aria-invalid drive the machine; every other attribute except multiple goes to the hidden <select>.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:select:change` `{ value }`: An option is chosen.
+
+## Keyboard
+
+- <kbd>Enter</kbd> <kbd>Space</kbd> <kbd>↓</kbd>: Opens the list on the chosen option.
+- <kbd>↓</kbd> <kbd>↑</kbd> <kbd>Home</kbd> <kbd>End</kbd>: Moves the highlight.
+- <kbd>Enter</kbd>: Chooses the highlighted option and closes.
+- <kbd>Esc</kbd>: Closes without a change.
+- Letters: Typeahead: highlights the next option starting with them.
+- <kbd>Tab</kbd>: A control in the `start` or `end` slot is its own tab stop.

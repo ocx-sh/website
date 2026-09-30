@@ -1,0 +1,49 @@
+---
+title: Terminal
+description: Recorded terminal sessions played with asciinema-player, collapsed or open.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Recordings come from running the real `ocx` binary (asciicast v2, player pinned to asciinema-player 3.15.1).
+The cast file is fetched as soon as the page loads; the player itself loads on first hover, focus or touch for an
+open terminal, and on first expand for a collapsed one.
+The player's own control bar stays off (`controls: false`); a themed play/pause button, a native seek range and a
+fullscreen button replace it, wired to the player through its API (play, pause, seek, getCurrentTime, getDuration).
+
+Select the title bar, or focus it and press <kbd>Enter</kbd> or <kbd>Space</kbd>, to play the recording. Closing it
+pauses and rewinds.
+
+## Stories
+
+<Stories of="terminal" />
+
+## Props
+
+<PropsTable
+  of="Terminal.astro"
+  rows={[
+    { name: 'src', type: 'string', required: true, description: 'Root-absolute path to a .cast file; the site base is prepended.' },
+    { name: 'title', type: 'string', description: 'Text centred in the title bar.' },
+    { name: 'cols', type: 'number', default: 'from the cast', description: 'Terminal width in columns.' },
+    { name: 'rows', type: 'number', default: 'from the cast', description: 'Terminal height in rows; with cols, reserves the space before loading.' },
+    { name: 'autoPlay', type: 'boolean', default: 'false', description: 'Start playback without a click. Recordings never autoplay by default.' },
+    { name: 'speed', type: 'number', default: '1', description: 'Playback speed multiplier.' },
+    { name: 'idleTimeLimit', type: 'number', default: '2', description: 'Compress pauses longer than this many seconds.' },
+    { name: 'loop', type: 'boolean', default: 'false', description: 'Restart at the end.' },
+    { name: 'fit', type: "'width' | 'height' | 'both' | 'none'", default: "'width'", description: 'How the player scales; none disables scaling.' },
+    { name: 'collapsed', type: 'boolean', default: 'false', description: 'Show only the title bar; the player loads when the reader expands it.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:collapsible:change` with detail `{ open }`, when the reader expands or collapses a collapsed terminal.
+
+## Keyboard
+
+- <kbd>Enter</kbd> or <kbd>Space</kbd> expands or collapses a collapsed terminal; its title bar is a native button.
+- The play button and the fullscreen button are native buttons: <kbd>Enter</kbd> or <kbd>Space</kbd> activates
+  whichever is focused.
+- The seek range is a native `<input type="range">`: the arrow keys move it, which seeks the recording.

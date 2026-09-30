@@ -1,0 +1,40 @@
+---
+title: Toc
+description: A scroll-spy table of contents on Zag toc; marks the heading you are reading.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A table of contents that marks the heading you are reading (or the entry you clicked), for pages
+that do not have Starlight's own. Its links work before JavaScript; the machine starts when the list scrolls into view, with
+no input. Scroll the first story: it lists its own sections. No event log there: the Toc starts at
+load, so its script counts before input and the page stays within its script budget.
+
+## Stories
+
+<Stories of="toc" />
+
+## Props
+
+<PropsTable
+  of="Toc.astro"
+  rows={[
+    { name: 'items', type: '{ id, label, depth }[]', required: true, description: 'One entry per heading: its element id, text and level (2 for an h2).' },
+    { name: 'label', type: 'string', default: "'On this page'", description: 'Heading of the list, its accessible name.' },
+    { name: 'zag', type: 'ZagProps<TocProps>', description: 'Zag machine props, data only; autoScroll defaults to false. The scroll-spy band follows the page scroll-padding-top.' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:toc:change` | `{ value: string[] }` | The active heading changes: `value` holds its id, or nothing when no heading is active. |
+
+## Keyboard
+
+Plain links in a `nav` landmark; no APG widget pattern applies.
+
+- <kbd>Tab</kbd>: Next entry.
+- <kbd>Enter</kbd>: Jump to that heading.

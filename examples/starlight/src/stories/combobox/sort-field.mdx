@@ -1,0 +1,27 @@
+---
+title: Sort field
+description: A CycleButton in the start slot flips the sort direction; it is its own tab stop and never opens the list.
+height: 300
+order: 1
+log: true
+---
+
+import Combobox from '@ocx-sh/theme/components/ui/Combobox.astro';
+import CycleButton from '@ocx-sh/theme/components/ui/CycleButton.astro';
+
+export const sortKeys = [
+  { value: 'name', label: 'Name' },
+  { value: 'updated', label: 'Updated' },
+  { value: 'rating', label: 'Rating' },
+  { value: 'downloads', label: 'Downloads' },
+];
+export const directions = [
+  { value: 'asc', label: 'Ascending', icon: 'sort-asc' },
+  { value: 'desc', label: 'Descending', icon: 'sort-desc' },
+];
+
+<div style="inline-size: min(100%, calc(var(--ocx-space-12) * 3))">
+  <Combobox label="Sort by" options={sortKeys} value="updated">
+    <CycleButton slot="start" variant="ghost" size="s" states={directions} value="desc" />
+  </Combobox>
+</div>

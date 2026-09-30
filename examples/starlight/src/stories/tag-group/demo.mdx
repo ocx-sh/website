@@ -1,0 +1,19 @@
+---
+title: Removable labels
+description: Removable labels report each removal before it happens; cancel the event to keep the chip.
+height: 200
+order: 1
+log: true
+---
+
+import TagGroup from '@ocx-sh/theme/components/ui/TagGroup.astro';
+
+export const labels = [
+  { value: 'cli', label: 'cli', tone: 'keyword' },
+  { value: 'stable', label: 'stable', tone: 'success' },
+  { value: 'beta', label: 'beta', tone: 'warning' },
+  { value: 'eol', label: 'eol', tone: 'danger' },
+  { value: 'docs', label: 'docs' },
+];
+
+<TagGroup label="Entry tags" removable items={labels} />

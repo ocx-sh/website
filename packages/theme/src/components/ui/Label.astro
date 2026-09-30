@@ -1,0 +1,44 @@
+---
+// Label (C-260): the field label, a <label for> or, for non-labelable targets (groups, meters), a
+// <span> that the target names through aria-labelledby. Look in field.css; no JS.
+import type { HTMLAttributes } from 'astro/types';
+import './field.css';
+
+export interface Props extends Omit<HTMLAttributes<'label'>, 'hidden'> {
+  /** Id of the control this label names (`as="label"`). */
+  for?: string;
+  /** `span` for targets a <label> cannot name; give it an `id` and point `aria-labelledby` at it. */
+  as?: 'label' | 'span';
+  /** Visually hidden, still the accessible name. */
+  hidden?: boolean;
+  /** Appends a decorative `*`; put `required` on the control itself. */
+  required?: boolean;
+  /** Muted, for a disabled control. */
+  disabled?: boolean;
+}
+
+const {
+  for: htmlFor,
+  as: Tag = 'label',
+  hidden = false,
+  required = false,
+  disabled = false,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<Tag
+  class:list={['ocx-ui-field__label', className]}
+  for={Tag === 'label' ? htmlFor : undefined}
+  data-hidden={hidden ? '' : undefined}
+  data-disabled={disabled ? '' : undefined}
+  {...rest}
+>
+  <slot />
+  {required && (
+    <span aria-hidden="true" class="ocx-ui-field__required">
+      *
+    </span>
+  )}
+</Tag>

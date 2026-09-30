@@ -1,0 +1,38 @@
+---
+title: Sort, filter and pages
+description: A DataTable with sorting by column, a text filter and pages of six rows.
+height: 470
+block: true
+log: true
+---
+
+import DataTable from '@ocx-sh/theme/components/ui/DataTable.astro';
+
+export const columns = [
+  { key: 'name', label: 'Package', mono: true },
+  { key: 'version', label: 'Version', mono: true },
+  { key: 'kind', label: 'Kind' },
+  { key: 'size', label: 'Size (MB)', numeric: true },
+];
+
+export const packages = [
+  { name: 'bazel', version: '8.2.1', kind: 'build system', size: 61 },
+  { name: 'buf', version: '1.50.0', kind: 'tool', size: 32 },
+  { name: 'clang', version: '19.1.7', kind: 'compiler', size: 412 },
+  { name: 'cmake', version: '3.31.6', kind: 'build system', size: 52 },
+  { name: 'deno', version: '2.2.4', kind: 'runtime', size: 44 },
+  { name: 'gcc', version: '14.2.0', kind: 'compiler', size: 298 },
+  { name: 'go', version: '1.24.1', kind: 'runtime', size: 75 },
+  { name: 'gradle', version: '8.13', kind: 'build system', size: 136 },
+  { name: 'jq', version: '1.7.1', kind: 'tool', size: 1 },
+  { name: 'just', version: '1.40.0', kind: 'tool', size: 6 },
+  { name: 'ninja', version: '1.12.1', kind: 'build system', size: 1 },
+  { name: 'nodejs', version: '24.1.0', kind: 'runtime', size: 9 },
+  { name: 'python', version: '3.13.2', kind: 'runtime', size: 110 },
+  { name: 'ripgrep', version: '14.1.1', kind: 'tool', size: 5 },
+  { name: 'rust', version: '1.85.1', kind: 'compiler', size: 280 },
+  { name: 'uv', version: '0.7.3', kind: 'tool', size: 18 },
+  { name: 'zig', version: '0.14.0', kind: 'compiler', size: 48 },
+];
+
+<DataTable caption="Packages" columns={columns} rows={packages} pageSize={6} />

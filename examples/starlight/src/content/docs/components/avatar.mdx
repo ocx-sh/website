@@ -1,0 +1,49 @@
+---
+title: Avatar
+description: An image tile with an initials fallback shown first, so a slow or broken image never flickers.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A person or entity tile: the initials paint first and the image paints over them once it has
+loaded, so a slow network or a broken URL never flashes a half-loaded picture, and no script runs
+before first paint. `AvatarGroup` stacks several into one overlapping row, collapsing the rest into
+a `+N` tile past `max`.
+
+## Stories
+
+<Stories of="avatar" />
+
+## Events
+
+- `ocx:avatar:status` `{ status: 'error' | 'loaded' }`: the image finished loading or failed; a failed image is hidden, leaving the initials.
+
+## Keyboard
+
+The avatar is `role="img"`, never focusable; no APG widget pattern applies.
+
+## Props
+
+<PropsTable
+  of="ui/Avatar.astro"
+  rows={[
+    { name: 'name', type: 'string', required: true, description: 'Accessible name; also the source for derived initials.' },
+    { name: 'src', type: 'string', description: 'Image URL. Omit to always show the initials fallback.' },
+    { name: 'srcset', type: 'string', description: 'Image srcset.' },
+    { name: 'initials', type: 'string', description: "Overrides the initials derived from name (first letter of up to its first two words)." },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'sm'", description: 'Tile size.' },
+    { name: 'status', type: "'online' | 'away' | 'busy' | 'offline'", description: 'Optional presence dot.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>
+
+<PropsTable
+  of="ui/AvatarGroup.astro"
+  rows={[
+    { name: 'items', type: '{ name, src?, srcset?, initials? }[]', required: true, description: 'One entry per avatar in the stack.' },
+    { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'sm'", description: 'Tile size, applied to every avatar in the group.' },
+    { name: 'max', type: 'number', description: 'Show at most this many avatars; the rest collapse into a "+N" tile.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

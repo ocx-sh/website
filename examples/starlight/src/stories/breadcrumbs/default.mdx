@@ -1,0 +1,17 @@
+---
+title: Deep trail
+description: Five segments, the current page last in the text colour and never a link.
+height: 120
+---
+
+import Breadcrumbs from '@ocx-sh/theme/components/ui/Breadcrumbs.astro';
+
+export const deep = [
+  { label: 'ocx.sh', href: '#demo' },
+  { label: 'docs', href: '#states' },
+  { label: 'Guides' },
+  { label: 'Publishing', href: '#props' },
+  { label: 'Signing packages' },
+];
+
+<Breadcrumbs items={deep} />

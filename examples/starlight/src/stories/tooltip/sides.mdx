@@ -1,0 +1,13 @@
+---
+title: Sides
+description: side places the popup above, below, left or right of the term; it flips when there is no room.
+height: 320
+order: 1
+prose: true
+---
+
+import Tooltip from '@ocx-sh/theme/components/Tooltip.astro';
+
+macOS requires all executable code to carry a valid <Tooltip term="code signature" side="bottom">A cryptographic seal embedded in the binary's `__LINKEDIT` segment. macOS checks this seal before allowing execution. An ad-hoc signature — created with `codesign --sign -` — is a local integrity check that requires no Apple Developer certificate.</Tooltip>.
+
+On Intel, <Tooltip term="Gatekeeper" side="right">A macOS subsystem that checks downloaded applications for valid signatures and notarization. Since Sequoia 15.1, the ability to bypass Gatekeeper warnings for unsigned apps has been removed entirely.</Tooltip> blocks them when a <Tooltip term="quarantine flag" side="left">The `com.apple.quarantine` extended attribute, automatically set by browsers and other download tools on files fetched from the internet.</Tooltip> is present.

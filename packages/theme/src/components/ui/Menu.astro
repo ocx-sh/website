@@ -1,0 +1,152 @@
+---
+// Menu (design c-menu, generic form): a trigger Button + a Popover-API panel of
+// links. Disclosure-navigation pattern (links in a popover, Tab order), not
+// ARIA role=menu, so the browser is the behaviour source: popovertarget sets the
+// expanded state, Esc + light dismiss close it, `closeOnFocusOut`
+// (starlight/menu-focusout.mjs) closes it on focus-out. VISUAL LAYER ONLY here.
+// Anchoring: implicit popovertarget anchor (each trigger anchors its own panel).
+// ponytail: without anchor positioning the panel pins under the header at the end
+// edge, not under its trigger; top-layer panels ignore an absolute parent. State hooks: `:popover-open | [data-state=open]`, `[aria-current=page]`,
+// `:hover, :focus-visible | [data-highlighted]`.
+// ponytail: type-ahead and roving arrow keys skipped — links + Tab cover it.
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import type { IconName } from '../../icons/icons.mjs';
+import { nextUiId } from './ids.mjs';
+import './overlay.css';
+
+export interface MenuItem {
+  label: string;
+  href: string;
+  /** Marks the current page (aria-current). */
+  current?: boolean;
+  /** Leading registry icon; once one item has an icon, the others keep its slot so labels align. */
+  icon?: IconName;
+}
+
+export interface Props {
+  /** Trigger text; also the panel's accessible name. */
+  label: string;
+  items: MenuItem[];
+  /** Panel edge aligned to the trigger. */
+  align?: 'start' | 'end';
+  id?: string;
+  class?: string;
+}
+
+const { label, items, align = 'start', id = nextUiId('menu'), class: className } = Astro.props;
+const iconSlot = items.some((it) => it.icon);
+---
+
+<div class:list={['ocx-ui-menu', className]} data-align={align}>
+  <Button class="ocx-ui-menu__trigger" size="s" popovertarget={id}>
+    {label}
+    <Icon name="chevron-down" size="sm" class="ocx-ui-menu__chevron" />
+  </Button>
+  <nav class="ocx-ui-overlay ocx-ui-menu__popup" id={id} popover aria-label={label}>
+    <ul class="ocx-ui-menu__list">
+      {items.map((it) => (
+        <li>
+          <a class="ocx-ui-menu__item" href={it.href} aria-current={it.current ? 'page' : undefined}>
+            {it.icon ? (
+              <Icon name={it.icon} class="ocx-ui-menu__icon" />
+            ) : (
+              iconSlot && <span class="ocx-ui-menu__icon" aria-hidden="true" />
+            )}
+            {it.label}
+            <Icon name="arrow-right" class="ocx-ui-menu__arrow" />
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</div>
+
+<script>
+  import { closeOnFocusOut } from '../../starlight/menu-focusout.mjs';
+  for (const panel of document.querySelectorAll<HTMLElement>('.ocx-ui-menu__popup')) closeOnFocusOut(panel);
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-menu {
+      display: inline-block;
+    }
+    /* The trigger is Button's element: its cid is Button's, so reach it through the root. */
+    .ocx-ui-menu > :global(.ocx-ui-menu__trigger) {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ocx-space-2);
+    }
+    .ocx-ui-menu:has(:popover-open) :global(.ocx-ui-menu__chevron) {
+      rotate: 180deg;
+    }
+
+    /* Fallback (no anchor positioning): pinned under the header, end edge, like the ecosystem menu.
+       ponytail: not under the trigger; a top-layer popover has the viewport as containing block. */
+    .ocx-ui-menu__popup {
+      position: fixed;
+      inset: var(--ocx-header-height) var(--ocx-space-5) auto auto;
+      min-inline-size: calc(var(--ocx-space-12) + var(--ocx-space-9));
+      max-inline-size: calc(100vw - var(--ocx-space-7));
+      font-family: var(--ocx-font-sans);
+    }
+    @supports (position-area: block-end) {
+      .ocx-ui-menu__popup {
+        inset: auto;
+        margin-block-start: var(--ocx-space-2);
+        position-area: block-end span-inline-end;
+        position-try-fallbacks: flip-inline;
+      }
+      .ocx-ui-menu[data-align='end'] .ocx-ui-menu__popup {
+        position-area: block-end span-inline-start;
+      }
+    }
+
+    .ocx-ui-menu__list {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ocx-ui-menu__item {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      font-size: var(--ocx-text-base);
+      font-weight: var(--ocx-font-weight-medium);
+      color: var(--ocx-color-fg);
+      text-decoration: none;
+      white-space: nowrap;
+      border-radius: var(--ocx-radius-md);
+    }
+    /* Leading icon (or its empty slot): the label's colour, one icon wide. */
+    .ocx-ui-menu__item > :global(.ocx-ui-menu__icon) {
+      flex-shrink: 0;
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+    }
+    .ocx-ui-menu__item > :global(.ocx-ui-menu__arrow) {
+      visibility: hidden;
+      margin-inline-start: auto;
+      color: var(--ocx-color-fg-subtle);
+    }
+    /* Hover/focus previews only: neutral hover tint + grey arrow, never coral. */
+    .ocx-ui-menu__item:is(:hover, :focus-visible, [data-highlighted]) {
+      background: var(--ocx-color-hover);
+    }
+    .ocx-ui-menu__item:is(:hover, :focus-visible, [data-highlighted]) > :global(.ocx-ui-menu__arrow) {
+      visibility: visible;
+    }
+    .ocx-ui-menu__item:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    .ocx-ui-menu__item[aria-current='page'] {
+      color: var(--ocx-color-accent-fg);
+      background: var(--ocx-color-accent-tint);
+    }
+  }
+</style>

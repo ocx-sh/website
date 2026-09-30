@@ -1,0 +1,42 @@
+---
+title: OS icons
+description: The operating system and shell glyphs, their registry names, and when to use Icon or PlatformIcons.
+---
+
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import PlatformIcons from '@ocx-sh/theme/components/PlatformIcons.astro';
+
+Operating systems and shells have their own glyphs in the [icon registry](../catalog/).
+
+## Operating systems
+
+For a package's platform list (`os/arch` strings), use [PlatformIcons](../../platform-icons/): it
+groups architectures per OS and names each glyph. Use `<Icon>` directly only where one OS stands on
+its own, such as a download button, and give it a `label` unless text next to it names the OS.
+
+| Glyph | Name | Platform string | Shown as |
+|---|---|---|---|
+| <Icon name="linux" size="lg" /> | `linux` | `linux` | Linux |
+| <Icon name="apple" size="lg" /> | `apple` | `darwin` | macOS |
+| <Icon name="windows" size="lg" /> | `windows` | `windows` | Windows |
+
+The same glyphs through PlatformIcons:
+
+<PlatformIcons platforms={['linux/amd64', 'darwin/arm64', 'windows/amd64']} />
+
+The glyphs fill in the text colour. `apple` and `windows` come from Simple Icons, `linux` is a
+custom Tux copied verbatim from Material Design Icons (Apache-2.0); `cmd` is copied verbatim from vscode-icons (MIT). Brand marks belong to their owners.
+
+## Shells
+
+Code tabs for installers show the shell's icon (`<TabItem icon="…">`) as inline `<Icon>`. Like all
+icons, they paint in the text colour.
+
+| Glyph | Name | Shell |
+|---|---|---|
+| <Icon name="shell" size="lg" /> | `shell` | POSIX `sh`, bash, zsh (Lucide, generic) |
+| <Icon name="powershell" size="lg" /> | `powershell` | PowerShell |
+| <Icon name="nushell" size="lg" /> | `nushell` | Nushell |
+| <Icon name="fish" size="lg" /> | `fish` | fish |
+| <Icon name="elvish" size="lg" /> | `elvish` | Elvish |
+| <Icon name="cmd" size="lg" /> | `cmd` | Windows Command Prompt |

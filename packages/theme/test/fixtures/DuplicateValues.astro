@@ -1,0 +1,10 @@
+---
+// Test fixture: two items share one value (must fail the build).
+import Accordion from '../../src/components/Accordion.astro';
+import AccordionItem from '../../src/components/AccordionItem.astro';
+---
+
+<Accordion>
+  <AccordionItem value="a" label="A">x</AccordionItem>
+  <AccordionItem value="a" label="A again">y</AccordionItem>
+</Accordion>

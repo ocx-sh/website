@@ -1,0 +1,60 @@
+---
+title: Dialog presets
+description: ConfirmDialog and AlertDialog, the Dialog with its action row and wiring done, opened by event.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+`ConfirmDialog` and `AlertDialog` are the base [Dialog](../dialog/) with the action row and the
+wiring already done. Neither renders a trigger: place one once, anywhere, and pop it from any
+script with `ocx:dialog:open` (`{ id }`), the same pattern `ocx:toast` uses. The outcome comes back
+as `ocx:dialog-result` (`{ id, value }`), bubbling from the dialog's own root.
+
+## Stories
+
+<Stories of="dialog-presets" />
+
+## Props
+
+### ConfirmDialog
+
+<PropsTable
+  of="ui/ConfirmDialog.astro"
+  rows={[
+    { name: 'id', type: 'string', description: 'Also what ocx:dialog:open / ocx:dialog-result key on.' },
+    { name: 'title', type: 'string', required: true, description: 'Heading of the dialog.' },
+    { name: 'message', type: 'string', description: 'One line under the title.' },
+    { name: 'confirmLabel', type: 'string', default: "'Confirm'", description: 'Confirm button label.' },
+    { name: 'cancelLabel', type: 'string', default: "'Cancel'", description: 'Cancel button label.' },
+  ]}
+/>
+
+### AlertDialog
+
+<PropsTable
+  of="ui/AlertDialog.astro"
+  rows={[
+    { name: 'id', type: 'string', description: 'Also what ocx:dialog:open / ocx:dialog-result key on.' },
+    { name: 'title', type: 'string', required: true, description: 'Heading of the dialog.' },
+    { name: 'message', type: 'string', description: 'One line under the title.' },
+    { name: 'tone', type: "'info' | 'success' | 'warning' | 'error'", default: "'info'", description: 'Icon and colour; role is always alertdialog.' },
+    { name: 'acknowledgeLabel', type: 'string', default: "'OK'", description: 'The one button’s label.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:dialog:open` `{ id }`: dispatch on `document` to open the preset whose id matches; it has no other way in.
+- `ocx:dialog-result` `{ id, value }`: exactly once per close. `value` names the button that closed
+  it (`'confirm'`, `'cancel'` or `'ok'`), or is `'dismiss'` for Esc, the X button or an outside
+  click. A caller waiting on the outcome always hears back; treat anything but `'confirm'` as no.
+- `ocx:dialog:change` `{ open }`: the dialog opens or closes, as the base Dialog.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Enter, Space | On an action button: run it; the dialog closes and reports it. |
+| Tab, Shift+Tab | Move focus within the dialog; it wraps at the ends. |
+| Escape | Close the dialog (`value: 'dismiss'`); focus returns to where it was before it opened. |

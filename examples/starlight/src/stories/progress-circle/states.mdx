@@ -1,0 +1,47 @@
+---
+title: States
+description: Sizes, values, the indeterminate spinner, tones and the shown percentage.
+height: 470
+order: 1
+block: true
+---
+
+import ProgressCircle from '@ocx-sh/theme/components/ui/ProgressCircle.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="size=s">
+    <ProgressCircle label="Small" value={40} size="s" />
+  </State>
+  <State label="size=m">
+    <ProgressCircle label="Medium" value={40} size="m" />
+  </State>
+  <State label="size=l">
+    <ProgressCircle label="Large" value={40} size="l" />
+  </State>
+  <State label="value=0">
+    <ProgressCircle label="Empty" value={0} />
+  </State>
+  <State label="value=40">
+    <ProgressCircle label="Forty percent" value={40} />
+  </State>
+  <State label="value=100">
+    <ProgressCircle label="Complete" value={100} />
+  </State>
+  <State label="indeterminate">
+    <ProgressCircle label="Loading" />
+  </State>
+  <State label="tone=success">
+    <ProgressCircle label="Success" value={70} tone="success" />
+  </State>
+  <State label="tone=warning">
+    <ProgressCircle label="Warning" value={70} tone="warning" />
+  </State>
+  <State label="tone=danger">
+    <ProgressCircle label="Danger" value={70} tone="danger" />
+  </State>
+  <State label="showValue">
+    <ProgressCircle label="Sync" value={72} showValue />
+  </State>
+</StateGrid>

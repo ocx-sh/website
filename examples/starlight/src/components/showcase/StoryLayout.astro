@@ -1,0 +1,162 @@
+---
+// C-125 story page: the whole document, no Starlight chrome. `<Stories>` embeds it as a canvas;
+// `#code` shows its source instead of the story; `?theme=light|dark` pins the theme, else it
+// follows the site (localStorage, live through `storage`) and then the OS; `?thumb` hides the log
+// and the code (gallery thumbnails). Indexable, canonical to the component page (D-SB8).
+import { Font } from 'astro:assets';
+import { Code } from 'astro:components';
+import '@ocx-sh/theme/tokens.css';
+import '@ocx-sh/theme/base.css';
+import './showcase.css';
+import Demo from './Demo.astro';
+import EventLog from './EventLog.astro';
+import StoryCycleButton from './StoryCycleButton.astro';
+import StoryToaster from './StoryToaster.astro';
+import type { StoryMeta } from './stories.mjs';
+
+interface Props {
+  /** The component page's path under `components/`. */
+  slug: string;
+  /** The component page's title. */
+  component: string;
+  meta: StoryMeta;
+  /** The story source shown at `#code`. */
+  code: string;
+}
+const { slug, component, meta, code } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const canonical = Astro.site && new URL(`${base}components/${slug}/`, Astro.site).href;
+const description = meta.description ?? `${meta.title}: a live story of the ${component} component.`;
+// Hand-minified: every story page carries it. Theme as Starlight's ThemeProvider, platform as Head.astro.
+// The `#code` view: Astro's Shiki `<Code>` with token colours (tokens.css › Code). Not Expressive
+// Code: its `<Code>` is reachable only through the `@astrojs/starlight/components` barrel, which
+// pulls every Starlight component's CSS into each story page (~17 KB gz measured).
+const c = (scope: string[], token: string) => ({ scope, settings: { foreground: `var(--ocx-color-code-${token})` } });
+const theme = {
+  name: 'ocx-story',
+  type: 'dark' as const,
+  colors: { 'editor.background': 'var(--ocx-color-code-bg)', 'editor.foreground': 'var(--ocx-color-code-fg)' },
+  tokenColors: [
+    c(['source', 'text'], 'fg'),
+    c(['punctuation', 'meta.brace', 'keyword.operator'], 'punctuation'),
+    c(['comment'], 'comment'),
+    c(['keyword', 'storage', 'constant.language'], 'keyword'),
+    c(['string', 'markup.inline.raw', 'punctuation.definition.string'], 'string'),
+    c(['constant.numeric'], 'number'),
+    c(['entity.name.tag', 'support.class.component', 'entity.name.function'], 'function'),
+    c(['entity.other.attribute-name', 'variable'], 'variable'),
+  ],
+};
+// Stylesheet links rendered inside the story (Expressive Code's) move to the head: first-paint
+// styles load before the content, never inside it (as the theme's MarkdownContent override does).
+// ponytail: a regex over the rendered slot; a `<link` inside an attribute value would fool it.
+const LINK = /<link\b[^>]*\brel=(["']?)stylesheet\1[^>]*>/gi;
+const story = await Astro.slots.render('default');
+const links = [...new Set(story.match(LINK) ?? [])].join('');
+const body = story.replace(LINK, '');
+// `prose` wraps the story in base.css's prose rules. Demo is rendered in two branches: an empty
+// `log` slot still counts as present (a blank log column).
+const content = meta.prose ? `<div class="ocx-prose">${body}</div>` : body;
+const boot = `(()=>{const d=document.documentElement,q=new URLSearchParams(location.search),f=q.get('theme'),a=()=>{let t=f;if(t!=='light'&&t!=='dark'){try{t=localStorage.getItem('starlight-theme')}catch{}}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.dataset.theme=t};a();if(!f)addEventListener('storage',a);if(q.has('thumb'))d.dataset.thumb='';const p=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'';d.dataset.platform=/mac/i.test(p)?'mac':/linux/i.test(p)?'linux':'windows'})()`;
+---
+
+<html lang="en" data-story-height={meta.height}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{`${meta.title} · ${component} story`}</title>
+    <meta name="description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    <link rel="shortcut icon" href={`${base}favicon.svg`} type="image/svg+xml" />
+    <script is:inline set:html={boot} />
+    <Font
+      cssVariable="--ocx-font-sans"
+      preload={[
+        { weight: 400, style: 'normal' },
+        { weight: 600, style: 'normal' },
+      ]}
+    />
+    <Font
+      cssVariable="--ocx-font-mono"
+      preload={[
+        { weight: 400, style: 'normal' },
+        { weight: 600, style: 'normal' },
+      ]}
+    />
+    <Fragment set:html={links} />
+  </head>
+  <body>
+    <main>
+      {/* The component, then the story: the headings a story renders (Accordion's h3, a Dialog's h2)
+      follow in order, as they do under the doc page's h1 and h2. */}
+      <h1 class="story-title">{component}</h1>
+      <h2 class="story-title">{meta.title}</h2>
+      {meta.log ? (
+        <Demo id="story" block={meta.block ?? false} prose={meta.prose ?? false}>
+          <Fragment set:html={content} />
+          <EventLog for="#story" slot="log" />
+        </Demo>
+      ) : (
+        <Demo id="story" block={meta.block ?? false} prose={meta.prose ?? false}>
+          <Fragment set:html={content} />
+        </Demo>
+      )}
+      <section id="code" aria-label="Code">
+        <Code code={code} lang="mdx" embeddedLangs={['tsx']} theme={theme} />
+      </section>
+    </main>
+    {meta.toaster && <StoryToaster />}
+    {body.includes('ocx-ui-cycle-button') && <StoryCycleButton />}
+  </body>
+</html>
+
+<style is:global>
+  /* Story page only (kept out of showcase.css, which every Starlight page loads). No Starlight reset
+   * here, so the parts of it components rely on. */
+  @layer ocx {
+    /* Zero specificity: a component's own rule (same layer) always wins over these resets. */
+    :where(:root[data-story-height]) :where(*, *::before, *::after) {
+      box-sizing: border-box;
+    }
+    :root[data-story-height] body {
+      margin: 0;
+      /* The canvas box: overlays centred in the viewport sit inside the body's box (axe reads a
+       * modal outside a short, scroll-locked body as hidden). */
+      min-block-size: 100vh;
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-prose-body);
+      line-height: var(--ocx-prose-lh);
+      color: var(--ocx-color-fg-muted);
+      background: var(--ocx-color-bg);
+    }
+    :where(:root[data-story-height]) :where(input, button, textarea, select) {
+      font: inherit;
+    }
+    /* The page's headings (axe page-has-heading-one, heading-order), for assistive tech only. */
+    :root[data-story-height] .story-title {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    :root[data-story-height] #story {
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+    }
+    :root[data-story-height] #code pre {
+      margin: 0;
+      padding: var(--ocx-space-5);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      line-height: var(--ocx-lh-code);
+    }
+    :root[data-story-height] #code:not(:target),
+    :root:has(#code:target) #story,
+    :root[data-thumb] :is(#code, .showcase-demo__log) {
+      display: none;
+    }
+  }
+</style>

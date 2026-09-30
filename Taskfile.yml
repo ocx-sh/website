@@ -2,6 +2,20 @@
 # Run through the ocx toolchain: `ocx exec -- task <name>`.
 version: '3'
 
+includes:
+  site: { taskfile: taskfiles/site.yml, optional: true }
+  deploy: { taskfile: taskfiles/deploy.yml, optional: true }
+  lore: { taskfile: taskfiles/lore.yml, optional: true }
+  bunny: { taskfile: taskfiles/bunny.yml, optional: true }
+
+vars:
+  # Apps present on disk: every examples/* with a package.json, plus site/ once it exists.
+  APPS:
+    sh: 'for d in examples/*/ site/; do if [ -f "${d}package.json" ]; then echo "${d%/}"; fi; done'
+  DISTS:
+    sh: 'for d in examples/*/ site/; do if [ -f "${d}package.json" ]; then printf "%sdist " "$d"; fi; done'
+  OXC: scripts/bin/oxc.sh
+
 tasks:
   default:
     cmds: [task --list]
@@ -9,47 +23,148 @@ tasks:
 
   install:
     desc: Install workspace dependencies
-    sources: [package.json, pnpm-lock.yaml, pnpm-workspace.yaml, '*/*/package.json']
+    sources: [package.json, pnpm-lock.yaml, pnpm-workspace.yaml, '*/*/package.json', site/package.json]
     generates: [node_modules/.modules.yaml]
     cmds: [pnpm install --frozen-lockfile]
 
   samples:
-    desc: Pull real docs from consumer repos into the Starlight example (gitignored)
+    desc: Pull real docs from consumer repos and convert them into the preview projects (.tmp/previews, gitignored)
     cmds: ['node scripts/samples/fetch.ts {{.CLI_ARGS}}']
+
+  previews:
+    desc: Build every consumer preview site offline from the samples cache (`task previews -- <site>` for one; dist in .tmp/previews/<site>/dist)
+    deps: [install]
+    cmds: ['node scripts/previews/build.ts {{.CLI_ARGS}}']
 
   dev:
     desc: Live-reload the Starlight example wearing the theme (http://localhost:4321/docs/)
+    aliases: ['theme:dev']
     deps: [install]
     cmds:
-      - cmd: test -d examples/starlight/src/content/docs/samples || task samples
       - pnpm --filter @ocx-sh/example-starlight dev
 
   build:
-    desc: Build the Starlight example under its non-root base
-    deps: [install]
-    cmds: [pnpm --filter @ocx-sh/example-starlight build]
-
-  lint:
-    desc: ESLint over every TypeScript source
-    deps: [install]
-    cmds: [pnpm exec eslint --max-warnings 0 .]
-
-  typecheck:
-    desc: tsc over the workspace, astro check over the example
+    desc: astro build every app present on disk (examples/*, site)
     deps: [install]
     cmds:
+      - for: { var: APPS }
+        cmd: pnpm --dir {{.ITEM}} run build
+
+  sync:
+    desc: astro sync every app, so a clean checkout has the generated content types lint and tsc read
+    deps: [install]
+    cmds:
+      - for: { var: APPS }
+        cmd: pnpm --dir {{.ITEM}} exec astro sync
+
+  lint:
+    desc: oxlint (type-aware), typed ESLint, actionlint
+    deps: [sync]
+    cmds:
+      - '{{.OXC}} oxlint --type-aware'
+      - pnpm exec eslint --max-warnings 0 .
+      - cmd: actionlint
+        if: test -d .github/workflows
+      # zizmor: not published on ocx.sh yet, so not pinned and not run.
+
+  fmt:
+    desc: oxfmt --check (ts/js/json/css/md/yaml), prettier --check for .astro
+    deps: [install]
+    cmds:
+      - '{{.OXC}} oxfmt --check'
+      - pnpm exec prettier --check "**/*.astro"
+
+  fmt:fix:
+    desc: Apply oxfmt and prettier formatting
+    deps: [install]
+    cmds:
+      - '{{.OXC}} oxfmt'
+      - pnpm exec prettier --write "**/*.astro"
+
+  typecheck:
+    desc: tsc over the workspace (checkJs), astro check over every app
+    deps: [sync]
+    cmds:
       - pnpm exec tsc --noEmit
-      - pnpm --filter @ocx-sh/example-starlight check
+      - for: { var: APPS }
+        cmd: pnpm --dir {{.ITEM}} run check
 
   test:
-    desc: Vitest (token contracts, nav, sample converter)
+    desc: Vitest (packages, scripts, infra, deploy action)
     deps: [install]
     cmds: [pnpm exec vitest run]
+
+  theme:test:
+    desc: Vitest for packages/theme only
+    deps: [install]
+    cmds: [pnpm exec vitest run packages/theme]
+
+  css:
+    desc: Built-CSS gate (outside-layers, literal-colours, dark-parity) over every app dist
+    cmds:
+      - node scripts/require-dist.mjs {{.DISTS}}
+      - node scripts/css/literal-colours.mjs $(find {{.DISTS}} -name '*.css' -o -name '*.html')
+      - node scripts/css/outside-layers.mjs $(find {{.DISTS}} -name '*.css' -o -name '*.html')
+      - node scripts/css/dark-parity.mjs $(find {{.DISTS}} -name '*.css' -o -name '*.html')
+
+  e2e:
+    desc: Playwright over the built dists
+    deps: [install]
+    cmds:
+      - node scripts/require-dist.mjs {{.DISTS}}
+      - pnpm exec playwright test {{.CLI_ARGS}}
+
+  lighthouse:
+    desc: Lighthouse over the built dists (parallel lanes, retry-on-fail, cache; LH_NO_CACHE=1 for all)
+    deps: [install]
+    cmds:
+      - node scripts/require-dist.mjs {{.DISTS}}
+      # Stages the example dist (scripts/lhci-stage.mjs), then audits.
+      - node scripts/lighthouse.mjs {{.CLI_ARGS}}
+
+  lighthouse:changed:
+    desc: Dev Lighthouse, cached pages skipped (LH_PRESET=desktop allowed; the gate stays mobile)
+    cmds:
+      - task: lighthouse
+        vars: { CLI_ARGS: --dev }
+
+  visual:
+    desc: Mock-vs-site screenshot pairs report (--watch to rerun)
+    deps: [install]
+    cmds: ['node scripts/visual/visual.mjs {{.CLI_ARGS}}']
+
+  pack:
+    desc: Pack smoke test of the published packages (publint, attw)
+    deps: [install]
+    cmds: [node scripts/pack-smoke.mjs]
+
+  docs:
+    desc: markdownlint and offline link check over docs/
+    deps: [install]
+    cmds:
+      - pnpm exec markdownlint-cli2 "docs/**/*.md"
+      - lychee --offline --no-progress docs/
+      # ponytail: validates each docs/lore/ skill dir + top-level rule .md via grim build
+      # (validate + pack, no push); adjust the glob if WP9's tree shape differs.
+      - cmd: >
+          for p in docs/lore/*/; do [ -f "${p}SKILL.md" ] && grim build --offline "${p%/}"; done;
+          for p in docs/lore/*.md; do [ -f "$p" ] && grim build --offline "$p"; done
+        if: test -d docs/lore
+
+  secrets:
+    desc: gitleaks over the git history (what gets published; ignored files like .lighthouseci/ are not)
+    cmds: [gitleaks git --redact .]
+
+  cutover:verify:
+    desc: Owner-local DNS/CDN cutover verification (alias of bunny:cutover-verify)
+    cmds: [task: 'bunny:cutover-verify']
 
   check:
     desc: Every gate CI runs
     cmds:
       - task: lint
+      - task: fmt
       - task: typecheck
       - task: test
       - task: build
+      - task: css

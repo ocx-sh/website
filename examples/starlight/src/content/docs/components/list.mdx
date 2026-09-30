@@ -1,0 +1,66 @@
+---
+title: List
+description: A selectable list on Zag listbox, with groups, a grid layout, rich rows and async pages on Zag async-list.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A list of options the reader picks from, on the Zag listbox (loaded on the first hover or focus).
+The list is one tab stop; arrows move through the rows. With `async`, the page supplies further
+pages, filtering and sorting (Zag async-list); see the async catalog story.
+
+## Stories
+
+<Stories of="list" />
+
+## Props
+
+<PropsTable
+  of="ui/List.astro"
+  rows={[
+    { name: 'items', type: '{ value, label, disabled?, group?, description?, meta? }[]', required: true, description: 'The rows; rows sharing a group render together under its label.' },
+    { name: 'label', type: 'string', required: true, description: 'Accessible name, shown above the list.' },
+    { name: 'selectionMode', type: "'single' | 'multiple'", default: "'single'", description: 'One row, or any number of rows.' },
+    { name: 'value', type: 'string | string[]', description: 'Selected value(s).' },
+    { name: 'orientation', type: "'vertical' | 'horizontal'", default: "'vertical'", description: 'Row direction; arrows follow it.' },
+    { name: 'columns', type: 'number', default: '0', description: 'Columns of a grid layout; arrows move in two dimensions.' },
+    { name: 'empty', type: 'string', default: "'Nothing to show.'", description: 'Text shown when there are no rows.' },
+    { name: 'async', type: 'boolean', default: 'false', description: "The page supplies data by answering ocx:list:fetch; items is the first page." },
+    { name: 'cursor', type: 'string', description: 'The next page’s cursor when async; “Load more” shows while there is one.' },
+    { name: 'zag', type: 'ZagProps<ListboxProps>', description: 'Zag machine props, data only (e.g. loopFocus, deselectable).' },
+  ]}
+/>
+
+A function child renders each row (rich rows); loaded pages of an `async` list use the built-in
+card row (label, description, meta). A row is an option: keep links and buttons out of it, since
+its content is presentational to assistive tech. An `async` list is flat and ignores `group`.
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:list:change` | `{ value: string[] }` | The selection changes. |
+| `ocx:list:fetch` | `{ cursor, filter, sort, signal, respond }` | An `async` list needs a page. Call `respond(page)` in the listener itself, not later; `page` may be a promise. It rejects: the error state. |
+| `ocx:list:load` | `{ count: number, hasMore: boolean }` | A page loaded; `count` is the rows now shown. |
+| `ocx:list:error` | `{ message: string }` | A load failed; the list shows Retry. |
+
+A `respond` after the listener returned, a page without `items: [{ value, label }]`, or no listener
+at all is the error state; with two listeners, the first answer wins. The types are exported from
+`List.astro`: `ListFetchDetail`, `ListPage`, `ListFilterDetail`, `ListSortDetail`.
+
+Send these to an `async` list to reload it from the first page: `ocx:list:filter` `{ text }`,
+`ocx:list:sort` `{ column, direction }`, `ocx:list:reload`. A newer load aborts the one in flight
+(its `signal`), and so does removing the list.
+
+## Keyboard
+
+APG [listbox](https://www.w3.org/WAI/ARIA/apg/patterns/listbox/) pattern.
+
+- <kbd>Tab</kbd>: Into the list (the first or selected row is active), and out of it.
+- <kbd>↓</kbd> / <kbd>↑</kbd>: Next / previous row, skipping disabled rows (in a grid: row below / above).
+- <kbd>→</kbd> / <kbd>←</kbd>: Next / previous row in a horizontal list or a grid.
+- <kbd>Home</kbd> / <kbd>End</kbd>: First / last row.
+- <kbd>Enter</kbd> / <kbd>Space</kbd>: Select the active row (toggle it in a multiple list).
+- <kbd>Ctrl</kbd>+<kbd>A</kbd>: Select every row of a multiple list.
+- letters: Move to the next row starting with them.

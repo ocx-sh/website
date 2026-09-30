@@ -1,0 +1,80 @@
+---
+title: States
+description: Multiple pressed, one disabled, with icons, icon only, and vertical.
+height: 455
+order: 1
+block: true
+---
+
+import ToggleGroup from '@ocx-sh/theme/components/ToggleGroup.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const platforms = [
+  { value: 'linux', label: 'linux' },
+  { value: 'macos', label: 'macos' },
+  { value: 'windows', label: 'windows' },
+  { value: 'freebsd', label: 'freebsd' },
+];
+
+<StateGrid wide>
+  <State label="multiple, two pressed">
+    <ToggleGroup
+      label="Scope"
+      multiple
+      items={[
+        { value: 'project', label: 'project' },
+        { value: 'user', label: 'user' },
+        { value: 'global', label: 'global' },
+      ]}
+      value={['project', 'user']}
+    />
+  </State>
+  <State label="nothing pressed, one disabled">
+    <ToggleGroup
+      label="Platform (freebsd unavailable)"
+      items={[...platforms.slice(0, 3), { value: 'freebsd', label: 'freebsd', disabled: true }]}
+    />
+  </State>
+  <State label="with icons">
+    <ToggleGroup
+      label="Platform with icons"
+      items={[
+        { value: 'linux', label: 'linux', icon: 'linux' },
+        { value: 'macos', label: 'macos', icon: 'apple' },
+        { value: 'windows', label: 'windows', icon: 'windows' },
+      ]}
+      value="linux"
+    />
+  </State>
+  <State label="icon only">
+    <ToggleGroup
+      label="Theme"
+      items={[
+        { value: 'light', label: 'Light', icon: 'sun', iconOnly: true },
+        { value: 'dark', label: 'Dark', icon: 'moon', iconOnly: true },
+      ]}
+      value="dark"
+    />
+  </State>
+  <State label="icon only, multiple, one disabled">
+    <ToggleGroup
+      label="Platforms (windows unavailable)"
+      multiple
+      items={[
+        { value: 'linux', label: 'linux', icon: 'linux', iconOnly: true },
+        { value: 'macos', label: 'macos', icon: 'apple', iconOnly: true },
+        { value: 'windows', label: 'windows', icon: 'windows', iconOnly: true, disabled: true },
+      ]}
+      value={['linux', 'macos']}
+    />
+  </State>
+  <State label="vertical">
+    <ToggleGroup
+      label="Scope, vertical"
+      items={platforms.slice(0, 3)}
+      value="macos"
+      zag={{ orientation: 'vertical' }}
+    />
+  </State>
+</StateGrid>

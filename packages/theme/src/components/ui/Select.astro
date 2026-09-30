@@ -1,0 +1,138 @@
+---
+// Select (design c-select, C-161) on Zag select, loaded on first interaction: the trigger is an APG
+// select-only combobox (arrows, Home/End, typeahead), the popup a Zag-positioned listbox (D-Z10).
+// A visually hidden native <select> carries the value into forms and holds the options; a consumer
+// appends <option value data-meta="…"> to it at runtime and the list follows (DependencyExplorer).
+// The trigger has a fixed inline-size, so a runtime option never resizes it (no CLS). The closed
+// popup is invisible, so select.zag.mjs builds it on start: less HTML on every page with a select.
+// Styles live in overlay.css (unscoped: no per-element scope class, runtime rows need none).
+// Error state: pass `aria-invalid="true"` (border turns danger); pair it with your own message.
+// Slots `start` / `end` put a control (a sort-direction toggle, an icon) inside the box: the box
+// becomes an InputGroup (Zag's control part) around the trigger, so a slotted button is its own tab
+// stop and a click on it never reaches the trigger. Without them the markup is the bare trigger.
+// ponytail: `multiple` skipped — no consumer.
+import type { Props as SelectMachineProps } from '@zag-js/select';
+import type { HTMLAttributes } from 'astro/types';
+import { iconSvg } from '../../icons/icon-svg.mjs';
+import { ICONS, type IconName } from '../../icons/icons.mjs';
+import InputGroup from './InputGroup.astro';
+import Label from './Label.astro';
+import { nextUiId } from './ids.mjs';
+import { connect, machine, toCollection } from './select.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './field.css';
+import './overlay.css';
+
+export interface SelectOption {
+  value: string;
+  label: string;
+  /** Right-aligned muted detail, e.g. a count. */
+  meta?: string;
+  /** Registry icon before the label in the popup row, and in the trigger while selected. */
+  icon?: IconName;
+  disabled?: boolean;
+}
+
+export interface Props extends Omit<HTMLAttributes<'select'>, 'multiple'> {
+  label: string;
+  hideLabel?: boolean;
+  /** Build-time options; a consumer may append more at runtime (see above). */
+  options?: SelectOption[];
+  /** Selected value; as with a native select, none selects the first enabled option. */
+  value?: string;
+  /** Zag machine props. */
+  zag?: ZagProps<SelectMachineProps>;
+}
+
+const {
+  label,
+  hideLabel = false,
+  options = [],
+  value,
+  zag,
+  class: className,
+  id,
+  disabled,
+  name,
+  required,
+  form,
+  'aria-invalid': invalid,
+  ...rest
+} = Astro.props;
+// aria-* (describedby, label…) name the focusable trigger; the hidden select is aria-hidden.
+const aria = Object.fromEntries(Object.entries(rest).filter(([k]) => k.startsWith('aria-')));
+const native = Object.fromEntries(Object.entries(rest).filter(([k]) => !k.startsWith('aria-')));
+const zagId = nextUiId('select');
+// SSR renders these; on start the machine reads them back from the native select and the trigger
+// (select.zag.mjs), so `data-zag-props` carries only the `zag` passthrough (C-106).
+const selected = value ?? options.find((o) => !o.disabled)?.value;
+const chosen = options.find((o) => o.value === selected);
+const props = {
+  ...(selected !== undefined && { defaultValue: [selected] }),
+  ...(disabled && { disabled: true }),
+  ...((invalid === true || invalid === 'true') && { invalid: true }),
+  ...(required && { required: true }),
+  ...(name && { name }),
+  ...(form && { form }),
+  ...(id && { ids: { hiddenSelect: id } }),
+  ...zag,
+};
+// Registry chevron drawn here, not via <Icon>: the svg is Zag's indicator part and takes its props.
+const chevron = ICONS['chevron-down'];
+const api = ssrApi(machine, connect, { ...props, id: zagId, collection: toCollection(options) });
+// Slots → InputGroup box; none → Fragment, which renders only the trigger (the named slots are empty).
+const grouped = Astro.slots.has('start') || Astro.slots.has('end');
+const Box = grouped ? InputGroup : Fragment;
+const box = grouped ? { disabled: Boolean(disabled), ...ssrAttrs(api.getControlProps()) } : {};
+---
+
+<div
+  class:list={['ocx-ui-field', 'ocx-ui-select', className]}
+  data-zag-root="select"
+  data-zag-id={zagId}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(zag ?? {})}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <Label hidden={hideLabel} {...ssrAttrs(api.getLabelProps())}>
+    {label}
+  </Label>
+  <Box {...box}>
+    <slot name="start" slot="start" />
+    <button class="ocx-ui-select__control" {...ssrAttrs(api.getTriggerProps())} {...aria}>
+      {chosen?.icon && <span class="ocx-ui-select__glyph" data-value={chosen.value} set:html={iconSvg(chosen.icon)} />}
+      <span class="ocx-ui-select__value" {...ssrAttrs(api.getValueTextProps())}>
+        {api.valueAsString}
+      </span>
+      <svg
+        class="ocx-ui-select__icon"
+        viewBox={chevron.viewBox}
+        focusable="false"
+        {...ssrAttrs(api.getIndicatorProps())}
+        set:html={chevron.body}
+      />
+    </button>
+    <slot name="end" slot="end" />
+  </Box>
+  <select {...ssrAttrs(api.getHiddenSelectProps())} {...native}>
+    {options.map((o) => (
+      <option
+        value={o.value}
+        selected={o.value === selected}
+        disabled={o.disabled}
+        data-meta={o.meta}
+        data-icon={o.icon && iconSvg(o.icon)}
+      >
+        {o.label}
+      </option>
+    ))}
+  </select>
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="select"]'))
+    mount(root, { load: () => import('./select.zag.mjs') });
+</script>

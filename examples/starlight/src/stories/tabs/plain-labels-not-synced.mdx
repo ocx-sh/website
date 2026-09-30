@@ -1,0 +1,16 @@
+---
+title: Plain labels, not synced
+description: A group without a syncKey keeps its own choice and stores nothing.
+height: 130
+order: 2
+prose: true
+---
+
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+
+<Tabs>
+  <TabItem label="macOS · Linux">The installer writes to `~/.ocx`.</TabItem>
+  <TabItem label="Windows">The installer writes to `%LOCALAPPDATA%\ocx`.</TabItem>
+  <TabItem label="Docker">Mount a volume at `/root/.ocx`.</TabItem>
+</Tabs>

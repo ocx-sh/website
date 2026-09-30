@@ -1,0 +1,174 @@
+---
+// <Kbd> (owner ask 2026-09-28): one or more keys, rendered as <kbd>. `Mod` is the adaptive
+// modifier (Cmd on mac, Ctrl elsewhere); a fixed set of other keys render a per-OS glyph even
+// though the same word is typed for all three (Alt -> Option on mac, Super -> Win on Windows).
+// No flicker, no host-dependent SSR (AGENTS.md assets rule): every OS variant renders as a
+// sibling span and CSS shows one keyed off html[data-platform], set by Head.astro before paint.
+// The `platform` prop forces one variant server-side; nothing else renders.
+export type Platform = 'auto' | 'mac' | 'windows' | 'linux';
+
+export interface Props {
+  /** `+`-joined key names, e.g. "Mod+Shift+K". Omit and use the default slot for a single key. */
+  keys?: string | undefined;
+  /** Force one OS's rendering instead of the client-detected default. */
+  platform?: Platform | undefined;
+  class?: string | undefined;
+}
+
+const { keys, platform = 'auto', class: className } = Astro.props;
+
+type Variant = { glyph: string; label?: string };
+type OsKey = { mac: Variant; windows: Variant; linux: Variant };
+
+// Aliases: alternate names for the same physical key.
+const ALIAS: Record<string, string> = {
+  cmd: 'Super',
+  meta: 'Super',
+  super: 'Super',
+  win: 'Super',
+  option: 'Alt',
+  up: 'ArrowUp',
+  down: 'ArrowDown',
+  left: 'ArrowLeft',
+  right: 'ArrowRight',
+  pageup: 'PgUp',
+  pagedown: 'PgDn',
+  escape: 'Esc',
+};
+
+// Keys whose glyph changes per OS.
+const OS_KEYS: Record<string, OsKey> = {
+  Mod: { mac: { glyph: '⌘', label: 'Command' }, windows: { glyph: 'Ctrl' }, linux: { glyph: 'Ctrl' } },
+  Super: {
+    mac: { glyph: '⌘', label: 'Command' },
+    windows: { glyph: '⊞', label: 'Windows' },
+    linux: { glyph: 'Super' },
+  },
+  Alt: { mac: { glyph: '⌥', label: 'Option' }, windows: { glyph: 'Alt' }, linux: { glyph: 'Alt' } },
+};
+
+// Keys with a fixed symbol, same on every OS.
+const GLYPHS: Record<string, Variant> = {
+  ArrowUp: { glyph: '↑', label: 'Up arrow' },
+  ArrowDown: { glyph: '↓', label: 'Down arrow' },
+  ArrowLeft: { glyph: '←', label: 'Left arrow' },
+  ArrowRight: { glyph: '→', label: 'Right arrow' },
+};
+
+type RenderedKey = { name: string; variants: (Variant & { os?: 'mac' | 'windows' | 'linux' })[] };
+
+function renderKey(raw: string): RenderedKey {
+  const name = ALIAS[raw.trim().toLowerCase()] ?? raw.trim();
+  const perOs = OS_KEYS[name];
+  if (perOs) {
+    if (platform !== 'auto') return { name, variants: [perOs[platform]] };
+    return {
+      name,
+      variants: (['mac', 'windows', 'linux'] as const).map((os) => ({ ...perOs[os], os })),
+    };
+  }
+  return { name, variants: [GLYPHS[name] ?? { glyph: name }] };
+}
+
+const rendered = keys
+  ? keys
+      .split('+')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map(renderKey)
+  : null;
+---
+
+<span class:list={['ocx-kbd-group', className]}>
+  {rendered ? (
+    rendered.map((key, i) => (
+      <>
+        {i > 0 && (
+          <span class="ocx-kbd-sep" aria-hidden="true">
+            +
+          </span>
+        )}
+        <kbd class="ocx-kbd-key">
+          {key.variants.map((v) => (
+            <span data-os={v.os}>
+              {v.label ? (
+                <>
+                  <span aria-hidden="true">{v.glyph}</span>
+                  <span class="ocx-kbd-label">{v.label}</span>
+                </>
+              ) : (
+                v.glyph
+              )}
+            </span>
+          ))}
+        </kbd>
+      </>
+    ))
+  ) : (
+    <kbd class="ocx-kbd-key">
+      <slot />
+    </kbd>
+  )}
+</span>
+
+<style>
+  @layer ocx {
+    .ocx-kbd-group {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ocx-space-1);
+      font-family: var(--ocx-font-mono);
+    }
+    .ocx-kbd-sep {
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-kbd-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--ocx-control-xs);
+      box-sizing: border-box;
+      padding: var(--ocx-prose-kbd-pad);
+      font-family: inherit;
+      font-size: max(var(--ocx-prose-code-sm), var(--ocx-text-xs));
+      font-weight: var(--ocx-font-weight-medium);
+      line-height: var(--ocx-lh-heading);
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border-strong);
+      border-bottom-width: var(--ocx-border-width-strong);
+      border-radius: var(--ocx-radius-sm);
+    }
+    /* Accessible name as text (aria-label on a role-less span is ignored by AT): the glyph is
+       aria-hidden, this label is visually hidden. Same pattern as DataTable's caption. */
+    .ocx-kbd-label {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    /* Every OS variant renders server-side; CSS shows one. Fallback (no data-platform yet, or
+       JS disabled): the Windows glyph, matching Head.astro's default-non-mac detection. */
+    .ocx-kbd-key [data-os] {
+      display: none;
+    }
+    .ocx-kbd-key [data-os='windows'] {
+      display: inline;
+    }
+    html[data-platform='mac'] .ocx-kbd-key [data-os='windows'] {
+      display: none;
+    }
+    html[data-platform='mac'] .ocx-kbd-key [data-os='mac'] {
+      display: inline;
+    }
+    html[data-platform='linux'] .ocx-kbd-key [data-os='windows'] {
+      display: none;
+    }
+    html[data-platform='linux'] .ocx-kbd-key [data-os='linux'] {
+      display: inline;
+    }
+  }
+</style>

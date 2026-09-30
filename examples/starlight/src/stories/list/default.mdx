@@ -1,0 +1,20 @@
+---
+title: Grouped toolchain list
+description: A single-select list with two groups, a disabled row and clang selected; arrows move through the rows.
+height: 360
+block: true
+log: true
+---
+
+import List from '@ocx-sh/theme/components/ui/List.astro';
+
+export const tools = [
+  { value: 'gcc', label: 'gcc', group: 'Compilers', meta: '14.2' },
+  { value: 'clang', label: 'clang', group: 'Compilers', meta: '19.1' },
+  { value: 'zig', label: 'zig', group: 'Compilers', meta: '0.14' },
+  { value: 'cmake', label: 'cmake', group: 'Build systems', meta: '3.31' },
+  { value: 'ninja', label: 'ninja', group: 'Build systems', meta: '1.12' },
+  { value: 'meson', label: 'meson', group: 'Build systems', meta: '1.7', disabled: true },
+];
+
+<List label="Toolchain" items={tools} value="clang" />

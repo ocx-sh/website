@@ -1,0 +1,32 @@
+---
+title: Tables
+description: Static Markdown tables that fill the column and scroll sideways when their words cannot fit.
+---
+
+A Markdown table stays static: no sorting or filtering, the head in mono caps, long code and URLs
+break anywhere. It fills the column and scrolls sideways when its words cannot fit. For sorting, a
+filter and pages, use the [DataTable](../data-table/).
+
+## Markdown tables
+
+| Command | What it does |
+|---|---|
+| `ocx add` | Add a package binding to `ocx.toml` |
+| `ocx lock` | Resolve tags to digests and write `ocx.lock` |
+| `ocx exec` | Run a command with the toolchain on `PATH` |
+
+Aligned columns:
+
+| Platform | Packages | Share |
+|:---|---:|:---:|
+| Linux | 412 | 61% |
+| macOS | 198 | 29% |
+| Windows | 67 | 10% |
+
+A wide table fits while its words can wrap, and scrolls sideways (focusable region) once they cannot:
+
+| Platform | Arch | libc | Archive | Shell | Installer | Profile file | Notes |
+|---|---|---|---|---|---|---|---|
+| Linux | x86_64 | glibc | `ocx-x86_64-unknown-linux-gnu.tar.gz` | sh | `https://setup.ocx.sh/sh` | `~/.profile` | Default for most distributions |
+| Linux | aarch64 | musl | `ocx-aarch64-unknown-linux-musl.tar.gz` | fish | `https://setup.ocx.sh/fish` | `~/.config/fish/conf.d/ocx.fish` | Alpine and minimal images |
+| Windows | x86_64 | msvc | `ocx-x86_64-pc-windows-msvc.zip` | PowerShell | `https://setup.ocx.sh/pwsh` | `$PROFILE` | PowerShell 5.1 and 7 |

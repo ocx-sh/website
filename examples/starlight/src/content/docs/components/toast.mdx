@@ -1,0 +1,72 @@
+---
+title: Toast
+description: A typed toast() API over the page toaster.
+---
+
+import Stories from '../../../components/showcase/Stories.astro';
+
+`toast()` (`@ocx-sh/theme/toast`) asks the page toaster to show a notification, bottom-right, for
+2.5 s by default. There is nothing to place: the toaster mounts itself, lazily, on the first call.
+It dispatches the `ocx:toast` DOM event, the one `CopyButton` and Expressive Code's copy buttons
+use, so calling `toast()` never imports Zag.
+
+A `'loading'` toast draws the shared [ProgressCircle](/docs/components/progress-circle/) ring: a
+spinning arc, and a determinate ring once you pass `progress` (0–100).
+
+## Stories
+
+<Stories of="toast" />
+
+## API
+
+Import it with `import { toast } from '@ocx-sh/theme/toast'`.
+
+### `toast(title, options?)`
+
+| Option        | Type                                                       | Default     | Description                                                                                                                                                                                                                            |
+| ------------- | ---------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | `string`                                                   | required    | The toast's heading.                                                                                                                                                                                                                   |
+| `description` | `string`                                                   | –           | One muted line under the title.                                                                                                                                                                                                        |
+| `tone`        | `'info' \| 'success' \| 'warning' \| 'error' \| 'loading'` | `'success'` | Status icon and its colour; `'loading'` shows a spinning ProgressCircle ring instead of an icon and persists like `persistent` until an update gives the toast another tone.                                                           |
+| `duration`    | `number` (ms)                                              | `2500`      | Time visible before it auto-dismisses.                                                                                                                                                                                                 |
+| `persistent`  | `boolean`                                                  | `false`     | Never auto-dismisses (`duration: Infinity`); dismiss it by id or with the close button.                                                                                                                                                |
+| `action`      | `{ label: string, event: string }`                         | –           | A text button; clicking it dispatches `event` on `document` and dismisses the toast. A toast with an action never auto-dismisses (WCAG 2.2.1: the reader needs the time to reach it).                                                  |
+| `progress`    | `number` (0–100)                                           | –           | Loading toasts only: draws the ring determinate at that percentage (clamped). Update by `id` to move it; an update that leaves it out keeps the last value. Ignored on every other tone.                                               |
+| `id`          | `string`                                                   | generated   | Pass the same id back into `toast()` to update that toast in place, or into `toast.dismiss()`. An update changes only the options it passes: `toast('Retrying…', { id })` keeps the toast's tone, description, action and persistence. |
+
+Returns the toast's `id`: `const id = toast('Saved')`.
+`toast('Uh oh', { tone: 'error', description: 'Retry in a moment.' })` shows an error toast. A
+progress toast is one id updated in place:
+`toast('Uploading…', { id: 'up', tone: 'loading', progress: 0 })` starts it,
+`toast('Uploading…', { id: 'up', progress: 60 })` moves the ring and
+`toast('Uploaded', { id: 'up', tone: 'success' })` settles it.
+
+### `toast.dismiss(id?)`
+
+Dismisses the toast with that id (`toast.dismiss(id)`), or every toast with none (`toast.dismiss()`).
+
+### `toast.promise(promise, options)`
+
+Shows a persistent loading toast, then updates it in place to `success` or `error` once `promise`
+settles. `success` and `error` are each a string or a function of the resolved value / rejected
+error. Resolves or rejects with whatever `promise` did:
+`` await toast.promise(fetch('/api/job'), { loading: 'Uploading…', success: (res) => `Uploaded (${res.status})`, error: 'Upload failed' }) ``.
+
+### The toaster
+
+The toaster (the Footer's region) reads `data-placement` (a Zag `Placement`, default
+`bottom-end`) and `data-max` (visible at once, default `3`) off its own root, read once when it
+first mounts.
+
+## Events
+
+| Event               | Detail                                                                           | When                                                                                                                                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ocx:toast`         | `{ title, description?, tone?, duration?, persistent?, action?, progress?, id }` | `toast()` dispatches this; any script may dispatch it directly (the original, still-supported contract used no `tone` for a default success toast, and `'danger'` for an error one — `CopyButton` still calls it that way). |
+| `ocx:toast:dismiss` | `{ id? }`                                                                        | `toast.dismiss()` dispatches this. Ignored before any toast has ever shown.                                                                                                                                                 |
+
+## Keyboard
+
+- <kbd>Alt</kbd> + <kbd>T</kbd>: move focus to the toasts; <kbd>Tab</kbd> reaches each one.
+- <kbd>Escape</kbd> on a focused toast: dismiss it.
+- <kbd>Enter</kbd> or <kbd>Space</kbd> on a toast's action or close button: activate it.

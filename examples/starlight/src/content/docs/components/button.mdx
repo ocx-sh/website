@@ -1,0 +1,31 @@
+---
+title: Button
+description: The button and button-styled link, in three variants and three sizes, with no client JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A native `<button>`, or an `<a>` when `href` is set, restyled on `--ocx-*` tokens. Tab to a button to
+see its 2px focus ring, and hover it for the hover state. Icons go in the slot as
+[`<Icon>`](../iconography/icon/), never as a text arrow or an emoji. Switch the theme in the header to check
+dark mode.
+
+## Stories
+
+<Stories of="button" />
+
+## Props
+
+<PropsTable
+  of="ui/Button.astro"
+  rows={[
+    { name: 'variant', type: "'primary' | 'secondary' | 'ghost'", default: "'secondary'", description: 'Primary is the coral fill, one per view; secondary is surface and hairline; ghost is text only.' },
+    { name: 'size', type: "'s' | 'm' | 'l'", default: "'m'", description: 'Height 30 (mono), 38 or 42.' },
+    { name: 'iconOnly', type: 'boolean', default: 'false', description: 'Square button holding only an icon; then aria-label is required.' },
+    { name: 'aria-label', type: 'string', description: 'Accessible name; required with iconOnly.' },
+    { name: 'href', type: 'string', description: 'Renders an <a> instead of a <button>.' },
+    { name: 'type', type: "'button' | 'submit' | 'reset'", default: "'button'", description: 'Button type; only without href.' },
+    { name: 'rest → <button> | <a>', type: 'HTMLAttributes', description: 'Every other attribute goes to the rendered element.' },
+  ]}
+/>

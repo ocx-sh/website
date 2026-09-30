@@ -1,0 +1,39 @@
+---
+title: Shell tabs
+description: A synced group of shell tabs with icons; pick a shell and the choice survives a reload.
+height: 220
+prose: true
+log: true
+---
+
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+
+<Tabs syncKey="shell">
+  <TabItem label="Shell" icon="shell">
+    ```sh
+    curl -fsSL setup.ocx.sh | sh
+    ```
+  </TabItem>
+  <TabItem label="PowerShell" icon="powershell">
+    ```powershell
+    Set-ExecutionPolicy Bypass
+    irm setup.ocx.sh/pwsh | iex
+    ```
+  </TabItem>
+  <TabItem label="Nushell" icon="nushell">
+    ```nushell
+    curl -fsSL setup.ocx.sh/nu | nu
+    ```
+  </TabItem>
+  <TabItem label="cmd" icon="cmd">
+    ```cmd
+    curl -fsSL setup.ocx.sh/cmd -o setup.cmd && setup.cmd
+    ```
+  </TabItem>
+  <TabItem label="Elvish" icon="elvish">
+    ```sh
+    curl -fsSL setup.ocx.sh/elv | elvish
+    ```
+  </TabItem>
+</Tabs>

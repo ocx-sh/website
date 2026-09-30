@@ -1,0 +1,44 @@
+---
+title: Tree
+description: File trees with icons, descriptions and collapsible directories.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Everything ocx stores lives under a single root. A tree is `selectable` when a click selects a row
+(a directory also collapses); click it again, press <kbd>Escape</kbd>, or click outside the tree to
+clear the selection.
+
+## Stories
+
+<Stories of="tree" />
+
+## Props
+
+A tree is a `<Tree>` of nested `<Node>`s (`TreeNode.astro`); a `<Description slot="description">`
+(`TreeDescription.astro`) fills a node's description column. A node is a directory when its default
+slot holds child nodes.
+
+<PropsTable
+  of="Tree.astro"
+  rows={[
+    { name: 'collapsible', type: 'boolean', default: 'true', description: 'With false, every directory stays expanded and has no toggle.' },
+    { name: 'selectable', type: 'boolean', default: 'false', description: 'Rows can be selected, one per tree; Escape, a second click, or a click outside the tree clears.' },
+  ]}
+/>
+
+<PropsTable
+  of="TreeNode.astro"
+  rows={[
+    { name: 'name', type: 'string', required: true, description: 'File or directory name; a trailing / is only a visual hint.' },
+    { name: 'icon', type: 'string', default: 'by name and kind', description: 'Icon shown before the name; it stays when the directory opens.' },
+    { name: 'openIcon', type: 'string', description: 'Icon of an expanded directory (a plain directory goes 📁 → 📂).' },
+    { name: 'open-icon', type: 'string', description: 'Kebab-case alias of openIcon, as ocx pages write it.' },
+    { name: 'open', type: "boolean | 'true' | 'false'", default: 'true', description: 'Whether a directory starts expanded.' },
+    { name: 'description', type: 'string', description: 'Plain-text description; the description slot wins when both are given.' },
+    { name: 'selectable', type: 'boolean', default: "the Tree's", description: 'Opts this row in or out of selection.' },
+  ]}
+/>
+
+<PropsTable of="TreeDescription.astro" rows={[]} />

@@ -1,0 +1,253 @@
+---
+// One row of a <Tree> (WP13.3). Port of ocx Node.vue + FileTreeNode.vue.
+//
+// Authoring form (MDX) — Astro cannot introspect children, so each Node renders itself:
+//
+//   import Tree from '@ocx-sh/theme/components/Tree.astro';
+//   import Node from '@ocx-sh/theme/components/TreeNode.astro';
+//   import Description from '@ocx-sh/theme/components/TreeDescription.astro';
+//
+//   <Tree>
+//     <Node name="~/.ocx/" icon="🏠" open>
+//       <Node name="packages/" icon="📦">
+//         <Description slot="description">immutable, <code>content-addressed</code> packages</Description>
+//       </Node>
+//     </Node>
+//   </Tree>
+//
+// - Description goes in the named slot `description` (ocx `<Description>x</Description>` becomes
+//   `<Description slot="description">x</Description>`; inline HTML such as <code> is kept). The
+//   `description` prop is the plain-text shorthand; the slot wins when both are given.
+// - A Node is a directory iff its default slot holds child Nodes. A trailing `/` in `name` is
+//   only a visual hint (ocx `packages/` with just a Description is a file row).
+// - `open` defaults to expanded; `open={false}` or `open="false"` starts collapsed.
+// - `icon` replaces the default icon; it stays put when the directory opens (the chevron shows
+//   the state), so the row carries one icon span, not a closed/open pair. `open-icon` / `openIcon` sets an explicit open icon; a plain directory with no
+//   icon goes 📁 → 📂. Default table (tree.mjs): metadata.json / manifest.json 📋, bin/ ⚙️,
+//   lib/ 📚, share/ 📁, content/ 📂, entrypoints/ 🚀; else 📁 (directory) or 📄 (file).
+// - `selectable` opts this row in or out of selection, over the Tree's `selectable`.
+import { CHEVRON, iconsFor } from './tree.mjs';
+
+interface Props {
+  name: string;
+  icon?: string;
+  openIcon?: string;
+  'open-icon'?: string;
+  open?: boolean | 'true' | 'false';
+  description?: string;
+  /** Overrides the Tree's `selectable` for this row. */
+  selectable?: boolean;
+}
+
+const { name, icon, openIcon, 'open-icon': openIconKebab, open = true, description, selectable } = Astro.props;
+const children = Astro.slots.has('default') ? await Astro.slots.render('default') : '';
+const isDir = /\bocx-tree__node\b/.test(children);
+const [closedIcon, openedIcon] = iconsFor(name, isDir, icon, openIconKebab ?? openIcon);
+const isOpen = open !== false && open !== 'false';
+const sel = selectable === undefined ? undefined : String(selectable);
+const hasDesc = Astro.slots.has('description') || !!description;
+---
+
+{isDir ? (
+  <li class="ocx-tree__node">
+    <details class="ocx-tree__details" open={isOpen}>
+      <summary class="ocx-tree__row ocx-tree__row--dir" data-selectable={sel}>
+        <span class="ocx-tree__chevron" set:html={CHEVRON} />
+        {closedIcon === openedIcon ? (
+          <span class="ocx-tree__icon" aria-hidden="true">
+            {closedIcon}
+          </span>
+        ) : (
+          <span class="ocx-tree__icon" aria-hidden="true">
+            <span class="ocx-tree__icon-closed">{closedIcon}</span>
+            <span class="ocx-tree__icon-open">{openedIcon}</span>
+          </span>
+        )}
+        <code class="ocx-tree__name ocx-tree__name--dir">{name}</code>
+        {hasDesc && (
+          <span class="ocx-tree__desc">
+            <slot name="description">{description}</slot>
+          </span>
+        )}
+      </summary>
+      <ul class="ocx-tree__children" set:html={children} />
+    </details>
+  </li>
+) : (
+  <li class="ocx-tree__node">
+    <div class="ocx-tree__row" data-selectable={sel}>
+      <span class="ocx-tree__chevron" />
+      <span class="ocx-tree__icon" aria-hidden="true">
+        {closedIcon}
+      </span>
+      <code class="ocx-tree__name">{name}</code>
+      {hasDesc && (
+        <span class="ocx-tree__desc">
+          <slot name="description">{description}</slot>
+        </span>
+      )}
+    </div>
+  </li>
+)}
+
+<style is:global>
+  @layer ocx {
+    .ocx-tree__node {
+      /* Geometry of ocx FileTreeNode.vue: 18px icon column, 8px row inset, 14px indent; the
+         parent's guide runs under the centre of its icon, each child hangs off it with a stub. */
+      --_icon: var(--ocx-control-xs);
+      --_inset: var(--ocx-space-3);
+      --_indent: calc(var(--ocx-space-4) + var(--ocx-space-1));
+      --_mid: calc(var(--ocx-space-1) + 0.5lh);
+      --_guide: var(--ocx-color-border-control); /* 3:1 non-text line */
+
+      position: relative;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .ocx-tree__row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: var(--ocx-space-2);
+      padding: var(--ocx-space-1) var(--ocx-space-3);
+      border-radius: var(--ocx-radius-sm);
+      transition: background-color var(--ocx-duration-enter);
+      user-select: none;
+    }
+    /* The chevron replaces the native disclosure triangle (dbcc8d595). */
+    .ocx-tree__row--dir {
+      list-style: none;
+    }
+    .ocx-tree__row--dir::-webkit-details-marker {
+      display: none;
+    }
+    /* 1b55b24ff: pointer and hover only on a row that does something: a toggle (Tree.astro takes a
+       static tree's summaries out with tabindex=-1) or a selectable row (tabindex=0 from the script). */
+    .ocx-tree__row:is(summary:not([tabindex='-1']), [tabindex='0']) {
+      cursor: pointer;
+    }
+    .ocx-tree__row:is(summary:not([tabindex='-1']), [tabindex='0']):hover {
+      background-color: var(--ocx-color-hover);
+    }
+    /* Selection paints at once (the hover fade stays); deselecting fades out. */
+    .ocx-tree__row[data-selected] {
+      background-color: var(--ocx-color-accent-tint);
+      transition: none;
+    }
+    @media (forced-colors: active) {
+      .ocx-tree__row[data-selected] {
+        outline: var(--ocx-border-width) solid Highlight;
+      }
+    }
+    .ocx-tree__row:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+
+    /* One chevron, rotated when open; on a file row an empty spacer that keeps icons aligned. */
+    .ocx-tree__chevron {
+      flex: none;
+      display: inline-flex;
+      align-self: flex-start;
+      width: var(--ocx-icon-sm);
+      height: var(--ocx-icon-sm);
+      margin-block-start: calc((1lh - var(--ocx-icon-sm)) / 2);
+      color: var(--ocx-color-fg-muted);
+      transition: rotate var(--ocx-duration-fast) var(--ocx-ease-out);
+    }
+    .ocx-tree__chevron svg {
+      width: 100%;
+      height: 100%;
+    }
+    .ocx-tree__details[open] > summary > .ocx-tree__chevron {
+      rotate: 90deg;
+    }
+
+    .ocx-tree__icon {
+      flex: none;
+      width: var(--_icon);
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-none);
+      text-align: center;
+    }
+    .ocx-tree__details:not([open]) > summary .ocx-tree__icon-open,
+    .ocx-tree__details[open] > summary .ocx-tree__icon-closed {
+      display: none;
+    }
+
+    /* Row-qualified: outranks the prose `:not(pre) > code` chip under the `where` scope strategy. */
+    .ocx-tree__row > .ocx-tree__name {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg);
+      background: transparent;
+      padding: 0;
+    }
+    .ocx-tree__row > .ocx-tree__name--dir {
+      color: var(--ocx-color-fg);
+      font-weight: var(--ocx-font-weight-semibold);
+    }
+
+    .ocx-tree__desc {
+      flex: 1 1 12em;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      margin-inline-start: var(--ocx-space-2);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-tree__desc code {
+      font-size: inherit;
+      background: var(--ocx-color-surface);
+    }
+
+    .ocx-tree__children {
+      list-style: none;
+      margin: 0 0 0 calc(var(--_inset) + var(--_lead, 0px) + var(--_icon) / 2);
+      padding: 0 0 0 var(--_indent);
+    }
+    /* Guide: each child draws its stretch of the parent's vertical line (the last one stops at
+       its own row, an L instead of a T) plus the horizontal stub to its row. */
+    .ocx-tree__children > .ocx-tree__node::before,
+    .ocx-tree__children > .ocx-tree__node::after {
+      content: '';
+      position: absolute;
+      inset-inline-start: calc(-1 * var(--_indent));
+      background: var(--_guide);
+    }
+    .ocx-tree__children > .ocx-tree__node::before {
+      top: 0;
+      bottom: 0;
+      width: var(--ocx-border-width);
+    }
+    .ocx-tree__children > .ocx-tree__node:last-child::before {
+      bottom: auto;
+      height: var(--_mid);
+    }
+    .ocx-tree__children > .ocx-tree__node::after {
+      top: var(--_mid);
+      width: calc(var(--_indent) - var(--ocx-space-1));
+      height: var(--ocx-border-width);
+    }
+
+    /* Expand/collapse: CSS only, off under reduced motion (below). */
+    .ocx-tree__details {
+      interpolate-size: allow-keywords;
+    }
+    .ocx-tree__details::details-content {
+      block-size: 0;
+      overflow: clip;
+      transition:
+        block-size var(--ocx-duration-moderate),
+        content-visibility var(--ocx-duration-moderate) allow-discrete;
+    }
+    .ocx-tree__details[open]::details-content {
+      block-size: auto;
+    }
+  }
+</style>

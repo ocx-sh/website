@@ -1,0 +1,22 @@
+---
+title: Install, select, remove
+description: Three sections under headings; each heading is a button that opens its section.
+height: 280
+block: true
+log: true
+---
+
+import Accordion from '@ocx-sh/theme/components/Accordion.astro';
+import AccordionItem from '@ocx-sh/theme/components/AccordionItem.astro';
+
+<Accordion value={['install']}>
+  <AccordionItem value="install" label="Install">
+    `ocx package install` fetches a package into the content-addressed store.
+  </AccordionItem>
+  <AccordionItem value="select" label="Select">
+    `ocx package select` points the current symlink at an installed candidate.
+  </AccordionItem>
+  <AccordionItem value="remove" label="Remove">
+    `ocx package remove` drops the candidate; the store keeps shared objects.
+  </AccordionItem>
+</Accordion>

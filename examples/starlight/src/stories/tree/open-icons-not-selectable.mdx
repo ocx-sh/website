@@ -1,0 +1,33 @@
+---
+title: Open icons, not selectable
+description: The chevron shows whether a directory is open; an icon stays unless open-icon names its open form. Selection is off by default, so a click only toggles.
+height: 280
+order: 1
+block: true
+---
+
+import Tree from '@ocx-sh/theme/components/Tree.astro';
+import Node from '@ocx-sh/theme/components/TreeNode.astro';
+import Description from '@ocx-sh/theme/components/TreeDescription.astro';
+
+<Tree>
+  <Node name="~/.ocx/packages/" icon="📦" open>
+    <Node name="{registry}/" icon="📁" open-icon="📂" open>
+      <Node name="sha256/ab/c123…/" icon="📁" open-icon="📂" open>
+        <Description slot="description">one directory per unique package build</Description>
+        <Node name="content/" icon="📂">
+          <Description slot="description">package files — binaries, libraries, headers</Description>
+        </Node>
+        <Node name="entrypoints/" icon="🚀">
+          <Description slot="description">generated launchers, one script per entry point</Description>
+        </Node>
+        <Node name="metadata.json" icon="📋">
+          <Description slot="description">declared env vars and extraction options</Description>
+        </Node>
+        <Node name="refs/" icon="🔗">
+          <Description slot="description">back-references to install symlinks</Description>
+        </Node>
+      </Node>
+    </Node>
+  </Node>
+</Tree>

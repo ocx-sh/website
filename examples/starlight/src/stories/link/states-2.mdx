@@ -1,0 +1,17 @@
+---
+title: A link inside a paragraph
+description: The link runs with the text, and the icon stays with the last word of a wrapped label.
+height: 200
+order: 2
+block: true
+---
+
+import Link from '@ocx-sh/theme/components/ui/Link.astro';
+
+<p>
+  Run the installer, then read the <Link href="#states">state notes</Link> or the{' '}
+  <Link href="https://github.com/ocx-sh/website" newTab>
+    {'source of this very long link label that wraps'}
+  </Link>{' '}
+  for the details.
+</p>

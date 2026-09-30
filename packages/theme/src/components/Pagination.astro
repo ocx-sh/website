@@ -1,0 +1,120 @@
+---
+// Pagination on Zag `pagination` (C-202): prev/next and a window of numbered pages with
+// ellipses. Buttons that fire `ocx:pagination:change`, or links when `href` is a URL template.
+import type { Props as PaginationMachineProps } from '@zag-js/pagination';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+import { connect, machine, pageUrl, trigger } from './pagination.zag.mjs';
+
+type Owned = 'count' | 'pageSize' | 'defaultPageSize' | 'page' | 'defaultPage' | 'type';
+interface Props {
+  /** Total number of items. */
+  count: number;
+  /** Items per page. */
+  pageSize: number;
+  /** Current page, from 1. */
+  page?: number;
+  /** Links mode: URL template, `{page}` replaced by the page number. */
+  href?: string;
+  /** Zag machine props (data only), e.g. `siblingCount`, `boundaryCount`. */
+  zag?: ZagProps<Omit<PaginationMachineProps, Owned>>;
+}
+
+const { count, pageSize, page = 1, href, zag = {} } = Astro.props;
+const id = nextUiId('pagination');
+const props = { ...zag, count, pageSize, defaultPage: page, type: href == null ? 'button' : 'link' };
+const api = ssrApi(machine, connect, { ...props, id, ...(href != null && { getPageUrl: pageUrl(href) }) });
+const Tag = href == null ? 'button' : 'a';
+---
+
+<nav
+  class="ocx-pagination"
+  data-zag-root="pagination"
+  data-zag-id={id}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(props)}
+  data-ocx-href={href}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <ul>
+    <li>
+      <Tag {...ssrAttrs(trigger(api.getPrevTriggerProps()))}>←</Tag>
+    </li>
+    {api.pages.map((entry, index) => (
+      <li data-ocx-slot>
+        {entry.type === 'page' ? (
+          <Tag {...ssrAttrs(api.getItemProps(entry))}>{entry.value}</Tag>
+        ) : (
+          <span {...ssrAttrs(api.getEllipsisProps({ index }))}>…</span>
+        )}
+      </li>
+    ))}
+    <li>
+      <Tag {...ssrAttrs(trigger(api.getNextTriggerProps()))}>→</Tag>
+    </li>
+  </ul>
+</nav>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="pagination"]'))
+    // Links mode: an early click already navigated natively; replaying it would navigate twice.
+    mount(root, { load: () => import('./pagination.zag.mjs'), replay: root.dataset['ocxHref'] == null });
+</script>
+
+<style is:global>
+  @layer ocx {
+    .ocx-pagination ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--ocx-space-1);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    /* Square mono cells, the ghost button's language; the current page in the sidebar's
+       current-page colours. */
+    .ocx-pagination :is([data-part='item'], [data-part='prev-trigger'], [data-part='next-trigger']),
+    .ocx-pagination [data-part='ellipsis'] {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: var(--ocx-control-md);
+      height: var(--ocx-control-md);
+      padding-inline: var(--ocx-space-2);
+      font: inherit;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-muted);
+      text-decoration: none;
+    }
+    .ocx-pagination :is([data-part='item'], [data-part='prev-trigger'], [data-part='next-trigger']) {
+      background: transparent;
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-md);
+      cursor: pointer;
+    }
+    .ocx-pagination :is([data-part='item'], [data-part='prev-trigger'], [data-part='next-trigger']):hover {
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-hover);
+      border-color: var(--ocx-color-hover-border);
+    }
+    .ocx-pagination [data-part='item'][data-selected] {
+      color: var(--ocx-color-accent-fg);
+      background: var(--ocx-color-accent-tint);
+      border-color: var(--ocx-color-accent-tint-border);
+      font-weight: var(--ocx-font-weight-semibold);
+    }
+    .ocx-pagination :is([data-part='prev-trigger'], [data-part='next-trigger'])[data-disabled] {
+      color: var(--ocx-color-fg-subtle);
+      background: transparent;
+      border-color: var(--ocx-color-border);
+      cursor: default;
+    }
+    .ocx-pagination :is([data-part='item'], [data-part='prev-trigger'], [data-part='next-trigger']):focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+title: Choice
+description: Checkbox, radio and switch on one native input, working before any JavaScript loads.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A native `<input>` drawn as a checkbox, a radio or a switch. The input is the form control: it
+toggles and submits before any script runs. Checkbox and switch load the Zag machine on first
+hover or focus and report changes; a click that came earlier is kept. `type="radio"` stays a plain
+native radio with no machine; for a set of radios, use [RadioGroup](../radio-group/).
+
+## Stories
+
+<Stories of="choice" />
+
+## Props
+
+<PropsTable
+  of="ui/Choice.astro"
+  rows={[
+    { name: 'type', type: "'checkbox' | 'radio' | 'switch'", default: "'checkbox'", description: 'Control kind; a switch is a checkbox with role="switch"; a radio is plain native (groups: RadioGroup).' },
+    { name: 'label', type: 'string', required: true, description: 'Visible label, also the accessible name.' },
+    { name: 'zag', type: 'ZagProps<checkbox.Props>', description: 'Zag machine props (checkbox and switch).' },
+    { name: 'rest → <input>', type: 'HTMLAttributes', description: 'Every other attribute (name, value, checked, disabled) goes to the <input>.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:checkbox:change` `{ checked }`: A checkbox toggles.
+- `ocx:switch:change` `{ checked }`: A switch toggles.
+
+## Keyboard
+
+- <kbd>Tab</kbd>: Moves focus to the choice.
+- <kbd>Space</kbd>: Toggles the checkbox or switch.

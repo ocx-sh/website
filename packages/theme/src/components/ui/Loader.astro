@@ -1,0 +1,26 @@
+---
+// Loader: the DependencyExplorer spinner, extracted. Always rendered, so the
+// live region exists before anything changes: the consumer swaps `__label` text
+// to report progress and hides the loader once its content lands. Hidden when
+// scripting is off (a loader without JS never finishes). The consumer sets
+// `aria-busy` on the region it fills. Styles: loader.css, loaded by base.css (no stylesheet request of its own).
+export interface Props {
+  /** Status text, announced politely. */
+  label?: string;
+  /** s = inline (icon-md, text-sm) · m = block (control-sm, inherits text). */
+  size?: 's' | 'm';
+  class?: string;
+}
+
+const { label = 'Loading…', size = 'm', class: className } = Astro.props;
+---
+
+<span class:list={['ocx-ui-loader', className]} role="status" data-size={size}>
+  <span class="ocx-ui-loader__spinner" aria-hidden="true">
+    <i></i>
+    <i></i>
+    <i></i>
+    <i></i>
+  </span>
+  <span class="ocx-ui-loader__label">{label}</span>
+</span>

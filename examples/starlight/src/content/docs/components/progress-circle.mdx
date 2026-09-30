@@ -1,0 +1,46 @@
+---
+title: Progress circle
+description: A static ring for determinate and indeterminate progress, with no JavaScript and one markup source shared with the toast.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A ring with `role="progressbar"`, named by `label`. Without a `value` it is indeterminate: a quarter
+arc that spins, and stands still under reduced motion. It ships no JavaScript. To move a determinate
+ring, set `aria-valuenow` and `style="--_value:N"` (unitless, 0 to 100) on the root.
+
+`Loader` stays the calm square; the ring is for progress that a toast or a task reports.
+
+## Stories
+
+<Stories of="progress-circle" />
+
+## Props
+
+<PropsTable
+  of="ui/ProgressCircle.astro"
+  rows={[
+    { name: 'label', type: 'string', description: 'Accessible name.' },
+    { name: 'value', type: 'number', description: '0 to 100, clamped. Absent means indeterminate.' },
+    {
+      name: 'size',
+      type: "'s' | 'm' | 'l'",
+      default: "'m'",
+      description: 'Ring box: icon-md, control-sm or control-xl.',
+    },
+    {
+      name: 'tone',
+      type: "'neutral' | 'success' | 'warning' | 'danger'",
+      default: "'neutral'",
+      description: 'Arc colour. Accent is not offered.',
+    },
+    {
+      name: 'showValue',
+      type: 'boolean',
+      default: 'false',
+      description: 'Rounded percentage beside the ring, hidden from assistive tech (aria-valuenow carries it).',
+    },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

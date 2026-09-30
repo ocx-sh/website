@@ -1,0 +1,11 @@
+---
+// A story page's CycleButton listener: Starlight pages install it from Search.astro's every-page
+// script, which story pages lack. StoryLayout renders this only for a story holding a CycleButton;
+// imported under `?story` (see toaster-story.d.ts).
+---
+
+<script>
+  import { install } from '@ocx-sh/theme/cycle-button?story';
+
+  install();
+</script>

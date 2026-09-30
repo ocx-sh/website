@@ -1,0 +1,23 @@
+{
+  "artifact": "hex-execute",
+  "cost_min": 0,
+  "entries": [
+    "20260928T060533Z-5f97ab84.json"
+  ],
+  "first_seen": "2026-09-28T06:05:33Z",
+  "fixed": null,
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "hex-execute-resume-stale-preview",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T06:05:33Z",
+  "occurrences": 1,
+  "scope": "harness",
+  "severity": "low",
+  "status": "deferred",
+  "title": "Interrupted WP leaves a preview server on its e2e port, reused on resume",
+  "v": 1,
+  "versions": [
+    "unknown"
+  ]
+}

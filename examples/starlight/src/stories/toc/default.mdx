@@ -1,0 +1,37 @@
+---
+title: Scroll-spy
+description: A table of contents that marks the heading you are reading; scroll this story and the list follows.
+height: 830
+block: true
+prose: true
+---
+
+import Toc from '@ocx-sh/theme/components/Toc.astro';
+
+export const sections = [
+  { id: 'overview', label: 'Overview', depth: 2 },
+  { id: 'props', label: 'Props', depth: 2 },
+  { id: 'events', label: 'Events', depth: 2 },
+  { id: 'keyboard', label: 'Keyboard', depth: 2 },
+];
+
+<Toc items={sections} />
+
+<h2 id="overview">Overview</h2>
+
+A table of contents for pages that do not have Starlight's own. Its links work before JavaScript;
+the machine starts when the list scrolls into view, with no input. Scroll this story: the list
+marks the heading you are reading.
+
+<h2 id="props">Props</h2>
+
+One entry per heading: its element id, text and level. The scroll-spy band follows the page
+scroll-padding-top.
+
+<h2 id="events">Events</h2>
+
+`ocx:toc:change` fires when the active heading changes.
+
+<h2 id="keyboard">Keyboard</h2>
+
+Plain links: Tab moves between entries, Enter jumps.

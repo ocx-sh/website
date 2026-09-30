@@ -1,0 +1,47 @@
+---
+title: ActionMenu
+description: A menu of commands on Zag menu, from a trigger button or a right-click on a target.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A menu of commands (APG menu pattern). Choosing an item fires `ocx:menu:select`. Navigation
+links belong in [Menu](../menu/), not here.
+
+An item takes a leading `icon` from the [icon registry](../iconography/catalog/); once one item
+has an icon, the others keep an empty slot so the labels stay aligned.
+
+## Stories
+
+<Stories of="action-menu" />
+
+## Props
+
+<PropsTable
+  of="ui/ActionMenu.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Trigger text; in context mode the accessible name of the menu.' },
+    { name: 'items', type: '{ value, label, disabled?, icon? }[]', required: true, description: 'The commands; value is sent in ocx:menu:select; icon is a registry name drawn before the label.' },
+    { name: 'context', type: 'boolean', default: 'false', description: 'Open on right-click or long-press on the default slot instead of from a trigger.' },
+    { name: 'placement', type: 'Placement', default: "'bottom-start'", description: 'Panel side and alignment relative to the trigger.' },
+    { name: 'zag', type: 'ZagProps<menu.Props>', description: 'Zag machine props passed through verbatim.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:menu:select` `{ value }`: an item is chosen by click, Enter or Space.
+- `ocx:menu:change` `{ open }`: the menu opens or closes.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Enter, Space, ArrowDown | On the trigger: open the menu and highlight the first item. |
+| ArrowUp | On the trigger: open the menu. In the menu: previous item. |
+| ArrowDown | Next item. |
+| Home, End | First or last item. |
+| A letter | Highlight the next item starting with it. |
+| Enter, Space | Choose the highlighted item and close. |
+| Escape | Close; focus returns to the trigger. |

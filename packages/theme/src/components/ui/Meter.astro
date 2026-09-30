@@ -1,0 +1,69 @@
+---
+// Meter (C-266, HeroUI Meter): a scalar in a known range (disk use, quota), `role="meter"`, no JS.
+// A div rather than <meter>: native meter styling needs per-engine pseudo-elements (D-P3). For
+// progress of a task, use ProgressCircle.
+import Label from './Label.astro';
+import { nextUiId } from './ids.mjs';
+import { formatValue } from './range.mjs';
+import './range.css';
+
+export interface Props {
+  /** Visible label, also the accessible name. */
+  label: string;
+  hideLabel?: boolean;
+  value: number;
+  min?: number;
+  max?: number;
+  /** Formats `value` itself. Default: the percent of the range. */
+  format?: Intl.NumberFormatOptions;
+  /** Replaces the shown text and `aria-valuetext`, e.g. "3.2 of 5 GB". */
+  valueText?: string;
+  /** Fill colour; neutral is muted ink, accent stays reserved. */
+  tone?: 'neutral' | 'success' | 'warning' | 'danger';
+  size?: 's' | 'm';
+  class?: string;
+}
+
+const {
+  label,
+  hideLabel = false,
+  value,
+  min = 0,
+  max = 100,
+  format,
+  valueText,
+  tone = 'neutral',
+  size = 'm',
+  class: className,
+} = Astro.props;
+const id = nextUiId('meter');
+const now = Math.min(max, Math.max(min, value));
+const fraction = max > min ? (now - min) / (max - min) : 0;
+const percent = Math.round(fraction * 10000) / 100;
+const text = valueText ?? (format ? formatValue(now, format) : formatValue(fraction, { style: 'percent' }));
+---
+
+<div
+  class:list={['ocx-ui-field', 'ocx-ui-meter', className]}
+  role="meter"
+  aria-labelledby={`${id}-label`}
+  aria-valuenow={now}
+  aria-valuemin={min}
+  aria-valuemax={max}
+  aria-valuetext={text}
+  data-tone={tone}
+  data-size={size}
+  style={`--_value:${percent}`}
+>
+  <div class="ocx-ui-meter__head">
+    <Label as="span" id={`${id}-label`} hidden={hideLabel} data-part="label">
+      {label}
+    </Label>
+    <span class="ocx-ui-meter__value" data-part="value-text">
+      {text}
+    </span>
+  </div>
+  <div class="ocx-ui-meter__track" data-part="track">
+    <div class="ocx-ui-meter__fill" data-part="fill"></div>
+  </div>
+</div>

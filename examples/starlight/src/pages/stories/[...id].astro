@@ -1,0 +1,31 @@
+---
+// C-125 story pages: one chromeless page per `src/stories/<slug>/<name>.mdx`, at
+// /docs/stories/<slug>/<name>/. The only place story modules are rendered (D-SB6), through the
+// `stories` collection so each page links only its own story's CSS.
+import type { GetStaticPaths } from 'astro';
+import { getCollection, getEntry, render } from 'astro:content';
+import StoryLayout from '../../components/showcase/StoryLayout.astro';
+import { parseFrontmatter, snippet } from '../../components/showcase/stories.mjs';
+
+export const getStaticPaths = (async () => {
+  const raws = import.meta.glob<string>('../../stories/**/*.mdx', { query: '?raw', import: 'default', eager: true });
+  return Promise.all(
+    (await getCollection('stories')).map(async (entry) => {
+      const id = entry.id;
+      const slug = id.slice(0, id.lastIndexOf('/'));
+      const raw = raws[`../../stories/${id}.mdx`];
+      if (raw === undefined) throw new Error(`story ${id}: no source at src/stories/${id}.mdx`);
+      const component = (await getEntry('docs', `components/${slug}`))?.data.title;
+      if (!component) throw new Error(`story ${id}: no docs page components/${slug}`);
+      return { params: { id }, props: { entry, slug, component, meta: parseFrontmatter(raw), code: snippet(raw) } };
+    }),
+  );
+}) satisfies GetStaticPaths;
+
+const { entry, slug, component, meta, code } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<StoryLayout slug={slug} component={component} meta={meta} code={code}>
+  <Content />
+</StoryLayout>

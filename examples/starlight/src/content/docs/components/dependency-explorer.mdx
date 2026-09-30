@@ -1,0 +1,43 @@
+---
+title: Dependency explorer
+description: Searchable licence table of the crates in the ocx binary.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Every third-party crate in `ocx`, with its licence. Search, filter by licence, and expand a
+row for its author and summary. Built on [SearchField](../search-field/), [Select](../select/)
+and [Collapsible](../collapsible/) rows.
+
+## Stories
+
+<Stories of="dependency-explorer" />
+
+## States
+
+The first story's buttons show each state.
+
+- **Loading**: skeletons and one placeholder per row to come (≤ 12); nothing moves.
+- **Error**: a danger aside names the cause.
+- **Empty**: no rows or no match. A known empty list reserves it from first paint, shown in the
+  known-empty story.
+
+## Props
+
+<PropsTable
+  of="DependencyExplorer.astro"
+  rows={[
+    { name: 'src', type: 'string', default: "'data/dependencies.json' under the base", description: 'URL of the dependencies JSON.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:collapsible:change` `{ open }` from a row.
+- `ocx:deps:load` (input): reload, from `detail.data` (JSON or a promise) if given.
+
+## Keyboard
+
+<kbd>Tab</kbd> reaches each control and row name; <kbd>Enter</kbd> or <kbd>Space</kbd> toggles a row;
+the filter takes the Select keys.

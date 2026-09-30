@@ -1,0 +1,74 @@
+---
+title: States
+description: The tags input with allowCreate, as free text, prefilled, at its maximum, disabled, in error and with a hint.
+height: 720
+order: 1
+block: true
+---
+
+import TagsInput from '@ocx-sh/theme/components/ui/TagsInput.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const topics = [
+  { value: 'k8s', label: 'kubernetes', meta: '312' },
+  { value: 'docker', label: 'docker', meta: '287' },
+  { value: 'cli', label: 'cli', meta: '954' },
+  { value: 'compiler', label: 'compiler', meta: '41' },
+  { value: 'build-system', label: 'build-system', meta: '63' },
+  { value: 'python', label: 'python', meta: '508' },
+  { value: 'rust', label: 'rust', meta: '377' },
+  { value: 'database', label: 'database', meta: '96' },
+  { value: 'security', label: 'security', meta: '120' },
+];
+
+export const few = topics.slice(0, 4);
+
+<StateGrid wide>
+  <State label="allowCreate with suggestions">
+    <div style="inline-size: 100%">
+      <TagsInput label="Topics, open list" suggestions={few} allowCreate placeholder="Pick or create" />
+    </div>
+  </State>
+  <State label="free, no suggestions">
+    <div style="inline-size: 100%">
+      <TagsInput label="Keywords" value={['ocx', 'oci']} placeholder="Type, then Enter or comma" />
+    </div>
+  </State>
+  <State label="prefilled, labels mapped">
+    <div style="inline-size: 100%">
+      <TagsInput label="Topics, prefilled" suggestions={topics} value={['k8s', 'docker', 'build-system', 'python']} />
+    </div>
+  </State>
+  <State label="max reached">
+    <div style="inline-size: 100%">
+      <TagsInput
+        label="Topics, at most 2"
+        suggestions={topics}
+        value={['cli', 'rust']}
+        max={2}
+        hint="At most 2 topics."
+      />
+    </div>
+  </State>
+  <State label="disabled">
+    <div style="inline-size: 100%">
+      <TagsInput label="Topics (disabled)" suggestions={few} value={['cli']} disabled />
+    </div>
+  </State>
+  <State label="error">
+    <div style="inline-size: 100%">
+      <TagsInput
+        label="Topics, required"
+        suggestions={few}
+        placeholder="Add a topic"
+        error="Add at least one topic."
+      />
+    </div>
+  </State>
+  <State label="hint">
+    <div style="inline-size: 100%">
+      <TagsInput label="Topics, with hint" suggestions={few} value={['security']} hint="Pick from the list." />
+    </div>
+  </State>
+</StateGrid>

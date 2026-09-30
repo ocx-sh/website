@@ -1,0 +1,61 @@
+---
+title: Search field
+description: A text field for searching or filtering, with a search icon and a clear button that appears once there is text.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Use it to filter a list or table, or to search a set of pages. For a free-form value that is not a
+search, use an [Input](../input/). The clear button is a real button and it shows only while the
+field holds text. Without JavaScript the browser's own clear behaviour applies and the button stays
+hidden.
+
+## Stories
+
+<Stories of="search-field" />
+
+## Props
+
+<PropsTable
+  of="ui/SearchField.astro"
+  rows={[
+    {
+      name: 'label',
+      type: 'string',
+      description: 'Required. Accessible name; the clear button is named "Clear label".',
+    },
+    {
+      name: 'hideLabel',
+      type: 'boolean',
+      default: 'true',
+      description: 'Hide the label visually, keep it for assistive tech.',
+    },
+    {
+      name: 'placeholder',
+      type: 'string',
+      default: 'label',
+      description: 'Never empty: the empty-state style needs it.',
+    },
+    {
+      name: 'rest → <input>',
+      type: 'HTMLAttributes',
+      description:
+        'Every other attribute goes to the input: value (the initial text; the clear button shows when it is set), name, disabled (greys the box, disables the input, hides the clear button), id (generated when omitted), class (added to the root element), autocomplete, aria-controls, data-* hooks.',
+    },
+  ]}
+/>
+
+## Events
+
+| Event                    | Detail | When                                                                                                    |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| `input`                  | none   | The native event. It also fires when the clear button or Escape empties the field, so listeners see it. |
+| `ocx:search-field:clear` | none   | The clear button or Escape emptied the field. It bubbles from the input.                                |
+
+## Keyboard
+
+- <kbd>Tab</kbd> moves from the input to the clear button.
+- <kbd>Enter</kbd> submits the surrounding form, or fires the native `search` event.
+- <kbd>Esc</kbd> clears a field that holds text and keeps focus in it. A surrounding dialog stays open. On an empty
+  field it does nothing, so the dialog closes as usual.

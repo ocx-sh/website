@@ -1,0 +1,19 @@
+---
+// One panel of <Tabs> (C-150). Renders a marked panel; <Tabs> reads the marks into its tab list
+// and rewrites each mark into the Zag content part.
+export type TabIcon = 'shell' | 'powershell' | 'nushell' | 'fish' | 'elvish' | 'cmd';
+
+export interface Props {
+  /** Tab text; synced groups match on it. */
+  label: string;
+  /** Shell icon (registry name, inline, currentColor) shown before the label. */
+  icon?: TabIcon;
+}
+
+const { label, icon } = Astro.props;
+if (!label) throw new Error('Missing prop `label` on <TabItem>.');
+---
+
+<div data-ocx-tab data-label={label} data-icon={icon}>
+  <slot />
+</div>

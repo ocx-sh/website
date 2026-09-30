@@ -1,0 +1,39 @@
+---
+title: States
+description: Multiple selection, disabled rows, a horizontal list, a grid, rich rows and the empty list.
+height: 715
+block: true
+order: 1
+---
+
+import List from '@ocx-sh/theme/components/ui/List.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+export const few = [
+  { value: 'linux', label: 'linux' },
+  { value: 'darwin', label: 'darwin' },
+  { value: 'windows', label: 'windows' },
+];
+export const locked = [
+  { value: 'stable', label: 'stable' },
+  { value: 'beta', label: 'beta', disabled: true },
+  { value: 'nightly', label: 'nightly', disabled: true },
+];
+export const arch = [
+  { value: 'amd64', label: 'amd64' },
+  { value: 'arm64', label: 'arm64' },
+  { value: 'riscv64', label: 'riscv64' },
+  { value: 's390x', label: 's390x' },
+];
+
+<StateGrid wide>
+  <State label="multiple, selected"><List label="Platforms" items={few} selectionMode="multiple" value={['linux', 'windows']} /></State>
+  <State label="disabled rows"><List label="Channel" items={locked} value="stable" /></State>
+  <State label="horizontal"><List label="Platform" items={few} orientation="horizontal" /></State>
+  <State label="grid, 2 columns"><List label="Architecture" items={arch} columns={2} /></State>
+  <State label="rich rows (slot)">
+    <List label="Architecture" items={arch.slice(0, 2)}>{(item) => <span><code>{item.label}</code> binaries</span>}</List>
+  </State>
+  <State label="empty"><List label="Pinned" items={[]} empty="Nothing pinned yet." /></State>
+</StateGrid>

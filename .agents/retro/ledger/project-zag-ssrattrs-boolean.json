@@ -1,0 +1,27 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T012027Z-db493ad9.json",
+    "20260928T012116Z-1674624b.json",
+    "20260928T043540Z-446e0c2d.json"
+  ],
+  "first_seen": "2026-09-28T01:20:27Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:11Z",
+    "by": "edd4dc3",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-zag-ssrattrs-boolean",
+  "kind": "defect",
+  "last_seen": "2026-09-28T04:35:41Z",
+  "occurrences": 3,
+  "scope": "project",
+  "severity": "high",
+  "status": "fixed",
+  "title": "ssrAttrs true to empty string drops Astro boolean attributes in SSR",
+  "v": 1,
+  "versions": []
+}

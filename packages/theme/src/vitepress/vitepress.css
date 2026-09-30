@@ -1,0 +1,22 @@
+/* OCX adapter · VitePress — layer 3 of 3.
+ * custom VitePress theme only; DefaultTheme CSS is unlayered and would win.
+ * Shiki code blocks on tokens (prose is base.css's), and the
+ * Shiki light/dark switch DefaultTheme would otherwise provide. No literal
+ * colours here (C-033). */
+
+@layer ocx {
+
+/* Code blocks: Shiki dual-theme output (spans carry --shiki-light / --shiki-dark). */
+div[class*='language-'] { position: relative; }
+div[class*='language-'] pre,
+.vp-code {
+  margin: 0; padding: var(--ocx-space-4) var(--ocx-space-5); overflow-x: auto;
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-prose-pre); line-height: var(--ocx-lh-code);
+  background: var(--ocx-color-code-bg); color: var(--ocx-color-code-fg);
+  border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg);
+}
+.vp-code code { font: inherit; background: none; padding: 0; }
+.shiki span { color: var(--shiki-light, inherit); }
+.dark .shiki span { color: var(--shiki-dark, inherit); }
+
+} /* @layer ocx */

@@ -1,0 +1,49 @@
+---
+title: Tree view
+description: An interactive tree on Zag tree-view.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+An interactive tree for app-like hierarchies (a package picker, a file browser); the machine loads
+on first hover or focus. Icons, descriptions and `selectable` work as in the native
+[Tree](../tree/), which suits documentation listings.
+
+## Stories
+
+<Stories of="tree-view" />
+
+## Props
+
+<PropsTable
+  of="TreeView.astro"
+  rows={[
+    { name: 'items', type: '{ value, label, children?, disabled?, icon?, openIcon?, description?, selectable? }[]', required: true, description: 'The tree as JSON; a node with children is a branch. icon, openIcon and description work as on a Tree Node; an item\'s selectable wins.' },
+    { name: 'label', type: 'string', required: true, description: 'Accessible name, shown above the tree.' },
+    { name: 'value', type: 'string', description: 'The selected node.' },
+    { name: 'selectable', type: 'boolean', default: 'false', description: 'Nodes can be selected; Escape or a click outside the tree clears the selection.' },
+    { name: 'expanded', type: 'string[]', default: '[]', description: 'Branches rendered open.' },
+    { name: 'zag', type: 'ZagProps<TreeViewProps>', description: 'Zag machine props, data only.' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:tree-view:select` | `{ value: string[] }` | The selection changes. |
+| `ocx:tree-view:expand` | `{ value: string[] }` | A branch opens or closes. |
+
+## Keyboard
+
+APG [tree view](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/) pattern.
+
+- <kbd>↓</kbd> / <kbd>↑</kbd>: Next / previous visible node.
+- <kbd>→</kbd>: Open a closed branch; on an open one, go to its first child.
+- <kbd>←</kbd>: Close an open branch; otherwise move to the parent.
+- <kbd>Home</kbd> / <kbd>End</kbd>: First / last visible node.
+- <kbd>Enter</kbd> / <kbd>Space</kbd>: Select a selectable node (a branch also toggles).
+- <kbd>Escape</kbd>: Clear the selection.
+- <kbd>*</kbd>: Open every sibling branch.
+- letters: Move to the next node starting with them.

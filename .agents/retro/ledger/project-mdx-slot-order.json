@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T043332Z-09e7c52b.json"
+  ],
+  "first_seen": "2026-09-28T04:33:32Z",
+  "fixed": {
+    "at": "2026-09-28T17:52:14Z",
+    "by": "779cf80",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-mdx-slot-order",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T04:33:32Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "MDX renders slot children before the parent, so parent context fails in builds",
+  "v": 1,
+  "versions": []
+}

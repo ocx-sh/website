@@ -1,0 +1,24 @@
+---
+title: Tooltip
+description: Inline term definitions that open on hover or keyboard focus.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Hover a dashed term, or Tab to it; Escape closes the popup.
+
+## Stories
+
+<Stories of="tooltip" />
+
+## Props
+
+<PropsTable
+  of="Tooltip.astro"
+  rows={[
+    { name: 'term', type: 'string', required: true, description: 'The trigger text, shown inline with a dashed underline. The default slot is the definition.' },
+    { name: 'side', type: "'top' | 'bottom' | 'left' | 'right'", default: "'top'", description: 'Side of the term the popup opens on.' },
+    { name: 'delayDuration', type: 'number', default: '400', description: 'Hover-intent delay in ms before the popup opens.' },
+  ]}
+/>

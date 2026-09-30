@@ -1,0 +1,91 @@
+---
+// Declarative file tree (WP13.3). Port of ocx Tree.vue + FileTree.vue; authoring form documented
+// in TreeNode.astro. `collapsible={false}` renders every directory expanded, with no toggle.
+// Selection is opt-in: `selectable` here, or per Node. Clicking the selected row again, Escape on
+// a row, or a pointerdown outside the tree (owner finding 2026-09-28) clears it.
+interface Props {
+  collapsible?: boolean;
+  /** Rows can be selected (one per tree); a Node's own `selectable` wins. */
+  selectable?: boolean;
+}
+
+const { collapsible = true, selectable = false } = Astro.props;
+let nodes = await Astro.slots.render('default');
+// ponytail: Astro has no context, so the Nodes cannot see `collapsible`; force their <details>
+// open and take the summaries out of the tab order here (the script blocks the toggle).
+if (!collapsible)
+  nodes = nodes
+    .replace(/<details\b(?![^>]*\sopen[\s>=])/g, '<details open')
+    .replace(/<summary\b/g, '<summary tabindex="-1"');
+---
+
+<div class="ocx-tree not-content" data-collapsible={String(collapsible)} data-selectable={String(selectable)}>
+  <ul class="ocx-tree__list" set:html={nodes} />
+</div>
+
+<script>
+  import { clear, isSelectable, select } from './tree.mjs';
+  // Selection needs this script, so a selectable row joins the tab order only here.
+  for (const tree of document.querySelectorAll('.ocx-tree'))
+    for (const row of tree.querySelectorAll('.ocx-tree__row'))
+      if (isSelectable(tree, row)) row.setAttribute('tabindex', '0');
+  const target = (e: Event) => {
+    const row = e.target instanceof Element ? e.target.closest('.ocx-tree__row') : null;
+    const tree = row?.closest<HTMLElement>('.ocx-tree');
+    return row && tree ? { row, tree } : undefined;
+  };
+  document.addEventListener('click', (e) => {
+    const { row, tree } = target(e) ?? {};
+    if (!row || !tree) return;
+    if (tree.dataset['collapsible'] === 'false' && row.localName === 'summary') e.preventDefault();
+    if (isSelectable(tree, row)) select(tree, row);
+  });
+  document.addEventListener('keydown', (e) => {
+    const { row, tree } = target(e) ?? {};
+    if (!row || !tree) return;
+    if (e.key === 'Escape') clear(tree);
+    // A summary turns Enter/Space into a click itself; a file row does not.
+    else if ((e.key === 'Enter' || e.key === ' ') && row.localName !== 'summary' && isSelectable(tree, row)) {
+      e.preventDefault();
+      select(tree, row);
+    }
+  });
+  // No selectable tree on the page → skip the listener entirely (no cost for non-selectable trees).
+  if (document.querySelector('.ocx-tree__row[tabindex="0"]'))
+    document.addEventListener('pointerdown', (e) => {
+      const inside = e.target instanceof Element ? e.target.closest('.ocx-tree') : null;
+      for (const selected of document.querySelectorAll('.ocx-tree [data-selected]')) {
+        const tree = selected.closest('.ocx-tree');
+        if (tree && tree !== inside) clear(tree);
+      }
+    });
+</script>
+
+<style is:global>
+  @layer ocx {
+    .ocx-tree {
+      /* The chevron column before the icon; a static tree has none. */
+      --_lead: calc(var(--ocx-icon-sm) + var(--ocx-space-2));
+      margin-block: var(--ocx-space-5);
+      padding: var(--ocx-space-4) var(--ocx-space-5);
+      overflow-x: auto;
+      font-size: var(--ocx-text-sm);
+      line-height: 1.6; /* no line-height token yet */
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    .ocx-tree__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .ocx-tree[data-collapsible='false'] {
+      --_lead: 0px;
+    }
+    .ocx-tree[data-collapsible='false'] .ocx-tree__chevron {
+      display: none;
+    }
+  }
+</style>

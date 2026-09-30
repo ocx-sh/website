@@ -1,0 +1,124 @@
+---
+// OS glyphs for `os/arch` platform strings (WP13.4, port of ocx PlatformIcons.vue).
+// Zero client JS: groups are computed at build time, glyphs are inline SVG
+// filled with `currentColor`, the tooltip is the native `title`.
+// Linux (Tux) is Material Design Icons (Apache-2.0, see THIRD_PARTY_NOTICES; ≤ 2 KB, Simple Icons' 5 KB Tux
+// pushed pages past the first TCP round trip); Apple is Simple Icons (CC0-1.0); Windows is a
+// trademark-neutral four-pane window. Chips are the Tag primitive (label, neutral).
+import type { IconName } from '../icons/icons.mjs';
+import Icon from './ui/Icon.astro';
+import Tag from './ui/Tag.astro';
+
+interface Props {
+  /** Platform strings in `os/arch` form (e.g. `linux/amd64`); a bare `os` is fine. */
+  platforms: string[];
+  /** `os` = glyphs only; `os-arch` = glyph + OS name + architecture chips. */
+  mode?: 'os' | 'os-arch';
+}
+
+// Glyphs come from the icon registry (src/icons/icons.mjs), which carries their sources.
+const GLYPHS: Record<string, { label: string; icon: IconName }> = {
+  linux: { label: 'Linux', icon: 'linux' },
+  darwin: { label: 'macOS', icon: 'apple' },
+  windows: { label: 'Windows', icon: 'windows' },
+};
+
+// Known OSes first, in a stable canonical order; unknowns after, alphabetically.
+const ORDER = ['linux', 'darwin', 'windows', 'any'];
+const rank = (os: string) => (ORDER.includes(os) ? ORDER.indexOf(os) : ORDER.length);
+
+const { platforms, mode = 'os' } = Astro.props;
+
+const byOs = new Map<string, Set<string>>();
+for (const entry of platforms) {
+  const slash = entry.indexOf('/');
+  const os = slash === -1 ? entry : entry.slice(0, slash);
+  const arch = slash === -1 ? '' : entry.slice(slash + 1);
+  if (!os) continue;
+  const arches = byOs.get(os) ?? new Set<string>();
+  if (arch) arches.add(arch);
+  byOs.set(os, arches);
+}
+const groups = [...byOs]
+  .map(([os, set]) => {
+    const glyph = GLYPHS[os];
+    const label = glyph?.label ?? os;
+    const arches = [...set].sort();
+    return { os, glyph, label, arches, title: arches.length ? `${label} (${arches.join(', ')})` : label };
+  })
+  .sort((a, b) => rank(a.os) - rank(b.os) || a.os.localeCompare(b.os));
+---
+
+{groups.length > 0 && (
+  <span class="ocx-platforms" data-mode={mode}>
+    {groups.map(({ os, glyph, label, arches, title }) => (
+      <span class="ocx-platform" data-os={os} role="img" aria-label={title} title={title}>
+        {glyph ? <Icon name={glyph.icon} class="ocx-platform__icon" /> : <Tag class="ocx-platform__fallback">{os}</Tag>}
+        {mode === 'os-arch' && (
+          <>
+            <span class="ocx-platform__name">{label}</span>
+            {arches.map((arch) => (
+              <Tag class="ocx-platform__arch">{arch}</Tag>
+            ))}
+          </>
+        )}
+      </span>
+    ))}
+  </span>
+)}
+
+<style>
+  @layer ocx {
+    .ocx-platforms {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      vertical-align: middle;
+    }
+    /* Release-archive list: one OS per line. */
+    .ocx-platforms[data-mode='os-arch'] {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--ocx-space-3);
+    }
+
+    .ocx-platform {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      color: var(--ocx-color-fg-subtle);
+      transition: color var(--ocx-duration-base);
+    }
+    /* Neutral hover: a glyph is not a link, so no accent. */
+    .ocx-platforms[data-mode='os'] .ocx-platform:hover {
+      color: var(--ocx-color-fg);
+    }
+
+    .ocx-platform > :global(.ocx-platform__icon) {
+      inline-size: var(--ocx-control-xs);
+      block-size: var(--ocx-control-xs);
+    }
+
+    .ocx-platform__name {
+      min-width: calc(var(--ocx-space-10) + var(--ocx-space-2));
+      font-size: var(--ocx-text-sm);
+      font-weight: var(--ocx-font-weight-medium);
+      color: var(--ocx-color-fg-muted);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .ocx-platform {
+        animation: ocx-platform-in var(--ocx-duration-slow) ease both;
+      }
+    }
+
+    /* Movement only, no fade: content that starts at opacity 0 is not contentful, so a view holding
+     * only platform icons had no first contentful paint (Lighthouse NO_FCP on the story pages). */
+    @keyframes ocx-platform-in {
+      from {
+        transform: translateY(var(--ocx-space-1));
+      }
+    }
+  }
+</style>

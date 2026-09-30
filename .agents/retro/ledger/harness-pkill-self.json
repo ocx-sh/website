@@ -1,0 +1,23 @@
+{
+  "artifact": "harness",
+  "cost_min": 0,
+  "entries": [
+    "20260928T065259Z-e73333bd.json"
+  ],
+  "first_seen": "2026-09-28T06:52:59Z",
+  "fixed": null,
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "harness-pkill-self",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T06:52:59Z",
+  "occurrences": 1,
+  "scope": "harness",
+  "severity": "low",
+  "status": "deferred",
+  "title": "pkill -f in a Bash call kills its own shell",
+  "v": 1,
+  "versions": [
+    "unknown"
+  ]
+}

@@ -1,0 +1,59 @@
+---
+title: States
+description: Every variant in every tone, plus the filter chip off, on and disabled, and the removable chip.
+height: 660
+order: 1
+block: true
+---
+
+import Tag from '@ocx-sh/theme/components/ui/Tag.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid>
+  <State label="label, neutral">
+    <Tag>neutral</Tag>
+  </State>
+  <State label="label, keyword">
+    <Tag tone="keyword">cli</Tag>
+  </State>
+  <State label="label, success">
+    <Tag tone="success">method</Tag>
+  </State>
+  <State label="label, warning">
+    <Tag tone="warning">beta</Tag>
+  </State>
+  <State label="label, danger">
+    <Tag tone="danger">deprecated</Tag>
+  </State>
+  <State label="stamp, neutral">
+    <Tag variant="stamp">planned</Tag>
+  </State>
+  <State label="stamp, keyword">
+    <Tag variant="stamp" tone="keyword">preview</Tag>
+  </State>
+  <State label="stamp, success">
+    <Tag variant="stamp" tone="success">signed</Tag>
+  </State>
+  <State label="stamp, warning">
+    <Tag variant="stamp" tone="warning">yanked</Tag>
+  </State>
+  <State label="stamp, danger">
+    <Tag variant="stamp" tone="danger">revoked</Tag>
+  </State>
+  <State label="filter, off">
+    <Tag variant="filter" as="button" aria-pressed="false" value="windows">windows</Tag>
+  </State>
+  <State label="filter, on">
+    <Tag variant="filter" as="button" aria-pressed="true" value="linux">linux</Tag>
+  </State>
+  <State label="filter, disabled">
+    <Tag variant="filter" as="button" aria-pressed="false" disabled>macos</Tag>
+  </State>
+  <State label="removable">
+    <Tag removable removeLabel="Remove cli">cli</Tag>
+  </State>
+  <State label="removable, tone">
+    <Tag tone="keyword" removable removeLabel="Remove build-tool">build-tool</Tag>
+  </State>
+</StateGrid>

@@ -1,0 +1,156 @@
+/* Toaster (C-181), design c-toast: surface + hairline + radius-lg + the one overlay shadow, mono
+ * text-sm, a status icon, the title and a muted close. Loaded with toast.zag.mjs, never before.
+ * Zag positions each toast inline (absolute in the fixed region, stacked by `--y`/`--offset`). */
+@layer ocx {
+  [data-scope='toast'][data-part='group'] {
+    z-index: var(--ocx-z-toast) !important; /* over Zag's inline max z-index: below the skip link */
+    inline-size: min(var(--ocx-toast-width), calc(100vw - 2 * var(--ocx-space-5)));
+  }
+  [data-scope='toast'][data-part='root'] {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ocx-space-3);
+    box-sizing: border-box;
+    inline-size: 100%;
+    inset-inline-end: 0;
+    padding: var(--ocx-toast-pad);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    line-height: var(--ocx-lh-heading);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+    box-shadow: var(--ocx-shadow-overlay);
+    translate: var(--x) var(--y);
+    z-index: var(--z-index);
+    height: var(--height);
+    opacity: var(--opacity);
+    will-change: translate, opacity;
+    transition:
+      translate var(--ocx-duration-slow) var(--ocx-ease-out),
+      opacity var(--ocx-duration-slow) var(--ocx-ease-out),
+      height var(--ocx-duration-slow) var(--ocx-ease-out);
+  }
+  [data-scope='toast'][data-part='root']:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  /* Registry icons (same markup as ui/Icon.astro; its global sheet is not guaranteed on the page,
+   * so the size and weight tokens are restated here). First line: status icon, title, close. The
+   * close box sits in the top-right corner at the padding inset (the body's `flex: 1` pushes it
+   * there); the status icon and the title's first line box (1lh) centre on the close box's band,
+   * not on the block, so a description below never drags them down. */
+  [data-scope='toast'] svg {
+    flex: none;
+    inline-size: var(--ocx-icon-md);
+    block-size: var(--ocx-icon-md);
+    stroke-width: var(--ocx-icon-stroke);
+  }
+  [data-scope='toast'] svg * {
+    vector-effect: non-scaling-stroke;
+  }
+  [data-scope='toast'][data-part='root'] > svg {
+    /* Centred on the close box (its padding + border around the same icon size), or on 1lh if taller. */
+    margin-block: max(var(--ocx-space-1) + var(--ocx-border-width), (1lh - var(--ocx-icon-md)) / 2);
+  }
+  /* Loading is the shared ProgressCircle ring (ui/progress-circle.css, inlined with this sheet): it
+   * spins itself and holds still under reduced motion. Neutral ink for info/loading: accent (coral)
+   * stays reserved for links, primary actions, current state and focus (AlertDialog uses the same
+   * four tones the same way). */
+  [data-scope='toast'][data-type='info'] > svg,
+  [data-scope='toast'][data-type='loading'] > svg {
+    color: var(--ocx-color-fg-muted);
+  }
+  [data-scope='toast'][data-type='success'] > svg {
+    color: var(--ocx-color-success);
+  }
+  [data-scope='toast'][data-type='warning'] > svg {
+    color: var(--ocx-color-warning);
+  }
+  [data-scope='toast'][data-type='error'] > svg {
+    color: var(--ocx-color-danger);
+  }
+  [data-scope='toast'][data-part='body'] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ocx-space-1);
+    flex: 1;
+    min-inline-size: 0;
+  }
+  /* Body and action share the offset that centres a text line on the close box (title and action
+   * on one line). 1lh resolves per element; both inherit the same font. */
+  [data-scope='toast'][data-part='body'],
+  [data-scope='toast'][data-part='action-trigger'] {
+    margin-block-start: max(0px, (var(--ocx-icon-md) + 2 * (var(--ocx-space-1) + var(--ocx-border-width)) - 1lh) / 2);
+  }
+  [data-scope='toast'][data-part='title'] {
+    overflow-wrap: anywhere;
+  }
+  [data-scope='toast'][data-part='description'] {
+    overflow-wrap: anywhere;
+    color: var(--ocx-color-fg-muted);
+    font-size: var(--ocx-text-xs);
+  }
+  [data-scope='toast'][data-part='description'][hidden] {
+    display: none;
+  }
+  [data-scope='toast'][data-part='action-trigger'] {
+    flex: none;
+    margin-inline: 0;
+    margin-block-end: 0;
+    padding: 0;
+    color: var(--ocx-color-accent-fg);
+    font: inherit;
+    font-weight: var(--ocx-font-weight-medium);
+    text-decoration: underline;
+    text-decoration-thickness: var(--ocx-border-width);
+    text-decoration-color: var(--ocx-color-accent-tint-border);
+    text-underline-offset: var(--ocx-prose-link-offset);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    transition: text-decoration-color var(--ocx-duration-base);
+  }
+  /* Hover as the prose link's (base.css): the ink stays accent-fg (the coral fill is 2.4:1 as text
+   * on light), the underline darkens to it. */
+  [data-scope='toast'][data-part='action-trigger']:hover {
+    text-decoration-color: currentColor;
+  }
+  /* Outset: the trigger has no padding, an inset ring would cover its label. */
+  [data-scope='toast'][data-part='action-trigger']:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  [data-scope='toast'][data-part='action-trigger'][hidden] {
+    display: none;
+  }
+  [data-scope='toast'][data-part='close-trigger'] {
+    display: inline-flex;
+    flex: none;
+    margin: 0;
+    padding: var(--ocx-space-1);
+    align-self: flex-start;
+    /* Only when the line is taller than the box: then the box centres on it instead. */
+    margin-block-start: max(0px, (1lh - var(--ocx-icon-md) - 2 * (var(--ocx-space-1) + var(--ocx-border-width))) / 2);
+    color: var(--ocx-color-fg-subtle);
+    background: none;
+    border: var(--ocx-border-width) solid transparent;
+    border-radius: var(--ocx-radius-md);
+    cursor: pointer;
+  }
+  [data-scope='toast'][data-part='close-trigger']:hover {
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-hover);
+    border-color: var(--ocx-color-hover-border);
+  }
+  [data-scope='toast'][data-part='close-trigger']:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset-inset);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-scope='toast'][data-part='root'] {
+      transition: none;
+    }
+  }
+}

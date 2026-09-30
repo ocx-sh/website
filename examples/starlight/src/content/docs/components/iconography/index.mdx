@@ -1,0 +1,77 @@
+---
+title: Iconography
+description: How the theme uses icons, from the registry and the grid to size, colour, meaning and accessibility.
+---
+
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+
+Every icon on an ocx.sh page comes from one registry, `@ocx-sh/theme/icons`, and renders through
+[`<Icon>`](icon/). Browse all of them in the [icon catalog](catalog/); the operating system and
+shell glyphs have [their own page](os/).
+
+## Use the registry
+
+- Draw an icon with `<Icon name="…" />`. It is inline SVG, so it paints with the text and never
+  flickers in late.
+- Never stand in for an icon with a text arrow (→), an emoji, an `<img>` or a CSS `url()`
+  background. Shell icons on code tabs are inline `<Icon>` too.
+- Components take an icon by name: a [Menu](../menu/) or [ActionMenu](../action-menu/) item has
+  an `icon`, and a [Button](../button/) takes an `<Icon>` in its slot.
+
+## Icon sets
+
+The registry has three sources. A custom glyph exists only for a brand missing from Simple Icons (or over the 2 KB cap), copied verbatim from a licensed upstream file with its source and licence recorded beside its `NAME_MAP` entry and in `THIRD_PARTY_NOTICES`. Nobody draws or edits icon paths by hand. The set was chosen on 2026-09-28 and is now stable.
+
+| Set | Used for | Licence |
+|---|---|---|
+| [Lucide](https://lucide.dev) | Interface, action and status icons, the generic `shell` icon and `elvish` (`lambda`). | ISC |
+| [Simple Icons](https://simpleicons.org) | Operating system, brand and shell glyphs. | CC0-1.0 |
+| Custom | `linux` (Material Design Icons Tux) and `cmd` (vscode-icons). | Apache-2.0 (Tux); MIT (`cmd`) |
+
+Brand marks belong to their owners; the theme shows them only to name the product they stand for.
+The [catalog](catalog/) lists each icon with its set.
+
+## Meaning
+
+Each icon means one thing everywhere. Icons stay stable: never swap an icon for looks or variety.
+To change what an icon means, change it in the registry so every use follows.
+
+| Icon | Name | Means |
+|---|---|---|
+| <Icon name="chevron-down" /> | `chevron-down` | Opens a panel in place (menu, select, disclosure). Turns over while open. |
+| <Icon name="chevron-right" /> | `chevron-right` | Expands a tree node or a collapsed row. |
+| <Icon name="arrow-right" /> | `arrow-right` | Goes somewhere: a link, a "more" row, the next page. |
+| <Icon name="external" /> | `external` | Leaves the site or opens a new tab. |
+| <Icon name="close" /> | `close` | Dismisses a dialog, drawer or toast. |
+| <Icon name="check" /> | `check` | Done, copied, selected. |
+| <Icon name="more" /> | `more` | Opens more actions for the thing it sits on. |
+
+## Drawing
+
+- Line icons come from Lucide's 24px grid with round caps and joins. A token,
+  `--ocx-icon-stroke`, sets one non-scaling stroke weight, so they look equally crisp at every size.
+- OS, brand and shell glyphs are filled. All icons paint in `currentColor`, shell icons included.
+- An icon's inline markup stays under 2 KB.
+
+## Size and colour
+
+- Sizes are tokens: `xs` 10px, `sm` 11px (the chevron on a trigger), `md` 14px (the default, in
+  text and menu rows), `lg` 20px (a glyph on its own).
+- An icon takes the colour of its text. It turns accent only where its text is accent, such as a
+  link or the current item; on hover it follows the neutral hover of its row.
+
+## Accessibility
+
+- An icon next to text is decorative and hidden from assistive technology; that is the default.
+- An icon alone must be named. On an icon-only button, name the button (`aria-label`), not the
+  icon. An icon that stands on its own, such as an OS glyph, takes `label`.
+
+## Add an icon
+
+1. Find it in Lucide or Simple Icons. Only for a brand neither has, copy a licensed upstream glyph verbatim and note its source URL and licence beside the entry; never draw one.
+2. Add a line to `NAME_MAP` in `packages/theme/scripts/generate-icons.mjs`: the source, a group and
+   search keywords.
+3. Run `pnpm --filter @ocx-sh/theme icons` and commit `icons.generated.mjs` and `icons.d.ts`. Never
+   edit them by hand; a test fails when they are stale.
+4. The [catalog](catalog/) lists it on the next build; the registry tests check its size and
+   markup.

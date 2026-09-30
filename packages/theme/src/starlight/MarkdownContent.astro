@@ -1,0 +1,15 @@
+---
+// Starlight's MarkdownContent with two SSR rewrites from tab-icons.mjs: a scroll region
+// around each markdown table, so the table itself can fill the column (starlight.css ›
+// Markdown tables), and in-content stylesheet links moved ahead of the content (no
+// half-styled first paint).
+import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+import { splitStylesheets, wrapTables } from './tab-icons.mjs';
+
+const { links, rest } = splitStylesheets(wrapTables(await Astro.slots.render('default')));
+---
+
+<Fragment set:html={links} />
+<Default>
+  <Fragment set:html={rest} />
+</Default>

@@ -1,0 +1,21 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T091753Z-77859c38.json"
+  ],
+  "first_seen": "2026-09-28T09:17:53Z",
+  "fixed": null,
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-plan-premise-check",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T09:17:53Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "deferred",
+  "title": "Plan contract assumed a component feature that never existed",
+  "v": 1,
+  "versions": []
+}

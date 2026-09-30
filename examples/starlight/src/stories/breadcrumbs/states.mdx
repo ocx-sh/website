@@ -1,0 +1,52 @@
+---
+title: States
+description: A narrow cell shows the folded trail; open the ellipsis to reach the hidden items.
+height: 320
+order: 1
+block: true
+---
+
+import Breadcrumbs from '@ocx-sh/theme/components/ui/Breadcrumbs.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const short = [
+  { label: 'ocx.sh', href: '#demo' },
+  { label: 'docs', href: '#states' },
+  { label: 'Installation' },
+];
+
+export const deep = [
+  { label: 'ocx.sh', href: '#demo' },
+  { label: 'docs', href: '#states' },
+  { label: 'Guides' },
+  { label: 'Publishing', href: '#props' },
+  { label: 'Signing packages' },
+];
+
+export const long = [
+  { label: 'ocx.sh', href: '#demo' },
+  { label: 'integrations', href: '#states' },
+  { label: 'Python SDK reference for package publishing', href: '#props' },
+  { label: 'Pushing a multi-platform package with attestations' },
+];
+
+export const withIcon = [{ label: 'shell', href: '#demo', icon: 'shell' }, { label: 'Elvish' }];
+
+<StateGrid>
+  <State label="short">
+    <Breadcrumbs items={short} />
+  </State>
+  <State label="deep, folded (narrow)">
+    <Breadcrumbs items={deep} />
+  </State>
+  <State label="long labels, truncated">
+    <Breadcrumbs items={long} />
+  </State>
+  <State label="leading icon">
+    <Breadcrumbs items={withIcon} />
+  </State>
+  <State label="current page only">
+    <Breadcrumbs items={[{ label: 'Home' }]} />
+  </State>
+</StateGrid>

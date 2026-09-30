@@ -1,0 +1,63 @@
+---
+title: States
+description: A scope picker with a text action, one choice, the action alone, a long command, and an icon-only picker with and without a label.
+height: 830
+order: 1
+toaster: true
+---
+
+import CommandBar from '@ocx-sh/theme/components/ui/CommandBar.astro';
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import Hint from '@ocx-sh/theme/components/ui/Hint.astro';
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const install = [
+  { value: 'linux', label: 'Linux', icon: 'linux', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+  { value: 'macos', label: 'macOS', icon: 'apple', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+  { value: 'windows', label: 'Windows', icon: 'windows', command: 'irm https://setup.ocx.sh/pwsh | iex' },
+];
+
+export const scope = [
+  { value: 'global', label: 'Global', icon: 'globe', command: 'ocx install ocx.sh/nodejs/node:24' },
+  { value: 'project', label: 'Project', icon: 'folder', command: 'ocx add ocx.sh/nodejs/node:24' },
+];
+
+<StateGrid wide>
+  <State label="scope picker; text action">
+    <CommandBar choices={scope} pickerLabel="Scope" noun="add command">
+      <Button slot="action" href="vscode://vscode.git/clone?url=https://github.com/ocx-sh/website.git"><Icon name="external" /> Open in VS Code</Button>
+    </CommandBar>
+  </State>
+  <State label="one choice: no picker">
+    <CommandBar choices={[scope[0]]} noun="install command" />
+  </State>
+  <State label="action only">
+    <CommandBar choices={[]}>
+      <Hint slot="action" label="Open in VS Code">
+        <Button iconOnly aria-label="Open in VS Code" href="vscode://vscode.git/clone?url=https://github.com/ocx-sh/website.git">
+          <Icon name="external" />
+        </Button>
+      </Hint>
+    </CommandBar>
+  </State>
+  <State label="long command scrolls inside the field">
+    <CommandBar
+      choices={[{ value: 'long', label: 'Long', command: 'ocx install ocx.sh/nodejs/node:24 ocx.sh/pnpm/pnpm:11 ocx.sh/astral-sh/uv:0.10 ocx.sh/oven-sh/bun:1 --no-modify-path' }]}
+      noun="install command"
+    />
+  </State>
+  <State label="icon-only picker and action">
+    <CommandBar choices={install} pickerLabel="Platform" noun="install command">
+      <Hint slot="action" label="Open in VS Code">
+        <Button iconOnly aria-label="Open in VS Code" href="vscode://vscode.git/clone?url=https://github.com/ocx-sh/website.git">
+          <Icon name="external" />
+        </Button>
+      </Hint>
+    </CommandBar>
+  </State>
+  <State label="pickerText: icon and label">
+    <CommandBar choices={install} pickerLabel="Platform" noun="install command" pickerText />
+  </State>
+</StateGrid>

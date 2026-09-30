@@ -4,26 +4,110 @@
   "description": "Shared tokens, base styles, navigation and Starlight plugin for the ocx.sh sites",
   "license": "Apache-2.0",
   "type": "module",
-  "repository": { "type": "git", "url": "git+https://github.com/ocx-sh/website.git", "directory": "packages/theme" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ocx-sh/website.git",
+    "directory": "packages/theme"
+  },
+  "homepage": "https://github.com/ocx-sh/website/tree/main/packages/theme#readme",
+  "bugs": {
+    "url": "https://github.com/ocx-sh/website/issues"
+  },
   "exports": {
-    "./fonts.css": "./src/fonts.css",
     "./tokens.css": "./src/tokens.css",
     "./base.css": "./src/base.css",
+    "./fonts.css": "./src/fonts.css",
     "./starlight.css": "./src/starlight/starlight.css",
+    "./starlight": {
+      "types": "./src/starlight/index.d.mts",
+      "default": "./src/starlight/index.mjs"
+    },
+    "./starlight/*.astro": "./src/starlight/*.astro",
+    "./components/*.astro": "./src/components/*.astro",
     "./nav.json": "./src/nav.json",
-    "./starlight": "./src/starlight/index.ts",
-    "./starlight/Header.astro": "./src/starlight/Header.astro"
+    "./nav": {
+      "types": "./src/nav.d.ts",
+      "default": "./src/nav.mjs"
+    },
+    "./vitepress": "./src/vitepress/vitepress.css",
+    "./logo.svg": "./src/logo.svg",
+    "./icons": {
+      "types": "./src/icons/icons.d.ts",
+      "default": "./src/icons/icons.mjs"
+    },
+    "./toast": {
+      "types": "./src/components/toast.d.mts",
+      "default": "./src/components/toast.mjs"
+    },
+    "./toaster": {
+      "types": "./src/starlight/toaster.d.mts",
+      "default": "./src/starlight/toaster.mjs"
+    },
+    "./cycle-button": {
+      "types": "./src/components/ui/cycle-button.d.mts",
+      "default": "./src/components/ui/cycle-button.mjs"
+    }
   },
-  "files": ["src"],
+  "bin": {
+    "ocx-site": "bin/ocx-site.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "src",
+    "bin",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "scripts": {
+    "prepack": "node -e \"for (const f of require('node:fs').globSync('src/**/*.d.mts')) require('node:fs').rmSync(f)\" && tsc --allowJs --declaration --emitDeclarationOnly -p tsconfig.dts.json",
+    "postpack": "node -e \"for (const f of require('node:fs').globSync('src/**/*.d.mts')) require('node:fs').rmSync(f)\"",
+    "icons": "node scripts/generate-icons.mjs"
+  },
   "dependencies": {
     "@fontsource/ibm-plex-mono": "^5.3.0",
-    "@fontsource/ibm-plex-sans": "^5.3.0"
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@pagefind/default-ui": "1.5.2",
+    "@zag-js/accordion": "1.44.0",
+    "@zag-js/async-list": "1.44.0",
+    "@zag-js/checkbox": "1.44.0",
+    "@zag-js/clipboard": "1.44.0",
+    "@zag-js/collapsible": "1.44.0",
+    "@zag-js/combobox": "1.44.0",
+    "@zag-js/dialog": "1.44.0",
+    "@zag-js/drawer": "1.44.0",
+    "@zag-js/listbox": "1.44.0",
+    "@zag-js/menu": "1.44.0",
+    "@zag-js/navigation-menu": "1.44.0",
+    "@zag-js/pagination": "1.44.0",
+    "@zag-js/popover": "1.44.0",
+    "@zag-js/radio-group": "1.44.0",
+    "@zag-js/select": "1.44.0",
+    "@zag-js/slider": "1.44.0",
+    "@zag-js/switch": "1.44.0",
+    "@zag-js/tabs": "1.44.0",
+    "@zag-js/tags-input": "1.44.0",
+    "@zag-js/toast": "1.44.0",
+    "@zag-js/toc": "1.44.0",
+    "@zag-js/toggle-group": "1.44.0",
+    "@zag-js/tooltip": "1.44.0",
+    "@zag-js/tree-view": "1.44.0",
+    "@zag-js/vanilla": "1.44.0",
+    "asciinema-player": "3.15.1"
   },
   "peerDependencies": {
-    "@astrojs/starlight": ">=0.42.0"
+    "@astrojs/starlight": ">=0.42.0 <0.43",
+    "astro": "^7"
   },
   "devDependencies": {
     "@astrojs/starlight": "^0.42.4",
-    "astro": "^7.3.5"
+    "@iconify-json/lucide": "1.2.137",
+    "@iconify-json/simple-icons": "1.2.97",
+    "ajv": "8.20.0",
+    "astro": "7.3.5"
   }
 }

@@ -1,0 +1,82 @@
+---
+// Checkbox / radio / switch (design c-choice, C-160, D-Z7). The native <input> is the form control
+// and the source of truth: visually hidden, drawn by the box beside it from its own :checked state,
+// so it submits and toggles with JS off. Checkbox and switch start a Zag machine on first
+// interaction (events, form reset); a lone radio has no machine (groups are RadioGroup).
+import type { Props as CheckboxMachineProps } from '@zag-js/checkbox';
+import type { HTMLAttributes } from 'astro/types';
+import * as checkbox from './checkbox.zag.mjs';
+import { nextUiId } from './ids.mjs';
+import * as zswitch from './switch.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './choice.css';
+
+export interface Props extends Omit<HTMLAttributes<'input'>, 'type'> {
+  type?: 'checkbox' | 'radio' | 'switch';
+  label: string;
+  /** Zag machine props (checkbox and switch). */
+  zag?: ZagProps<CheckboxMachineProps>;
+}
+
+const { type = 'checkbox', label, class: className, zag, ...input } = Astro.props;
+const { checked, disabled, name, value, required, form, id, ...rest } = input;
+const zagId = nextUiId(type);
+// SSR renders the input's own state; on start the machine reads it back from the input
+// (choice.mjs), so `data-zag-props` carries only the `zag` passthrough (C-106).
+const props = {
+  defaultChecked: !!checked,
+  ...(disabled && { disabled: true }),
+  ...(required && { required: true }),
+  ...(name && { name }),
+  ...(value != null && { value: String(value) }),
+  ...(form && { form }),
+  ...(id && { ids: { hiddenInput: id } }),
+  ...zag,
+};
+const api =
+  type === 'switch'
+    ? ssrApi(zswitch.machine, zswitch.connect, { ...props, id: zagId })
+    : ssrApi(checkbox.machine, checkbox.connect, { ...props, id: zagId });
+---
+
+{type === 'radio' ? (
+  <label class:list={['ocx-ui-choice', className]} data-type="radio">
+    <input class="ocx-ui-choice__input" type="radio" {...input} />
+    <span class="ocx-ui-choice__box" aria-hidden="true" />
+    <span class="ocx-ui-choice__label">{label}</span>
+  </label>
+) : (
+  <label
+    class:list={['ocx-ui-choice', className]}
+    data-type={type}
+    data-zag-root={type}
+    data-zag-id={zagId}
+    data-zag-state="idle"
+    data-zag-props={JSON.stringify(zag ?? {})}
+    {...ssrAttrs(api.getRootProps())}
+  >
+    <input
+      class="ocx-ui-choice__input"
+      {...ssrAttrs(api.getHiddenInputProps())}
+      role={type === 'switch' ? 'switch' : undefined}
+      {...rest}
+    />
+    <span class="ocx-ui-choice__box" {...ssrAttrs(api.getControlProps())} />
+    <span class="ocx-ui-choice__label" {...ssrAttrs(api.getLabelProps())}>
+      {label}
+    </span>
+  </label>
+)}
+
+<script>
+  import { mount } from './zag.mjs';
+
+  const load = {
+    checkbox: () => import('./checkbox.zag.mjs'),
+    switch: () => import('./switch.zag.mjs'),
+  };
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="checkbox"], [data-zag-root="switch"]'))
+    // No replay: the native click already toggled the input; readDom carries it over (S-110).
+    mount(root, { load: load[root.dataset.zagRoot as keyof typeof load], replay: false });
+</script>

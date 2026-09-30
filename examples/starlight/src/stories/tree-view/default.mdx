@@ -1,0 +1,25 @@
+---
+title: ocx home
+description: A selectable tree of the ocx store; expand a branch, select a node, Escape clears.
+height: 380
+block: true
+log: true
+---
+
+import TreeView from '@ocx-sh/theme/components/TreeView.astro';
+
+export const store = [
+  {
+    value: 'packages',
+    label: 'packages/',
+    children: [
+      { value: 'cmake', label: 'cmake/', children: [{ value: 'cmake-3.31', label: '3.31.6' }] },
+      { value: 'ninja', label: 'ninja/', children: [{ value: 'ninja-1.12', label: '1.12.1' }] },
+    ],
+  },
+  { value: 'layers', label: 'layers/', children: [{ value: 'sha256', label: 'sha256/' }] },
+  { value: 'index', label: 'index/', children: [{ value: 'ocx.sh', label: 'ocx.sh' }] },
+  { value: 'config', label: 'config.toml' },
+];
+
+<TreeView label="ocx home" items={store} expanded={['packages']} selectable />

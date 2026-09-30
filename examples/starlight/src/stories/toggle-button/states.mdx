@@ -1,0 +1,51 @@
+---
+title: States
+description: Pressed is accent ink on an accent tint with a coral edge; disabled is flat and subtle, pressed or not.
+height: 520
+order: 1
+block: true
+---
+
+import ToggleButton from '@ocx-sh/theme/components/ui/ToggleButton.astro';
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid>
+  <State label="off">
+    <ToggleButton>linux</ToggleButton>
+  </State>
+  <State label="on (pressed)">
+    <ToggleButton pressed>linux</ToggleButton>
+  </State>
+  <State label="size=s">
+    <ToggleButton size="s">linux</ToggleButton>
+  </State>
+  <State label="size=s, on">
+    <ToggleButton size="s" pressed>linux</ToggleButton>
+  </State>
+  <State label="with icon">
+    <ToggleButton><Icon name="pin" /> pinned</ToggleButton>
+  </State>
+  <State label="icon only, off">
+    <ToggleButton iconOnly aria-label="Pin version">
+      <Icon name="pin" />
+    </ToggleButton>
+  </State>
+  <State label="icon only, on">
+    <ToggleButton iconOnly pressed aria-label="Pin version">
+      <Icon name="pin" />
+    </ToggleButton>
+  </State>
+  <State label="icon only, size=s">
+    <ToggleButton iconOnly size="s" aria-label="Pin version">
+      <Icon name="pin" />
+    </ToggleButton>
+  </State>
+  <State label="disabled">
+    <ToggleButton disabled>linux</ToggleButton>
+  </State>
+  <State label="disabled, on">
+    <ToggleButton disabled pressed>linux</ToggleButton>
+  </State>
+</StateGrid>

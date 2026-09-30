@@ -1,0 +1,60 @@
+---
+title: States
+description: Text addon, icon, unit suffix, ghost icon button, disabled and invalid.
+height: 440
+order: 1
+block: true
+---
+
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import InputGroup from '@ocx-sh/theme/components/ui/InputGroup.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid wide>
+  <State label="text addon">
+    <InputGroup>
+      <span slot="start" class="ocx-ui-input-group__addon">https://</span>
+      <input class="ocx-ui-input-group__input" aria-label="Website" placeholder="ocx.sh" />
+    </InputGroup>
+  </State>
+  <State label="icon">
+    <InputGroup>
+      <Icon slot="start" name="search" />
+      <input
+        class="ocx-ui-input-group__input"
+        type="search"
+        aria-label="Search packages"
+        placeholder="Search packages…"
+      />
+    </InputGroup>
+  </State>
+  <State label="unit suffix, type=number (no spin buttons)">
+    <InputGroup>
+      <input class="ocx-ui-input-group__input" type="number" aria-label="Cache size" value="512" />
+      <span slot="end" class="ocx-ui-input-group__addon">MB</span>
+    </InputGroup>
+  </State>
+  <State label="ghost icon button">
+    <InputGroup>
+      <Icon slot="start" name="search" />
+      <input class="ocx-ui-input-group__input" aria-label="Filter" value="cli" />
+      <Button slot="end" variant="ghost" size="s" iconOnly aria-label="Clear filter">
+        <Icon name="close" />
+      </Button>
+    </InputGroup>
+  </State>
+  <State label="disabled">
+    <InputGroup disabled>
+      <span slot="start" class="ocx-ui-input-group__addon">https://</span>
+      <input class="ocx-ui-input-group__input" aria-label="Default registry" value="ocx.sh" disabled />
+    </InputGroup>
+  </State>
+  <State label="invalid">
+    <InputGroup invalid>
+      <span slot="start" class="ocx-ui-input-group__addon">https://</span>
+      <input class="ocx-ui-input-group__input" aria-label="Namespace" value="ocx" aria-invalid="true" />
+    </InputGroup>
+  </State>
+</StateGrid>

@@ -1,0 +1,31 @@
+---
+// Starlight `MobileMenuToggle` override (C-231, D-Z4, D-Z6): Starlight's button (`.sl-menu-button`,
+// `popovertarget="starlight__sidebar"`) as the trigger of a Zag drawer whose content is the sidebar
+// pane. The root is manual: Search.astro's every-page script starts it on the first tap and opens
+// the drawer (D-Z11); until then, JS off or on a load error the `popovertarget` opens the pane
+// natively. SSR is `lean()` (mobile-menu.zag.mjs): this renders on every page with a sidebar.
+// Styles: starlight.css (Starlight's scoped toggle rules do not reach this markup).
+import { connect, lean, machine, PANE } from './mobile-menu.zag.mjs';
+import Icon from '../components/ui/Icon.astro';
+import { ssrApi, ssrAttrs } from '../components/ui/zag-runtime.mjs';
+
+const id = 'mobile-menu';
+const props = { modal: false, swipeDirection: 'start' };
+const api = ssrApi(machine, connect, { ...props, id, ids: { content: PANE } });
+---
+
+<span
+  class="ocx-menu md:sl-hidden print:hidden"
+  data-zag-root="drawer"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(props)}
+  data-zag-state="idle"
+  data-zag-trigger="manual"
+>
+  <button popovertarget={PANE} class="sl-menu-button sl-flex" {...ssrAttrs(lean('trigger', api.getTriggerProps()))}>
+    <Icon name="menu" class="open-menu" />
+    <Icon name="close" class="close-menu" />
+    <span class="sr-only">{Astro.locals.t('menuButton.accessibleLabel')}</span>
+  </button>
+  <div {...ssrAttrs(lean('backdrop', api.getBackdropProps()))}></div>
+</span>

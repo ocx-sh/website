@@ -1,0 +1,49 @@
+---
+// AvatarGroup: an overlapping stack of Avatar tiles, with a "+N" tile once `items` exceeds `max`.
+import Avatar from './Avatar.astro';
+
+export interface AvatarGroupItem {
+  name: string;
+  src?: string | undefined;
+  srcset?: string | undefined;
+  initials?: string | undefined;
+}
+
+export interface Props {
+  items: AvatarGroupItem[];
+  size?: 'sm' | 'md' | 'lg' | undefined;
+  /** Show at most this many avatars; the rest collapse into a "+N" tile. */
+  max?: number | undefined;
+  class?: string | undefined;
+}
+
+const { items, size = 'sm', max, class: className } = Astro.props;
+const shown = max ? items.slice(0, max) : items;
+const overflow = max ? Math.max(items.length - max, 0) : 0;
+---
+
+<div class:list={['ocx-avatar-group', className]}>
+  {shown.map((item) => (
+    <Avatar name={item.name} src={item.src} srcset={item.srcset} initials={item.initials} size={size} />
+  ))}
+  {overflow > 0 && (
+    <span class="ocx-avatar" data-size={size}>
+      +{overflow}
+    </span>
+  )}
+</div>
+
+<style>
+  @layer ocx {
+    .ocx-avatar-group {
+      display: inline-flex;
+    }
+    .ocx-avatar-group :global(.ocx-avatar) {
+      border-color: var(--ocx-color-surface);
+      border-width: var(--ocx-border-width-strong);
+    }
+    .ocx-avatar-group :global(.ocx-avatar) + :global(.ocx-avatar) {
+      margin-inline-start: calc(-1 * var(--ocx-space-3));
+    }
+  }
+</style>

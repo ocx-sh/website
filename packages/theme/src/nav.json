@@ -1,154 +1,189 @@
 {
-  "$schema": "https://ocx.sh/theme/v1/nav.schema.json",
-  "version": 3,
+  "$schema": "./nav.schema.json",
+  "version": 4,
   "brand": {
     "wordmark": "ocx",
-    "logo": "/logo.svg",
     "href": "/"
   },
   "sections": [
+    { "id": "docs", "label": "docs", "href": "/docs/" },
+    { "id": "catalog", "label": "catalog", "href": "/catalog/" },
+    { "id": "ecosystem", "label": "ecosystem", "hubs": ["integrations", "apps"] }
+  ],
+  "hubs": [
     {
-      "id": "docs",
-      "label": "docs",
-      "href": "/docs/"
+      "id": "integrations",
+      "label": "integrations",
+      "href": "/integrations/",
+      "blurb": "ocx inside your build system, CI and editor.",
+      "all": "all integrations →",
+      "categories": [
+        { "id": "build", "label": "build" },
+        { "id": "ci", "label": "ci" },
+        { "id": "sdks", "label": "sdks" },
+        { "id": "editors", "label": "editors" }
+      ]
     },
     {
-      "id": "catalog",
-      "label": "catalog",
-      "href": "/catalog/"
-    },
-    {
-      "id": "ecosystem",
-      "label": "ecosystem",
-      "menu": [
-        {
-          "id": "integrations",
-          "label": "integrations",
-          "href": "/integrations/",
-          "all": "all integrations →"
-        },
-        {
-          "id": "apps",
-          "label": "apps",
-          "href": "/apps/",
-          "all": "all apps →"
-        }
+      "id": "apps",
+      "label": "apps",
+      "href": "/apps/",
+      "blurb": "Standalone tools built on ocx.",
+      "all": "all apps →",
+      "categories": [
+        { "id": "publish", "label": "publish" },
+        { "id": "browse", "label": "browse" },
+        { "id": "agents", "label": "agents" }
       ]
     }
   ],
-  "subsites": [
+  "claims": [
+    { "path": "/", "repo": "ocx-sh/website", "search": true },
+    { "path": "/integrations/", "repo": "ocx-sh/website", "search": false },
+    { "path": "/apps/", "repo": "ocx-sh/website", "search": false },
+    { "path": "/install/", "repo": "ocx-sh/website", "search": false },
+    { "path": "/docs/", "repo": "ocx-sh/ocx", "search": true },
+    { "path": "/schemas/", "repo": "ocx-sh/ocx", "search": false },
+    { "path": "/catalog/", "repo": "ocx-sh/index", "search": false },
+    { "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "search": true },
+    { "path": "/integrations/python/", "repo": "ocx-sh/ocx-sdk-python", "search": true },
+    { "path": "/apps/catalog/", "repo": "ocx-sh/catalog", "search": true }
+  ],
+  "entries": [
     {
       "id": "bazel",
       "hub": "integrations",
-      "label": "bazel",
-      "href": "/integrations/bazel/",
-      "repo": "ocx-sh/rules_ocx",
-      "generator": "mdbook"
+      "category": "build",
+      "label": "Bazel",
+      "meta": "rules_ocx",
+      "desc": "Hermetic toolchains for Bazel, pulled from any OCI registry.",
+      "href": "/integrations/bazel/"
     },
     {
       "id": "cmake",
       "hub": "integrations",
-      "label": "cmake",
-      "href": "/integrations/cmake/",
-      "repo": "ocx-sh/find_ocx",
-      "generator": "mdbook"
+      "category": "build",
+      "label": "CMake",
+      "meta": "find_ocx",
+      "desc": "find_package() for ocx-managed tools.",
+      "planned": true
+    },
+    {
+      "id": "gradle",
+      "hub": "integrations",
+      "category": "build",
+      "label": "Gradle",
+      "meta": "plugin",
+      "desc": "Toolchain provisioning for Gradle builds.",
+      "planned": true
+    },
+    {
+      "id": "github-actions",
+      "hub": "integrations",
+      "category": "ci",
+      "label": "GitHub Actions",
+      "meta": "setup-ocx",
+      "desc": "Install and cache ocx tools in one step.",
+      "planned": true
+    },
+    {
+      "id": "gitlab-ci",
+      "hub": "integrations",
+      "category": "ci",
+      "label": "GitLab CI",
+      "meta": "ocx component",
+      "desc": "A CI/CD component with a shared cache.",
+      "planned": true
     },
     {
       "id": "python",
       "hub": "integrations",
-      "label": "python",
-      "href": "/integrations/python/",
-      "repo": "ocx-sh/ocx-sdk-python",
-      "generator": "mkdocs-material"
+      "category": "sdks",
+      "label": "Python",
+      "meta": "ocx-sdk",
+      "desc": "Resolve and install packages from Python.",
+      "href": "/integrations/python/"
     },
     {
-      "id": "setup",
+      "id": "java",
       "hub": "integrations",
-      "label": "github actions",
-      "href": "/integrations/setup-ocx/",
-      "repo": "ocx-sh/setup-ocx",
-      "generator": "astro"
+      "category": "sdks",
+      "label": "Java",
+      "meta": "ocx-sdk",
+      "desc": "The same resolver, on the JVM.",
+      "planned": true
+    },
+    {
+      "id": "mirror-sdk",
+      "hub": "integrations",
+      "category": "sdks",
+      "label": "Mirror SDK",
+      "meta": "ocx-mirror-sdk",
+      "desc": "Build custom mirrors on the ocx-mirror engine.",
+      "planned": true
+    },
+    {
+      "id": "vscode",
+      "hub": "integrations",
+      "category": "editors",
+      "label": "VS Code",
+      "meta": "vscode-ocx",
+      "desc": "Pinned tools on the editor PATH, with lockfile hints.",
+      "planned": true
     },
     {
       "id": "mirror",
       "hub": "apps",
-      "label": "mirror",
-      "href": "/apps/mirror/",
-      "repo": "ocx-sh/ocx-mirror",
-      "generator": "astro"
-    }
-  ],
-  "footer": [
-    {
-      "label": "discord",
-      "href": "https://discord.gg/mT2UCF8CVe"
+      "category": "publish",
+      "label": "ocx-mirror",
+      "meta": "cli",
+      "desc": "Republish upstream releases as signed OCI packages.",
+      "planned": true
     },
     {
-      "label": "roadmap",
-      "href": "/docs/roadmap/"
+      "id": "indexbot",
+      "hub": "apps",
+      "category": "publish",
+      "label": "indexbot",
+      "meta": "service",
+      "desc": "Run and curate your own package index.",
+      "planned": true
     },
     {
-      "label": "security",
-      "href": "/docs/security/"
+      "id": "catalog",
+      "hub": "apps",
+      "category": "browse",
+      "label": "catalog",
+      "meta": "web",
+      "desc": "Browse and search any index.",
+      "href": "/apps/catalog/"
+    },
+    {
+      "id": "mcp",
+      "hub": "apps",
+      "category": "agents",
+      "label": "ocx-mcp",
+      "meta": "mcp server",
+      "desc": "Let coding agents find and install tools.",
+      "planned": true
+    },
+    {
+      "id": "lore",
+      "hub": "apps",
+      "category": "agents",
+      "label": "lore",
+      "meta": "skills",
+      "desc": "Agent skills that teach ocx workflows.",
+      "href": "https://lore.ocx.sh/"
     }
   ],
   "actions": [
-    {
-      "id": "install",
-      "label": "install",
-      "href": "/install/",
-      "kind": "button"
-    },
-    {
-      "id": "github",
-      "label": "GitHub",
-      "href": "https://github.com/ocx-sh",
-      "kind": "icon"
-    }
+    { "id": "install", "label": "install", "href": "/install/", "kind": "button" },
+    { "id": "github", "label": "GitHub", "href": "https://github.com/ocx-sh", "kind": "icon" }
   ],
-  "menuItems": {
-    "integrations": {
-      "build": [
-        "bazel",
-        "cmake",
-        "gradle"
-      ],
-      "ci": [
-        "github-actions",
-        "gitlab-ci"
-      ],
-      "sdks": [
-        "python",
-        "java"
-      ],
-      "editors": [
-        "vscode"
-      ]
-    },
-    "apps": {
-      "publish": [
-        "mirror",
-        "indexbot"
-      ],
-      "browse": [
-        "catalog"
-      ],
-      "agents": [
-        "mcp",
-        "lore"
-      ]
-    }
-  },
-  "activeAlias": {
-    "integrations": "ecosystem",
-    "apps": "ecosystem"
-  },
-  "menuRules": "Fixed size: 620px wide, 168px rail, body height = tallest tab across all tabs, 76px detail strip. Rail items are click-to-switch tabs; each row has a → icon link to its hub page (also linked from the strip at rest). Items are names only and are the links; hover/focus previews their description in the display-only strip (default: the hub blurb). Planned items get no marker in the menu; the hub page labels them. Max 4 categories per tab, 6 items each (5 + \"n more →\").",
-  "menuItemFields": [
-    "name",
-    "meta (short mono tag)",
-    "desc (≤ 60 chars, one line)",
-    "category",
-    "planned?"
+  "footer": [
+    { "label": "discord", "href": "https://discord.gg/mT2UCF8CVe" },
+    { "label": "roadmap", "href": "/docs/roadmap/" },
+    { "label": "security", "href": "/docs/security/" }
   ]
 }

@@ -1,0 +1,10 @@
+/* CycleButton (CycleButton.astro): the Button look comes from `.ocx-ui-button` (button.css); this
+   sheet only swaps the state glyphs. Imported from the component's frontmatter, so the body sits
+   in @layer ocx. Every state's glyph is in the markup and CSS shows the current one: the swap is
+   instant, and a page that decides the state before paint (the theme switch) restyles it without
+   script. The name and the next-state hint are the button's aria-label (cycle-button.mjs keeps it). */
+@layer ocx {
+  .ocx-ui-cycle-button__state:not(.ocx-ui-cycle-button__current) {
+    display: none;
+  }
+}

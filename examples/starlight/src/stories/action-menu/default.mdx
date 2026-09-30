@@ -1,0 +1,17 @@
+---
+title: Actions menu
+description: A trigger button that opens a menu of commands; choosing one fires ocx:menu:select.
+height: 300
+log: true
+---
+
+import ActionMenu from '@ocx-sh/theme/components/ui/ActionMenu.astro';
+
+export const actions = [
+  { value: 'copy', label: 'Copy digest', icon: 'copy' },
+  { value: 'pin', label: 'Pin version', icon: 'pin' },
+  { value: 'remove', label: 'Remove', icon: 'trash' },
+  { value: 'publish', label: 'Publish', icon: 'external', disabled: true },
+];
+
+<ActionMenu label="Actions" items={actions} />

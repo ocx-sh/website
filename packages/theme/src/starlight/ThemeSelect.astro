@@ -1,0 +1,41 @@
+---
+// Starlight `ThemeSelect` override: the one icon toggle, rendered by Header and MobileMenuFooter
+// (C-024), a two-state CycleButton. ThemeProvider sets `html[data-theme]` before paint and SSR cannot
+// know it, so the button renders `light` and the dark rules below show the dark glyph (moon) from the
+// attribute alone; theme-toggle.mjs (wired from Search.astro's early script) then syncs the state and
+// the name.
+import CycleButton from '../components/ui/CycleButton.astro';
+
+const states: { value: string; label: string; icon: 'sun' | 'moon' }[] = [
+  { value: 'light', label: 'Light mode', icon: 'sun' },
+  { value: 'dark', label: 'Dark mode', icon: 'moon' },
+];
+---
+
+<CycleButton class="ocx-header__tool ocx-theme-toggle" variant="ghost" size="s" states={states} data-ocx-theme />
+
+<style is:global>
+  @layer ocx {
+    /* The header tool box (30), over Button's ghost icon-only box. */
+    .ocx-theme-toggle.ocx-ui-button[data-icon-only] {
+      inline-size: calc(var(--ocx-space-7) - var(--ocx-space-1));
+      block-size: calc(var(--ocx-space-7) - var(--ocx-space-1));
+      background: none;
+      border: 0;
+      border-radius: var(--ocx-radius-md);
+    }
+    .ocx-theme-toggle.ocx-ui-button:focus-visible {
+      outline-offset: calc(var(--ocx-focus-offset) * -1);
+    }
+    .ocx-theme-toggle .ocx-icon {
+      inline-size: var(--ocx-icon-ml);
+      block-size: var(--ocx-icon-ml);
+    }
+    :root[data-theme='dark'] .ocx-theme-toggle > [data-icon='sun'] {
+      display: none;
+    }
+    :root[data-theme='dark'] .ocx-theme-toggle > [data-icon='moon'] {
+      display: inline;
+    }
+  }
+</style>

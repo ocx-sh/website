@@ -1,0 +1,68 @@
+---
+// Icon: one registry icon (src/icons/icons.mjs) as inline SVG, so it paints with the text, never
+// late. Decorative (aria-hidden) unless `label` names it. Colour is currentColor; the size and the
+// line weight (`--ocx-icon-stroke`) are tokens, and a parent may resize it through its own class.
+import { ICONS, type IconName } from '../../icons/icons.mjs';
+
+export interface Props {
+  name: IconName;
+  /** Accessible name. Without it the icon is decorative and hidden from assistive tech. */
+  label?: string;
+  /** xs 10 · sm 11 · md 14 · lg 20 (`--ocx-icon-*`). */
+  size?: 'xs' | 'sm' | 'md' | 'lg';
+  class?: string;
+}
+
+const { name, label, size = 'md', class: className } = Astro.props;
+const icon = ICONS[name];
+if (!icon) throw new Error(`Icon: no icon named "${String(name)}"`);
+---
+
+<svg
+  class:list={['ocx-icon', className]}
+  data-icon={name}
+  data-size={size}
+  viewBox={icon.viewBox}
+  fill={icon.stroke ? 'none' : 'currentColor'}
+  stroke={icon.stroke ? 'currentColor' : undefined}
+  stroke-width={icon.stroke}
+  stroke-linecap={icon.stroke ? 'round' : undefined}
+  stroke-linejoin={icon.stroke ? 'round' : undefined}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  focusable="false"
+  set:html={icon.body}
+/>
+
+<style is:global>
+  @layer ocx {
+    /* :where() keeps these at (0,1,0): a parent's class always resizes the icon. */
+    :where(.ocx-icon) {
+      flex-shrink: 0;
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+      vertical-align: middle;
+    }
+    :where(.ocx-icon[data-size='xs']) {
+      inline-size: var(--ocx-icon-xs);
+      block-size: var(--ocx-icon-xs);
+    }
+    :where(.ocx-icon[data-size='sm']) {
+      inline-size: var(--ocx-icon-sm);
+      block-size: var(--ocx-icon-sm);
+    }
+    :where(.ocx-icon[data-size='lg']) {
+      inline-size: var(--ocx-icon-lg);
+      block-size: var(--ocx-icon-lg);
+    }
+    /* Line icons: the token beats the stroke-width attribute, and a non-scaling stroke keeps it one
+       weight at every size instead of scaling with the 24px viewBox (~1.2px at md). */
+    :where(.ocx-icon[stroke]) {
+      stroke-width: var(--ocx-icon-stroke);
+    }
+    :where(.ocx-icon[stroke] *) {
+      vector-effect: non-scaling-stroke;
+    }
+  }
+</style>

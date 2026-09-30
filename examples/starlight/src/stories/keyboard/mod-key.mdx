@@ -1,0 +1,18 @@
+---
+title: Mod key
+description: The adaptive key, forced to each OS with the platform prop; without it CSS shows the variant for the reader's own html[data-platform], set before first paint.
+height: 270
+block: true
+order: 1
+---
+
+import Kbd from '@ocx-sh/theme/components/ui/Kbd.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="macOS"><Kbd keys="Mod+K" platform="mac" /></State>
+  <State label="Windows"><Kbd keys="Mod+K" platform="windows" /></State>
+  <State label="Linux"><Kbd keys="Mod+K" platform="linux" /></State>
+  <State label="auto (this reader's OS)"><Kbd keys="Mod+K" /></State>
+</StateGrid>

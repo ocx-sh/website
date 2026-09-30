@@ -1,0 +1,119 @@
+/* Loader (Loader.astro). In base.css, not the component: the DependencyExplorer paints it in its first
+   viewport, where one more stylesheet request put LCP a round trip later (Lighthouse perf 0.99). */
+@layer ocx {
+  .ocx-ui-loader {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ocx-space-4);
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-loader[hidden] {
+    display: none;
+  }
+  .ocx-ui-loader[data-size='s'] {
+    gap: var(--ocx-space-3);
+    font-size: var(--ocx-text-sm);
+  }
+  /* Four layers on a 2×2 grid, pulled one at a time clockwise: each lands in strong ink, cools to
+   * the quiet cell tone and leaves as the next lands, so a three-layer train with a dark head
+   * circles the square. Neutral: accent stays off a non-interactive status. Still (reduced
+   * motion): three quiet layers, the fourth landing as the head. */
+  .ocx-ui-loader__spinner {
+    --_t: calc(var(--ocx-duration-slow) * 6);
+    flex: none;
+    display: grid;
+    grid-template: 1fr 1fr / 1fr 1fr;
+    gap: var(--ocx-space-1);
+    inline-size: var(--ocx-control-sm);
+    block-size: var(--ocx-control-sm);
+  }
+  .ocx-ui-loader[data-size='s'] .ocx-ui-loader__spinner {
+    inline-size: var(--ocx-icon-md);
+    block-size: var(--ocx-icon-md);
+  }
+  /* Empty <i> cells: the UA sheet makes them italic, which fetches the italic face (one more font
+     request before LCP on every page with a Loader). */
+  .ocx-ui-loader__spinner > i {
+    font-style: normal;
+    position: relative;
+    background: var(--ocx-color-border-control);
+  }
+  .ocx-ui-loader__spinner > i::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--ocx-color-fg-muted);
+    opacity: 0;
+  }
+  /* Clockwise: DOM order is TL TR BL BR. */
+  .ocx-ui-loader__spinner > i:nth-child(2) {
+    --_i: 1;
+  }
+  .ocx-ui-loader__spinner > i:nth-child(4) {
+    --_i: 2;
+  }
+  .ocx-ui-loader__spinner > i:nth-child(3) {
+    --_i: 3;
+  }
+  .ocx-ui-loader__spinner > i:nth-child(3)::after {
+    opacity: 1;
+  }
+  /* Forced colours drop backgrounds: cells in GrayText, the head in CanvasText. */
+  @media (forced-colors: active) {
+    .ocx-ui-loader__spinner > i {
+      forced-color-adjust: none;
+      background: GrayText;
+    }
+    .ocx-ui-loader__spinner > i::after {
+      background: CanvasText;
+    }
+  }
+  /* A loader without JS never finishes. */
+  @media (scripting: none) {
+    .ocx-ui-loader {
+      display: none;
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ocx-ui-loader__spinner > i,
+    .ocx-ui-loader__spinner > i::after {
+      animation: ocx-ui-loader-pull var(--_t) linear calc((var(--_i, 0) - 4) * var(--_t) / 4) infinite;
+    }
+    .ocx-ui-loader__spinner > i::after {
+      animation-name: ocx-ui-loader-land;
+    }
+  }
+  /* Land: drop in half a cell and grow to full; hold; shrink away as the next layer lands. */
+  @keyframes ocx-ui-loader-pull {
+    0% {
+      opacity: 0;
+      transform: translateY(-50%) scale(0.5);
+      animation-timing-function: var(--ocx-ease-out);
+    }
+    6% {
+      opacity: 1;
+    }
+    14%,
+    62% {
+      opacity: 1;
+      transform: none;
+      animation-timing-function: var(--ocx-ease-in-out);
+    }
+    76%,
+    100% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+  }
+  /* The head stays full ink, then snaps to the quiet tone: a crossfade would pass through a muddy mix. */
+  @keyframes ocx-ui-loader-land {
+    0%,
+    30% {
+      opacity: 1;
+    }
+    32%,
+    100% {
+      opacity: 0;
+    }
+  }
+}

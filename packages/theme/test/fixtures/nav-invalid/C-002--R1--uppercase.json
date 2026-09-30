@@ -1,0 +1,289 @@
+{
+  "$schema": "../../../src/nav.schema.json",
+  "version": 4,
+  "brand": {
+    "wordmark": "ocx",
+    "href": "/"
+  },
+  "sections": [
+    {
+      "id": "docs",
+      "label": "docs",
+      "href": "/docs/"
+    },
+    {
+      "id": "catalog",
+      "label": "catalog",
+      "href": "/catalog/"
+    },
+    {
+      "id": "ecosystem",
+      "label": "ecosystem",
+      "hubs": [
+        "integrations",
+        "apps"
+      ]
+    }
+  ],
+  "hubs": [
+    {
+      "id": "integrations",
+      "label": "integrations",
+      "href": "/integrations/",
+      "blurb": "ocx inside your build system, CI and editor.",
+      "all": "all integrations →",
+      "categories": [
+        {
+          "id": "build",
+          "label": "build"
+        },
+        {
+          "id": "ci",
+          "label": "ci"
+        },
+        {
+          "id": "sdks",
+          "label": "sdks"
+        },
+        {
+          "id": "editors",
+          "label": "editors"
+        }
+      ]
+    },
+    {
+      "id": "apps",
+      "label": "apps",
+      "href": "/apps/",
+      "blurb": "Standalone tools built on ocx.",
+      "all": "all apps →",
+      "categories": [
+        {
+          "id": "publish",
+          "label": "publish"
+        },
+        {
+          "id": "browse",
+          "label": "browse"
+        },
+        {
+          "id": "agents",
+          "label": "agents"
+        }
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "path": "/",
+      "repo": "ocx-sh/website",
+      "search": true
+    },
+    {
+      "path": "/integrations/",
+      "repo": "ocx-sh/website",
+      "search": false
+    },
+    {
+      "path": "/apps/",
+      "repo": "ocx-sh/website",
+      "search": false
+    },
+    {
+      "path": "/install/",
+      "repo": "ocx-sh/website",
+      "search": false
+    },
+    {
+      "path": "/docs/",
+      "repo": "ocx-sh/ocx",
+      "search": true
+    },
+    {
+      "path": "/schemas/",
+      "repo": "ocx-sh/ocx",
+      "search": false
+    },
+    {
+      "path": "/catalog/",
+      "repo": "ocx-sh/index",
+      "search": false
+    },
+    {
+      "path": "/integrations/bazel/",
+      "repo": "ocx-sh/rules_ocx",
+      "search": true
+    },
+    {
+      "path": "/integrations/python/",
+      "repo": "ocx-sh/ocx-sdk-python",
+      "search": true
+    },
+    {
+      "path": "/apps/catalog/",
+      "repo": "ocx-sh/catalog",
+      "search": true
+    },
+    {
+      "path": "/integrations/Probe/",
+      "repo": "ocx-sh/probe",
+      "search": false
+    }
+  ],
+  "entries": [
+    {
+      "id": "bazel",
+      "hub": "integrations",
+      "category": "build",
+      "label": "Bazel",
+      "meta": "rules_ocx",
+      "desc": "Hermetic toolchains for Bazel, pulled from any OCI registry.",
+      "href": "/integrations/bazel/"
+    },
+    {
+      "id": "cmake",
+      "hub": "integrations",
+      "category": "build",
+      "label": "CMake",
+      "meta": "find_ocx",
+      "desc": "find_package() for ocx-managed tools.",
+      "planned": true
+    },
+    {
+      "id": "gradle",
+      "hub": "integrations",
+      "category": "build",
+      "label": "Gradle",
+      "meta": "plugin",
+      "desc": "Toolchain provisioning for Gradle builds.",
+      "planned": true
+    },
+    {
+      "id": "github-actions",
+      "hub": "integrations",
+      "category": "ci",
+      "label": "GitHub Actions",
+      "meta": "setup-ocx",
+      "desc": "Install and cache ocx tools in one step.",
+      "planned": true
+    },
+    {
+      "id": "gitlab-ci",
+      "hub": "integrations",
+      "category": "ci",
+      "label": "GitLab CI",
+      "meta": "ocx component",
+      "desc": "A CI/CD component with a shared cache.",
+      "planned": true
+    },
+    {
+      "id": "python",
+      "hub": "integrations",
+      "category": "sdks",
+      "label": "Python",
+      "meta": "ocx-sdk",
+      "desc": "Resolve and install packages from Python.",
+      "href": "/integrations/python/"
+    },
+    {
+      "id": "java",
+      "hub": "integrations",
+      "category": "sdks",
+      "label": "Java",
+      "meta": "ocx-sdk",
+      "desc": "The same resolver, on the JVM.",
+      "planned": true
+    },
+    {
+      "id": "mirror-sdk",
+      "hub": "integrations",
+      "category": "sdks",
+      "label": "Mirror SDK",
+      "meta": "ocx-mirror-sdk",
+      "desc": "Build custom mirrors on the ocx-mirror engine.",
+      "planned": true
+    },
+    {
+      "id": "vscode",
+      "hub": "integrations",
+      "category": "editors",
+      "label": "VS Code",
+      "meta": "vscode-ocx",
+      "desc": "Pinned tools on the editor PATH, with lockfile hints.",
+      "planned": true
+    },
+    {
+      "id": "mirror",
+      "hub": "apps",
+      "category": "publish",
+      "label": "ocx-mirror",
+      "meta": "cli",
+      "desc": "Republish upstream releases as signed OCI packages.",
+      "planned": true
+    },
+    {
+      "id": "indexbot",
+      "hub": "apps",
+      "category": "publish",
+      "label": "indexbot",
+      "meta": "service",
+      "desc": "Run and curate your own package index.",
+      "planned": true
+    },
+    {
+      "id": "catalog",
+      "hub": "apps",
+      "category": "browse",
+      "label": "catalog",
+      "meta": "web",
+      "desc": "Browse and search any index.",
+      "href": "/apps/catalog/"
+    },
+    {
+      "id": "mcp",
+      "hub": "apps",
+      "category": "agents",
+      "label": "ocx-mcp",
+      "meta": "mcp server",
+      "desc": "Let coding agents find and install tools.",
+      "planned": true
+    },
+    {
+      "id": "lore",
+      "hub": "apps",
+      "category": "agents",
+      "label": "lore",
+      "meta": "skills",
+      "desc": "Agent skills that teach ocx workflows.",
+      "href": "https://lore.ocx.sh/"
+    }
+  ],
+  "actions": [
+    {
+      "id": "install",
+      "label": "install",
+      "href": "/install/",
+      "kind": "button"
+    },
+    {
+      "id": "github",
+      "label": "GitHub",
+      "href": "https://github.com/ocx-sh",
+      "kind": "icon"
+    }
+  ],
+  "footer": [
+    {
+      "label": "discord",
+      "href": "https://discord.gg/mT2UCF8CVe"
+    },
+    {
+      "label": "roadmap",
+      "href": "/docs/roadmap/"
+    },
+    {
+      "label": "security",
+      "href": "/docs/security/"
+    }
+  ]
+}

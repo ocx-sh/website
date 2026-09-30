@@ -1,0 +1,35 @@
+---
+// Starlight `Head` override: the default head plus the Fonts API faces for the
+// two families the plugin registers (their cssVariables are the theme tokens).
+// Preloads the four upright faces, the only weights the theme loads (sans and
+// mono at 400/600, tokens.css): Lighthouse counts each font fetched before LCP.
+// Italics are never preloaded and use font-display: optional (fonts.mjs): no block, no late swap.
+import Default from '@astrojs/starlight/components/Head.astro';
+import { Font } from 'astro:assets';
+// <Kbd> platform detection (owner ask 2026-09-28): sets data-platform before first paint so no
+// OS-specific key glyph flickers or waits on a client render. Defaults to non-mac when the UA
+// string doesn't say otherwise (Kbd.astro's CSS fallback matches this default). Kept comment-free:
+// an inline script ships in every page's HTML, which must stay under HTML_GZ_MAX.
+---
+
+<script is:inline>
+  ((d) => {
+    const p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+    d.dataset.platform = /mac/i.test(p) ? 'mac' : /linux/i.test(p) ? 'linux' : 'windows';
+  })(document.documentElement);
+</script>
+<Default />
+<Font
+  cssVariable="--ocx-font-sans"
+  preload={[
+    { weight: 400, style: 'normal' },
+    { weight: 600, style: 'normal' },
+  ]}
+/>
+<Font
+  cssVariable="--ocx-font-mono"
+  preload={[
+    { weight: 400, style: 'normal' },
+    { weight: 600, style: 'normal' },
+  ]}
+/>

@@ -1,0 +1,8 @@
+---
+// A List whose rows come from a function slot (C-250 rich rows), for ui-list.test.ts.
+import List from '../../src/components/ui/List.astro';
+
+const items = Astro.props.items;
+---
+
+<List label="Tools" items={items}>{(item: { label: string }) => <strong class="card">{item.label}!</strong>}</List>

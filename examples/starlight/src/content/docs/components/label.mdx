@@ -1,0 +1,38 @@
+---
+title: Label
+description: The field label as a native label or a span, with a required marker and a visually hidden form.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+The name of a control. [Input](../input/), [Select](../select/) and [Combobox](../combobox/)
+render one for you; reach for `Label` when you build your own field. It ships no JavaScript.
+
+## Stories
+
+<Stories of="label" />
+
+## Props
+
+<PropsTable
+  of="ui/Label.astro"
+  rows={[
+    { name: 'for', type: 'string', description: 'Id of the control this label names (as="label").' },
+    {
+      name: 'as',
+      type: "'label' | 'span'",
+      default: "'label'",
+      description: 'span for targets a label cannot name; give it an id and point aria-labelledby at it.',
+    },
+    { name: 'hidden', type: 'boolean', default: 'false', description: 'Visually hidden, still the accessible name.' },
+    {
+      name: 'required',
+      type: 'boolean',
+      default: 'false',
+      description: 'Appends a decorative *; put required on the control itself.',
+    },
+    { name: 'disabled', type: 'boolean', default: 'false', description: 'Muted, for a disabled control.' },
+    { name: 'rest → <label>', type: 'HTMLAttributes', description: 'Every other attribute goes to the element.' },
+  ]}
+/>

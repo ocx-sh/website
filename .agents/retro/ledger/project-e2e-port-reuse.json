@@ -1,0 +1,26 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260927T223947Z-6035154b.json",
+    "20260928T114810Z-228b9b49.json"
+  ],
+  "first_seen": "2026-09-27T22:39:47Z",
+  "fixed": {
+    "at": "2026-09-28T17:52:14Z",
+    "by": "779cf80",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-e2e-port-reuse",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T11:48:10Z",
+  "occurrences": 2,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Playwright reuseExistingServer silently tests another server on the e2e port",
+  "v": 1,
+  "versions": []
+}

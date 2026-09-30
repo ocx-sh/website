@@ -1,0 +1,28 @@
+---
+title: Keyboard
+description: A shortcut key or key combination, rendered as <kbd>, with keys that adapt to the reader's OS.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+`Kbd` renders one or more keys, joined by `+`, as `<kbd>` elements. `Mod` is the one adaptive
+key — Cmd on macOS, Ctrl on Windows and Linux — so a shortcut written once works everywhere. A
+handful of other keys are always literal but still render a per-OS glyph (Alt shows as Option on
+macOS; Super shows as the Windows key). Every variant renders on the server; a tiny script in the
+document head picks which one shows, so nothing waits on the client and nothing flickers.
+
+## Stories
+
+<Stories of="keyboard" />
+
+## Props
+
+<PropsTable
+  of="ui/Kbd.astro"
+  rows={[
+    { name: 'keys', type: 'string', description: '"+"-joined key names, e.g. "Mod+Shift+K". Omit and use the default slot for a single key.' },
+    { name: 'platform', type: "'auto' | 'mac' | 'windows' | 'linux'", default: "'auto'", description: "Force one OS's rendering instead of the client-detected default." },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

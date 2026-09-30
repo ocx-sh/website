@@ -1,0 +1,123 @@
+---
+// Starlight `MobileMenuFooter` override: the default layout with the OCX icon
+// toggle instead of the "Auto ▾" select, plus the header's section links and
+// ecosystem menu trigger, which the header hides at ≤ 640px (C-023). A trigger
+// inside the open pane nests the menu under it, so the pane stays open.
+import nav from '../nav.json';
+import { activeSection } from '../nav.mjs';
+import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
+import config from 'virtual:starlight/user-config';
+import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
+import Icon from '../components/ui/Icon.astro';
+import ThemeSelect from './ThemeSelect.astro';
+
+const path = Astro.url.pathname;
+const active = activeSection(nav, path);
+const links: { label: string; href?: string; current?: boolean }[] = [
+  ...nav.sections.flatMap((s) =>
+    'href' in s
+      ? [{ label: s.label, href: s.href, current: s.id === active }]
+      : [
+          { label: s.label },
+          ...nav.hubs
+            .filter((h) => s.hubs.includes(h.id))
+            .map((h) => ({ label: h.label, href: h.href, current: s.id === active && path.startsWith(h.href) })),
+        ],
+  ),
+  ...nav.actions
+    .filter((a) => a.id === 'install')
+    .map((a) => ({ label: a.label, href: a.href, current: active === a.id })),
+];
+---
+
+<nav class="ocx-mobile-sections" aria-label="ocx sections">
+  <ul>
+    {links.map((l) => (
+      <li>
+        {l.href ? (
+          <a href={l.href} aria-current={l.current ? 'page' : undefined}>
+            {l.label}
+          </a>
+        ) : (
+          <button type="button" popovertarget="ocx-ecosystem-menu">
+            {l.label}
+            <Icon name="chevron-down" size="md" />
+          </button>
+        )}
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<div class="mobile-preferences sl-flex">
+  <div class="social-icons">
+    <SocialIcons />
+  </div>
+  <ThemeSelect />
+  {/* Rendered only with several locales: its script would otherwise ship to every page (htmlGz). */}
+  {config.isMultilingual && <LanguageSelect />}
+</div>
+
+<style is:global>
+  @layer ocx {
+    .ocx-mobile-sections ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--ocx-space-2) var(--ocx-space-5);
+      margin: 0;
+      padding: var(--ocx-space-3) 0;
+      list-style: none;
+      border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .ocx-mobile-sections :is(a, button) {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--ocx-space-2);
+      min-height: var(--ocx-control-xl);
+      padding: 0;
+      background: none;
+      border: 0;
+      cursor: pointer;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      font-weight: var(--ocx-font-weight-medium);
+      color: var(--ocx-color-fg-muted);
+      text-decoration: none;
+    }
+    .ocx-mobile-sections button svg {
+      width: var(--ocx-icon-md);
+      height: var(--ocx-icon-md);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-mobile-sections :is(a, button):hover {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-mobile-sections a[aria-current] {
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-mobile-sections :is(a, button):focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+    /* Starlight's own MobileMenuFooter layout (its scoped CSS does not reach a
+       copied tree), on tokens. */
+    .social-icons {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-5);
+      margin-inline-end: auto;
+      padding-block: var(--ocx-space-5);
+    }
+    .social-icons:empty {
+      display: none;
+    }
+    .mobile-preferences {
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      column-gap: var(--ocx-space-5);
+      padding: var(--ocx-space-3) 0;
+      border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+  }
+</style>

@@ -1,0 +1,37 @@
+---
+// C-222: the DependencyExplorer showcase's state controls. Each button re-runs the explorer that
+// follows it through `ocx:deps:load`: its own source 2 s slower, a list with no rows, or data with
+// no binary (the error state). The wiring is inline: as a module it was one more request before
+// first paint, and past ~16 of those Lighthouse's simulation queued LCP a round trip later (perf
+// 0.99). A click before the explorer mounts is held and replayed by the explorer.
+---
+
+<div class="showcase-actions">
+  <button type="button" class="showcase-action" data-deps="slow">
+    Reload, 2 s slower
+  </button>
+  <button type="button" class="showcase-action" data-deps="empty">
+    No rows
+  </button>
+  <button type="button" class="showcase-action" data-deps="broken">
+    Bad data
+  </button>
+</div>
+
+<script is:inline>
+  ((bar) => {
+    const summary = { total: 0, uniqueLicenses: 0, licenses: {} };
+    const sources = {
+      slow: (el) =>
+        new Promise((r) => setTimeout(r, 2000)).then(() => fetch(el.dataset.src ?? '')).then((r) => r.json()),
+      empty: () => ({ generated: '2026-09-27', binaries: { ocx: { summary, components: [] } } }),
+      broken: () => ({ generated: '2026-09-27', binaries: {} }),
+    };
+    bar.addEventListener('click', (e) => {
+      const source = sources[e.target.closest?.('[data-deps]')?.getAttribute('data-deps')];
+      const explorer = bar.parentElement?.querySelector('.ocx-deps');
+      if (explorer && source)
+        explorer.dispatchEvent(new CustomEvent('ocx:deps:load', { detail: { data: source(explorer) } }));
+    });
+  })(document.currentScript.previousElementSibling);
+</script>

@@ -1,0 +1,41 @@
+---
+title: Pagination
+description: Numbered pages with prev/next on Zag pagination, as buttons or as links.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A window of numbered pages with ellipses. Without `href` the pages are buttons and a change fires
+`ocx:pagination:change`; with an `href` template they are links, and work without JavaScript.
+
+## Stories
+
+<Stories of="pagination" />
+
+## Props
+
+<PropsTable
+  of="Pagination.astro"
+  rows={[
+    { name: 'count', type: 'number', required: true, description: 'Total number of items.' },
+    { name: 'pageSize', type: 'number', required: true, description: 'Items per page.' },
+    { name: 'page', type: 'number', default: '1', description: 'Current page, from 1.' },
+    { name: 'href', type: 'string', description: 'Links mode: URL template, {page} replaced by the page number.' },
+    { name: 'zag', type: 'ZagProps<PaginationProps>', description: 'Zag machine props, data only (e.g. siblingCount, boundaryCount).' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:pagination:change` | `{ page: number }` | The current page changes (links mode: before the navigation). |
+| `ocx:pagination:set` (listened) | `{ count: number }` | Dispatch it on the root to change the item count of a live pagination. |
+
+## Keyboard
+
+Links or buttons in a `nav` landmark; no APG widget pattern applies.
+
+- <kbd>Tab</kbd>: Next page control; a disabled prev/next is skipped.
+- <kbd>Enter</kbd>: Go to that page (buttons: <kbd>Space</kbd> too).

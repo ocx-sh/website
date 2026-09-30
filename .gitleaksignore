@@ -1,0 +1,2 @@
+# False positive: CSS token name in the type-scale showcase, not a key.
+e1b64eb68cd8f81a34c5d1094f1f0110a7c474c4:examples/starlight/src/components/showcase/TypeScale.astro:generic-api-key:70

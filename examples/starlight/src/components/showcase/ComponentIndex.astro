@@ -1,0 +1,46 @@
+---
+// C-120 / D-SB9: the gallery of every page in the components directory, read from the docs
+// collection (a new page lists itself), grouped by the example sidebar's groups. Each card is a link
+// holding a thumbnail box: the page's title in display type, which stays the static fallback (no JS,
+// docs-only pages). A page with a `default` story is flagged `data-story` (its route follows from the
+// card's href, which keeps ~260 B gz out of an index near HTML_GZ_MAX); the observer in
+// component-filter.mjs creates the inert iframe only once the box is on screen, since every iframe
+// element costs a browsing context (the W1 heap measurement, D-SB10). Each group is an h2 and its
+// list, no wrapper (the filter hides both when the list empties). Story modules are never
+// imported (D-SB6): their existence is read from the raw glob's keys, never loaded. No style block
+// here (props-table test): the gallery styles ride in ComponentFilter.astro.
+import { getCollection } from 'astro:content';
+import { groupPages, componentPages } from './pages.mjs';
+import { storyId } from './stories.mjs';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const href = (p: { id: string }) => `${base}${p.id}/`;
+const defaults = new Set(
+  Object.keys(import.meta.glob('../../stories/**/default.mdx', { query: '?raw', import: 'default' })).map(storyId),
+);
+const groups = groupPages(
+  componentPages(await getCollection('docs')),
+  Astro.locals.starlightRoute?.sidebar ?? [],
+  href,
+);
+const hasStory = (p: { id: string }) => defaults.has(`${p.id.slice('components/'.length)}/default`);
+---
+
+{groups.map((g) => (
+  <>
+    <h2>{g.label}</h2>
+    <ul class="showcase-index not-content">
+      {g.pages.map((p) => (
+        <li>
+          <a class="showcase-index__card" href={href(p)}>
+            <span class="showcase-index__thumb" data-story={hasStory(p) || undefined} aria-hidden="true">
+              {p.data.title}
+            </span>
+            <span class="showcase-index__title">{p.data.title}</span>
+            <span class="showcase-index__desc">{p.data.description}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </>
+))}

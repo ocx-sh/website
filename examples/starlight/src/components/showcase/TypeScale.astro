@@ -1,0 +1,256 @@
+---
+// Type specimens rendered with the theme's real tokens (foundation pages). Each row shows a live
+// sample, its token names, and the size / line height / weight / tracking the browser resolves
+// for it: the script reads them back, so clamp() tokens report the size at this viewport.
+type Row = {
+  /** Token that names the row (size, or family for the families scale). */
+  token: string;
+  text: string;
+  size: string;
+  weight?: string;
+  lh?: string;
+  tracking?: string;
+  mono?: boolean;
+  caps?: boolean;
+  muted?: boolean;
+  rule?: boolean;
+};
+type Scale = 'families' | 'weights' | 'display' | 'prose' | 'ui' | 'tracking' | 'caps';
+interface Props {
+  scale: Scale;
+}
+
+const body = '--ocx-prose-body';
+const SCALES: Record<Scale, Row[]> = {
+  families: [
+    { token: '--ocx-font-sans', text: 'Sans: where humans read sentences', size: '--ocx-text-lg' },
+    { token: '--ocx-font-mono', text: 'Mono: ocx.sh/nodejs/node:24', size: '--ocx-text-lg', mono: true },
+  ],
+  weights: [
+    { token: '--ocx-font-weight-regular', text: 'Regular 400, sans', size: body, weight: 'regular' },
+    { token: '--ocx-font-weight-semibold', text: 'Semibold 600, sans', size: body, weight: 'semibold' },
+    { token: '--ocx-font-weight-regular', text: 'Regular 400, mono', size: body, weight: 'regular', mono: true },
+    { token: '--ocx-font-weight-semibold', text: 'Semibold 600, mono', size: body, weight: 'semibold', mono: true },
+  ],
+  display: [
+    {
+      token: '--ocx-display-1',
+      text: 'The simple package manager.',
+      size: '--ocx-display-1',
+      weight: 'bold',
+      lh: 'display',
+      tracking: 'display',
+    },
+    {
+      token: '--ocx-display-2',
+      text: 'Your registry is the package server',
+      size: '--ocx-display-2',
+      weight: 'semibold',
+      lh: 'display',
+      tracking: 'display',
+    },
+    {
+      token: '--ocx-display-lead',
+      text: 'Lead: sans, muted ink, at most 60ch.',
+      size: '--ocx-display-lead',
+      lh: 'prose',
+      muted: true,
+    },
+  ],
+  prose: [
+    {
+      token: '--ocx-prose-h1',
+      text: 'Installation',
+      size: '--ocx-prose-h1',
+      weight: 'bold',
+      lh: 'heading',
+      tracking: 'display',
+    },
+    {
+      token: '--ocx-prose-h1-symbol',
+      text: 'ocx.install()',
+      size: '--ocx-prose-h1-symbol',
+      weight: 'semibold',
+      lh: 'heading',
+      tracking: 'heading',
+      mono: true,
+    },
+    {
+      token: '--ocx-prose-h2',
+      text: 'Manual installation',
+      size: '--ocx-prose-h2',
+      weight: 'semibold',
+      lh: 'heading',
+      tracking: 'heading',
+      rule: true,
+    },
+    {
+      token: '--ocx-prose-h3',
+      text: 'Pinned versions',
+      size: '--ocx-prose-h3',
+      weight: 'semibold',
+      lh: 'heading',
+      tracking: 'heading',
+    },
+    {
+      token: '--ocx-prose-h4',
+      text: 'Lockfile entries',
+      size: '--ocx-prose-h4',
+      weight: 'semibold',
+      lh: 'heading',
+      tracking: 'heading',
+    },
+    {
+      token: '--ocx-prose-body',
+      text: 'Body copy at prose size in muted ink, set on a 760px measure.',
+      size: body,
+      lh: 'prose',
+      muted: true,
+    },
+  ],
+  ui: [
+    { token: '--ocx-text-2xl', text: 'Page title in the catalog', size: '--ocx-text-2xl', weight: 'semibold' },
+    { token: '--ocx-text-xl', text: 'Section title', size: '--ocx-text-xl', weight: 'semibold' },
+    { token: '--ocx-text-lg', text: 'Hub lead, group heading', size: '--ocx-text-lg', weight: 'semibold' },
+    { token: '--ocx-text-md', text: 'Card title, button', size: '--ocx-text-md', weight: 'semibold' },
+    {
+      token: '--ocx-text-base',
+      text: 'Dense body, card description, sidebar item',
+      size: '--ocx-text-base',
+      muted: true,
+    },
+    { token: '--ocx-text-sm', text: 'Nav links and tabs', size: '--ocx-text-sm', mono: true, muted: true },
+    {
+      token: '--ocx-text-xs',
+      text: 'ocx.sh/nodejs/node:24, footer, metadata',
+      size: '--ocx-text-xs',
+      mono: true,
+      muted: true,
+    },
+    {
+      token: '--ocx-text-2xs',
+      text: 'Eyebrows, table heads',
+      size: '--ocx-text-2xs',
+      weight: 'semibold',
+      tracking: 'caps',
+      mono: true,
+      caps: true,
+      muted: true,
+    },
+  ],
+  tracking: [
+    {
+      token: '--ocx-tracking-display',
+      text: 'Display and h1: tighter',
+      size: '--ocx-display-2',
+      weight: 'semibold',
+      lh: 'display',
+      tracking: 'display',
+    },
+    {
+      token: '--ocx-tracking-heading',
+      text: 'Headings h2 to h4: slightly tight',
+      size: '--ocx-prose-h2',
+      weight: 'semibold',
+      lh: 'heading',
+      tracking: 'heading',
+    },
+    {
+      token: '--ocx-tracking-caps',
+      text: 'Every mono caps label: open',
+      size: '--ocx-text-2xs',
+      weight: 'semibold',
+      tracking: 'caps',
+      mono: true,
+      caps: true,
+      muted: true,
+    },
+  ],
+  caps: [
+    {
+      token: '--ocx-text-2xs',
+      text: 'Eyebrow, table head, callout title',
+      size: '--ocx-text-2xs',
+      weight: 'semibold',
+      tracking: 'caps',
+      mono: true,
+      caps: true,
+      muted: true,
+    },
+  ],
+};
+
+const { scale } = Astro.props;
+const v = (name: string) => `var(${name})`;
+const rows = SCALES[scale].map((r) => {
+  const extra = [
+    r.weight && `--ocx-font-weight-${r.weight}`,
+    r.lh && (r.lh === 'prose' ? '--ocx-prose-lh' : `--ocx-lh-${r.lh}`),
+    r.tracking && `--ocx-tracking-${r.tracking}`,
+  ].filter((t): t is string => Boolean(t));
+  const style = [
+    `font-family:${v(r.mono ? '--ocx-font-mono' : '--ocx-font-sans')}`,
+    `font-size:${v(r.size)}`,
+    r.weight && `font-weight:${v(`--ocx-font-weight-${r.weight}`)}`,
+    r.lh && `line-height:${v(r.lh === 'prose' ? '--ocx-prose-lh' : `--ocx-lh-${r.lh}`)}`,
+    r.tracking && `letter-spacing:${v(`--ocx-tracking-${r.tracking}`)}`,
+    r.caps && 'text-transform:uppercase',
+    r.muted && `color:${v(r.caps ? '--ocx-color-fg-subtle' : '--ocx-color-fg-muted')}`,
+  ]
+    .filter(Boolean)
+    .join(';');
+  const tokens = [r.token, ...extra.filter((t) => t !== r.token)];
+  return { ...r, style, tokens };
+});
+---
+
+<ul class="showcase-type not-content" data-type-scale>
+  {rows.map((r) => (
+    <li class="showcase-type__row">
+      <div class="showcase-type__sample" data-rule={r.rule ? '' : undefined} style={r.style} data-sample>
+        {r.text}
+      </div>
+      <p class="showcase-type__meta">
+        {r.tokens.map((t) => (
+          <code>{t}</code>
+        ))}
+        <span class="showcase-type__resolved" data-resolved></span>
+      </p>
+    </li>
+  ))}
+</ul>
+
+<script>
+  // Resolved values are read back from the browser, never restated here.
+  const px = (s: string) => Number.parseFloat(s);
+  const fmt = (n: number) => String(Number(n.toFixed(3)));
+  const fill = () => {
+    for (const row of document.querySelectorAll<HTMLElement>('[data-type-scale] .showcase-type__row')) {
+      const sample = row.querySelector<HTMLElement>('[data-sample]');
+      const out = row.querySelector<HTMLElement>('[data-resolved]');
+      if (!sample || !out) continue;
+      const cs = getComputedStyle(sample);
+      const size = px(cs.fontSize);
+      const lh = cs.lineHeight === 'normal' ? 'normal' : fmt(px(cs.lineHeight) / size);
+      const track = cs.letterSpacing === 'normal' ? '0' : `${fmt(px(cs.letterSpacing) / size)}em`;
+      out.textContent = `${fmt(size)}px / ${lh} · ${cs.fontWeight} · ${track}`;
+    }
+  };
+  fill();
+  let frame = 0;
+  addEventListener('resize', () => {
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(fill);
+  });
+</script>
+
+<style is:global>
+  /* The figures fill in after load: reserve their own line in the server render so nothing shifts. */
+  @layer ocx {
+    .showcase-type__meta > .showcase-type__resolved {
+      flex: 0 0 100%;
+      min-block-size: 1lh;
+      margin-inline-start: 0;
+    }
+  }
+</style>

@@ -1,0 +1,28 @@
+---
+title: Not collapsible
+description: With collapsible={false} every directory stays expanded with no chevron, and the default icons apply.
+height: 235
+order: 4
+block: true
+---
+
+import Tree from '@ocx-sh/theme/components/Tree.astro';
+import Node from '@ocx-sh/theme/components/TreeNode.astro';
+import Description from '@ocx-sh/theme/components/TreeDescription.astro';
+
+<Tree collapsible={false}>
+  <Node name="mytool/">
+    <Description slot="description">workdir (cwd for the commands below)</Description>
+    <Node name="build/">
+      <Description slot="description">bundle contents — becomes <code>content/</code> after install</Description>
+      <Node name="bin/">
+        <Node name="mytool">
+          <Description slot="description">your binary, Python script, shell wrapper, …</Description>
+        </Node>
+      </Node>
+    </Node>
+    <Node name="metadata.json">
+      <Description slot="description">OCI config sidecar — not part of the archive</Description>
+    </Node>
+  </Node>
+</Tree>

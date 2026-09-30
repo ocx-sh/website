@@ -1,45 +1,18 @@
 ---
-title: Asides, tabs, cards
-description: Starlight built-in components restyled onto the tokens.
+title: Asides
+description: Starlight's note, tip, caution and danger callouts, restyled onto the tokens.
 ---
 
-import { Aside, Tabs, TabItem, Card, CardGrid, LinkCard, Badge, Steps } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+An aside interrupts the reading flow for something the reader must not miss: a caveat, a
+shortcut, a risk. For a status fact inside a sentence, use [Tag](../tag/) or
+[Badge](../badges/) instead — an aside is a paragraph, not a word. [Cards](../cards/), the other
+Starlight callout, moved to their own page.
 
 <Aside>A note aside with `code`.</Aside>
-<Aside type="tip" title="Tip">Tip aside with a [link](#tabs).</Aside>
+<Aside type="tip" title="Tip">
+  Tip aside with a [link](../).
+</Aside>
 <Aside type="caution">Caution aside.</Aside>
 <Aside type="danger">Danger aside.</Aside>
-
-## Tabs
-
-<Tabs syncKey="shell">
-  <TabItem label="Shell">
-    ```sh
-    curl -fsSL https://setup.ocx.sh/sh | sh
-    ```
-  </TabItem>
-  <TabItem label="PowerShell">
-    ```powershell
-    irm https://setup.ocx.sh/pwsh | iex
-    ```
-  </TabItem>
-</Tabs>
-
-## Cards
-
-<CardGrid>
-  <Card title="docs" icon="open-book">Guides and reference for the ocx CLI.</Card>
-  <Card title="catalog" icon="puzzle">Browse packages in the index.</Card>
-</CardGrid>
-
-<LinkCard title="Install ocx" href="/install/" description="One command, every shell." />
-
-## Badges and steps
-
-<Badge text="stable" variant="success" /> <Badge text="planned" variant="caution" /> <Badge text="new" variant="note" />
-
-<Steps>
-1. Add the theme: `pnpm add @ocx-sh/theme`
-2. Register the plugin in `astro.config.mjs`
-3. Run `task dev`
-</Steps>

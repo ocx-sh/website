@@ -1,0 +1,46 @@
+---
+title: Accordion
+description: Stacked disclosure sections with arrow-key navigation, on the Zag accordion machine.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Sections under headings; each heading is a button that opens its section. The first paint is
+final; the machine loads on the first hover or focus.
+
+## Stories
+
+<Stories of="accordion" />
+
+## Props
+
+<PropsTable
+  of="Accordion.astro"
+  rows={[
+    { name: 'multiple', type: 'boolean', default: 'false', description: 'Several sections may be open at once.' },
+    { name: 'collapsible', type: 'boolean', default: 'true', description: 'The open section closes when its heading is selected again. false keeps one open (single mode): its heading shows no chevron and is aria-disabled.' },
+    { name: 'value', type: 'string[]', default: '[]', description: 'Values of the sections open on first paint.' },
+    { name: 'zag', type: 'ZagProps<AccordionProps>', description: 'Further Zag accordion props, data only.' },
+  ]}
+/>
+
+<PropsTable
+  of="AccordionItem.astro"
+  rows={[
+    { name: 'value', type: 'string', required: true, description: 'Unique within the accordion; part of element ids, so a slug.' },
+    { name: 'label', type: 'string', required: true, description: 'Heading text on the trigger.' },
+  ]}
+/>
+
+Each item's default slot is its section. Headings render as `<h3>`.
+
+## Events
+
+- `ocx:accordion:change` with detail `{ value }`, when a section opens or closes; `value` lists the open ones.
+
+## Keyboard
+
+- <kbd>Enter</kbd> or <kbd>Space</kbd> opens the focused section, or closes it when allowed.
+- <kbd>↓</kbd> and <kbd>↑</kbd> focus the next or previous heading, wrapping at the ends.
+- <kbd>Home</kbd> and <kbd>End</kbd> focus the first or last heading.

@@ -1,0 +1,16 @@
+---
+title: States
+description: Each state is a live trigger, so open it to see the panel.
+height: 480
+order: 1
+---
+
+import Popover from '@ocx-sh/theme/components/ui/Popover.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid>
+  <State label="placement=top"><Popover placement="top"><span slot="trigger">Top</span>Opens above the trigger.</Popover></State>
+  <State label="placement=bottom-end"><Popover placement="bottom-end"><span slot="trigger">End</span>Aligned to the end edge.</Popover></State>
+  <State label="modal"><Popover modal><span slot="trigger">Modal</span>Focus stays in here. <a href="#demo">A link</a></Popover></State>
+</StateGrid>

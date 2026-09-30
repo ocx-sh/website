@@ -1,0 +1,16 @@
+---
+title: Install scope
+description: Native radios sharing one name; the arrow keys move the choice and log ocx:radio-group:change.
+height: 240
+log: true
+---
+
+import RadioGroup from '@ocx-sh/theme/components/ui/RadioGroup.astro';
+
+export const scopes = [
+  { value: 'project', label: 'project' },
+  { value: 'user', label: 'user' },
+  { value: 'system', label: 'system', disabled: true },
+];
+
+<RadioGroup label="Install scope" name="scope" items={scopes} value="project" />

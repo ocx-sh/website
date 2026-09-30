@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T044531Z-da4f5c02.json"
+  ],
+  "first_seen": "2026-09-28T06:50:01Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:38Z",
+    "by": "packages/theme/src/starlight/toaster.mjs",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-main-pane-isolation",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T06:50:01Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Starlight .main-pane isolation traps fixed overlays under the sidebar",
+  "v": 1,
+  "versions": []
+}

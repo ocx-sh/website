@@ -1,0 +1,131 @@
+---
+// Every registry icon with a search box. The grid is server-rendered, so it paints complete with
+// no script; the script only hides cards that do not match (name, group, keywords).
+// Bytes per card count: this page sits near the HTML budget (tests/budgets.mjs). So the cards carry
+// no classes (the style is global, selected through the root) and no keywords: those (~590 B gz
+// in the HTML) come with the registry, imported when the search box is first used. The script
+// reads name and group from the card's text.
+// The glyph is Icon.astro's markup minus `data-icon`: the name already sits in the card's <code>,
+// and a per-card unique attribute splits the otherwise identical attribute run into separate gzip
+// matches (~600 B gz over the catalog). Same class and attributes, so Icon's global styles apply.
+import Input from '@ocx-sh/theme/components/ui/Input.astro';
+import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
+---
+
+<div class="icon-catalog not-content" data-icon-catalog>
+  <Input label="Search icons" hideLabel type="search" placeholder="Search, e.g. arrow, linux" autocomplete="off" />
+  <p aria-live="polite" data-count>
+    {ICON_NAMES.length} icons
+  </p>
+  <ul>
+    {ICON_NAMES.map((name) => {
+      const { viewBox, body, stroke, group } = ICONS[name];
+      return (
+        <li>
+          <svg
+            class="ocx-icon"
+            data-size="lg"
+            viewBox={viewBox}
+            fill={stroke ? 'none' : 'currentColor'}
+            stroke={stroke ? 'currentColor' : undefined}
+            stroke-width={stroke}
+            stroke-linecap={stroke ? 'round' : undefined}
+            stroke-linejoin={stroke ? 'round' : undefined}
+            aria-hidden="true"
+            set:html={body}
+          />
+          <code>{name}</code>
+          <span>{group}</span>
+        </li>
+      );
+    })}
+  </ul>
+</div>
+
+<script>
+  import type { IconName } from '@ocx-sh/theme/icons';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-icon-catalog]')) {
+    const input = root.querySelector('input');
+    const count = root.querySelector<HTMLElement>('[data-count]');
+    const cards = [...root.querySelectorAll<HTMLElement>('li')];
+    const total = cards.length;
+    // Loads on first focus (or input), so nothing loads before interaction. Offline: name and group
+    // still match, keywords do not.
+    let texts: Promise<string[]> | undefined;
+    const load = () =>
+      (texts ??= import('@ocx-sh/theme/icons')
+        .then(
+          ({ ICONS }) => ICONS,
+          () => undefined,
+        )
+        .then((icons) =>
+          cards.map((card) => {
+            const text = [...card.children].map((e) => e.textContent).join(' ');
+            const name = card.querySelector('code')?.textContent as IconName;
+            return `${text} ${icons?.[name]?.keywords ?? ''}`;
+          }),
+        ));
+    input?.addEventListener('focus', load, { once: true });
+    input?.addEventListener('input', async () => {
+      const all = await load();
+      const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+      let shown = 0;
+      cards.forEach((card, i) => {
+        const hit = words.every((w) => all[i]?.includes(w));
+        card.hidden = !hit;
+        if (hit) shown++;
+      });
+      if (count)
+        count.textContent = !words.length ? `${total} icons` : shown ? `${shown} of ${total} icons` : 'No icon matches';
+    });
+  }
+</script>
+
+<style is:global>
+  /* Only the catalog page uses these, so they stay here rather than in showcase.css. Global, not
+     scoped: scoping stamps a class on every card element. */
+  @layer ocx {
+    .icon-catalog {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-4);
+      margin-block: var(--ocx-space-6);
+    }
+    .icon-catalog > p {
+      margin: 0;
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .icon-catalog > ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(calc(var(--ocx-space-12) + var(--ocx-space-5)), 1fr));
+      gap: var(--ocx-space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .icon-catalog li {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--ocx-space-2);
+      padding: var(--ocx-space-5) var(--ocx-space-3) var(--ocx-space-4);
+      color: var(--ocx-color-fg);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-md);
+    }
+    .icon-catalog li[hidden] {
+      display: none;
+    }
+    .icon-catalog li > code {
+      font-size: var(--ocx-text-sm);
+      overflow-wrap: anywhere;
+      text-align: center;
+    }
+    .icon-catalog li > span {
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+    }
+  }
+</style>

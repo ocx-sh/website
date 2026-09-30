@@ -1,0 +1,27 @@
+---
+title: Loader
+description: The polite loading status region, four layers pulled in turn, still under reduced motion and hidden without JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+The consumer swaps the label to report progress and hides the loader once content lands. Four
+layers are pulled in turn around a 2×2 grid: each lands in strong ink, settles to a quiet tone and leaves
+as the next arrives. With reduced motion the grid holds still, one layer landing, and the text carries the
+state. With JavaScript off it is hidden, because nothing would ever finish loading.
+
+## Stories
+
+<Stories of="loader" />
+
+## Props
+
+<PropsTable
+  of="ui/Loader.astro"
+  rows={[
+    { name: 'label', type: 'string', default: "'Loading…'", description: 'Status text, announced politely.' },
+    { name: 'size', type: "'s' | 'm'", default: "'m'", description: 'Inline (s) or block (m).' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

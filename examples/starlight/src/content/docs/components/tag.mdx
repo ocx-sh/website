@@ -1,0 +1,71 @@
+---
+title: Tag
+description: The passive label and status stamp in five tones, plus the filter chip and a removable chip, with no client JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A label is a tint fill for a passive category. A stamp is outline caps for a status fact: stamp
+only the exception, stable things get none. Switch the theme in the header to check dark mode.
+For Starlight's own inline stamp — a heading or sidebar `badge:` — see [Badge](../badges/)
+instead; Tag is for page content.
+
+The filter chip is the one that responds: coral ink, tint and edge with a trailing check when on
+(`aria-pressed`, `aria-checked` or `data-state="on"`), surface and hairline when off. A removable
+chip ends in a square remove button. Tag itself holds no behaviour; TagGroup and TagsInput drive
+pressing and removing.
+
+## Stories
+
+<Stories of="tag" />
+
+## Props
+
+<PropsTable
+  of="ui/Tag.astro"
+  rows={[
+    {
+      name: 'variant',
+      type: "'label' | 'stamp' | 'filter'",
+      default: "'label'",
+      description:
+        'Label is a tint fill for a category; stamp is outline caps for a status fact; filter is the toggle chip.',
+    },
+    {
+      name: 'tone',
+      type: "'neutral' | 'keyword' | 'success' | 'warning' | 'danger'",
+      default: "'neutral'",
+      description: 'Colour of the tag. A filter chip ignores it: its state sets the colour.',
+    },
+    {
+      name: 'as',
+      type: "'span' | 'button'",
+      default: "'span'",
+      description: 'Root element; a button gets type="button". A removable chip is always a span.',
+    },
+    { name: 'value', type: 'string', description: 'Written to data-value, the item value a group reads.' },
+    {
+      name: 'removable',
+      type: 'boolean',
+      default: 'false',
+      description: 'Adds a trailing remove button. Needs removeLabel.',
+    },
+    {
+      name: 'removeLabel',
+      type: 'string',
+      description: 'Accessible name of the remove button. Required with removable.',
+    },
+    {
+      name: 'removeProps',
+      type: 'Record<string, unknown>',
+      description: 'Attributes spread on the remove button (Zag item-delete-trigger props).',
+    },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+    {
+      name: 'rest → <button>',
+      type: 'HTMLAttributes<button>',
+      description: 'Spread on the root, e.g. aria-pressed or disabled.',
+    },
+  ]}
+/>

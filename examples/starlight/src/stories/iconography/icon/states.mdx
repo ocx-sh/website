@@ -1,0 +1,22 @@
+---
+title: States
+description: Line icons stroke in the text colour at the --ocx-icon-stroke weight; OS, brand and shell glyphs fill in it.
+height: 350
+order: 1
+block: true
+---
+
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import State from '../../../components/showcase/State.astro';
+import StateGrid from '../../../components/showcase/StateGrid.astro';
+
+<StateGrid>
+  <State label="size=xs"><Icon name="check" size="xs" /></State>
+  <State label="size=sm"><Icon name="check" size="sm" /></State>
+  <State label="size=md (default)"><Icon name="check" /></State>
+  <State label="size=lg"><Icon name="check" size="lg" /></State>
+  <State label="line"><Icon name="search" size="lg" /></State>
+  <State label="filled"><Icon name="github" size="lg" /></State>
+  <State label="filled (shell)"><Icon name="fish" size="lg" /></State>
+  <State label="label (role=img)"><Icon name="apple" size="lg" label="macOS" /></State>
+</StateGrid>

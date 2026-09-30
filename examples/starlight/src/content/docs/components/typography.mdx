@@ -1,0 +1,64 @@
+---
+title: Typography
+description: Font families, weights, the display, prose and UI type scales, tracking and the mono caps label, each set live with its tokens.
+---
+
+import Demo from '../../../components/showcase/Demo.astro';
+import TypeScale from '../../../components/showcase/TypeScale.astro';
+
+Every size, weight, line height and tracking on an ocx.sh page is a token from
+`@ocx-sh/theme`; no page sets a raw value. Each sample below is set with those tokens, and the
+figures beside it (size / line height, weight, tracking) are what your browser resolves for it, so
+the fluid `clamp()` sizes report the size at this window width. Running text has its own page:
+[Prose](../prose/).
+
+## Font families
+
+Mono is the voice: identifiers, commands, navigation and labels. Sans carries sentences.
+
+<Demo block><TypeScale scale="families" /></Demo>
+
+Both families ship as self-hosted faces at 400 and 600, four font files per page. A fallback face
+sized to match each family holds the layout still while they load.
+
+## Weights
+
+Two weights, one per loaded face. `--ocx-font-weight-medium` and `--ocx-font-weight-bold` stay as
+intents but resolve to the 400 and 600 faces, so no page asks for a face that is not loaded. Mono
+never carries bold display text.
+
+<Demo block><TypeScale scale="weights" /></Demo>
+
+## Display scale
+
+Landing pages, hubs and single-page sites. `--ocx-display-hero` (84px at most) is the landing hero
+band only, one per site.
+
+<Demo block><TypeScale scale="display" /></Demo>
+
+## Prose scale
+
+Docs and reference bodies, set at a 760px measure. Every second-level heading gets a hairline
+above it; that rule alone makes a long reference page scannable. A mono h1 names an API symbol.
+
+<Demo block><TypeScale scale="prose" /></Demo>
+
+## UI scale
+
+Chrome, navigation, tables and cards. These are the only sizes below 15px. A new size is a token
+change, never an inline value.
+
+<Demo block><TypeScale scale="ui" /></Demo>
+
+## Tracking
+
+Three values only.
+
+<Demo block><TypeScale scale="tracking" /></Demo>
+
+## Mono caps label
+
+Every mono uppercase label (eyebrows, table heads, callout titles, sidebar groups) is
+`--ocx-text-2xs` mono at semibold, uppercase, with `--ocx-tracking-caps`.
+
+<Demo block><TypeScale scale="caps" /></Demo>

@@ -1,0 +1,18 @@
+---
+title: Combobox
+description: A text input with a filtered list; typing filters, Enter commits.
+height: 300
+log: true
+---
+
+import Combobox from '@ocx-sh/theme/components/ui/Combobox.astro';
+
+export const packages = [
+  { value: 'kitware/cmake', label: 'kitware/cmake', meta: '4.0.2' },
+  { value: 'cmark-cli', label: 'cmark-cli', meta: '0.3.1' },
+  { value: 'cmake-find-ocx', label: 'CMake · find_ocx', meta: '0.3.1' },
+];
+
+<div style="inline-size: min(100%, calc(var(--ocx-space-12) * 3))">
+  <Combobox label="Package" options={packages} value="kitware/cmake" placeholder="Search packages" />
+</div>

@@ -1,0 +1,133 @@
+---
+// Slider (C-270, HeroUI Slider) on Zag slider, loaded on first interaction: APG slider, or the
+// multi-thumb slider when `value` is a pair. Arrows step, PageUp/Down take the large step, Home/End
+// jump. The hidden inputs are the form fields (`name`, one per thumb: a range submits `name[]`
+// twice). `thumbAlignment: 'center'` keeps the first paint free of measurement (D-P12).
+// ponytail: vertical orientation, origin and thumbCollisionBehavior stay reachable through `zag`
+// but have no styles; add them when a consumer needs one.
+import type { Props as SliderMachineProps } from '@zag-js/slider';
+import Label from './Label.astro';
+import { nextUiId } from './ids.mjs';
+import { formatValue, formatValues } from './range.mjs';
+import { connect, machine } from './slider.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './range.css';
+
+export interface Props {
+  /** Visible label, the accessible name of a single thumb. */
+  label: string;
+  hideLabel?: boolean;
+  /** One number = one thumb; a pair = a range with two thumbs. */
+  value: number | [number, number];
+  min?: number;
+  max?: number;
+  step?: number;
+  /** Form field name; one hidden input per thumb. */
+  name?: string;
+  disabled?: boolean;
+  /** Tick marks under the track; a number is labelled with its formatted value. */
+  marks?: (number | { value: number; label: string })[];
+  /** Formats the value text and `aria-valuetext`. Default: the plain number. */
+  format?: Intl.NumberFormatOptions;
+  /** Thumb names. A range defaults to `["Minimum <label>", "Maximum <label>"]`. */
+  thumbLabels?: string[];
+  /** Show the value in the label row (a range as "a – b"). Default true. */
+  showValue?: boolean;
+  /** Zag machine props (data only). */
+  zag?: ZagProps<SliderMachineProps>;
+  class?: string;
+}
+
+const {
+  label,
+  hideLabel = false,
+  value,
+  min = 0,
+  max = 100,
+  step = 1,
+  name,
+  disabled = false,
+  marks = [],
+  format,
+  thumbLabels,
+  showValue = true,
+  zag,
+  class: className,
+} = Astro.props;
+const values = Array.isArray(value) ? value : [value];
+const zagId = nextUiId('slider');
+const names = thumbLabels ?? (values.length > 1 ? [`Minimum ${label}`, `Maximum ${label}`] : undefined);
+const base = {
+  min,
+  max,
+  step,
+  thumbAlignment: 'center' as const,
+  ...(name && { name }),
+  ...(disabled && { disabled: true }),
+  ...(names && { 'aria-label': names }),
+  ...zag,
+};
+// A thumb with its own name must not be named by the shared label (aria-labelledby wins over
+// aria-label): it points at itself, so its aria-label is its name.
+const first = ssrApi(machine, connect, { ...base, id: zagId, defaultValue: values });
+const thumbIds = values.map((_, index) => first.getThumbProps({ index }).id);
+const props = { ...base, ...(names && { 'aria-labelledby': thumbIds }) };
+// `data-zag-props` carries the data props; on start the machine reads the values back from the
+// hidden inputs and builds `getAriaValueText` from `data-ocx-format` (slider.zag.mjs).
+const api = ssrApi(machine, connect, {
+  ...props,
+  id: zagId,
+  defaultValue: values,
+  ...(format && { getAriaValueText: ({ value: v }: { value: number }) => formatValue(v, format) }),
+});
+const markers = marks.map((m) => (typeof m === 'number' ? { value: m, label: formatValue(m, format) } : m));
+---
+
+<div
+  class:list={['ocx-ui-field', 'ocx-ui-slider', className]}
+  data-zag-root="slider"
+  data-zag-id={zagId}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(props)}
+  data-ocx-format={format ? JSON.stringify(format) : undefined}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <div class="ocx-ui-slider__head">
+    <Label as="label" hidden={hideLabel} disabled={disabled} {...ssrAttrs(api.getLabelProps())}>
+      {label}
+    </Label>
+    {showValue && (
+      <span class="ocx-ui-slider__value" {...ssrAttrs(api.getValueTextProps())}>
+        {formatValues(api.value, format)}
+      </span>
+    )}
+  </div>
+  <div class="ocx-ui-slider__control" {...ssrAttrs(api.getControlProps())}>
+    <div class="ocx-ui-slider__track" {...ssrAttrs(api.getTrackProps())}>
+      <div class="ocx-ui-slider__range" {...ssrAttrs(api.getRangeProps())}></div>
+    </div>
+    {values.map((_, index) => (
+      <div class="ocx-ui-slider__thumb" {...ssrAttrs(api.getThumbProps({ index }))}>
+        <input {...ssrAttrs(api.getHiddenInputProps({ index }))} disabled={disabled || undefined} />
+      </div>
+    ))}
+  </div>
+  {markers.length > 0 && (
+    <div class="ocx-ui-slider__marks" {...ssrAttrs(api.getMarkerGroupProps())}>
+      {markers.map((m) => (
+        <span class="ocx-ui-slider__mark" {...ssrAttrs(api.getMarkerProps({ value: m.value }))}>
+          {m.label}
+        </span>
+      ))}
+    </div>
+  )}
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="slider"]'))
+    // No replay: a press before start reaches no machine, and a replayed press would double-step.
+    mount(root, { load: () => import('./slider.zag.mjs'), replay: false });
+</script>

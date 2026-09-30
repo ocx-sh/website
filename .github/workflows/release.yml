@@ -1,0 +1,169 @@
+name: Release
+
+# A stable tag vX.Y.Z publishes @ocx-sh/theme to npm and the grim skills to
+# ghcr.io/ocx-sh/lore at the same version, then a GitHub release. RELEASING.md
+# has the procedure. Prerelease tags do not match: grim rejects them, and npm
+# would move `latest`.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+# No cache anywhere in this workflow: a restored cache in a publishing job is a
+# poisoning path. Every publish step is idempotent, so "re-run failed jobs" is
+# the recovery for a partial release.
+jobs:
+  verify:
+    name: Verify tag
+    # Forks carry the tags too; only the canonical repo publishes.
+    if: github.repository == 'ocx-sh/website'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # The version is committed (reviewed PR), never derived from the tag: the
+      # tag only confirms it, so the repo records exactly what was published.
+      - name: Tag matches package version and is on main
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(jq -r .version packages/theme/package.json)"
+          if [ "v${version}" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match packages/theme/package.json version $version"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::tag $TAG points at a commit that is not on main"
+            exit 1
+          fi
+
+  gate:
+    name: ${{ matrix.gate }}
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        gate: [check, pack]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.3'
+          cache: false
+      - name: Install dependencies
+        run: ocx exec -- task install
+      - name: Run ${{ matrix.gate }}
+        env:
+          GATE: ${{ matrix.gate }}
+        run: ocx exec -- task "$GATE"
+
+  npm:
+    name: Publish to npm
+    needs: gate
+    if: github.repository == 'ocx-sh/website'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing (OIDC) and provenance; no NPM_TOKEN
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.3'
+          cache: false
+      # prepack runs tsc from the workspace devDependencies.
+      - name: Install dependencies
+        run: ocx exec -- task install
+      - name: Publish @ocx-sh/theme
+        working-directory: packages/theme
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Idempotent: the first release is published by hand (RELEASING.md), and a
+          # re-run after a later job failed must not fail here.
+          if ocx exec -- npm view "@ocx-sh/theme@${TAG#v}" version >/dev/null 2>&1; then
+            echo "@ocx-sh/theme@${TAG#v} is already on npm; skipping"
+            exit 0
+          fi
+          ocx exec -- npm publish --provenance --access public
+
+  skills:
+    name: Publish grim skills
+    needs: gate
+    if: github.repository == 'ocx-sh/website'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push the grim skills to ghcr.io with GITHUB_TOKEN
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.3'
+          cache: false
+      - name: Log in to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Per-job credential store in the runner temp dir (wiped after the job);
+        # grim refuses the plaintext write without --allow-insecure-store.
+        run: |
+          export DOCKER_CONFIG="$RUNNER_TEMP/docker"
+          echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> "$GITHUB_ENV"
+          printf '%s' "$GITHUB_TOKEN" | ocx exec -- grim login ghcr.io -u "$GITHUB_ACTOR" --password-stdin --allow-insecure-store
+      # publish.toml (repo root) names the registry and namespace. --version strips
+      # the leading v and cascades X.Y / X / latest; an existing version is a no-op.
+      # --git embeds the origin remote, which links each ghcr package to this repo.
+      - name: Publish
+        env:
+          TAG: ${{ github.ref_name }}
+        run: ocx exec -- grim publish --version "$TAG" --git --license Apache-2.0
+      - name: Log out
+        if: always()
+        run: ocx exec -- grim logout ghcr.io
+
+  github-release:
+    name: GitHub release
+    needs: [npm, skills]
+    if: github.repository == 'ocx-sh/website'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub release
+    steps:
+      # No cliff.toml in this repo: GitHub-generated notes, appended to the links.
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $TAG exists; skipping"
+            exit 0
+          fi
+          version="${TAG#v}"
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" --generate-notes \
+            --notes "npm: [@ocx-sh/theme@${version}](https://www.npmjs.com/package/@ocx-sh/theme/v/${version}) · grim skills: \`ghcr.io/ocx-sh/lore/*:${version}\`"

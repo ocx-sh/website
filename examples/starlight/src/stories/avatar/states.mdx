@@ -1,0 +1,36 @@
+---
+title: States
+description: Image, fallback, a broken image, three sizes, four presence statuses and a group with a +N tile.
+height: 490
+block: true
+order: 1
+---
+
+import Avatar from '@ocx-sh/theme/components/ui/Avatar.astro';
+import AvatarGroup from '@ocx-sh/theme/components/ui/AvatarGroup.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="image"><Avatar name="Priya Anand" src="https://i.pravatar.cc/64?img=5" /></State>
+  <State label="fallback (no src)"><Avatar name="Cole Baxter" /></State>
+  <State label="broken image"><Avatar name="Dana Reyes" src="data:," /></State>
+  <State label="size sm"><Avatar name="Priya Anand" size="sm" src="https://i.pravatar.cc/64?img=5" /></State>
+  <State label="size md"><Avatar name="Priya Anand" size="md" src="https://i.pravatar.cc/64?img=5" /></State>
+  <State label="size lg"><Avatar name="Priya Anand" size="lg" src="https://i.pravatar.cc/64?img=5" /></State>
+  <State label="status, online"><Avatar name="Priya Anand" status="online" src="https://i.pravatar.cc/64?img=5" /></State>
+  <State label="status, busy"><Avatar name="Cole Baxter" status="busy" /></State>
+  <State label="status, away"><Avatar name="Dana Reyes" status="away" /></State>
+  <State label="status, offline"><Avatar name="Sam Iyer" status="offline" /></State>
+  <State label="group">
+    <AvatarGroup
+      items={[
+        { name: 'Priya Anand', src: 'https://i.pravatar.cc/64?img=5' },
+        { name: 'Cole Baxter' },
+        { name: 'Dana Reyes' },
+        { name: 'Sam Iyer' },
+      ]}
+      max={3}
+    />
+  </State>
+</StateGrid>

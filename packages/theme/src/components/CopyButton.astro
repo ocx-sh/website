@@ -1,0 +1,73 @@
+---
+// C-180: copies `value`, reads "copied" for 1.5 s (design c-code), then asks the page toaster for
+// "Copied <label ?? value>" (C-181). Behaviour: Zag clipboard via clipboard.zag.mjs, loaded on
+// first hover/focus/touch; the button is a secondary `s` Button.
+import type { Props as ClipboardProps } from '@zag-js/clipboard';
+import Button from './ui/Button.astro';
+import Icon from './ui/Icon.astro';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+import { connect, machine, triggerProps } from './clipboard.zag.mjs';
+
+interface Props {
+  /** Text written to the clipboard. */
+  value: string;
+  /** What the toast names instead of the value. */
+  label?: string;
+  zag?: ZagProps<ClipboardProps>;
+}
+const { value, label, zag = {} } = Astro.props;
+const id = nextUiId('copy');
+const props = { timeout: 1500, ...zag, value };
+const api = ssrApi(machine, connect, { ...props, id });
+---
+
+<div
+  class="ocx-copy"
+  data-zag-root="clipboard"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(props)}
+  data-label={label}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <Button size="s" {...ssrAttrs(triggerProps(api, label))}>
+    <span {...ssrAttrs(api.getIndicatorProps({ copied: false }))}>copy</span>
+    <span class="ocx-copy__done" {...ssrAttrs(api.getIndicatorProps({ copied: true }))}>
+      <Icon name="check" size="sm" />
+      copied
+    </span>
+  </Button>
+</div>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="clipboard"]'))
+    mount(root, { load: () => import('./clipboard.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-copy {
+      display: inline-flex;
+    }
+    .ocx-copy__done {
+      display: inline-flex;
+      align-items: center;
+      gap: calc(var(--ocx-space-2) + var(--ocx-space-1)); /* sheet 6px; no token */
+    }
+    .ocx-copy__done[hidden] {
+      display: none;
+    }
+    .ocx-copy :global(.ocx-icon) {
+      inline-size: var(--ocx-icon-ms);
+      block-size: var(--ocx-icon-ms);
+    }
+    /* Copied: success border and text for the machine's timeout (design c-code), over hover. */
+    .ocx-copy :global(.ocx-ui-button[data-part='trigger'][data-copied]) {
+      color: var(--ocx-color-success);
+      border-color: var(--ocx-color-success);
+    }
+  }
+</style>

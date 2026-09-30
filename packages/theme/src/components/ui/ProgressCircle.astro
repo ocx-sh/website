@@ -1,0 +1,45 @@
+---
+// ProgressCircle (C-265, HeroUI ProgressCircle): a static ring, `role="progressbar"`, no JS. The SVG
+// is the shared builder's (the toast draws the same one). A consumer moves a determinate ring by
+// setting `aria-valuenow` and `style="--_value:N"` on the root.
+import { progressCircleSvg } from './progress-circle.mjs';
+import './progress-circle.css';
+
+export interface Props {
+  /** Accessible name. */
+  label: string;
+  /** 0–100. Absent = indeterminate (a spinning quarter arc). */
+  value?: number;
+  /** s = icon-md · m = control-sm · l = control-xl. */
+  size?: 's' | 'm' | 'l';
+  /** Arc colour; accent stays reserved for links, current and focus. */
+  tone?: 'neutral' | 'success' | 'warning' | 'danger';
+  /** Show the rounded percentage beside the ring (determinate only). */
+  showValue?: boolean;
+  class?: string;
+}
+
+const { label, value, size = 'm', tone = 'neutral', showValue = false, class: className } = Astro.props;
+const determinate = typeof value === 'number' && !Number.isNaN(value);
+const clamped = determinate ? Math.round(Math.min(100, Math.max(0, value)) * 10) / 10 : undefined;
+---
+
+<span
+  class:list={['ocx-ui-progress-circle', className]}
+  role="progressbar"
+  aria-label={label}
+  aria-valuemin="0"
+  aria-valuemax="100"
+  aria-valuenow={clamped}
+  data-state={determinate ? 'determinate' : 'indeterminate'}
+  data-size={size}
+  data-tone={tone}
+  style={clamped === undefined ? undefined : `--_value:${clamped}`}
+>
+  <Fragment set:html={progressCircleSvg({ value, size })} />
+  {showValue && clamped !== undefined && (
+    <span class="ocx-ui-progress-circle__value" aria-hidden="true">
+      {Math.round(clamped)}%
+    </span>
+  )}
+</span>

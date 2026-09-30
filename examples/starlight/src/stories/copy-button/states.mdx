@@ -1,0 +1,18 @@
+---
+title: States
+description: A value only, a label, and a long value whose toast is cut to 40 characters.
+height: 180
+order: 1
+block: true
+toaster: true
+---
+
+import CopyButton from '@ocx-sh/theme/components/CopyButton.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="value only"><CopyButton value="ocx.sh/pnpm/pnpm:11" /></State>
+  <State label="label"><CopyButton value="sha256:4f2a9c0d1e7b" label="digest" /></State>
+  <State label="long value, toast cut to 40"><CopyButton value="curl -fsSL https://setup.ocx.sh/sh | sh -s -- --no-modify-path" /></State>
+</StateGrid>

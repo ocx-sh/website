@@ -1,0 +1,91 @@
+---
+// Radio group (design c-choice, C-160, D-Z7): native radios sharing `name`, so arrow keys, form
+// submit and JS-off are the browser's; Zag radio-group mirrors the checked one from the first
+// interaction and surfaces changes. Items wear Choice's radio look (choice.css).
+import type { Props as RadioGroupMachineProps } from '@zag-js/radio-group';
+import { nextUiId } from './ids.mjs';
+import { connect, machine } from './radio-group.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './choice.css';
+
+export interface RadioItem {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
+
+export interface Props {
+  /** Group label, the radiogroup's accessible name. */
+  label: string;
+  /** Form field name shared by the radios. */
+  name: string;
+  items: RadioItem[];
+  /** Checked value. */
+  value?: string;
+  orientation?: 'horizontal' | 'vertical';
+  /** Zag machine props. */
+  zag?: ZagProps<RadioGroupMachineProps>;
+}
+
+const { label, name, items, value, orientation = 'vertical', zag } = Astro.props;
+const id = nextUiId('radio-group');
+// The machine reads name, orientation and the checked radio back from the DOM on start
+// (radio-group.zag.mjs), so `data-zag-props` carries only the `zag` passthrough (C-106).
+const props = { name, orientation, ...(value !== undefined && { defaultValue: value }), ...zag };
+const api = ssrApi(machine, connect, { ...props, id });
+---
+
+<div
+  class="ocx-ui-radio-group"
+  data-zag-root="radio-group"
+  data-zag-id={id}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(zag ?? {})}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <span class="ocx-ui-radio-group__label" {...ssrAttrs(api.getLabelProps())}>
+    {label}
+  </span>
+  {items.map((item) => (
+    <label class="ocx-ui-choice" data-type="radio" {...ssrAttrs(api.getItemProps(item))}>
+      <input class="ocx-ui-choice__input" {...ssrAttrs(api.getItemHiddenInputProps(item))} />
+      <span class="ocx-ui-choice__box" {...ssrAttrs(api.getItemControlProps(item))} />
+      <span class="ocx-ui-choice__label" {...ssrAttrs(api.getItemTextProps(item))}>
+        {item.label}
+      </span>
+    </label>
+  ))}
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="radio-group"]'))
+    mount(root, { load: () => import('./radio-group.zag.mjs'), replay: false });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-radio-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--ocx-space-3);
+    }
+    .ocx-ui-radio-group[data-orientation='horizontal'] {
+      flex-flow: row wrap;
+      align-items: center;
+      column-gap: var(--ocx-space-5);
+    }
+    .ocx-ui-radio-group__label {
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-sm);
+      font-weight: var(--ocx-font-weight-medium);
+      color: var(--ocx-color-fg);
+    }
+    .ocx-ui-radio-group[data-orientation='horizontal'] > .ocx-ui-radio-group__label {
+      flex-basis: 100%;
+    }
+  }
+</style>

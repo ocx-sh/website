@@ -1,0 +1,212 @@
+---
+// Interactive tree on Zag `tree-view` (C-200): APG tree with roving focus, arrows, Home/End,
+// typeahead, opt-in selection. Icons, descriptions and `selectable` match the native `Tree`
+// (shared core: tree.mjs); for a static file listing use `Tree`.
+import type { Props as TreeViewMachineProps } from '@zag-js/tree-view';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+import { CHEVRON, iconsFor } from './tree.mjs';
+import { connect, machine, toCollection } from './tree-view.zag.mjs';
+import type { TreeViewItem } from './tree-view.zag.mjs';
+
+// Ours, or controlled: a JSON value with no updater would freeze the live tree.
+type Owned =
+  | 'collection'
+  | 'defaultSelectedValue'
+  | 'defaultExpandedValue'
+  | 'selectedValue'
+  | 'expandedValue'
+  | 'focusedValue'
+  | 'checkedValue';
+interface Props {
+  /** The tree as JSON; a node with non-empty `children` is a branch. */
+  items: TreeViewItem[];
+  /** Accessible name, shown above the tree. */
+  label: string;
+  /** The selected node's value. */
+  value?: string;
+  /** Nodes can be selected; an item's own `selectable` wins. Off by default, as in `Tree`. */
+  selectable?: boolean;
+  /** Values of the branches rendered open. */
+  expanded?: string[];
+  /** Zag machine props (data only). */
+  zag?: ZagProps<Omit<TreeViewMachineProps, Owned>>;
+}
+
+const { items, label, value, selectable = false, expanded = [], zag = {} } = Astro.props;
+const id = nextUiId('tree-view');
+// Selection is controlled so tree-view.zag.mjs can refuse a non-selectable node (Zag has no filter).
+const props = { ...zag, selectedValue: value == null ? [] : [value], defaultExpandedValue: expanded };
+const api = ssrApi(machine, connect, { ...props, id, collection: toCollection(items) });
+
+// ponytail: the nodes are a string, not a recursive component, so TreeView stays one file.
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
+const tag = (name: string, attrs: Record<string, unknown>, inner: string) =>
+  `<${name}${Object.entries(ssrAttrs(attrs))
+    .map(([k, v]) => (v === '' || v === true ? ` ${k}` : ` ${k}="${esc(v)}"`))
+    .join('')}>${inner}</${name}>`;
+// The text part holds icon, name and description (tree-view.zag.mjs reads the label off the name).
+const text = (item: TreeViewItem, isDir: boolean) => {
+  const [closed, open] = iconsFor(item.label, isDir, item.icon, item.openIcon);
+  const icon =
+    closed === open
+      ? esc(closed)
+      : `<span data-icon="closed">${esc(closed)}</span><span data-icon="open">${esc(open)}</span>`;
+  const sel = item.selectable === undefined ? '' : ` data-selectable="${item.selectable}"`;
+  return (
+    `<span class="ocx-tree-view__icon" aria-hidden="true">${icon}</span>` +
+    `<span class="ocx-tree-view__name"${sel}>${esc(item.label)}</span>` +
+    (item.description ? `<span class="ocx-tree-view__desc">${esc(item.description)}</span>` : '')
+  );
+};
+const node = (item: TreeViewItem, indexPath: number[]): string => {
+  const p = { node: item, indexPath };
+  if (!api.getNodeState(p).isBranch)
+    return tag('div', api.getItemProps(p), tag('span', api.getItemTextProps(p), text(item, false)));
+  const control =
+    tag('span', api.getBranchIndicatorProps(p), CHEVRON) + tag('span', api.getBranchTextProps(p), text(item, true));
+  const children = (item.children ?? []).map((child, i) => node(child, [...indexPath, i])).join('');
+  return tag(
+    'div',
+    api.getBranchProps(p),
+    tag('div', api.getBranchControlProps(p), control) + tag('div', api.getBranchContentProps(p), children),
+  );
+};
+const html = items.map((item, i) => node(item, [i])).join('');
+---
+
+<div
+  class="ocx-tree-view not-content"
+  data-zag-root="tree-view"
+  data-zag-id={id}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(props)}
+  data-selectable={String(selectable)}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <p {...ssrAttrs(api.getLabelProps())}>{label}</p>
+  <div {...ssrAttrs(api.getTreeProps())} set:html={html} />
+</div>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tree-view"]'))
+    mount(root, { load: () => import('./tree-view.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-tree-view {
+      margin-block: var(--ocx-space-5);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg);
+    }
+    .ocx-tree-view > [data-part='label'] {
+      margin: 0 0 var(--ocx-space-2);
+      font-size: var(--ocx-text-2xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-tree-view > [data-part='tree'] {
+      padding: var(--ocx-space-2);
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    /* A row: the branch control or the leaf item, indented one step per level. The chevron column
+       is reserved on leaves too, so labels of one level line up. */
+    .ocx-tree-view :global([data-part='branch-control']),
+    .ocx-tree-view :global([data-part='item']) {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-1);
+      min-height: var(--ocx-control-sm);
+      padding-inline: calc(var(--ocx-space-4) * (var(--depth, 1) - 1) + var(--ocx-space-2)) var(--ocx-space-3);
+      border-radius: var(--ocx-radius-sm);
+      cursor: pointer;
+      user-select: none;
+    }
+    .ocx-tree-view :global([data-part='item']) {
+      padding-inline-start: calc(
+        var(--ocx-space-4) * (var(--depth, 1) - 1) + var(--ocx-space-2) + var(--ocx-icon-sm) + var(--ocx-space-1)
+      );
+    }
+    .ocx-tree-view :global([data-part='branch-control']:hover),
+    .ocx-tree-view :global([data-part='item']:hover) {
+      background: var(--ocx-color-hover);
+    }
+    /* Icon, name, description: the Tree row's columns; the description wraps under narrow widths. */
+    .ocx-tree-view :global(:is([data-part='branch-text'], [data-part='item-text'])) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: var(--ocx-space-2);
+      min-width: 0;
+      padding-block: var(--ocx-space-1);
+    }
+    .ocx-tree-view :global(.ocx-tree-view__icon) {
+      flex: none;
+      width: var(--ocx-control-xs);
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-none);
+      text-align: center;
+    }
+    .ocx-tree-view :global([data-part='branch-text'][data-state='open'] > * > [data-icon='closed']),
+    .ocx-tree-view :global([data-part='branch-text'][data-state='closed'] > * > [data-icon='open']) {
+      display: none;
+    }
+    .ocx-tree-view :global(.ocx-tree-view__name) {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-family: var(--ocx-font-mono);
+    }
+    .ocx-tree-view :global(.ocx-tree-view__desc) {
+      flex: 1 1 12em;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      margin-inline-start: var(--ocx-space-2);
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-tree-view :global([data-part='branch'][aria-selected='true'] > [data-part='branch-control']),
+    .ocx-tree-view :global([data-part='item'][aria-selected='true']) {
+      /* fg, not accent-fg: coral text on the tint over surface-subtle misses 4.5:1 in light. */
+      font-weight: var(--ocx-font-weight-medium);
+      background: var(--ocx-color-accent-tint);
+    }
+    .ocx-tree-view :global([data-part='branch-control']:focus-visible),
+    .ocx-tree-view :global([data-part='item']:focus-visible) {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    .ocx-tree-view :global([data-disabled]) {
+      color: var(--ocx-color-fg-subtle);
+      cursor: default;
+    }
+    .ocx-tree-view :global([data-part='branch-indicator']) {
+      display: inline-flex;
+      flex: none;
+      color: var(--ocx-color-fg-muted);
+      transition: rotate var(--ocx-duration-fast) var(--ocx-ease-out);
+    }
+    .ocx-tree-view :global([data-part='branch-indicator'] svg) {
+      width: var(--ocx-icon-sm);
+      height: var(--ocx-icon-sm);
+    }
+    .ocx-tree-view :global([data-part='branch-indicator'][data-state='open']) {
+      rotate: 90deg;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ocx-tree-view :global([data-part='branch-indicator']) {
+        transition: none;
+      }
+    }
+    @media (forced-colors: active) {
+      .ocx-tree-view :global([aria-selected='true']) {
+        outline: var(--ocx-border-width) solid Highlight;
+      }
+    }
+  }
+</style>

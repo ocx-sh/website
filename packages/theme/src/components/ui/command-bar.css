@@ -1,0 +1,215 @@
+/* CommandBar (CommandBar.astro): picker, field and action joined into one bar. Imported from the
+   component's frontmatter, so the whole body sits in @layer ocx. Segments overlap by one border
+   width so a seam is one hairline; the focused or hovered segment rises above its neighbours so its
+   border shows whole. Every segment is the field height (38, --ocx-control-2xl), like a Button m. */
+@layer ocx {
+  .ocx-cmdbar {
+    display: flex;
+    align-items: stretch;
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-inline-size: 0;
+  }
+  .ocx-cmdbar > :not(:first-child) {
+    margin-inline-start: calc(-1 * var(--ocx-border-width));
+  }
+  .ocx-cmdbar [hidden] {
+    display: none;
+  }
+
+  /* Picker: the Select primitive, compact. Width follows the longest label (`ch`), never the pick. */
+  .ocx-cmdbar__picker {
+    position: relative;
+    flex: none;
+    display: flex;
+  }
+  .ocx-cmdbar__picker .ocx-ui-select__control {
+    --_glyph: 0px;
+    inline-size: calc(
+      var(--ocx-cmdbar-ch) * 1ch + var(--_glyph) + var(--ocx-space-4) + var(--ocx-icon-md) + var(--ocx-space-3) +
+        var(--ocx-space-4)
+    );
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+  .ocx-cmdbar[data-icons] .ocx-ui-select__control {
+    --_glyph: calc(var(--ocx-icon-md) + var(--ocx-space-3));
+  }
+  /* Icon-only trigger (every choice has an icon, no `pickerText`): a square the bar's height. The
+     icon is centred, a small chevron sits in the corner; the label is the accessible name and the
+     picker's tooltip, the popup rows carry icon and label. */
+  .ocx-cmdbar[data-picker-icon] .ocx-cmdbar__picker .ocx-ui-select__control {
+    inline-size: var(--ocx-control-2xl);
+    padding: 0;
+    justify-content: center;
+  }
+  .ocx-cmdbar[data-picker-icon] .ocx-ui-select__glyph {
+    margin: 0;
+  }
+  .ocx-cmdbar[data-picker-icon] .ocx-ui-select__value {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    clip-path: inset(50%);
+  }
+  .ocx-cmdbar[data-picker-icon] .ocx-ui-select__icon {
+    inset-inline-end: var(--ocx-space-2);
+    inset-block-end: var(--ocx-space-2);
+    inline-size: var(--ocx-icon-xs);
+    block-size: var(--ocx-icon-xs);
+  }
+  /* Not the picker: a z-index would cap its popup inside the bar's stacking context. */
+  .ocx-cmdbar__copy:hover,
+  .ocx-cmdbar__copy:focus-within,
+  .ocx-cmdbar__action :is(a, button):is(:hover, :focus-visible) {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Field: the whole box is the copy button. The box scrolls (it holds the button, so it is no extra
+     tab stop) and the command never widens the page; `contain` keeps a grid cell or a flex parent
+     from growing to the command's width. No scrollbar (it would sit under the text): the sticky icon
+     lane, faded in from the text, says there is more. */
+  .ocx-cmdbar__copy {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    min-inline-size: 0;
+    contain: inline-size;
+  }
+  .ocx-cmdbar__field {
+    flex: 1;
+    display: flex;
+    box-sizing: border-box;
+    min-inline-size: 0;
+    block-size: var(--ocx-control-2xl);
+    overflow: auto hidden;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    line-height: var(--ocx-lh-none);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+    scrollbar-width: none;
+  }
+  .ocx-cmdbar__field::-webkit-scrollbar {
+    display: none;
+  }
+  .ocx-cmdbar__copy:not(:first-child) .ocx-cmdbar__field {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+  .ocx-cmdbar__copy:not(:last-child) .ocx-cmdbar__field {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+  .ocx-cmdbar__field:hover {
+    border-color: var(--ocx-color-hover-border);
+  }
+  .ocx-cmdbar__field:has(.ocx-cmdbar__trigger:focus-visible) {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset-inset);
+  }
+  .ocx-cmdbar__trigger {
+    flex: 1 0 auto;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .ocx-cmdbar__trigger:focus-visible {
+    outline: none;
+  }
+  /* Starlight's inline-code chrome is reset. */
+  .ocx-cmdbar .ocx-cmdbar__text {
+    padding: 0 var(--ocx-space-4);
+    font: inherit;
+    color: inherit;
+    white-space: nowrap;
+    background: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  /* Copy and check share one grid cell and crossfade on the code block's duration and curve. */
+  .ocx-cmdbar__icons {
+    position: sticky;
+    inset-inline-end: 0;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    margin-inline-start: auto;
+    padding-inline: var(--ocx-space-4);
+    color: var(--ocx-color-fg-subtle);
+    background: var(--ocx-color-surface);
+    box-shadow: calc(-1 * var(--ocx-space-4)) 0 var(--ocx-space-4) var(--ocx-color-surface);
+  }
+  .ocx-cmdbar__field:hover .ocx-cmdbar__icons {
+    color: var(--ocx-color-fg);
+  }
+  .ocx-cmdbar__icons > * {
+    grid-area: 1 / 1;
+    transition: opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out);
+  }
+  .ocx-cmdbar__icons > .ocx-cmdbar__done {
+    color: var(--ocx-color-success);
+    opacity: 0;
+  }
+  .ocx-cmdbar__copy[data-copied] .ocx-cmdbar__field {
+    border-color: var(--ocx-color-success);
+  }
+  .ocx-cmdbar__copy[data-copied] .ocx-cmdbar__idle {
+    opacity: 0;
+  }
+  .ocx-cmdbar__copy[data-copied] .ocx-cmdbar__done {
+    opacity: 1;
+  }
+  /* Live status: read by assistive tech, never seen (the check is the sighted confirmation). */
+  .ocx-cmdbar__status {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Action: trailing controls (a link Button, alone or inside a Hint), joined as the last segment. */
+  .ocx-cmdbar__action {
+    flex: none;
+    display: flex;
+  }
+  .ocx-cmdbar__action > .ocx-ui-hint {
+    display: flex;
+  }
+  .ocx-cmdbar .ocx-cmdbar__action :is(a, button) {
+    block-size: var(--ocx-control-2xl);
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+  .ocx-cmdbar .ocx-cmdbar__action:first-child :is(a, button) {
+    border-start-start-radius: var(--ocx-radius-md);
+    border-end-start-radius: var(--ocx-radius-md);
+  }
+  .ocx-cmdbar .ocx-cmdbar__action :is(a, button):focus-visible {
+    outline-offset: var(--ocx-focus-offset-inset);
+  }
+
+  @media (forced-colors: active) {
+    .ocx-cmdbar__copy[data-copied] .ocx-cmdbar__field {
+      border-color: Highlight;
+    }
+    .ocx-cmdbar__icons > .ocx-cmdbar__done {
+      color: CanvasText;
+    }
+  }
+}

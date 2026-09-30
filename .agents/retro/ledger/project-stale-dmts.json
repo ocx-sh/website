@@ -1,0 +1,26 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T054807Z-d297900d.json",
+    "20260928T105252Z-d8a236f2.json"
+  ],
+  "first_seen": "2026-09-28T05:48:00Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:11Z",
+    "by": "9e9da84",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-stale-dmts",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T10:52:52Z",
+  "occurrences": 2,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Stale prepack .d.mts files shadow .mjs types and break lint",
+  "v": 1,
+  "versions": []
+}

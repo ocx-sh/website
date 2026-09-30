@@ -1,0 +1,39 @@
+---
+title: Hint
+description: A short inverted label for an icon button on Zag tooltip, shown on hover or keyboard focus.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A hint names what an icon button does. The button keeps its own `aria-label`; the hint is its
+description while shown. For definitions of terms in prose, use [Tooltip](../tooltip/).
+
+## Stories
+
+<Stories of="hint" />
+
+## Props
+
+<PropsTable
+  of="ui/Hint.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Hint text.' },
+    { name: 'openDelay', type: 'number', default: '400', description: 'Hover delay before the hint shows, in ms.' },
+    { name: 'placement', type: 'Placement', default: "'bottom'", description: 'Hint side and alignment relative to the button.' },
+    { name: 'zag', type: 'ZagProps<tooltip.Props>', description: 'Zag machine props passed through verbatim.' },
+  ]}
+/>
+
+The default slot is the one `<button>` or `<a>` the hint describes.
+
+## Events
+
+- `ocx:hint:change` `{ open }`: the hint shows or hides.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Tab | Focusing the button shows the hint. |
+| Escape | Hide the hint. |

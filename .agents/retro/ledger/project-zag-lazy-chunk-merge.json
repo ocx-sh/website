@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T065259Z-c1066690.json"
+  ],
+  "first_seen": "2026-09-28T06:52:59Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:11Z",
+    "by": "3261ad9",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-zag-lazy-chunk-merge",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T06:52:59Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Rolldown merges lazy Zag deps into the eager chunk via shared imports",
+  "v": 1,
+  "versions": []
+}

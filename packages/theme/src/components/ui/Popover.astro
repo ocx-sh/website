@@ -1,0 +1,71 @@
+---
+// Popover (C-170) on Zag `popover` (popover.zag.mjs): a trigger Button and a panel in the menu
+// surface (overlay.css; design question 1, interim). Esc and outside click close it and return
+// focus. Zag positions the panel with a fixed strategy, so clipping containers do not cut it
+// (D-Z10). The machine loads on the first hover/focus (C-104). `ocx:popover:change {open}`.
+import type { Placement, Props as PopoverProps } from '@zag-js/popover';
+import Button from './Button.astro';
+import { nextUiId } from './ids.mjs';
+import { connect, machine, parts } from './popover.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './overlay.css';
+
+interface Props {
+  /** Panel side and alignment relative to the trigger. */
+  placement?: Placement;
+  /** Trap focus inside the panel and hide the page from assistive tech while open. */
+  modal?: boolean;
+  /** Zag machine props passed through verbatim (C-106). */
+  zag?: ZagProps<PopoverProps>;
+}
+
+const { placement = 'bottom-start', modal = false, zag } = Astro.props;
+const id = nextUiId('popover');
+const zagProps = { ...zag, modal, positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const } };
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }))).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+---
+
+<div
+  class="ocx-ui-popover"
+  data-zag-root="popover"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+>
+  <Button {...p.trigger}>
+    <slot name="trigger" />
+  </Button>
+  <div class="ocx-ui-popover__positioner not-content" {...p.positioner}>
+    <div class="ocx-ui-overlay ocx-ui-popover__content" {...p.content}>
+      <slot />
+    </div>
+  </div>
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-popover[data-zag-root]'))
+    mount(root, { load: () => import('./popover.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-popover {
+      display: inline-block;
+    }
+    [data-part='content'] {
+      box-sizing: border-box;
+      max-inline-size: min(calc(100vw - var(--ocx-space-7)), var(--ocx-panel-width));
+      padding: var(--ocx-space-4) var(--ocx-space-5);
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-base);
+    }
+    [data-part='content']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(var(--ocx-focus-offset) * -1);
+    }
+  }
+</style>

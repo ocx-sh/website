@@ -1,0 +1,21 @@
+---
+title: Text and visual
+description: A text column and an image, side by side from 800px wide and stacked below; the section fades in once as it scrolls into view.
+height: 590
+block: true
+---
+
+import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
+
+<FeatureSection title="Your Registry is the Package Server">
+  <Fragment slot="text">
+
+Install packages directly from any OCI-compliant registry. No taps, no formulas, no Artifactory. The same infrastructure you already run for container images now serves your development tools.
+
+One command installs and activates a package. Switch versions instantly. Every install is content-addressed by SHA-256 digest — what you download is what you run.
+
+  </Fragment>
+
+<img class="feature-img" src="/docs/favicon.svg" alt="The ocx logo" width="240" height="240" />
+
+</FeatureSection>

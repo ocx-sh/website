@@ -1,0 +1,66 @@
+/* Link (Link.astro). In base.css, not the component: every Starlight page renders a Link in its
+   breadcrumb trail, and a component sheet would be one more render-blocking request per page. */
+@layer ocx {
+  .ocx-ui-link {
+    color: var(--ocx-color-accent-fg);
+    text-decoration: underline;
+    text-decoration-thickness: var(--ocx-border-width);
+    text-decoration-color: var(--ocx-color-accent-tint-border);
+    text-underline-offset: var(--ocx-prose-link-offset);
+    cursor: pointer;
+    transition: text-decoration-color var(--ocx-duration-base);
+  }
+  .ocx-ui-link[data-tone='neutral'] {
+    color: var(--ocx-color-fg-muted);
+    text-decoration-color: var(--ocx-color-border);
+  }
+  /* Hover as the prose link's: the ink holds (accent) or firms to fg (neutral), the underline inks. */
+  .ocx-ui-link:hover {
+    text-decoration-color: currentColor;
+  }
+  .ocx-ui-link[data-tone='neutral']:hover {
+    color: var(--ocx-color-fg);
+  }
+  .ocx-ui-link[data-underline='hover'],
+  .ocx-ui-link[data-underline='none'] {
+    text-decoration-line: none;
+  }
+  .ocx-ui-link[data-underline='hover']:hover {
+    text-decoration-line: underline;
+  }
+  /* Square, outset: an inset ring would cover the text. */
+  .ocx-ui-link:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  .ocx-ui-link[aria-disabled='true'],
+  .ocx-ui-link[aria-disabled='true']:hover {
+    color: var(--ocx-color-fg-subtle);
+    text-decoration-color: var(--ocx-color-border);
+    cursor: not-allowed;
+  }
+  .ocx-ui-link[aria-disabled='true'][data-underline='hover']:hover {
+    text-decoration-line: none;
+  }
+  /* Word joiner + nowrap: the icon never wraps alone onto its own line. */
+  .ocx-ui-link__end {
+    margin-inline-start: var(--ocx-space-1);
+    white-space: nowrap;
+  }
+  /* The external mark reads like an exponent: its top meets the text's cap line (owner: sat too low
+     on the icon default `middle`). */
+  .ocx-ui-link__end > .ocx-icon {
+    vertical-align: text-top;
+  }
+  .ocx-ui-link__sr {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}

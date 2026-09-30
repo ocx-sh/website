@@ -1,0 +1,28 @@
+---
+title: Menu
+description: A trigger and a Popover API panel of navigation links that closes on Escape, outside click or tab-out.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A navigation disclosure: the panel is a list of links, and the current page carries
+`aria-current`. Escape, an outside click, or tabbing out closes it. Every state is a live trigger;
+open it to see the panel.
+
+## Stories
+
+<Stories of="menu" />
+
+## Props
+
+<PropsTable
+  of="ui/Menu.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Trigger text; also the accessible name of the panel.' },
+    { name: 'items', type: '{ label, href, current?, icon? }[]', required: true, description: 'The links; current marks the page the reader is on; icon is a registry name drawn before the label.' },
+    { name: 'align', type: "'start' | 'end'", default: "'start'", description: 'Panel edge aligned to the trigger.' },
+    { name: 'id', type: 'string', default: 'generated', description: 'Panel id the trigger targets.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

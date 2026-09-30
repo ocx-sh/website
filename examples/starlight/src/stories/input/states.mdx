@@ -1,0 +1,72 @@
+---
+title: States
+description: Hint, error, disabled, hidden label, slots for icons, addons and buttons, and the number stepper.
+height: 1260
+order: 1
+block: true
+---
+
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import Input from '@ocx-sh/theme/components/ui/Input.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid wide>
+  <State label="hint">
+    <Input label="Registry URL" type="url" placeholder="https://ghcr.io" hint="An https:// address." />
+  </State>
+  <State label="error">
+    <Input label="Namespace" value="acme" error="Needs a host, e.g. ghcr.io/acme" />
+  </State>
+  <State label="disabled">
+    <Input label="Default registry" value="ocx.sh" hint="Set by ocx.toml" disabled />
+  </State>
+  <State label="hideLabel, type=search">
+    <Input label="Search packages" hideLabel type="search" placeholder="Search packages…" />
+  </State>
+  <State label="required, type=password">
+    <Input label="Token" type="password" required hint="Stored only in this browser." />
+  </State>
+  <State label="start slot, text addon">
+    <Input label="Website" type="url" placeholder="ocx.sh">
+      <span slot="start" class="ocx-ui-input-group__addon">https://</span>
+    </Input>
+  </State>
+  <State label="start slot, icon">
+    <Input label="Search packages" hideLabel type="search" placeholder="Search packages…">
+      <Icon slot="start" name="search" />
+    </Input>
+  </State>
+  <State label="end slot, unit">
+    <Input label="Cache size" type="number" value="512">
+      <span slot="end" class="ocx-ui-input-group__addon">MB</span>
+    </Input>
+  </State>
+  <State label="type=number, stepper">
+    <Input label="Retries" type="number" value="3" min="0" max="10" hint="0 to 10." />
+  </State>
+  <State label="type=number, stepper={false}">
+    <Input label="Port" type="number" value="5000" stepper={false} />
+  </State>
+  <State label="end slot, ghost button">
+    <Input label="Filter" value="cli">
+      <Button slot="end" variant="ghost" size="s" iconOnly aria-label="Clear filter">
+        <Icon name="close" />
+      </Button>
+    </Input>
+  </State>
+  <State label="slot, error">
+    <Input label="Website" value="ocx" error="Needs a host, e.g. ocx.sh">
+      <span slot="start" class="ocx-ui-input-group__addon">https://</span>
+    </Input>
+  </State>
+  <State label="slot, disabled">
+    <Input label="Cache size" type="number" value="512" disabled>
+      <span slot="end" class="ocx-ui-input-group__addon">MB</span>
+    </Input>
+  </State>
+  <State label="type=number, readonly">
+    <Input label="Cache size" type="number" value="512" readonly />
+  </State>
+</StateGrid>

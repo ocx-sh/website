@@ -1,3 +1,4 @@
+@layer starlight, ocx;
 /* OCX design tokens · v1.2 — layer 1 of 3. Every site loads this first.
  *
  *   tokens.css       values only (this file) — no selectors that style anything
@@ -10,6 +11,8 @@
  * Light = :root. Dark = every selector a supported generator uses:
  *   .dark (VitePress/catalog) · [data-theme=dark] (Starlight) */
 
+@layer ocx {
+
 :root,
 :root[data-theme='light'] {
   /* Surfaces & borders */
@@ -18,50 +21,67 @@
   --ocx-color-surface-subtle: #eff2f5;
   --ocx-color-border: #e2e6ec;
   --ocx-color-border-strong: #d5dae1;       /* planned/dashed cards, frames, kbd base */
-  --ocx-color-overlay: rgba(15, 18, 23, 0.55);
+  --ocx-color-border-control: #7f8998;      /* interactive boundary (control edges): 3:1 on bg, surface, surface-subtle */
+  --ocx-color-overlay: rgba(15, 18, 23, 0.55);   /* scrim behind modal dialogs and the drawer */
 
   /* Foreground */
   --ocx-color-fg: #1b2129;
   --ocx-color-fg-muted: #4b5665;
-  --ocx-color-fg-subtle: #636e7f;
+  --ocx-color-fg-subtle: #5f6979;         /* 4.5:1 on tinted code lines (diff/mark) too */
   --ocx-color-on-accent: #1b2129;           /* ink on coral — 5.4:1 (white was 3.0:1). Same in dark; not flipped. */
 
   /* Accent — coral is the ONLY interactive colour. */
   --ocx-color-accent: #ff6047;
   --ocx-color-accent-hover: #ff8570;
-  --ocx-color-accent-fg: #d11c00;           /* small text on light surfaces (5.4:1) */
+  --ocx-color-accent-fg: #ce1c00;           /* small text on light surfaces (5.5:1), incl. tinted code lines */
   --ocx-color-accent-tint: rgba(255, 96, 71, 0.10);
   --ocx-color-accent-tint-border: rgba(255, 96, 71, 0.55);
+  --ocx-color-focus: var(--ocx-color-accent-fg);  /* focus ring + thin active markers — coral is 2.8:1 on light bg, below 3:1 */
+  --ocx-color-shadow: rgb(0 0 0 / 0.12);
+
+  /* Interaction states. Accent marks links, the current/selected item, primary actions and focus;
+   * every other hover is neutral: rows, menu items, options, tree nodes take the hover tint,
+   * bordered controls (cards, secondary buttons, fields) take the hover border. */
+  --ocx-color-hover: rgba(27, 33, 41, 0.06);         /* translucent: reads on bg, surface and surface-subtle */
+  --ocx-color-hover-border: var(--ocx-color-border-control);
+
+  /* Scrollbars (native `scrollbar-color`/`::-webkit-scrollbar`): neutral, never accent; the
+   * track is transparent so the thumb overlays rather than boxing the content. The thumb is
+   * non-text UI an author restyle exposes to WCAG 1.4.11: border-control (3:1), hover fg-muted. */
+  --ocx-color-scrollbar-thumb: var(--ocx-color-border-control);
+  --ocx-color-scrollbar-thumb-hover: var(--ocx-color-fg-muted);
+  --ocx-color-scrollbar-track: transparent;
 
   /* Status */
   --ocx-color-success: #0a7652;
   --ocx-color-success-tint: rgba(14, 159, 110, 0.10);
-  --ocx-color-warning: #926512;
-  --ocx-color-warning-tint: rgba(250, 184, 51, 0.16);
+  --ocx-color-warning: #8b6011;
+  --ocx-color-warning-tint: rgba(250, 184, 51, 0.12);  /* label-grade: warning ink ≥ 4.5:1 on it over bg, surface, surface-subtle */
   --ocx-color-danger: #b42318;
   --ocx-color-danger-tint: rgba(180, 35, 24, 0.08);
-  --ocx-color-keyword: #6a55ce;
+  --ocx-color-keyword: #5f4ac6;           /* label-grade: 4.5:1 on its tint over surface-subtle */
   --ocx-color-keyword-tint: rgba(111, 91, 208, 0.09);
 
   /* Code */
   --ocx-color-code-bg: #f6f8fa;
   --ocx-color-code-fg: #1b2129;
-  --ocx-color-code-comment: var(--ocx-color-fg-subtle);
-  --ocx-color-code-keyword: var(--ocx-color-keyword);
+  --ocx-color-code-comment: var(--ocx-color-fg-subtle);   /* upright: the design has no italics; punctuation stays muted */
+  --ocx-color-code-punctuation: var(--ocx-color-fg-muted);  /* brackets, separators, plain operators */
+  --ocx-color-code-keyword: var(--ocx-color-keyword);    /* keywords, flags/parameters, true/false/null */
   --ocx-color-code-string: var(--ocx-color-success);
   --ocx-color-code-number: var(--ocx-color-warning);
-  --ocx-color-code-function: var(--ocx-color-fg);
-  --ocx-color-code-variable: var(--ocx-color-fg-muted);
+  --ocx-color-code-function: #1a5fc2;   /* commands, cmdlets, functions: own hue, apart from keywords (5.7:1) */
+  --ocx-color-code-variable: var(--ocx-color-accent-fg); /* variables and data keys: a hue apart from commands */
   --ocx-color-code-deleted: var(--ocx-color-accent-fg);
   --ocx-color-code-prompt: var(--ocx-color-accent);
 
   /* Type — mono is the voice; sans where humans read sentences. */
-  --ocx-font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --ocx-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ocx-font-sans: 'IBM Plex Sans', 'OCX Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ocx-font-mono: 'IBM Plex Mono', 'OCX Mono Fallback', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* UI scale — chrome, nav, tables, cards. The ONLY sizes below 15px. */
   --ocx-text-2xs: 10.5px;   /* mono caps: eyebrows, table heads, callout titles */
-  --ocx-text-xs: 11.5px;    /* mono: identifiers, metadata, chips, footer */
+  --ocx-text-xs: 12px;      /* mono: identifiers, metadata, chips, footer — Lighthouse legible floor */
   --ocx-text-sm: 12.5px;    /* mono: nav links, tabs */
   --ocx-text-base: 13px;    /* sans: dense body, card descriptions, sidebar */
   --ocx-text-md: 14.5px;    /* sans: card titles, buttons, landing card body */
@@ -78,6 +98,16 @@
   --ocx-prose-h3: 19px;
   --ocx-prose-h4: 16px;
   --ocx-prose-code: 0.88em;
+  --ocx-prose-code-sm: 0.8em;               /* kbd, Starlight --sl-text-code-sm */
+  --ocx-prose-pre: 0.85em;                  /* code blocks outside Expressive Code */
+  --ocx-prose-h1-margin: 0 0 0.6em;
+  --ocx-prose-h2-margin: 2em 0 0.6em;
+  --ocx-prose-h2-pad: 0.5em;                /* above the h2 section rule */
+  --ocx-prose-h3-margin: 1.6em 0 0.5em;
+  --ocx-prose-h4-margin: 1.4em 0 0.4em;
+  --ocx-prose-link-offset: 0.18em;
+  --ocx-prose-code-pad: 0.15em 0.45em;
+  --ocx-prose-kbd-pad: 0.1em 0.4em;
   --ocx-prose-width: 760px;
 
   /* Display scale — landing, hubs, single-page sites. */
@@ -86,30 +116,37 @@
   --ocx-display-2: clamp(28px, 3.2vw, 38px);/* landing h2, hub & install h1 */
   --ocx-display-lead: 19px;
 
+  /* Four font files per page (Lighthouse budget): sans + mono at 400 and 600.
+   * medium and bold stay as intents but resolve to a loaded face. */
   --ocx-font-weight-regular: 400;
-  --ocx-font-weight-medium: 500;
+  --ocx-font-weight-medium: 400;            /* design 500 — no 500 face loaded */
   --ocx-font-weight-semibold: 600;
-  --ocx-font-weight-bold: 700;              /* sans only — mono never above 600 */
+  --ocx-font-weight-bold: 600;              /* design 700 — no 700 face loaded */
 
   --ocx-tracking-display: -0.02em;          /* display-1/2, prose h1 */
   --ocx-tracking-heading: -0.01em;          /* h2–h4, symbol h1 */
   --ocx-tracking-caps: 0.08em;              /* EVERY mono uppercase label — one value */
+  --ocx-lh-none: 1;                         /* single-line controls, brand mark */
   --ocx-lh-heading: 1.25;
   --ocx-lh-display: 1.08;
+  --ocx-lh-code: 1.75;
 
   /* Shape — sharp system. Borders carry hierarchy; shadows only on floating things. */
   --ocx-radius-sm: 0;                       /* chips, kbd, inline code */
   --ocx-radius-md: 0;                       /* inputs, buttons, callouts, nav items */
   --ocx-radius-lg: 2px;                     /* cards, code blocks, tables */
   --ocx-radius-xl: 2px;                     /* hero terminal, floating palette */
-  --ocx-radius-full: 999px;                 /* status dot ONLY */
+  --ocx-radius-full: 999px;                 /* round marks ONLY: status dot, radio */
   --ocx-border-width: 1px;
   --ocx-border-width-emphasis: 1.5px;
   --ocx-border-width-strong: 2px;
   --ocx-border-width-marker: 3px;
-  --ocx-shadow-overlay: 0 4px 16px rgb(0 0 0 / 0.12);
-  --ocx-focus-ring: 2px solid var(--ocx-color-accent);
+  --ocx-shadow-overlay: 0 4px 16px var(--ocx-color-shadow);
+  --ocx-focus-ring: 2px solid var(--ocx-color-focus);
   --ocx-focus-offset: 2px;
+  /* Inset ring for boxes with radius-lg: an outset outline grows the corner radius by the offset
+   * and reads round; inset, the radius clamps to 0 and the ring stays square. */
+  --ocx-focus-offset-inset: calc(-1 * var(--ocx-focus-offset));
 
   /* Space — 4px base */
   --ocx-space-1: 2px;
@@ -135,6 +172,34 @@
   --ocx-bp-outline: 1200px;                 /* reference only — media queries can't read vars */
   --ocx-bp-drawer: 640px;
 
+  /* Sizes — icons and fixed-height controls */
+  --ocx-scrollbar-size: 10px;               /* thin native scrollbar: track+thumb thickness */
+  --ocx-icon-xs: 10px;
+  --ocx-icon-sm: 11px;
+  --ocx-icon-ms: 12px;                      /* copy-button check icon */
+  --ocx-icon-md: 14px;
+  --ocx-icon-ml: 16px;                      /* header tool icons: github, theme toggle */
+  --ocx-icon-lg: 20px;                      /* brand mark, header rule */
+  --ocx-icon-stroke: 1.5px;                 /* line icons: one weight at every icon size */
+  --ocx-control-choice: 16px;               /* checkbox, radio box */
+  --ocx-control-xs: 18px;                   /* kbd */
+  --ocx-control-sm: 20px;                   /* chip */
+  --ocx-control-md: 28px;                   /* header tool */
+  --ocx-control-lg: 30px;                   /* install button, panel item */
+  --ocx-control-xl: 32px;                   /* search trigger, collapsed search */
+  --ocx-control-2xl: 38px;                  /* field, button — md */
+  --ocx-control-3xl: 42px;                  /* field, button — lg */
+  --ocx-search-width: clamp(220px, 30vw, 360px);
+  --ocx-card-pad: 18px;
+  --ocx-header-menu-gap: 5px;
+  --ocx-skip-offset: -100px;                /* skip link parked above the viewport */
+  --ocx-panel-width: 620px;                 /* ecosystem panel: fixed, never resizes */
+  --ocx-panel-rail: 168px;
+  --ocx-panel-body: 290px;                  /* overridden at build time from nav.json */
+  --ocx-panel-detail: 76px;
+  --ocx-panel-row: 40px;
+  --ocx-panel-row-gap: 20px;
+
   /* Motion */
   --ocx-duration-fast: 0.1s;
   --ocx-duration-enter: 0.12s;
@@ -142,14 +207,34 @@
   --ocx-duration-moderate: 0.2s;
   --ocx-duration-slow: 0.3s;
 
-  /* Stacking */
+  --ocx-ease-out: cubic-bezier(0.2, 0, 0, 1);       /* enter: overlays, drawer, toast, tab indicator */
+  --ocx-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);  /* move: nav-menu indicator, viewport resize */
+  --ocx-scale-enter: 0.96;                          /* dialog and search card scale in from (exit fades only) */
+
+  /* Stacking — overlay = popover (menus, select, combobox, nav-menu viewport) and modal (dialog). */
   --ocx-z-header: 30;
   --ocx-z-drawer-backdrop: 40;
   --ocx-z-drawer: 44;
   --ocx-z-popover: 100;
-  --ocx-z-modal: 101;
+  --ocx-z-modal-backdrop: 110;
+  --ocx-z-modal: 111;
+  --ocx-z-tooltip: 150;                     /* hint: above any popover it annotates */
   --ocx-z-toast: 200;
   --ocx-z-skip-link: 300;
+
+  /* Zag overlays (Stage Z, C-108a): geometry for the component WPs, which never edit this file.
+   * Toast surface = surface + border + radius-lg + shadow-overlay, mono text-sm (design c-toast). */
+  --ocx-color-inverse: var(--ocx-color-fg);         /* hint (Zag tooltip): inverted ink, no arrow */
+  --ocx-color-on-inverse: var(--ocx-color-bg);
+  --ocx-control-hint: 26px;                 /* hint height */
+  --ocx-track-size: 4px;                    /* meter, slider track */
+  --ocx-slider-thumb: 16px;                 /* slider thumb */
+  --ocx-seek-track: 2px;                    /* terminal seek bar track */
+  --ocx-seek-thumb: 10px;                   /* terminal seek bar thumb */
+  --ocx-toast-width: 320px;
+  --ocx-toast-pad: 10px 14px;
+  --ocx-dialog-width: 640px;                /* dialog and search dialog, max inline size */
+  --ocx-drawer-width: min(85vw, 320px);     /* start/end drawer; bottom drawer is full width */
 
   color-scheme: light;
 }
@@ -161,6 +246,12 @@
   --ocx-color-surface-subtle: #1c232d;
   --ocx-color-border: #252d39;
   --ocx-color-border-strong: #323b49;
+  --ocx-color-border-control: #636e80;
+  --ocx-color-hover: rgba(231, 235, 241, 0.07);
+  --ocx-color-hover-border: var(--ocx-color-border-control);
+  --ocx-color-scrollbar-thumb: var(--ocx-color-border-control);
+  --ocx-color-scrollbar-thumb-hover: var(--ocx-color-fg-muted);
+  --ocx-color-scrollbar-track: transparent;
   --ocx-color-overlay: rgba(0, 0, 0, 0.6);
   --ocx-color-fg: #e7ebf1;
   --ocx-color-fg-muted: #9aa5b3;
@@ -176,6 +267,44 @@
   --ocx-color-keyword-tint: rgba(192, 179, 255, 0.10);
   --ocx-color-code-bg: #14181f;
   --ocx-color-code-fg: #c8d0da;
-  --ocx-shadow-overlay: 0 4px 16px rgb(0 0 0 / 0.45);
+  /* Same references as light: each resolves to its dark counterpart (≥4.5:1 on code-bg). */
+  --ocx-color-code-comment: var(--ocx-color-fg-subtle);
+  --ocx-color-code-punctuation: var(--ocx-color-fg-muted);
+  --ocx-color-code-keyword: var(--ocx-color-keyword);
+  --ocx-color-code-string: var(--ocx-color-success);
+  --ocx-color-code-number: var(--ocx-color-warning);
+  --ocx-color-code-function: #6cb6ff;   /* 8.3:1 */
+  --ocx-color-code-variable: var(--ocx-color-accent-fg);
+  --ocx-color-code-deleted: var(--ocx-color-accent-fg);
+  --ocx-color-code-prompt: var(--ocx-color-accent);
+  /* Coral is not flipped: same values as light, restated for scheme parity. */
+  --ocx-color-on-accent: #1b2129;
+  --ocx-color-accent: #ff6047;
+  --ocx-color-accent-hover: #ff8570;
+  --ocx-color-accent-tint: rgba(255, 96, 71, 0.10);
+  --ocx-color-accent-tint-border: rgba(255, 96, 71, 0.55);
+  --ocx-color-focus: var(--ocx-color-accent);
+  --ocx-color-shadow: rgb(0 0 0 / 0.45);
+  --ocx-color-inverse: var(--ocx-color-fg);
+  --ocx-color-on-inverse: var(--ocx-color-bg);
+  /* Restated only because their values name a colour token (dark-parity gate); same as light. */
+  --ocx-focus-ring: 2px solid var(--ocx-color-focus);
+  --ocx-shadow-overlay: 0 4px 16px var(--ocx-color-shadow);
   color-scheme: dark;
 }
+
+/* Reduced motion: every theme transition reads a duration token, so zeroing
+ * the tokens replaces a universal-selector override sweep. Keep this block last:
+ * `:root[data-theme]` ties the scheme blocks on specificity and wins by order. */
+@media (prefers-reduced-motion: reduce) {
+  :root,
+  :root[data-theme] {
+    --ocx-duration-fast: 0s;
+    --ocx-duration-enter: 0s;
+    --ocx-duration-base: 0s;
+    --ocx-duration-moderate: 0s;
+    --ocx-duration-slow: 0s;
+  }
+}
+
+} /* @layer ocx */

@@ -1,0 +1,16 @@
+---
+title: Copy an install command
+description: Click copy and the value goes to the clipboard, the button reads copied for 1.5 s and a toast confirms it; a code block's copy button toasts too.
+height: 200
+log: true
+prose: true
+toaster: true
+---
+
+import CopyButton from '@ocx-sh/theme/components/CopyButton.astro';
+
+<CopyButton value="ocx install ocx.sh/nodejs/node:24" label="install command" />
+
+```sh
+ocx add astral-sh/uv:0.10
+```

@@ -1,0 +1,17 @@
+summary = "Everything an AI agent needs to build an ocx.sh site on @ocx-sh/theme: setup, components, theming, icons, deploy and quality gates"
+keywords = "ocx,ocx-sh,astro,starlight,theme,design-system,components,design-tokens,icons,deploy,bunny,lighthouse,accessibility"
+description = "The @ocx-sh/theme skill set: ocx-theme-setup wires the Starlight plugin into an Astro site under its nav.json claim, ocx-theme-components is the component catalog with import paths, props, accessibility contracts and the lazy loading rules, ocx-theme-theming covers tokens, the accent rule, focus and dark parity, ocx-theme-icons the icon registry, ocx-theme-deploy the reusable Bunny deploy action, and ocx-theme-quality the Lighthouse, budget and e2e gates a site keeps."
+license = "Apache-2.0"
+repository = "https://github.com/ocx-sh/website"
+
+# Members are same-directory relative and untagged, as in the lore catalog:
+# this repo publishes flat under ghcr.io/ocx-sh/lore/<name>, and the
+# consumer's grimoire.lock freezes the versions. Do not pass --pin.
+
+[skills]
+ocx-theme-setup = "./ocx-theme-setup"
+ocx-theme-components = "./ocx-theme-components"
+ocx-theme-theming = "./ocx-theme-theming"
+ocx-theme-icons = "./ocx-theme-icons"
+ocx-theme-deploy = "./ocx-theme-deploy"
+ocx-theme-quality = "./ocx-theme-quality"

@@ -1,0 +1,84 @@
+---
+title: States
+description: With flip the visual moves to the left on wide screens and sections alternate; the visual slot takes an image or a code block.
+height: 2150
+order: 1
+block: true
+---
+
+import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
+
+<FeatureSection title="Same Command on Every Platform" flip>
+  <Fragment slot="text">
+
+Think `docker pull` — but for standalone binaries. You name the package, OCI multi-platform manifests resolve the right build for your OS and architecture. No platform conditionals, no filename guessing, no architecture mapping tables.
+
+Write `ocx add astral-sh/uv:0.10` once. It works on your Mac, your CI runner's Linux, and your colleague's Windows machine — the tools you already use, distributed the way containers taught us.
+
+  </Fragment>
+
+```sh wrap
+ocx add astral-sh/uv:0.10
+```
+
+</FeatureSection>
+
+<FeatureSection title="Composable Environments">
+  <Fragment slot="text">
+
+Every package declares its own environment variables. `ocx package exec` layers them on top of your current shell, and with `--clean` it strips everything back to only what the packages provide — no host pollution, no PATH conflicts, no stale state.
+
+Compose multiple packages in a single invocation. Each one contributes its variables. Pass `--clean` when you need a hermetic, reproducible scope — ideal for CI pipelines and build systems.
+
+  </Fragment>
+
+```sh wrap
+ocx package exec --clean astral-sh/uv:0.10 -- uv --version
+```
+
+</FeatureSection>
+
+<FeatureSection title="Content-Addressed and Deduplicated" flip>
+  <Fragment slot="text">
+
+Every object in the store is identified by its SHA-256 digest — a cryptographic fingerprint of its contents. If `astral-sh/uv:0.10` and `astral-sh/uv:latest` resolve to the same build, they share one directory on disk. Storage scales with distinct builds, not with the number of tags pointing at them.
+
+This also means verification is built in. A path under `sha256:…/` never changes its contents. Pin any package to a digest and you have a lockfile-free guarantee — no registry queries, no index lookups, just the hash.
+
+  </Fragment>
+
+```sh wrap
+ocx package install astral-sh/uv:latest
+```
+
+</FeatureSection>
+
+<FeatureSection title="Built for Automation">
+  <Fragment slot="text">
+
+Every command returns structured JSON with `--format json`. Exit codes are meaningful. Environment variables compose cleanly. There is no interactive prompt, no "press Y to continue", no color code that breaks your parser.
+
+`ocx package exec` runs commands with package-declared variables. `ocx package env` prints them for your build system. `ocx env --ci` writes them directly into GitHub Actions or GitLab CI runtime files. The entire CLI is designed to be called by other tools, not typed by humans.
+
+  </Fragment>
+
+```sh wrap
+ocx --format json package env astral-sh/uv:0.10
+```
+
+</FeatureSection>
+
+<FeatureSection title="Relocatable and Air-Gap Ready" flip>
+  <Fragment slot="text">
+
+Every install is a self-contained directory — no global state, no registry database, no fragile symlinks into system paths. Copy the store to a USB drive, zip it into a CI cache artifact, or `scp` it to a machine behind a firewall.
+
+The local index snapshot plus the content-addressed object store is everything `ocx --offline` needs. Bundle a toolchain once, redistribute it to air-gapped hosts, and `ocx --offline run` resolves it without ever touching the network.
+
+  </Fragment>
+
+```sh wrap
+ocx --offline package exec astral-sh/uv:0.10 -- uv --version
+```
+
+</FeatureSection>

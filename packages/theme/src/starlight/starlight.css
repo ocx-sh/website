@@ -1,21 +1,13 @@
 /* OCX adapter · Astro Starlight · v1.2 — layer 3 of 3.
  *
- * astro.config.mjs
- *   starlight({
- *     customCss: [
- *       '@fontsource/ibm-plex-sans/400.css', …500/600/700,
- *       '@fontsource/ibm-plex-mono/400.css', …500/600,
- *       './src/styles/ocx-tokens.css',
- *       './src/styles/ocx-base.css',
- *       './src/styles/ocx-starlight.css',
- *     ],
- *     components: { Header: './src/components/OcxHeader.astro' },
- *   })
- *   + ec.config.mjs (Expressive Code) from theme/astro/.
+ * Not wired by hand: the ocxTheme() plugin (./index.ts) injects fonts, tokens,
+ * base and this file through Starlight's customCss, ahead of the consumer's own.
  *
- * Only native-variable mapping and Starlight-specific chrome live here. Prose
- * comes from ocx-base.css. The selector list includes [data-theme='light'] so
- * the mapping also beats Starlight < 0.34, which ships unlayered CSS. */
+ * Only native-variable mapping and Starlight-specific chrome live here; prose
+ * is base.css's. Everything sits in @layer ocx, ordered after
+ * Starlight's own layers; unlayered consumer CSS always wins. */
+
+@layer ocx {
 
 :root, :root[data-theme='light'] {
   --sl-font: var(--ocx-font-sans);
@@ -75,7 +67,7 @@
   --sl-text-h3: var(--ocx-prose-h3);
   --sl-text-h4: var(--ocx-prose-h4);
   --sl-text-code: var(--ocx-prose-code);
-  --sl-text-code-sm: 0.8em;
+  --sl-text-code-sm: var(--ocx-prose-code-sm);
   --sl-line-height: var(--ocx-prose-lh);
   --sl-line-height-headings: var(--ocx-lh-heading);
 
@@ -83,57 +75,363 @@
   --sl-nav-pad-x: 0px;
   --sl-nav-pad-y: 0px;
   --sl-sidebar-width: var(--ocx-sidebar-width);
+  --sl-sidebar-pad-x: var(--ocx-space-4);
   --sl-content-width: var(--ocx-prose-width);
   --sl-shadow-sm: none;
   --sl-shadow-md: none;
   --sl-shadow-lg: var(--ocx-shadow-overlay);
+
+  /* Badges read as .ocx-chip: tint fill, status-coloured text, no border. */
+  --sl-badge-default-bg: var(--ocx-color-accent-tint);
+  --sl-badge-default-text: var(--ocx-color-accent-fg);
+  --sl-badge-default-border: transparent;
+  --sl-badge-note-bg: var(--ocx-color-keyword-tint);
+  --sl-badge-note-text: var(--ocx-color-keyword);
+  --sl-badge-note-border: transparent;
+  --sl-badge-tip-bg: var(--ocx-color-keyword-tint);
+  --sl-badge-tip-text: var(--ocx-color-keyword);
+  --sl-badge-tip-border: transparent;
+  --sl-badge-success-bg: var(--ocx-color-success-tint);
+  --sl-badge-success-text: var(--ocx-color-success);
+  --sl-badge-success-border: transparent;
+  --sl-badge-caution-bg: var(--ocx-color-warning-tint);
+  --sl-badge-caution-text: var(--ocx-color-warning);
+  --sl-badge-caution-border: transparent;
+  --sl-badge-danger-bg: var(--ocx-color-danger-tint);
+  --sl-badge-danger-text: var(--ocx-color-danger);
+  --sl-badge-danger-border: transparent;
 }
 
 /* Header: Starlight's <header class="header"> wraps OcxHeader.astro — let ours paint. */
 header.header { padding: 0; background: none; border: 0; box-shadow: none; }
 header.header .ocx-header { width: 100%; }
-header.header .ocx-header__menu { display: none; }      /* Starlight renders its own mobile toggle */
 /* Starlight's <site-search> button takes the .ocx-header__search look. */
 .ocx-header site-search > button {
-  box-sizing: border-box; width: clamp(220px, 30vw, 360px); max-width: none; height: 32px; padding: 0 var(--ocx-space-4); gap: var(--ocx-space-3);
+  box-sizing: border-box; width: var(--ocx-search-width); max-width: none; height: var(--ocx-control-xl); padding: 0 var(--ocx-space-4); gap: var(--ocx-space-3);
   background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg-subtle);
   border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-md);
   font-family: var(--ocx-font-mono); font-size: var(--ocx-text-xs);
 }
 .ocx-header site-search > button:hover { border-color: var(--ocx-color-accent); color: var(--ocx-color-fg-subtle); }
 .ocx-header site-search kbd { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); background: var(--ocx-color-surface); border: var(--ocx-border-width) solid var(--ocx-color-border); border-bottom-width: var(--ocx-border-width-strong); border-radius: var(--ocx-radius-sm); }
-@media (max-width: 1080px) { .ocx-header site-search > button { width: 32px; padding: 0; justify-content: center; } .ocx-header site-search > button > :not(svg) { display: none; } }
-site-search dialog { border-radius: var(--ocx-radius-xl); border: var(--ocx-border-width) solid var(--ocx-color-border); }
+.ocx-header site-search kbd kbd { border: 0; background: none; }   /* Starlight nests one <kbd> per key: one box */
+@container ocx-header (max-width: 1080px) { .ocx-header site-search > button { width: var(--ocx-control-xl); padding: 0; justify-content: center; } .ocx-header site-search > button > :not(svg) { display: none; } }
+/* Starlight's mobile menu toggle (MobileMenuToggle.astro renders it, so
+ * Starlight's scoped rules no longer reach it) is position:fixed over the
+ * header's end: a header tool in look, with the header reserving its slot
+ * (WCAG 2.5.8). The toggle shows below Starlight's md breakpoint, a viewport
+ * query. Open = the pane is `:popover-open`, natively or by the drawer (C-231). */
+.sl-menu-button {
+  position: fixed; top: calc((var(--sl-nav-height) - var(--sl-menu-button-size)) / 2); z-index: var(--sl-z-index-navbar);
+  inset-inline-end: var(--ocx-space-5); border: 0; border-radius: var(--ocx-radius-md); cursor: pointer;
+  background: none; color: var(--ocx-color-fg-muted); box-shadow: none;
+}
+.sl-menu-button svg { width: 1em; height: 1em; }
+nav.sidebar:has(> :popover-open) .sl-menu-button .open-menu, nav.sidebar:not(:has(> :popover-open)) .sl-menu-button .close-menu { display: none; }
+.sl-menu-button:hover, nav.sidebar:has(> :popover-open) .sl-menu-button { background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg); }
+@media (width < 50rem) {
+  header.header .ocx-header { padding-inline-end: calc(var(--ocx-space-5) + var(--sl-menu-button-size) + var(--ocx-space-4)); }
+}
 
-/* Sidebar & outline */
+/* Pagefind results: square system (the dialog box itself lives in Search.astro). */
+site-search .pagefind-ui { --pagefind-ui-border-radius: var(--ocx-radius-md); --sl-search-corners: var(--ocx-radius-md); }
+site-search button[data-close-modal] {
+  block-size: var(--_h);
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); color: var(--ocx-color-accent-fg);
+}
+site-search button[data-close-modal]:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); }
+
+/* Sidebar (mock #1b, C-230): mono-caps group labels over one flat item list,
+ * nested groups on Zag collapsible (Sidebar.astro), no chevrons, no nested
+ * indent rules; active = tint + coral text. Starlight's scoped sublist rules do
+ * not reach this markup: their base (list reset, block links) is restated. */
+sl-sidebar-state-persist { display: contents; }
 .sidebar-pane { border-inline-end: var(--ocx-border-width) solid var(--ocx-color-border); }
-.right-sidebar { border-inline-start: none; }
-.sidebar-content .large, .sidebar-content summary .large {
-  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600;
+.sidebar-content { padding-block: var(--ocx-space-6); }
+.sidebar-content ul { margin: 0; padding: 0; list-style: none; }
+.sidebar-content li { overflow-wrap: anywhere; }
+.sidebar-content .top-level > li + li { margin-top: var(--ocx-space-5); }
+.sidebar-content ul ul > li[data-zag-root] { margin-top: var(--ocx-space-3); }
+.sidebar-content :is(.group-label, [data-part='trigger']) {
+  display: flex; align-items: center; gap: var(--ocx-space-2); box-sizing: border-box; width: 100%;
+  padding: var(--ocx-space-3) var(--ocx-space-4); line-height: 1.4;
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold);
   letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; color: var(--ocx-color-fg-subtle);
 }
-.sidebar-content a { font-size: var(--ocx-text-md); color: var(--ocx-color-fg-muted); border-radius: var(--ocx-radius-md); }
-.sidebar-content a[aria-current='page'] { color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); font-weight: 500; }
-.right-sidebar-panel h2 { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600; letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; color: var(--ocx-color-fg-subtle); }
-starlight-toc a { border-inline-start: var(--ocx-border-width-strong) solid var(--ocx-color-border); font-size: var(--ocx-text-sm); }
-starlight-toc a[aria-current='true'] { color: var(--ocx-color-accent-fg); border-inline-start-color: var(--ocx-color-accent); background: none; }
+.sidebar-content [data-part='trigger'] {
+  margin: 0; border: 0; border-radius: var(--ocx-radius-md); background: none; text-align: start; cursor: pointer;
+}
+/* The group's chunk failed to load: its links stay reachable (as a native <details> never lost them). */
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='error'] > [data-part='content'][hidden] { display: block; }
+.sidebar-content [data-part='trigger']:focus-visible { outline: var(--ocx-focus-ring); outline-offset: calc(var(--ocx-focus-offset) * -1); }
+.sidebar-content a {
+  display: block; padding: var(--ocx-space-3) var(--ocx-space-4); line-height: 1.4; text-decoration: none;
+  font-family: var(--ocx-font-sans); font-size: var(--ocx-text-base); font-weight: var(--ocx-font-weight-regular);
+  color: var(--ocx-color-fg-muted); border-radius: var(--ocx-radius-md);
+}
+.sidebar-content :is(a, .group-label, [data-part='trigger']) > .sl-badge { margin-inline-start: 0.25em; }
+/* Entry badges: Starlight's small Badge on the --sl-badge-* mapping above. */
+.sidebar-content .sl-badge {
+  display: inline-block; padding: var(--ocx-space-1) var(--ocx-space-2); line-height: 1; overflow-wrap: anywhere;
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); border-radius: var(--ocx-radius-sm);
+  font-weight: var(--ocx-font-weight-regular); letter-spacing: normal; text-transform: none; /* not the group label's caps */
+  color: var(--sl-badge-default-text); background: var(--sl-badge-default-bg); border: var(--ocx-border-width) solid var(--sl-badge-default-border);
+}
+.sidebar-content .sl-badge.note { color: var(--sl-badge-note-text); background: var(--sl-badge-note-bg); border-color: var(--sl-badge-note-border); }
+.sidebar-content .sl-badge.tip { color: var(--sl-badge-tip-text); background: var(--sl-badge-tip-bg); border-color: var(--sl-badge-tip-border); }
+.sidebar-content .sl-badge.success { color: var(--sl-badge-success-text); background: var(--sl-badge-success-bg); border-color: var(--sl-badge-success-border); }
+.sidebar-content .sl-badge.caution { color: var(--sl-badge-caution-text); background: var(--sl-badge-caution-bg); border-color: var(--sl-badge-caution-border); }
+.sidebar-content .sl-badge.danger { color: var(--sl-badge-danger-text); background: var(--sl-badge-danger-bg); border-color: var(--sl-badge-danger-border); }
+.sidebar-content a[aria-current='page'] > .sl-badge { color: inherit; background: transparent; border-color: currentColor; }
+.sidebar-content a:hover { color: var(--ocx-color-fg); }
+.sidebar-content a[aria-current='page'] { color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); font-weight: var(--ocx-font-weight-medium); }
+
+/* Mobile menu (C-231, design question 9 interim): below 50em the pane is a
+ * full-height start sheet under the header, sliding in; the drawer's backdrop
+ * (MobileMenuToggle.astro) dims the page beside it. The page does not scroll
+ * behind it (Starlight's rule, restated: its toggle's global style is gone). */
+@media (width < 50rem) {
+  .sidebar-pane { width: var(--ocx-drawer-width); box-shadow: var(--ocx-shadow-overlay); }
+  /* Enter and exit: the pane slides from the start edge (overlay/display allow-discrete keep the
+     top-layer popover rendered through the exit; the drawer hides it at once). */
+  .sidebar-pane[popover]:not([data-swiping]) {
+    transition: translate var(--ocx-duration-slow) var(--ocx-ease-out), display var(--ocx-duration-slow) allow-discrete, overlay var(--ocx-duration-slow) allow-discrete;
+  }
+  .sidebar-pane[popover]:not(:popover-open) { translate: -100% 0; }
+  .sidebar-pane:popover-open:not([data-swiping]) { @starting-style { translate: -100% 0; } }
+  :root[dir='rtl'] .sidebar-pane[popover]:not(:popover-open) { translate: 100% 0; }
+  :root[dir='rtl'] .sidebar-pane:popover-open:not([data-swiping]) { @starting-style { translate: 100% 0; } }
+  .sidebar-pane[data-state] { touch-action: pan-y; }
+  body:has(#starlight__sidebar:popover-open) { overflow: hidden; }
+  .ocx-menu > div {
+    position: fixed; inset: var(--sl-nav-height) 0 0; z-index: var(--ocx-z-drawer-backdrop);
+    background: var(--ocx-color-overlay); opacity: calc(1 - var(--drawer-swipe-progress, 0));
+  }
+  .ocx-menu > div[hidden] { display: none; opacity: 0; }
+  .ocx-menu > div:not([data-swiping]) {
+    transition: opacity var(--ocx-duration-slow) var(--ocx-ease-out), display var(--ocx-duration-slow) allow-discrete;
+  }
+  .ocx-menu > div:not([hidden], [data-swiping]) { @starting-style { opacity: 0; } }
+}
+
+/* Outline: 2px rule per item, square, active = focus-coloured rule + coral text. */
+.right-sidebar { border-inline-start: none; }
+.right-sidebar-panel { padding-top: var(--ocx-space-8); }
+.right-sidebar-panel h2 { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; color: var(--ocx-color-fg-subtle); }
+starlight-toc a {
+  padding-block: var(--ocx-space-2); padding-inline: calc(var(--ocx-space-4) * (var(--depth, 0) + 1)) var(--ocx-space-3);
+  border-inline-start: var(--ocx-border-width-strong) solid var(--ocx-color-border); border-radius: var(--ocx-radius-sm);
+  font-size: var(--ocx-text-sm); color: var(--ocx-color-fg-muted);
+}
+starlight-toc a:hover { color: var(--ocx-color-fg); }
+starlight-toc a[aria-current='true'] { color: var(--ocx-color-accent-fg); border-inline-start-color: var(--ocx-color-focus); background: none; }
+mobile-starlight-toc .toggle { border-radius: var(--ocx-radius-md); }
+
+/* Page title (mock #1b): H1 in the content column, no banner rule, no extra padding. */
+main > .content-panel:first-child { padding-top: var(--ocx-space-8); padding-bottom: 0; }
+main > .content-panel + .content-panel { border-top: 0; }
+h1[id='_top'] { margin-top: 0; font-weight: var(--ocx-font-weight-bold); letter-spacing: var(--ocx-tracking-display); color: var(--ocx-color-fg); }
 
 /* Asides → .ocx-callout shape */
 .starlight-aside { border: var(--ocx-border-width) solid var(--ocx-color-border); border-inline-start-width: var(--ocx-border-width-marker); border-radius: var(--ocx-radius-md); background: var(--ocx-color-surface); }
-.starlight-aside__title { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600; letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
-.starlight-aside--note { border-inline-start-color: var(--ocx-color-keyword); }
-.starlight-aside--tip { border-inline-start-color: var(--ocx-color-success); }
-.starlight-aside--caution { border-inline-start-color: var(--ocx-color-warning); }
-.starlight-aside--danger { border-inline-start-color: var(--ocx-color-danger); }
+.starlight-aside { padding: var(--ocx-space-4) var(--ocx-space-5); }
+.starlight-aside__icon { display: none; }                /* mock c-callout: the kind in mono caps, no glyph */
+.starlight-aside__content { font-size: var(--ocx-text-md); }
+.starlight-aside__title { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
+.starlight-aside--note { --sl-color-asides-text-accent: var(--ocx-color-keyword); border-inline-start-color: var(--ocx-color-keyword); }
+.starlight-aside--tip { --sl-color-asides-text-accent: var(--ocx-color-success); border-inline-start-color: var(--ocx-color-success); }
+.starlight-aside--caution { --sl-color-asides-text-accent: var(--ocx-color-warning); border-inline-start-color: var(--ocx-color-warning); }
+.starlight-aside--danger { --sl-color-asides-text-accent: var(--ocx-color-danger); border-inline-start-color: var(--ocx-color-danger); }
 
-/* Buttons, cards, tabs, badges */
-.sl-link-button { border-radius: var(--ocx-radius-md); font-size: var(--ocx-text-md); }
-.sl-link-button.primary { background: var(--ocx-color-accent); border-color: var(--ocx-color-accent); color: var(--ocx-color-on-accent); font-weight: 600; }
-.sl-link-button.primary:hover { background: var(--ocx-color-accent-hover); border-color: var(--ocx-color-accent-hover); }
-.sl-link-button.secondary, .sl-link-button.minimal { border: var(--ocx-border-width) solid var(--ocx-color-border); color: var(--ocx-color-fg); background: var(--ocx-color-surface); }
+/* Buttons, cards, badges, steps, file tree */
+.sl-link-button { /* = ui/Button m */
+  box-sizing: border-box; min-block-size: var(--ocx-control-2xl); padding: 0 var(--ocx-space-5);
+  gap: calc(var(--ocx-space-2) + var(--ocx-space-1)); line-height: var(--ocx-lh-none);
+  font-family: var(--ocx-font-sans); font-size: var(--ocx-text-base); font-weight: var(--ocx-font-weight-medium);
+  border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-md);
+}
+.sl-link-button:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); }
+.sl-link-button.primary { background: var(--ocx-color-accent); border-color: var(--ocx-color-accent); color: var(--ocx-color-on-accent); font-weight: var(--ocx-font-weight-semibold); }
+.sl-link-button.primary:hover { background: var(--ocx-color-accent-hover); border-color: var(--ocx-color-accent-hover); color: var(--ocx-color-on-accent); }
+.sl-link-button.secondary { color: var(--ocx-color-fg); background: var(--ocx-color-surface); }
 .sl-link-button.secondary:hover { border-color: var(--ocx-color-accent); }
-.card, .sl-link-card { border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg); background: var(--ocx-color-surface); box-shadow: none; }
-.card:hover, .sl-link-card:hover { border-color: var(--ocx-color-accent); }
-starlight-tabs [role='tab'] { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); }
-starlight-tabs [role='tab'][aria-selected='true'] { color: var(--ocx-color-accent-fg); border-color: var(--ocx-color-accent); }
+.sl-link-button.minimal { padding: 0 var(--ocx-space-3); color: var(--ocx-color-fg-muted); background: none; border-color: transparent; }
+.sl-link-button.minimal:hover { color: var(--ocx-color-fg); }
+/* Card = base.css .ocx-card (same box, padding, title, icon tile); Starlight's rotating
+ * rainbow icon borders are dropped for one neutral square tile (design: monogram tile). */
+.card { gap: var(--ocx-space-3); padding: var(--ocx-card-pad); border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg); background: var(--ocx-color-surface); box-shadow: none; }
+.card .title {
+  gap: var(--ocx-space-3); margin: 0; font-family: var(--ocx-font-sans); font-size: var(--ocx-text-md);
+  font-weight: var(--ocx-font-weight-semibold); line-height: var(--ocx-lh-heading); color: var(--ocx-color-fg);
+}
+.card .icon {
+  box-sizing: content-box; font-size: var(--ocx-icon-md); padding: calc((var(--ocx-control-md) - var(--ocx-icon-md)) / 2);
+  border: 0; border-radius: 0; background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg-muted);
+}
+.card .body { margin: 0; font-size: var(--ocx-text-base); line-height: var(--ocx-prose-lh); color: var(--ocx-color-fg-muted); }
+.card .body > :first-child { margin-top: 0; }
+.card-grid { gap: var(--ocx-space-5); }
 .sl-badge { font-family: var(--ocx-font-mono); border-radius: var(--ocx-radius-sm); }
+.sl-steps > li::before { border-radius: var(--ocx-radius-sm); }
+starlight-file-tree :is(summary, a, .tree-entry) { border-radius: var(--ocx-radius-sm); }
+
+/* LinkCard and prev/next pagination are one card (mock c-pager): same box and
+ * title as .card; hover is the neutral hover border (accent is for links, current
+ * item, primary action, focus). The pager's "Previous/Next" is a mono-caps eyebrow. */
+.sl-link-card, .pagination-links a {
+  border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg);
+  background: var(--ocx-color-surface); box-shadow: none; padding: var(--ocx-space-4) var(--ocx-space-5);
+  color: var(--ocx-color-fg-subtle); transition: border-color var(--ocx-duration-base);
+}
+.sl-link-card:hover, .pagination-links a:hover { border-color: var(--ocx-color-hover-border); background: var(--ocx-color-surface); }
+.sl-link-card:has(a:focus-visible), .pagination-links a:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset-inset); }
+.sl-link-card a:focus-visible { outline: none; }
+.sl-link-card .title, .pagination-links .link-title {
+  font-family: var(--ocx-font-sans); font-size: var(--ocx-text-md); font-weight: var(--ocx-font-weight-semibold); line-height: var(--ocx-lh-heading);
+  letter-spacing: normal; text-transform: none; color: var(--ocx-color-fg);
+}
+.sl-link-card .description { font-size: var(--ocx-text-base); color: var(--ocx-color-fg-subtle); }
+.pagination-links a { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
+.sl-link-card .icon, .pagination-links a svg { color: var(--ocx-color-fg-subtle); }
+.sl-link-card:hover .icon, .pagination-links a:hover svg { color: var(--ocx-color-fg); }
+
+/* Expressive Code: plain panel (mock c-code). EC's CSS sits in
+ * starlight.components, so these win by layer; sizes are absolute tokens so
+ * nothing compounds below 12px (Lighthouse legible-font). */
+.expressive-code {
+  --ec-codeFontSize: var(--ocx-text-base);
+  --ec-uiFontSize: var(--ocx-text-sm);
+  --ec-codePadBlk: var(--ocx-space-5);
+  --ec-codePadInl: var(--ocx-space-5);
+  --ec-brdRad: calc(var(--ocx-radius-lg) - var(--ocx-border-width));
+  --ec-tm-inlMarkerBrdRad: var(--ocx-radius-sm);
+  --ec-frm-edTabBrdRad: var(--ocx-radius-sm);
+  --ec-frm-edTabBarBg: var(--ocx-color-surface-subtle);
+  --ec-frm-edTabBarBrdBtmCol: var(--ocx-color-border);
+  --ec-frm-edActTabBg: var(--ocx-color-surface-subtle);
+  --ec-frm-edActTabFg: var(--ocx-color-fg);
+  --ec-frm-edActTabIndTopCol: var(--ocx-color-surface-subtle);
+  --ec-frm-edActTabIndBtmCol: var(--ocx-color-surface-subtle);
+  --ec-frm-trmTtbBg: var(--ocx-color-surface-subtle);
+  --ec-frm-trmTtbFg: var(--ocx-color-fg);
+  --ec-frm-inlBtnFg: var(--ocx-color-fg-subtle);
+  --ec-tm-markBg: var(--ocx-color-accent-tint);
+  --ec-tm-markBrdCol: var(--ocx-color-accent);
+  --ec-tm-insBg: var(--ocx-color-success-tint);
+  --ec-tm-insBrdCol: var(--ocx-color-success);
+  --ec-tm-insDiffIndCol: var(--ocx-color-success);
+  --ec-tm-delBg: var(--ocx-color-danger-tint);
+  --ec-tm-delBrdCol: var(--ocx-color-danger);
+  --ec-tm-delDiffIndCol: var(--ocx-color-danger);
+  /* U+2212 MINUS SIGN, not the hyphen: same drawn bar width as '+' in the mono
+   * font (owner: marks should read as equal width). */
+  --ec-tm-delDiffIndContent: '\2212';
+  --ocx-ec-diff-marker-wd: 2ch;
+}
+
+/* ec diff markers: a fixed, centred +/- gutter, inset like the normal code gutter's start, with a
+ * small gap before the code (owner: first too close, then far too much). Colours stay the ins/del
+ * tokens set above; copy already excludes the marker (EC's own behaviour). The start padding grows
+ * only on blocks that actually have a diff line, so unmarked code keeps its normal gutter and diff
+ * lines stay aligned with their own block's other lines. */
+.expressive-code:has(.ec-line.ins) .code,
+.expressive-code:has(.ec-line.del) .code {
+  --ec-codePadInl: calc(var(--ocx-space-2) + var(--ocx-ec-diff-marker-wd) + var(--ocx-space-2));
+  padding-inline-end: var(--ocx-space-5);
+}
+.ec-line.ins .code::before,
+.ec-line.del .code::before {
+  inset-inline-start: var(--ocx-space-2);
+  inset-block: 0;
+  box-sizing: border-box;
+  inline-size: var(--ocx-ec-diff-marker-wd);
+  padding-inline: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.expressive-code .frame.has-title .header {
+  box-sizing: border-box; block-size: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2)); align-items: center;   /* mock: 36px title bar */
+  background: var(--ocx-color-surface-subtle); border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
+}
+.expressive-code .frame .title { font-weight: var(--ocx-font-weight-semibold); background: none; }
+/* Copy (mock c-code): a square control, always shown; in a titled frame it sits
+ * in the title bar (pinned to the mock's control + padding height). Hover →
+ * neutral hover-border (secondary control, never accent); copied → EC's
+ * .feedback laid over the button as "✓ copied" in success. The DOM text stays
+ * for the aria-live announcement; the visual text is generated with an empty
+ * alt so it is not read twice.
+ * EC's own inset-block-start adds --ec-brdWd on top of --button-spacing but
+ * not on the bottom, so a plain --ocx-space-2 sits 2 * border-width off
+ * centre in the title bar; subtracting it here re-centres the button so the
+ * gap above and below reads as the same --ocx-space-2 (S-title-symmetry). */
+.expressive-code .frame.has-title { --button-spacing: calc(var(--ocx-space-2) - var(--ec-brdWd)); }
+/* The copied pill is wider than the idle button (fixed text, monospace UI
+ * font: 1ch is exact) — reserved so the title's own padding can leave room
+ * and nothing behind it shifts when the pill appears/disappears. */
+.expressive-code .frame.has-title .title {
+  padding-inline-end: calc(9ch + 2 * var(--ocx-space-3) + 2 * var(--ec-brdWd) + var(--ocx-space-2));
+}
+.expressive-code .copy button {
+  opacity: 1; inline-size: calc(var(--ocx-icon-md) + 2 * var(--ocx-space-3)); block-size: var(--ocx-control-md);
+  border-radius: var(--ocx-radius-md); background: none; transition-duration: var(--ocx-duration-base);
+}
+.expressive-code .copy button > div { display: none; }             /* no fill, only the border */
+.expressive-code .copy button::before { opacity: 1; border-color: transparent; }
+.expressive-code .copy button:hover::before { border-color: var(--ocx-color-hover-border); }
+.expressive-code .copy button::after { margin: auto; inline-size: var(--ocx-icon-md); block-size: var(--ocx-icon-md); mask-size: contain; -webkit-mask-size: contain; }
+.expressive-code .copy .feedback {
+  position: absolute; inset-block-start: 0; inset-inline-end: 0; z-index: 2; display: flex; align-items: center;
+  block-size: var(--ocx-control-md); margin: 0; padding: 0 var(--ocx-space-3); transform: none;
+  font-size: 0; color: var(--ocx-color-success); background: var(--ocx-color-code-bg);
+  border: var(--ocx-border-width) solid var(--ocx-color-success); border-radius: var(--ocx-radius-md);
+}
+.expressive-code .frame.has-title .copy .feedback { background: var(--ocx-color-surface-subtle); }
+.expressive-code .copy .feedback::after { content: none; }
+.expressive-code .copy .feedback::before { content: '✓ copied' / ''; font-size: var(--ocx-text-xs); font-weight: var(--ocx-font-weight-medium); white-space: pre; }
+/* Crossfade (owner: the swap back was not smooth): while the pill shows, the icon under it fades
+ * out; as the pill fades out, the icon fades back in on the same duration and curve. Without this the
+ * full-strength icon shows through the half-transparent pill mid-fade. */
+.expressive-code .copy .feedback { transition: opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out); }
+.expressive-code .copy button::after { transition: opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out); }
+.expressive-code .copy:has(.feedback.show) button::after { opacity: 0; }
+/* No window dots; a titled terminal reads like a titled file frame. */
+.expressive-code .frame.is-terminal .header { justify-content: flex-start; }
+.expressive-code .frame.is-terminal .header::before { display: none; }
+/* An untitled terminal is a plain panel: no empty title bar. */
+.expressive-code .frame.is-terminal:not(.has-title) { --button-spacing: var(--ocx-space-3); }
+.expressive-code .frame.is-terminal:not(.has-title) .header { display: none; }
+.expressive-code .frame.is-terminal:not(.has-title) pre { border-top: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd)); }
+/* Untitled frames float the copy button over the code: keep the first line clear of it. */
+.expressive-code .frame:not(.has-title) .ec-line:first-child .code { padding-inline-end: calc(var(--ocx-icon-md) + 4 * var(--ocx-space-3)); }
+
+/* Markdown tables fill the column: Starlight makes a table its own scroll box
+ * (display:block), which shrink-wraps the grid. tab-icons.mjs › wrapTables puts
+ * each bare <table> in a focusable .ocx-table-scroll region that scrolls and
+ * clips instead, and the table returns to a width:100% table layout. */
+.sl-markdown-content .ocx-table-scroll {
+  overflow-x: auto; border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg);
+}
+.sl-markdown-content .ocx-table-scroll:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset-inset); }
+.sl-markdown-content .ocx-table-scroll > table:not([class]) { display: table; margin: 0; border: 0; border-radius: 0; }
+/* A table scrolls only when its words cannot fit: long inline code and URLs
+ * (paths, archive names) may break anywhere, so they no longer set a column's
+ * min-content width, and cells pad at space-4 so an 8-column table fits the
+ * 1280px content column. Plain words still never break mid-word. */
+.sl-markdown-content .ocx-table-scroll > table:not([class]) :is(th, td) { padding-inline: var(--ocx-space-4); }
+.sl-markdown-content .ocx-table-scroll > table:not([class]) :is(th, td) :is(code, a) { overflow-wrap: anywhere; }
+
+/* MarkdownContent.astro puts Expressive Code's stylesheet link ahead of the
+ * content; it takes no part in ContentPanel's `> * + *` rhythm. */
+.sl-container > link + * { margin-top: 0; }
+
+/* Prose rules are base.css's. Starlight wraps an h2 in an anchor div (its h2 is
+ * inline), so the section rule moves from the h2 to the wrapper. */
+.sl-markdown-content .sl-heading-wrapper.level-h2 { margin: var(--ocx-prose-h2-margin); padding-top: var(--ocx-prose-h2-pad); border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
+.sl-markdown-content .sl-heading-wrapper > h2 { margin: 0; padding-top: 0; border-top: 0; }
+
+/* Starlight isolates .main-pane, which traps an open Dialog or Drawer (z-index modal/drawer) under
+ * the static sidebar and the header. Lift the isolation only while one is open in the content. */
+.main-pane:has(:is([data-scope='dialog'], [data-scope='drawer'])[data-part='content'][data-state='open']) { isolation: auto; }
+
+} /* @layer ocx */

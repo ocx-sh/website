@@ -1,0 +1,20 @@
+---
+title: States
+description: A single key, a combination, Alt as Option, Super as the Windows key, arrows and a forced platform.
+height: 270
+block: true
+order: 2
+---
+
+import Kbd from '@ocx-sh/theme/components/ui/Kbd.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="single key"><Kbd>Esc</Kbd></State>
+  <State label="combination"><Kbd keys="Mod+Shift+K" /></State>
+  <State label="Alt / Option"><Kbd keys="Alt+F4" platform="mac" /></State>
+  <State label="Super / Win"><Kbd keys="Super+L" platform="windows" /></State>
+  <State label="arrows"><Kbd keys="Up+Down+Left+Right" /></State>
+  <State label="forced platform"><Kbd keys="Mod+Alt+Delete" platform="windows" /></State>
+</StateGrid>

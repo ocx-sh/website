@@ -1,0 +1,66 @@
+---
+// C-121: the Props section of a component page. `rows` mirror the component's declared Props,
+// one `rest → <element>` row for HTML attribute passthrough; showcase-shape.test.ts fails on a
+// missing or stale row.
+export interface Row {
+  name: string;
+  type: string;
+  default?: string;
+  required?: boolean;
+  description: string;
+}
+interface Props {
+  /** Specifier under `@ocx-sh/theme/components/`, e.g. `ui/Button.astro`. */
+  of: string;
+  rows: Row[];
+}
+const { of, rows } = Astro.props;
+const tag = `<${(of.split('/').pop() ?? of).replace(/\.astro$/, '')}>`;
+---
+
+{rows.length ? (
+  <div class="showcase-props not-content" role="region" aria-label={`${tag} props`} tabindex="0">
+    <table class="showcase-props__table">
+      <caption>
+        <code>{tag}</code> props
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Prop</th>
+          <th scope="col">Type</th>
+          <th scope="col">Default</th>
+          <th scope="col">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr>
+            <th scope="row">
+              <code>{r.name}</code>
+            </th>
+            <td data-label="Type">
+              <code>{r.type}</code>
+            </td>
+            <td data-label="Default">
+              {r.default !== undefined ? (
+                <code>{r.default}</code>
+              ) : r.required ? (
+                <span class="showcase-props__required">required</span>
+              ) : (
+                <>
+                  <span aria-hidden="true">–</span>
+                  <span class="sr-only">none</span>
+                </>
+              )}
+            </td>
+            <td data-label="Description">{r.description}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+) : (
+  <p class="showcase-props__none">
+    <code>{tag}</code> takes no props; it renders its default slot.
+  </p>
+)}

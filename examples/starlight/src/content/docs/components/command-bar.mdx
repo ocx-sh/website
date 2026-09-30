@@ -1,0 +1,46 @@
+---
+title: Command bar
+description: One copyable command with an optional picker and action.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A command you copy by clicking it. The picker swaps the command and shows only its icon (the name and
+the tooltip carry the choice, the popup lists icon and label); a picker whose choices lack an icon shows the
+label instead of an empty box, and `pickerText` adds the label to an icon. The slot `action` adds a control
+at the right edge, ideally an icon-only button: a `Button` with `iconOnly`, an `aria-label` and a `Hint`.
+Copying is the [copy button](../copy-button/)'s, the picker a compact [select](../select/).
+
+## Stories
+
+<Stories of="command-bar" />
+
+## Props
+
+<PropsTable
+  of="ui/CommandBar.astro"
+  rows={[
+    { name: 'choices', type: '{ value, label, command, icon? }[]', required: true, description: 'Commands on offer: none is the action alone, one has no picker. With detect, linux, macos and windows match the visitor.' },
+    { name: 'pickerLabel', type: 'string', default: '"Command"', description: 'Accessible name of the picker.' },
+    { name: 'pickerText', type: 'boolean', default: 'false', description: 'Label next to the picker icon; default icon only.' },
+    { name: 'noun', type: 'string', default: '"command"', description: 'Name of the copy after the choice label: "Linux install command".' },
+    { name: 'detect', type: 'boolean', default: 'false', description: 'Preselect the visitor OS before first paint.' },
+    { name: 'zag', type: 'ZagProps<clipboard.Props>', default: '{}', description: 'Zag clipboard machine props.' },
+    { name: 'class', type: 'string', description: 'Extra class on the bar.' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:select:change` | `{ value }` | A choice is picked. |
+| `ocx:clipboard:copy` | `{ value }` | The command is on the clipboard. |
+| `ocx:clipboard:error` | `{ value }` | The browser refused the write. |
+| `ocx:toast` | `{ title, tone? }` | After a copy: "Copied Linux install command". |
+
+## Keyboard
+
+- <kbd>Enter</kbd> or <kbd>Space</kbd> on the field: copy.
+- The picker takes the [select](../select/#keyboard)'s keys.

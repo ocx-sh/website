@@ -1,0 +1,11 @@
+---
+// Test fixture: an Accordion (props passed through) with items a, b, c, as a page would compose it.
+import Accordion from '../../src/components/Accordion.astro';
+import AccordionItem from '../../src/components/AccordionItem.astro';
+---
+
+<Accordion {...Astro.props}>
+  <AccordionItem value="a" label="A">Panel a</AccordionItem>
+  <AccordionItem value="b" label="B">Panel b</AccordionItem>
+  <AccordionItem value="c" label="C">Panel c</AccordionItem>
+</Accordion>

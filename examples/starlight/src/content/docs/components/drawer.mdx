@@ -1,0 +1,42 @@
+---
+title: Drawer
+description: A sheet from the start, end or bottom edge on Zag drawer, with the dialog behaviour plus swipe to close.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A sheet that slides in from an edge. It behaves like a modal dialog, and a swipe back towards its
+edge closes it.
+
+## Stories
+
+<Stories of="drawer" />
+
+## Props
+
+<PropsTable
+  of="ui/Drawer.astro"
+  rows={[
+    { name: 'title', type: 'string', required: true, description: 'Heading of the drawer; also its accessible name.' },
+    { name: 'description', type: 'string', description: 'One line under the title, linked as the accessible description.' },
+    { name: 'open', type: 'boolean', default: 'false', description: 'Open on first paint.' },
+    { name: 'modal', type: 'boolean', default: 'true', description: 'Trap focus, lock scroll and hide the page from assistive tech.' },
+    { name: 'side', type: "'start' | 'end' | 'bottom'", default: "'start'", description: 'Edge the sheet comes from; swiping back towards it closes the sheet.' },
+    { name: 'zag', type: 'ZagProps<drawer.Props>', description: 'Zag machine props passed through verbatim.' },
+  ]}
+/>
+
+Slots: `trigger` (the trigger button's content; no trigger when absent) and the default slot (the body).
+
+## Events
+
+- `ocx:drawer:change` `{ open }`: the drawer opens or closes.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Enter, Space | On the trigger: open the drawer; focus moves into it. |
+| Tab, Shift+Tab | Move focus within the drawer; it wraps at the ends. |
+| Escape | Close the drawer; focus returns to the trigger. |

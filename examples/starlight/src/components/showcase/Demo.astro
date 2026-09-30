@@ -1,0 +1,24 @@
+---
+// Live demo frame of a showcase page (D-Z13). An EventLog in slot `log` sits beside the stage,
+// and stacks under it on narrow screens. `block` lays wide components out at full width.
+interface Props {
+  id?: string;
+  /** Full-width content (tables, sections, trees) instead of a centred row of controls. */
+  block?: boolean;
+  /** Keep Starlight's prose styles inside (markdown tables, inline terms); implies `block`. */
+  prose?: boolean;
+}
+const { id, block = false, prose = false } = Astro.props;
+const hasLog = Astro.slots.has('log');
+---
+
+<div class:list={['showcase-demo', { 'not-content': !prose }]} id={id} data-has-log={hasLog ? '' : undefined}>
+  <div class="showcase-demo__stage" data-block={block || prose ? '' : undefined}>
+    <slot />
+  </div>
+  {hasLog && (
+    <div class="showcase-demo__log">
+      <slot name="log" />
+    </div>
+  )}
+</div>

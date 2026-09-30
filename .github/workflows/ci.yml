@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+# Superseded PR runs are cancelled; main runs always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  # One gate per job: the gates are memory-heavy (AGENTS.md: run them one at a time),
+  # and a runner holds one comfortably. `visual` is not here: it compares against the
+  # gitignored design export in .tmp/design/, which CI never has.
+  gate:
+    name: ${{ matrix.gate }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        gate: [check, e2e, lighthouse, pack]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.3'
+          # House default (ocx-sh/ocx): a restored object store is runner-executable content.
+          cache: false
+
+      - name: Locate pnpm store
+        id: pnpm
+        run: echo "store=$(ocx exec -- pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm.outputs.store }}
+          key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: pnpm-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: ocx exec -- task install
+
+      - name: Cache Playwright browsers
+        if: matrix.gate == 'e2e' || matrix.gate == 'lighthouse'
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Lighthouse drives Playwright's Chromium too (.lighthouserc.cjs chromePath).
+      # On a cache hit this only installs the system libraries.
+      - name: Install Chromium
+        if: matrix.gate == 'e2e' || matrix.gate == 'lighthouse'
+        run: ocx exec -- pnpm exec playwright install --with-deps chromium
+
+      # `check` builds on its own; `pack` builds a fixture consumer from the tarball.
+      - name: Build
+        if: matrix.gate == 'e2e' || matrix.gate == 'lighthouse'
+        run: ocx exec -- task build
+
+      - name: Run ${{ matrix.gate }}
+        env:
+          GATE: ${{ matrix.gate }}
+          LH_HTML: '1'
+        run: ocx exec -- task "$GATE"
+
+      - name: Upload failure reports
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.gate }}-reports
+          path: |
+            test-results/
+            playwright-report/
+            .lighthouseci/
+          if-no-files-found: ignore
+          retention-days: 14

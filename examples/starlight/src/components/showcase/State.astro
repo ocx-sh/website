@@ -1,0 +1,14 @@
+---
+// One labelled state of a component, a cell of StateGrid.
+interface Props {
+  label: string;
+}
+const { label } = Astro.props;
+---
+
+<figure class="showcase-state">
+  <div class="showcase-state__stage">
+    <slot />
+  </div>
+  <figcaption class="showcase-state__label">{label}</figcaption>
+</figure>

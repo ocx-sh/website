@@ -1,0 +1,24 @@
+---
+title: States
+description: Closed, open, disabled, and a trigger slot with inline markup.
+height: 380
+order: 1
+block: true
+---
+
+import Collapsible from '@ocx-sh/theme/components/Collapsible.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid wide>
+  <State label="closed"><Collapsible label="Closed">Hidden until opened.</Collapsible></State>
+  <State label="open"><Collapsible label="Open" open>Shown on first paint.</Collapsible></State>
+  <State label="disabled"><Collapsible label="Disabled" disabled>Never shown.</Collapsible></State>
+  <State label="trigger slot">
+    <Collapsible>
+      <span slot="trigger">Trigger with <code>markup</code></span>
+
+      Any inline content fits in the trigger.
+    </Collapsible>
+  </State>
+</StateGrid>

@@ -1,0 +1,70 @@
+---
+title: States
+description: Single and multiple selection, a disabled chip, removable chips, read-only labels and many chips wrapping.
+height: 780
+order: 2
+block: true
+---
+
+import TagGroup from '@ocx-sh/theme/components/ui/TagGroup.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const platforms = [
+  { value: 'linux', label: 'linux' },
+  { value: 'macos', label: 'macos' },
+  { value: 'windows', label: 'windows' },
+  { value: 'freebsd', label: 'freebsd' },
+];
+export const labels = [
+  { value: 'cli', label: 'cli', tone: 'keyword' },
+  { value: 'stable', label: 'stable', tone: 'success' },
+  { value: 'beta', label: 'beta', tone: 'warning' },
+  { value: 'eol', label: 'eol', tone: 'danger' },
+  { value: 'docs', label: 'docs' },
+];
+export const many = [
+  'linux',
+  'macos',
+  'windows',
+  'freebsd',
+  'openbsd',
+  'netbsd',
+  'illumos',
+  'android',
+  'ios',
+  'wasm',
+  'x86_64',
+  'aarch64',
+  'riscv64',
+  'musl',
+  'glibc',
+].map((v) => ({ value: v, label: v }));
+
+<StateGrid wide>
+  <State label="single, one on">
+    <TagGroup label="Channel" selectionMode="single" items={platforms.slice(0, 3)} value="macos" />
+  </State>
+  <State label="multiple, two on">
+    <TagGroup label="Platforms" selectionMode="multiple" items={platforms} value={['linux', 'windows']} />
+  </State>
+  <State label="disabled chip">
+    <TagGroup
+      label="Platforms (freebsd unavailable)"
+      selectionMode="multiple"
+      items={[...platforms.slice(0, 3), { value: 'freebsd', label: 'freebsd', disabled: true }]}
+    />
+  </State>
+  <State label="removable">
+    <TagGroup label="Tags" removable items={platforms.slice(0, 3)} />
+  </State>
+  <State label="removable, tones">
+    <TagGroup label="Labels" removable removeLabel="Remove label {label}" items={labels} />
+  </State>
+  <State label="read-only labels, hidden group label">
+    <TagGroup label="Labels" hideLabel items={labels} />
+  </State>
+  <State label="many chips wrapping">
+    <TagGroup label="Targets" selectionMode="multiple" items={many} value={['linux', 'aarch64']} />
+  </State>
+</StateGrid>

@@ -1,0 +1,16 @@
+---
+title: States
+description: One line and the default three lines, each one line-height tall.
+height: 216
+order: 1
+block: true
+---
+
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid wide>
+  <State label="lines=1"><div style="inline-size: 100%"><Skeleton lines={1} /></div></State>
+  <State label="lines=3"><div style="inline-size: 100%"><Skeleton /></div></State>
+</StateGrid>

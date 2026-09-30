@@ -1,0 +1,23 @@
+{
+  "artifact": "hex-execute",
+  "cost_min": 0,
+  "entries": [
+    "20260928T071318Z-0a27137a.json"
+  ],
+  "first_seen": "2026-09-28T07:13:00Z",
+  "fixed": null,
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "hex-execute-parallel-gates-oom",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T07:13:00Z",
+  "occurrences": 1,
+  "scope": "harness",
+  "severity": "high",
+  "status": "deferred",
+  "title": "Parallel WPs running heavy gates at once exhaust host memory",
+  "v": 1,
+  "versions": [
+    "unknown"
+  ]
+}

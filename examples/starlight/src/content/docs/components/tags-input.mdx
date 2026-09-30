@@ -1,0 +1,94 @@
+---
+title: Tags input
+description: A field that holds removable chips, added by typing or by picking from a list of suggestions.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A text field that collects values as removable [tag](../tag/) chips, on the Zag tags-input with a combobox for
+the suggestions (loaded on first hover or focus). Typing filters the suggestions (fuzzy by default; values already
+added are left out) and <kbd>Enter</kbd> adds the highlighted one. Text that names a suggestion by value or label
+adds it; other text becomes a tag only with `allowCreate`, on by default without suggestions.
+
+## Stories
+
+<Stories of="tags-input" />
+
+## Props
+
+<PropsTable
+  of="ui/TagsInput.astro"
+  rows={[
+    {
+      name: 'label',
+      type: 'string',
+      required: true,
+      description: 'Accessible name, shown as the visible label unless hideLabel.',
+    },
+    { name: 'hideLabel', type: 'boolean', default: 'false', description: 'Keep the label for assistive tech only.' },
+    { name: 'hint', type: 'string', description: 'Help text below the field.' },
+    { name: 'error', type: 'string', description: 'Error text; replaces the hint and marks the field invalid.' },
+    { name: 'value', type: 'string[]', default: '[]', description: 'The tags: suggestion values, or free text.' },
+    {
+      name: 'suggestions',
+      type: '{ value, label, meta? }[]',
+      default: '[]',
+      description: 'The valid list; a chip shows the label of its value.',
+    },
+    {
+      name: 'allowCreate',
+      type: 'boolean',
+      default: 'true without suggestions, false with',
+      description: 'Whether text outside the suggestions becomes a tag.',
+    },
+    {
+      name: 'matchMode',
+      type: "'fuzzy' | 'contains' | 'startsWith'",
+      default: "'fuzzy'",
+      description: "How typed text matches a suggestion's label.",
+    },
+    { name: 'max', type: 'number', description: 'Most tags; at the limit the input takes no more text.' },
+    {
+      name: 'delimiter',
+      type: 'string',
+      default: "','",
+      description: 'Key that adds the typed text, and the separator a paste is split on.',
+    },
+    { name: 'placeholder', type: 'string', description: 'Shown while there are no tags.' },
+    { name: 'name', type: 'string', description: 'Form field name; the value is the tags joined by ", ".' },
+    { name: 'disabled', type: 'boolean', default: 'false', description: 'Disables the input and the remove buttons.' },
+    { name: 'readOnly', type: 'boolean', default: 'false', description: 'Shows the tags without editing.' },
+    {
+      name: 'empty',
+      type: 'string',
+      default: "'No match'",
+      description: 'Text shown when the typed text matches no suggestion.',
+    },
+    { name: 'zag', type: 'ZagProps<tags-input.Props>', description: 'Zag tags-input machine props, data only.' },
+    { name: 'class', type: 'string', description: 'Added to the root.' },
+  ]}
+/>
+
+## Events
+
+| Event                    | Detail                                                 | When                                                                              |
+| ------------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------------- |
+| `ocx:tags-input:change`  | `{ value }`, the tags in order                         | A tag is added or removed.                                                        |
+| `ocx:tags-input:create`  | `{ value }`                                            | An added tag is not one of the suggestions.                                       |
+| `ocx:tags-input:invalid` | `{ value, reason: 'unknown' \| 'duplicate' \| 'max' }` | Text is rejected: outside the list, already added, or past `max`. The text stays. |
+
+All bubble.
+
+## Keyboard
+
+- Typing: filters the suggestions and opens the list.
+- <kbd>↓</kbd> <kbd>↑</kbd>: open the list, move the highlight.
+- <kbd>Enter</kbd>: adds the highlighted suggestion, else the typed text when it names a suggestion, else creates it
+  when allowed.
+- <kbd>,</kbd> (the delimiter) and paste: add the typed text by the same rule; a paste is split on the delimiter.
+- <kbd>Backspace</kbd> on an empty input: highlights the last chip; again, removes it.
+- <kbd>←</kbd> <kbd>→</kbd> from the start of the input: move between the chips.
+- <kbd>Delete</kbd> <kbd>Backspace</kbd> on a highlighted chip: remove it.
+- <kbd>Esc</kbd>: closes the list; again, clears the text.
+- Leaving the field clears unadded text.

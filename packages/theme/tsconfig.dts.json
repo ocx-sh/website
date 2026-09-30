@@ -1,0 +1,15 @@
+// prepack clears stale src/**/*.d.mts first: tsc resolves `./x.mjs` to a
+// sibling `x.d.mts` (import resolution ignores `exclude`) and then refuses to
+// overwrite it (TS5055).
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "rootDir": "src",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["src/**/*.mjs"]
+}

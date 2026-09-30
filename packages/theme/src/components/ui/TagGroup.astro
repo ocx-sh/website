@@ -1,0 +1,150 @@
+---
+// TagGroup (C-272, HeroUI TagGroup, D-P7): a labelled, wrapping set of Tag chips. selectionMode
+// 'none' = a plain list of label chips, optionally removable by a native delegated script
+// (tag-group.mjs); 'single' / 'multiple' = filter chips on Zag toggle-group (a radio group or
+// aria-pressed buttons), mounted on first interaction. Selectable and removable at once would need the
+// APG grid pattern, so the type rejects it.
+import type { Props as ToggleGroupMachineProps } from '@zag-js/toggle-group';
+import { connect, machine } from '../toggle-group.zag.mjs';
+import { nextUiId } from './ids.mjs';
+import Label from './Label.astro';
+import Tag from './Tag.astro';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+
+export interface TagItem {
+  /** Id-safe value (no whitespace): Zag builds the item id from it. */
+  value: string;
+  label: string;
+  /** Selectable: the chip takes no press. Removable: its remove button is disabled. */
+  disabled?: boolean;
+  /** Label chips only; a filter chip ignores tone. */
+  tone?: 'neutral' | 'keyword' | 'success' | 'warning' | 'danger';
+}
+
+interface Common {
+  /** Group name, shown above the chips. */
+  label: string;
+  /** Visually hide the label; it stays the group's accessible name. */
+  hideLabel?: boolean;
+  items: TagItem[];
+  /** Initially selected value(s) (single / multiple). */
+  value?: string | string[];
+  /** Zag `toggle-group` machine props, data only (single / multiple). */
+  zag?: ZagProps<ToggleGroupMachineProps>;
+  class?: string;
+}
+type Mode =
+  | {
+      selectionMode?: 'none';
+      /** Each chip gets a remove button; removal emits a cancelable `ocx:tag-group:remove`. */
+      removable?: boolean;
+      /** Remove button name; `{label}` is replaced by the chip's label. */
+      removeLabel?: string;
+    }
+  | { selectionMode: 'single' | 'multiple'; removable?: false; removeLabel?: never };
+export type Props = Common & Mode;
+
+const {
+  label,
+  hideLabel = false,
+  items,
+  selectionMode = 'none',
+  value = [],
+  removable = false,
+  removeLabel = 'Remove {label}',
+  zag,
+  class: className,
+} = Astro.props as Common & { selectionMode?: string; removable?: boolean; removeLabel?: string };
+const id = nextUiId('tag-group');
+const labelId = `${id}-label`;
+const selectable = selectionMode === 'single' || selectionMode === 'multiple';
+const props = {
+  defaultValue: Array.isArray(value) ? value : [value],
+  ...(selectionMode === 'multiple' ? { multiple: true } : { deselectable: false }),
+  ...zag,
+};
+const api = selectable ? ssrApi(machine, connect, { id, ...props }) : undefined;
+// Tag writes type="button" itself; a second one from the spread would render twice.
+const itemAttrs = (item: TagItem) => {
+  const attrs = ssrAttrs(api!.getItemProps(item));
+  delete attrs['type'];
+  return attrs;
+};
+---
+
+<div class:list={['ocx-ui-field', 'ocx-ui-tag-group-field', className]}>
+  <Label as="span" id={labelId} hidden={hideLabel}>
+    {label}
+  </Label>
+  {api ? (
+    <div
+      class="ocx-ui-tag-group"
+      data-zag-root="tag-group"
+      data-zag-state="idle"
+      data-zag-id={id}
+      data-zag-props={JSON.stringify(props)}
+      aria-labelledby={labelId}
+      {...ssrAttrs(api.getRootProps())}
+    >
+      {items.map((item) => (
+        <Tag as="button" variant="filter" {...(item.tone ? { tone: item.tone } : {})} {...itemAttrs(item)}>
+          {item.label}
+        </Tag>
+      ))}
+    </div>
+  ) : (
+    <ul class="ocx-ui-tag-group" role="list" aria-labelledby={labelId} tabindex="-1" data-ocx-tag-group>
+      {items.map((item) => (
+        <li>
+          <Tag
+            variant="label"
+            {...(item.tone ? { tone: item.tone } : {})}
+            value={item.value}
+            {...(removable
+              ? {
+                  removable: true as const,
+                  removeLabel: removeLabel.replaceAll('{label}', item.label),
+                  removeProps: { disabled: item.disabled },
+                }
+              : {})}
+          >
+            {item.label}
+          </Tag>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
+<script>
+  import { install } from './tag-group.mjs';
+  import { mount } from './zag.mjs';
+
+  install();
+  // Replay on: the chips are plain buttons, so an early click did nothing natively (C-104).
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tag-group"]'))
+    mount(root, { load: () => import('../toggle-group.zag.mjs') });
+</script>
+
+<style is:global>
+  @layer ocx {
+    /* Chips wrap; toggle-group roving focus stays linear in DOM order across lines. */
+    .ocx-ui-tag-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--ocx-space-2);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ocx-ui-tag-group > li {
+      margin: 0;
+      padding: 0;
+    }
+    .ocx-ui-tag-group:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+  }
+</style>

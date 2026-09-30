@@ -1,0 +1,357 @@
+---
+// Data table: sort by column header, a text filter and pages, over rows the server renders in their
+// final order (first paint is final; without JavaScript the table reads as rendered). The page
+// script loads data-table.mjs on first hover, focus or touch; paging is the Zag Pagination.
+// Markdown tables stay static: this is for data a page passes in.
+import Pagination from '../Pagination.astro';
+import { arrange, summary } from './data-table.mjs';
+import type { Direction } from './data-table.mjs';
+import { nextUiId } from './ids.mjs';
+import Icon from './Icon.astro';
+import SearchField from './SearchField.astro';
+
+export interface Column {
+  /** Row field shown in this column. */
+  key: string;
+  /** Header text. */
+  label: string;
+  /** Sort button in the header; default true. */
+  sortable?: boolean;
+  /** Numbers: aligned to the end, tabular figures. */
+  numeric?: boolean;
+  /** Identifiers (commands, paths, versions): mono. */
+  mono?: boolean;
+}
+
+interface Props {
+  /** What the table lists; the table caption and the scroll region's name (visually hidden). */
+  caption: string;
+  columns: Column[];
+  rows: Record<string, string | number>[];
+  /** Rows per page; without it every match shows and there is no pagination. */
+  pageSize?: number;
+  /** Text filter above the table; default true. */
+  filter?: boolean;
+  /** Initial sort. */
+  sort?: { key: string; direction?: Direction };
+  /** Initial filter text. */
+  query?: string;
+  /** Initial page, from 1. */
+  page?: number;
+  /** Shown when no row matches. */
+  empty?: string;
+}
+
+const {
+  caption,
+  columns,
+  rows,
+  pageSize,
+  filter = true,
+  sort,
+  query = '',
+  page = 1,
+  empty = 'No rows match the filter.',
+} = Astro.props;
+const direction = sort?.direction ?? 'ascending';
+const text = rows.map((row) => Object.fromEntries(columns.map(({ key }) => [key, String(row[key] ?? '')])));
+const view = arrange(text, {
+  ...(sort && { key: sort.key, direction }),
+  query,
+  page,
+  ...(pageSize && { pageSize }),
+});
+const shown = new Set(view.visible);
+const matched = new Set(view.order);
+const sequence = [...view.order, ...[...text.keys()].filter((i) => !matched.has(i))];
+const id = nextUiId('data-table');
+---
+
+<div
+  class="ocx-data-table not-content"
+  data-ocx-data-table
+  data-ocx-page={view.page}
+  data-ocx-page-size={pageSize}
+  data-ocx-sort={sort?.key}
+  data-ocx-direction={sort && direction}
+>
+  {filter && (
+    <SearchField
+      class="ocx-data-table__filter"
+      label={`Filter ${caption}`}
+      placeholder="Filter rows…"
+      autocomplete="off"
+      spellcheck="false"
+      value={query}
+      aria-controls={id}
+      data-ocx-filter
+    />
+  )}
+  <div class="ocx-data-table__scroll" role="region" aria-label={caption} tabindex="0">
+    <table class="ocx-data-table__table" id={id}>
+      <caption>{caption}</caption>
+      <thead>
+        <tr>
+          {columns.map(({ key, label, sortable = true, numeric }) => (
+            <th
+              scope="col"
+              data-ocx-key={key}
+              data-ocx-numeric={numeric ? '' : undefined}
+              aria-sort={sort?.key === key ? direction : undefined}
+            >
+              {sortable ? (
+                <button type="button" data-ocx-sort={key}>
+                  {label}
+                  <Icon name="sort" size="sm" />
+                  <Icon name="sort-asc" size="sm" />
+                  <Icon name="sort-desc" size="sm" />
+                </button>
+              ) : (
+                label
+              )}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {sequence.map((index) => (
+          <tr data-ocx-row hidden={!shown.has(index)}>
+            {columns.map(({ key, numeric, mono }) => (
+              <td data-ocx-numeric={numeric ? '' : undefined} data-ocx-mono={mono ? '' : undefined}>
+                {text[index]?.[key]}
+              </td>
+            ))}
+          </tr>
+        ))}
+        <tr data-ocx-empty hidden={view.order.length > 0}>
+          <td colspan={columns.length}>{empty}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="ocx-data-table__foot">
+    <p class="ocx-data-table__status" data-ocx-status aria-live="polite">
+      {summary(view.order.length, rows.length)}
+    </p>
+    {pageSize && (
+      <div data-ocx-pager hidden={view.pages <= 1}>
+        <Pagination
+          count={Math.max(view.order.length, 1)}
+          pageSize={pageSize}
+          page={view.page}
+          zag={{ translations: { rootLabel: `${caption}, pages` } }}
+        />
+      </div>
+    )}
+  </div>
+</div>
+
+<script>
+  import type { Pager } from './data-table.mjs';
+  import { mount } from './zag.mjs';
+
+  const ARM = ['pointerenter', 'focusin', 'touchstart'];
+  for (const root of document.querySelectorAll<HTMLElement>('[data-ocx-data-table]')) {
+    const nav = root.querySelector<HTMLElement>('[data-zag-root="pagination"]');
+    const handle = nav && mount(nav, { load: () => import('../pagination.zag.mjs') });
+    // Page 1 first (valid under the old count), then the new count; an empty result keeps one
+    // page so Zag's count never drops to 0 pages (the pager is hidden then anyway).
+    const pager: Pager | undefined =
+      nav && handle
+        ? (count) =>
+            void handle.start().then(() => {
+              (handle.api as { setPage?: (page: number) => void } | undefined)?.setPage?.(1);
+              nav.dispatchEvent(new CustomEvent('ocx:pagination:set', { detail: { count: Math.max(count, 1) } }));
+            })
+        : undefined;
+    // Pagination may go live before data-table.mjs: keep its page on the root for bind() to read.
+    root.addEventListener('ocx:pagination:change', (event) => {
+      root.dataset['ocxPage'] = String((event as CustomEvent<{ page: number }>).detail.page);
+    });
+    let early: HTMLElement | undefined;
+    const onClick = (event: Event) => {
+      early ??= (event.target as Element | null)?.closest<HTMLElement>('button[data-ocx-sort]') ?? undefined;
+    };
+    root.addEventListener('click', onClick);
+    const arm = () => {
+      for (const type of ARM) root.removeEventListener(type, arm);
+      import('./data-table.mjs')
+        .then(({ bind }) => {
+          root.removeEventListener('click', onClick);
+          bind(root, pager);
+          early?.click();
+        })
+        .catch((error: unknown) => console.error('[ocx] DataTable failed to start', root, error));
+    };
+    for (const type of ARM) root.addEventListener(type, arm, { passive: true });
+    // A back/forward restore can put a value in the filter input the server never rendered
+    // (the attribute default still reflects the initial `query`): that filtered state must take
+    // effect right away, not wait for a first hover/focus/touch that may never come.
+    // Some browsers restore form values after the scripts ran: check again on `pageshow`.
+    const input = root.querySelector<HTMLInputElement>('[data-ocx-filter]');
+    const restored = () => {
+      if (input && input.value !== input.defaultValue) arm();
+    };
+    restored();
+    window.addEventListener('pageshow', restored, { once: true });
+  }
+</script>
+
+<style is:global>
+  @layer ocx {
+    /* Sized by its container, never by its rows: a wide table scrolls inside its region instead
+       of widening a grid or flex parent (contain: inline-size drops the intrinsic width). */
+    .ocx-data-table {
+      display: flex;
+      flex: 1 1 100%;
+      flex-direction: column;
+      gap: var(--ocx-space-4);
+      inline-size: 100%;
+      min-inline-size: 0;
+      contain: inline-size;
+    }
+    .ocx-data-table [hidden] {
+      display: none;
+    }
+    .ocx-data-table .ocx-data-table__filter {
+      inline-size: var(--ocx-search-width);
+      max-inline-size: 100%;
+    }
+    .ocx-data-table__scroll {
+      overflow-x: auto;
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    /* Inset: the region clips an outset ring, and inset keeps the 2px corner square. */
+    .ocx-data-table__scroll:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    /* Design "site model" table: UI scale (13px), mono caps head on surface-subtle. */
+    .ocx-data-table__table {
+      inline-size: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-heading);
+      color: var(--ocx-color-fg-muted);
+    }
+    :where(.ocx-data-table__table) caption {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    :where(.ocx-data-table__table) th {
+      padding: var(--ocx-space-3) var(--ocx-space-5);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      text-align: start;
+      white-space: nowrap;
+      color: var(--ocx-color-fg-subtle);
+      background: var(--ocx-color-surface-subtle);
+      border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    :where(.ocx-data-table__table) td {
+      padding: var(--ocx-space-4) var(--ocx-space-5);
+      vertical-align: top;
+      border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    :where(.ocx-data-table__table) tbody tr:nth-last-child(1 of :not([hidden])) td {
+      border-bottom: 0;
+    }
+    :where(.ocx-data-table__table) :is(th, td)[data-ocx-numeric] {
+      text-align: end;
+      font-variant-numeric: tabular-nums;
+    }
+    :where(.ocx-data-table__table) td[data-ocx-mono] {
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg);
+      overflow-wrap: anywhere;
+    }
+    :where(.ocx-data-table__table) tr[data-ocx-row]:hover td {
+      background: var(--ocx-color-hover);
+    }
+    :where(.ocx-data-table__table) tr[data-ocx-empty] td {
+      padding-block: var(--ocx-space-7);
+      text-align: center;
+      color: var(--ocx-color-fg-subtle);
+    }
+
+    /* Sort button: fills its header cell; neutral hover tint, the sorted column in full ink. */
+    :where(.ocx-data-table__table) th:has(> button) {
+      padding: 0;
+    }
+    :where(.ocx-data-table__table) th button {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      inline-size: 100%;
+      margin: 0;
+      padding: var(--ocx-space-3) var(--ocx-space-5);
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      border-radius: var(--ocx-radius-sm);
+      cursor: pointer;
+    }
+    :where(.ocx-data-table__table) th[data-ocx-numeric] button {
+      flex-direction: row-reverse;
+      justify-content: start;
+    }
+    :where(.ocx-data-table__table) th button:hover {
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-hover);
+    }
+    :where(.ocx-data-table__table) th[aria-sort] {
+      color: var(--ocx-color-fg);
+    }
+    :where(.ocx-data-table__table) th button:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    /* Three icons per header, CSS shows the one matching aria-sort (no JS): unsorted in the control
+       line colour, sorted in the header's ink. */
+    :where(.ocx-data-table__table) th svg {
+      flex: none;
+      color: var(--ocx-color-border-control);
+    }
+    :where(.ocx-data-table__table) th svg[data-icon='sort-asc'],
+    :where(.ocx-data-table__table) th svg[data-icon='sort-desc'],
+    :where(.ocx-data-table__table) th[aria-sort] svg[data-icon='sort'] {
+      display: none;
+    }
+    :where(.ocx-data-table__table) th[aria-sort] svg {
+      color: currentColor;
+    }
+    :where(.ocx-data-table__table) th[aria-sort='ascending'] svg[data-icon='sort-asc'],
+    :where(.ocx-data-table__table) th[aria-sort='descending'] svg[data-icon='sort-desc'] {
+      display: block;
+    }
+
+    .ocx-data-table__foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--ocx-space-4);
+    }
+    .ocx-data-table__status {
+      margin: 0;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+    }
+  }
+</style>

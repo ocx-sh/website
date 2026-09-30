@@ -1,0 +1,78 @@
+---
+// SearchField (C-269, HeroUI SearchField): Label + InputGroup around <input type="search">, a start
+// search icon and an end clear button. Clear shows only while the input holds text; the script
+// (search-field.mjs) clears on that button and on Escape. Enter submits natively.
+import type { HTMLAttributes } from 'astro/types';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import InputGroup from './InputGroup.astro';
+import Label from './Label.astro';
+import { nextUiId } from './ids.mjs';
+
+export interface Props extends Omit<HTMLAttributes<'input'>, 'type'> {
+  /** Accessible name; the clear button is named "Clear <label>". */
+  label: string;
+  /** Keep the label for assistive tech only (the placeholder and icon show the purpose). */
+  hideLabel?: boolean;
+  /** Defaults to `label`. Must be non-empty: the empty-state CSS keys off `:placeholder-shown`. */
+  placeholder?: string;
+}
+
+const { label, hideLabel = true, placeholder, id: idProp, class: className, ...rest } = Astro.props;
+const id = idProp ?? nextUiId('search');
+const disabled = Boolean(rest.disabled);
+---
+
+<div class:list={['ocx-ui-field', 'ocx-ui-search-field', className]}>
+  <Label for={id} hidden={hideLabel} disabled={disabled}>
+    {label}
+  </Label>
+  <InputGroup disabled={disabled}>
+    <Icon slot="start" name="search" />
+    <input
+      {...rest}
+      class="ocx-ui-input-group__input"
+      type="search"
+      id={id}
+      placeholder={placeholder?.trim() ? placeholder : label}
+    />
+    <Button
+      slot="end"
+      class="ocx-ui-search-field__clear"
+      variant="ghost"
+      size="s"
+      iconOnly
+      aria-label={`Clear ${label}`}
+      disabled={disabled}
+    >
+      <Icon name="close" />
+    </Button>
+  </InputGroup>
+</div>
+
+<style is:global>
+  @layer ocx {
+    /* Empty, disabled, or no script to clear with: nothing to show. */
+    .ocx-ui-search-field:has(.ocx-ui-input-group__input:is(:placeholder-shown, :disabled, :read-only))
+      .ocx-ui-search-field__clear {
+      display: none;
+    }
+    @media (scripting: none) {
+      .ocx-ui-search-field__clear {
+        display: none;
+      }
+    }
+    /* Our clear button replaces the native glyph. */
+    .ocx-ui-search-field .ocx-ui-input-group__input::-webkit-search-cancel-button,
+    .ocx-ui-search-field .ocx-ui-input-group__input::-webkit-search-decoration {
+      appearance: none;
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { install } from './search-field.mjs';
+
+  install();
+</script>

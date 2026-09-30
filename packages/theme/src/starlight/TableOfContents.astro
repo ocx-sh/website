@@ -1,0 +1,93 @@
+---
+// Starlight `TableOfContents` override: the default TOC plus "edit this page ↗"
+// (only with `editLink.baseUrl`) and "report an issue ↗" (C-027).
+import Default from '@astrojs/starlight/components/TableOfContents.astro';
+import nav from '../nav.json';
+import { claimFor } from '../nav.mjs';
+import { probe } from '../components/toc-probe.mjs';
+
+const { editUrl, toc } = Astro.locals.starlightRoute;
+const claim = claimFor(nav, Astro.url.pathname);
+// End of page (owner finding): Starlight's scroll-spy band sits near the top, so short trailing
+// sections never reach it and get skipped. Instead of its choice, `probe` (toc-probe.mjs, inlined
+// via `String`) slides a line from Starlight's own band top (just under `scroll-padding-top`, where
+// a jump lands a heading) to the viewport bottom over the last screen of scroll, so every entry
+// lights in order and the last one at the bottom; the `location.hash` target stays current while
+// the view sits where the jump put it. It replaces every `current` set (recomputed, argument
+// ignored) and runs on scroll/resize (each fires at most once a frame: no rAF throttle), through
+// Starlight's own setter. Inline and hand-minified (a string, so no formatter expands it): every
+// docs page pays these HTML bytes. Leans on StarlightTOC's `current` setter (0.42). Both TOCs get
+// it: the phone one (`mobile-starlight-toc`) through its own setter, which also writes "On this page".
+const TAIL =
+  'document.querySelectorAll("starlight-toc,mobile-starlight-toc").forEach(t=>' +
+  'customElements.whenDefined(t.localName).then(C=>{let ' +
+  's=Object.getOwnPropertyDescriptor(C.prototype,"current").set,a=[...t.querySelectorAll("a")],P=' +
+  String(probe)
+    .replace(/\s*\n\s*/g, '')
+    .replace(/\s*([-=,;:?(){}<>+*/&|!])\s*/g, '$1') +
+  ',g=()=>s.call(t,a[P(a.map(l=>document.getElementById(decodeURIComponent(l.hash.slice(1)))?.getBoundingClientRect().top??1/0),' +
+  'parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||0,' +
+  'innerHeight,document.documentElement.scrollHeight,scrollY,a.findIndex(l=>l.hash==location.hash))]||a[0]);' +
+  'Object.defineProperty(t,"current",{set:g});addEventListener("scroll",g);addEventListener("resize",g);g()}))';
+---
+
+<Default />
+{toc && <script is:inline set:html={TAIL} />}
+<ul class="ocx-toc-links">
+  {editUrl && (
+    <li>
+      <a href={editUrl.href} rel="noopener">
+        edit this page ↗
+      </a>
+    </li>
+  )}
+  {claim && (
+    <li>
+      <a href={`https://github.com/${claim.repo}/issues/new`} rel="noopener">
+        report an issue ↗
+      </a>
+    </li>
+  )}
+</ul>
+
+<style is:global>
+  @layer ocx {
+    /* Mock #1b: a sharp 2px bar per entry, coral on the current one — Starlight
+       rounds its TOC links (0.25rem), which bends the bar and the highlight. */
+    starlight-toc a,
+    mobile-starlight-toc a {
+      border-radius: var(--ocx-radius-md);
+    }
+    starlight-toc a[aria-current='true'] {
+      background: none;
+    }
+    /* Nested entries (h3+, a nested <ul> per Starlight's own TOC recursion) read as a lower
+       tier: smaller and lighter than the top-level h2 rows, on top of starlight.css's per-depth
+       indent and guide rule. */
+    starlight-toc ul ul a,
+    mobile-starlight-toc ul ul a {
+      font-size: var(--ocx-text-xs);
+      font-weight: var(--ocx-font-weight-regular);
+    }
+
+    .ocx-toc-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-2);
+      margin: var(--ocx-space-6) 0 0;
+      padding: var(--ocx-space-5) 0 0;
+      list-style: none;
+      border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .ocx-toc-links a {
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+      text-decoration: none;
+      border-radius: var(--ocx-radius-md);
+    }
+    .ocx-toc-links a:hover {
+      color: var(--ocx-color-fg);
+    }
+  }
+</style>

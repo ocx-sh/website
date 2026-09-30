@@ -1,0 +1,147 @@
+---
+// Collapsible (C-140): an APG disclosure on Zag `collapsible`. SSR renders the machine's parts
+// (first paint is final); the machine loads on the first hover, focus or touch.
+import type { Props as CollapsibleMachineProps } from '@zag-js/collapsible';
+import { connect, machine } from './collapsible.zag.mjs';
+import './ui/disclosure.css';
+import Icon from './ui/Icon.astro';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+
+interface Props {
+  /** Open on first paint. */
+  open?: boolean;
+  /** The trigger ignores activation; the content keeps its state. */
+  disabled?: boolean;
+  /** Trigger text; the `trigger` slot replaces it. */
+  label?: string;
+  /** Further Zag collapsible props, data only (C-106); `open` stays ours (controlled mode needs an owner). */
+  zag?: ZagProps<Omit<CollapsibleMachineProps, 'open'>>;
+}
+
+const { open = false, disabled = false, label, zag = {} } = Astro.props;
+if (!label && !Astro.slots.has('trigger')) throw new Error('<Collapsible> needs a `label` or a `trigger` slot');
+const id = nextUiId('collapsible');
+const props = { ...zag, defaultOpen: open, disabled };
+const api = ssrApi(machine, connect, { ...props, id });
+---
+
+<div
+  class="ocx-collapsible"
+  data-zag-root="collapsible"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(props)}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <button
+    class="ocx-collapsible__trigger"
+    {...ssrAttrs(api.getTriggerProps())}
+    aria-disabled={disabled ? 'true' : undefined}
+  >
+    <span class="ocx-collapsible__label">
+      <slot name="trigger">{label}</slot>
+    </span>
+    <Icon name="chevron-down" class="ocx-collapsible__chevron" />
+  </button>
+  <div class="ocx-collapsible__content" {...ssrAttrs(api.getContentProps())}>
+    <slot />
+  </div>
+</div>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-collapsible[data-zag-root]'))
+    mount(root, { load: () => import('./collapsible.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    /* One Accordion item on its own (same look, see AccordionItem.astro): a full-width trigger row
+     * with a trailing chevron in the prose flow, no frame. Open = a 2px focus-coloured start bar
+     * down the whole disclosure, accent-fg title and chevron, the chevron turned up. Hover is the
+     * neutral tint. Margins are reset against Starlight's prose flow. */
+    .ocx-collapsible {
+      inline-size: 100%;
+      box-shadow: inset var(--ocx-border-width-strong) 0 0 transparent; /* closed: the open bar, transparent */
+    }
+    /* An inset shadow, so opening shifts nothing.
+     * ponytail: physical left edge; a :dir(rtl) mirror when an RTL consumer appears. */
+    .ocx-collapsible[data-state='open'] {
+      box-shadow: inset var(--ocx-border-width-strong) 0 0 var(--ocx-color-focus);
+    }
+    .ocx-collapsible__trigger {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      box-sizing: border-box;
+      inline-size: 100%;
+      margin: 0;
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      border: 0;
+      border-radius: 0;
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-prose-body);
+      font-weight: var(--ocx-font-weight-medium);
+      line-height: var(--ocx-lh-heading);
+      text-align: start;
+      color: var(--ocx-color-fg);
+      background: none;
+      cursor: pointer;
+      /* On the base rule, not only :focus-visible: the ring's geometry is part of the look. */
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    .ocx-collapsible__label {
+      flex: 1;
+      min-inline-size: 0;
+    }
+    .ocx-collapsible__trigger > :global(.ocx-collapsible__chevron) {
+      color: var(--ocx-color-fg-muted);
+      transition: rotate var(--ocx-duration-moderate) var(--ocx-ease-in-out);
+    }
+    .ocx-collapsible__trigger:hover:not([data-disabled]) {
+      background: var(--ocx-color-hover);
+    }
+    .ocx-collapsible__trigger:hover:not([data-disabled], [data-state='open']) > :global(.ocx-collapsible__chevron) {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-collapsible__trigger[data-state='open'],
+    .ocx-collapsible__trigger[data-state='open'] > :global(.ocx-collapsible__chevron) {
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-collapsible__trigger[data-state='open'] > :global(.ocx-collapsible__chevron) {
+      rotate: 180deg;
+    }
+    .ocx-collapsible__trigger[data-disabled] {
+      color: var(--ocx-color-fg-subtle);
+      cursor: not-allowed;
+    }
+    .ocx-collapsible__trigger[data-disabled] > :global(.ocx-collapsible__chevron) {
+      color: inherit;
+    }
+    .ocx-collapsible__trigger:focus-visible {
+      outline: var(--ocx-focus-ring);
+    }
+    /* Open/close motion: ui/disclosure.css, live roots only. */
+    .ocx-collapsible__content {
+      margin: 0;
+      padding: 0 var(--ocx-space-4) var(--ocx-space-4);
+    }
+    .ocx-collapsible__content > :global(:first-child) {
+      margin-top: 0;
+    }
+    .ocx-collapsible__content > :global(:last-child) {
+      margin-bottom: 0;
+    }
+    /* Forced colours drop box-shadow: the open bar becomes a system-coloured border. */
+    @media (forced-colors: active) {
+      .ocx-collapsible {
+        border-inline-start: var(--ocx-border-width-strong) solid Canvas;
+      }
+      .ocx-collapsible[data-state='open'] {
+        border-inline-start-color: Highlight;
+      }
+    }
+  }
+</style>

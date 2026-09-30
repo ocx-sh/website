@@ -1,0 +1,93 @@
+---
+title: Tag group
+description: A labelled set of chips that wrap across lines, as filter chips with one or several on, or as removable labels.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Use filter chips to narrow a list by one choice (`single`) or several (`multiple`), and plain
+chips to show the labels an entry carries (`none`), optionally removable. The chips wrap onto new
+lines; the group keeps one Tab stop and the arrow keys walk them in reading order. To type new
+values into a field, use a tags input instead.
+
+A selected chip is "current": accent ink on an accent tint with a coral edge and a check. Hover
+is neutral, and a disabled chip is flat and subtle. Tab to a group to see the focus ring.
+
+## Stories
+
+<Stories of="tag-group" />
+
+## Props
+
+<PropsTable
+  of="ui/TagGroup.astro"
+  rows={[
+    {
+      name: 'label',
+      type: 'string',
+      required: true,
+      description: 'Group name, shown above the chips and used as its accessible name.',
+    },
+    {
+      name: 'hideLabel',
+      type: 'boolean',
+      default: 'false',
+      description: 'Hide the label visually; it still names the group.',
+    },
+    {
+      name: 'items',
+      type: '{ value, label, disabled?, tone? }[]',
+      required: true,
+      description: 'The chips; a value holds no whitespace. tone applies to label chips only.',
+    },
+    {
+      name: 'selectionMode',
+      type: "'none' | 'single' | 'multiple'",
+      default: "'none'",
+      description: 'none = label chips; single = a radio group; multiple = pressed buttons.',
+    },
+    { name: 'value', type: 'string | string[]', description: 'Initially selected value(s), single and multiple.' },
+    {
+      name: 'removable',
+      type: 'boolean',
+      default: 'false',
+      description: "Each chip gets a remove button. Only with selectionMode 'none'; the type rejects it otherwise.",
+    },
+    {
+      name: 'removeLabel',
+      type: 'string',
+      default: "'Remove {label}'",
+      description: "Remove button name; {label} is replaced by the chip's label.",
+    },
+    {
+      name: 'zag',
+      type: 'ZagProps<toggle-group.Props>',
+      description: 'Zag toggle-group machine props, data only (e.g. deselectable: true for single).',
+    },
+    { name: 'class', type: 'string', description: 'Added to the wrapper.' },
+  ]}
+/>
+
+## Events
+
+| Event                  | Detail                                    | When                                                                                                           |
+| ---------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `ocx:tag-group:change` | `{ value }`, the selected values in order | A chip is selected or released (single, multiple).                                                             |
+| `ocx:tag-group:remove` | `{ value }`                               | A remove button is used. Cancelable: `preventDefault()` keeps the chip, for example while the server confirms. |
+
+Both bubble. After a removal, focus moves to the next remove button, else the previous one, else
+the group.
+
+## Keyboard
+
+Single and multiple: the group is one Tab stop; focus enters on the first chip.
+
+- <kbd>←</kbd> <kbd>→</kbd> move focus through the chips in reading order, across wrapped lines, wrapping at the ends.
+- <kbd>Home</kbd> <kbd>End</kbd> move focus to the first or last chip.
+- <kbd>Space</kbd> <kbd>Enter</kbd> select or release the focused chip.
+
+Removable:
+
+- <kbd>Tab</kbd> moves between the remove buttons.
+- <kbd>Enter</kbd> <kbd>Space</kbd> <kbd>Backspace</kbd> <kbd>Delete</kbd> remove the focused chip.

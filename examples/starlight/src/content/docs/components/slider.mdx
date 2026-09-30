@@ -1,0 +1,99 @@
+---
+title: Slider
+description: Pick a number or a range by dragging or with the keyboard.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A track with one thumb, or two when `value` is a pair. The value text sits beside the label and
+hidden inputs carry the values into a form, so it submits before any script loads. The machine
+loads on first hover or focus; a press before that is lost, since a drag cannot be replayed. To
+display a number only, use [Meter](../meter/).
+
+## Stories
+
+<Stories of="slider" />
+
+## Props
+
+<PropsTable
+  of="ui/Slider.astro"
+  rows={[
+    {
+      name: 'label',
+      type: 'string',
+      required: true,
+      description: 'Visible label; the accessible name of a single thumb.',
+    },
+    {
+      name: 'hideLabel',
+      type: 'boolean',
+      default: 'false',
+      description: 'Hide the label visually. It stays the name.',
+    },
+    {
+      name: 'value',
+      type: 'number | [number, number]',
+      required: true,
+      description: 'Initial value. A pair makes a range with two thumbs.',
+    },
+    { name: 'min', type: 'number', default: '0', description: 'Lowest value.' },
+    { name: 'max', type: 'number', default: '100', description: 'Highest value.' },
+    {
+      name: 'step',
+      type: 'number',
+      default: '1',
+      description: 'Arrow-key and drag increment; PageUp and PageDown take ten.',
+    },
+    {
+      name: 'name',
+      type: 'string',
+      description: 'Form field name; one hidden input per thumb.',
+    },
+    { name: 'disabled', type: 'boolean', default: 'false', description: 'Not focusable, not draggable, muted.' },
+    {
+      name: 'marks',
+      type: '(number | { value, label })[]',
+      description: 'Ticks under the track; a number is labelled with its value.',
+    },
+    {
+      name: 'format',
+      type: 'Intl.NumberFormatOptions',
+      description: 'Formats the value text, mark labels and aria-valuetext (locale en).',
+    },
+    {
+      name: 'thumbLabels',
+      type: 'string[]',
+      description: 'Thumb names. A range defaults to "Minimum <label>" and "Maximum <label>".',
+    },
+    {
+      name: 'showValue',
+      type: 'boolean',
+      default: 'true',
+      description: 'Value text beside the label; a range reads "a – b".',
+    },
+    {
+      name: 'zag',
+      type: 'ZagProps<slider.Props>',
+      description: 'Zag slider machine props, data only.',
+    },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>
+
+## Events
+
+| Event               | Detail                                         | When                                                         |
+| ------------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| `ocx:slider:input`  | `{ value }`, a number, or an array for a range | The value changes, on every step of a drag.                  |
+| `ocx:slider:change` | `{ value }`, same shape                        | A change ends: the pointer is released, or a key is pressed. |
+
+## Keyboard
+
+Each thumb is a Tab stop. A range's thumbs cannot cross.
+
+- <kbd>→</kbd> <kbd>↑</kbd> raise the focused thumb by one step.
+- <kbd>←</kbd> <kbd>↓</kbd> lower it by one step.
+- <kbd>PageUp</kbd> <kbd>PageDown</kbd> move it by the large step (ten steps).
+- <kbd>Home</kbd> <kbd>End</kbd> jump to the lowest or highest allowed value.

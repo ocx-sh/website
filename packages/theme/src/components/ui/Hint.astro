@@ -1,0 +1,101 @@
+---
+// Hint (C-174) on Zag `tooltip` (tooltip.zag.mjs): wraps one icon button and shows a short
+// inverted label on hover (after `openDelay`) or keyboard focus. The button keeps its own
+// accessible name (`aria-label`); the hint is its description while shown. Design: inverted ink,
+// mono, no arrow, 400 ms (c-feedback). Terms use `Tooltip.astro` (D-Z9). `ocx:hint:change {open}`.
+import type { Placement, Props as TooltipProps } from '@zag-js/tooltip';
+import { nextUiId } from './ids.mjs';
+import { connect, machine, parts } from './tooltip.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+
+interface Props {
+  /** Hint text. */
+  label: string;
+  /** Hover delay before the hint shows, in ms. */
+  openDelay?: number;
+  /** Hint side and alignment relative to the button. */
+  placement?: Placement;
+  /** Zag machine props passed through verbatim (C-106). */
+  zag?: ZagProps<TooltipProps>;
+}
+
+const { label, openDelay = 400, placement = 'bottom', zag } = Astro.props;
+const id = nextUiId('hint');
+const zagProps = { ...zag, openDelay, positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const } };
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }))).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+
+// The trigger part is the slotted button itself: its Zag attributes go onto its start tag.
+const escape = (v: string) => v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+const trigger = Object.entries(p['trigger'] ?? {})
+  .map(([k, v]) => (v === '' || v === true ? k : `${k}="${escape(v)}"`))
+  .join(' ');
+const slot = await Astro.slots.render('default');
+const start = /^\s*<(button|a)\b/i;
+if (!start.test(slot)) throw new Error('Hint: the default slot must be one <button> or <a>');
+if (/^\s*<[^>]*\s(id|data-part|data-state)=/i.test(slot))
+  throw new Error('Hint: the slotted button must not set id, data-part or data-state; the hint owns them');
+const button = slot.replace(start, (tag) => `${tag} ${trigger}`);
+---
+
+<span
+  class="ocx-ui-hint"
+  data-zag-root="tooltip"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+>
+  <Fragment set:html={button} />
+  <span class="ocx-ui-hint__positioner" {...p.positioner}>
+    <span class="ocx-ui-hint__content" {...p.content}>
+      {label}
+    </span>
+  </span>
+</span>
+
+<script>
+  import { mount } from './zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-hint[data-zag-root]'))
+    mount(root, { load: () => import('./tooltip.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-hint {
+      display: inline-block;
+    }
+    [data-part='content'] {
+      z-index: var(--ocx-z-tooltip);
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      block-size: var(--ocx-control-hint);
+      padding: 0 var(--ocx-space-3);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      line-height: var(--ocx-lh-none);
+      white-space: nowrap;
+      color: var(--ocx-color-on-inverse);
+      background: var(--ocx-color-inverse);
+    }
+    [data-part='content'][hidden] {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* Fade in and out; live only, so a hint never animates on load. Zag's vanilla connect hides at
+       once, so `display` (allow-discrete) holds the node until the fade ends. */
+    .ocx-ui-hint[data-zag-state='live'] [data-part='content'] {
+      transition:
+        opacity var(--ocx-duration-enter) var(--ocx-ease-out),
+        display var(--ocx-duration-enter) allow-discrete;
+    }
+    .ocx-ui-hint[data-zag-state='live'] [data-part='content']:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+      }
+    }
+  }
+</style>

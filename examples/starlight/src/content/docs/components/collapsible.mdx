@@ -1,0 +1,37 @@
+---
+title: Collapsible
+description: A disclosure that shows and hides one region, on the Zag collapsible machine.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A button that shows or hides the region below it. The first paint is final; the machine loads on
+the first hover or focus.
+
+## Stories
+
+<Stories of="collapsible" />
+
+## Props
+
+<PropsTable
+  of="Collapsible.astro"
+  rows={[
+    { name: 'open', type: 'boolean', default: 'false', description: 'Open on first paint.' },
+    { name: 'disabled', type: 'boolean', default: 'false', description: 'The trigger ignores activation and reads as disabled.' },
+    { name: 'label', type: 'string', description: 'Trigger text; the trigger slot replaces it.' },
+    { name: 'zag', type: 'ZagProps<CollapsibleProps>', description: 'Further Zag collapsible props, data only.' },
+  ]}
+/>
+
+The default slot is the content; the `trigger` slot replaces `label`.
+
+## Events
+
+- `ocx:collapsible:change` with detail `{ open }`, when the reader opens or closes the region.
+
+## Keyboard
+
+- <kbd>Enter</kbd> or <kbd>Space</kbd> toggles the region; the trigger is a native button.
+- <kbd>Tab</kbd> moves to the trigger, then into the open region.

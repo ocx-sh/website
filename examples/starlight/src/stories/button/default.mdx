@@ -1,0 +1,15 @@
+---
+title: Button
+description: The three variants, an icon-only button and a button-styled link.
+height: 150
+---
+
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+
+<Button variant="primary">Get started</Button>
+<Button>Install</Button>
+<Button variant="ghost" href="#props">User guide <Icon name="arrow-right" /></Button>
+<Button iconOnly aria-label="Copy">
+  <Icon name="copy" />
+</Button>

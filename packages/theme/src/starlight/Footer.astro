@@ -1,0 +1,61 @@
+---
+// Starlight `Footer` override: nav.json `footer` links and the licence line (C-026).
+// Prev/next pagination kept (owner review 2026-09-27: styled as cards, CSS in starlight.css);
+// no last-updated: mock #1a shows none.
+import Pagination from '@astrojs/starlight/components/Pagination.astro';
+import nav from '../nav.json';
+
+const year = new Date().getFullYear();
+---
+
+<Pagination />
+
+<footer class="ocx-footer">
+  <span class="ocx-footer__links">
+    {nav.footer.map((l, i) => (i > 0 ? ['·', <a href={l.href}>{l.label}</a>] : <a href={l.href}>{l.label}</a>))}
+  </span>
+  <span class="ocx-footer__license">{`Apache-2.0 · © ${year} The OCX Authors`}</span>
+</footer>
+
+{/* C-181 toaster root: empty and polite from first paint, so the first toast is announced (its glue,
+  toaster.mjs, runs from Search.astro's every-page script). Every
+  other attribute of Zag's group part (role, label, id, placement, inline position) is spread when
+  the machine starts, before that toast is added: rendered here it would cost every page ~110 B gz. */}
+<div
+  data-zag-root="toast"
+  data-zag-state="idle"
+  data-zag-trigger="manual"
+  data-zag-id="ocx-toaster"
+  data-zag-props="{}"
+  aria-live="polite"
+></div>
+
+<style is:global>
+  @layer ocx {
+    /* Mock #1a footer: one mono line, links left, licence right. */
+    .ocx-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--ocx-space-3) var(--ocx-space-6);
+      margin-top: var(--ocx-space-9);
+      padding: var(--ocx-space-4) 0;
+      border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-footer__links {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: var(--ocx-space-3);
+    }
+    .ocx-footer a {
+      color: var(--ocx-color-fg-muted);
+      text-decoration: none;
+    }
+    .ocx-footer a:hover {
+      color: var(--ocx-color-fg);
+    }
+  }
+</style>

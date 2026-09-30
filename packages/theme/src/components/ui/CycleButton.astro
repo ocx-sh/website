@@ -1,0 +1,82 @@
+---
+// CycleButton: a button that steps through two or more states, each click swapping the glyph for
+// the next state's (wrapping): the theme switch, a sort direction. The Button look (`variant`, `size`);
+// SSR renders the initial state final, and cycle-button.mjs only advances it (no machine). It ships no
+// script of its own (one more early request on every page, as the theme toggle renders it): its one
+// delegated click listener installs from Search.astro's every-page script; outside Starlight call
+// `install()` from `@ocx-sh/theme/cycle-button`.
+// Every state's glyph is in the markup, in order, and CSS shows the current one (cycle-button.css).
+// ponytail: the glyphs are the states (no wrapper span, no hidden text): the theme switch renders
+// twice on every page and each element counts toward the DOM budget (C-112). `data-cycle` carries
+// the values and labels, `aria-label` the name and the next-state hint.
+import type { HTMLAttributes } from 'astro/types';
+import type { IconName } from '../../icons/icons.mjs';
+import Icon from './Icon.astro';
+import './cycle-button.css';
+
+interface CycleState {
+  /** Reported in `ocx:cycle-button:change` and submitted under `name`. */
+  value: string;
+  /** Accessible name while this state is current; the hint names the next one. */
+  label: string;
+  /** Registry icon for this state. */
+  icon: IconName;
+}
+export interface Props extends Omit<HTMLAttributes<'button'>, 'type' | 'value' | 'name'> {
+  /** Two or more states, in click order. */
+  states: CycleState[];
+  /** Initial state's `value`; the first state by default. */
+  value?: string;
+  /** Form field name: a hidden input carries the current value. */
+  name?: string;
+  variant?: 'ghost' | 'secondary';
+  /** s = 30 · m = 38. */
+  size?: 's' | 'm';
+  /** Glyph only, the label as its accessible name; false shows the label beside it. */
+  iconOnly?: boolean;
+  disabled?: boolean;
+}
+
+const {
+  states,
+  value = states[0]?.value,
+  name,
+  variant = 'secondary',
+  size = 'm',
+  iconOnly = true,
+  disabled,
+  class: className,
+  ...rest
+} = Astro.props;
+if (states.length < 2) throw new Error('CycleButton: states needs at least two entries');
+const at = states.findIndex((s) => s.value === value);
+if (at < 0) throw new Error(`CycleButton: value "${String(value)}" is not one of the states`);
+const { label } = states[at]!;
+// `type` and the name are ours: they follow `rest` in one object, since Astro renders a spread and a
+// later attribute side by side. cycle-button.mjs writes the same name on every change.
+const attrs = {
+  ...rest,
+  type: 'button' as const,
+  'aria-label': `${label} (click for ${states[(at + 1) % states.length]!.label})`,
+};
+---
+
+<button
+  {...attrs}
+  disabled={disabled}
+  class:list={['ocx-ui-button', 'ocx-ui-cycle-button', className]}
+  data-variant={variant}
+  data-size={size}
+  data-icon-only={iconOnly ? '' : undefined}
+  data-value={value}
+  data-cycle={JSON.stringify(states.map((s) => [s.value, s.label]))}
+>
+  {states.map((s, i) => (
+    <Icon
+      name={s.icon}
+      class={i === at ? 'ocx-ui-cycle-button__state ocx-ui-cycle-button__current' : 'ocx-ui-cycle-button__state'}
+    />
+  ))}
+  {!iconOnly && <span class="ocx-ui-cycle-button__label">{label}</span>}
+  {name && <input type="hidden" name={name} value={value} disabled={disabled} />}
+</button>

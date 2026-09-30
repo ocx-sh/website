@@ -1,0 +1,526 @@
+/* Showcase kit styles (example-local). Loaded through the example's Starlight customCss, so
+   they ride in the shared, cached stylesheet: inlined per page they pushed the larger showcase
+   documents past the first TCP window (a Lighthouse round trip before LCP). */
+@layer ocx {
+  /* Demo */
+  .showcase-demo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ocx-border-width);
+    margin-block: var(--ocx-space-5) var(--ocx-space-7);
+    background: var(--ocx-color-border);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .showcase-demo[data-has-log] {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--ocx-space-12) * 3)), 1fr));
+  }
+  .showcase-demo__stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ocx-space-4) var(--ocx-space-5);
+    min-block-size: var(--ocx-space-12);
+    padding: var(--ocx-space-8) var(--ocx-space-6);
+    background: var(--ocx-color-bg);
+  }
+  .showcase-demo__stage[data-block] {
+    display: block;
+    padding: var(--ocx-space-6);
+  }
+  .showcase-demo__stage[data-block] > :first-child {
+    margin-block-start: 0;
+  }
+  .showcase-demo__stage[data-block] > :last-child {
+    margin-block-end: 0;
+  }
+  .showcase-demo__log {
+    background: var(--ocx-color-surface-subtle);
+  }
+  /* StateGrid */
+  .showcase-states {
+    --_cell: calc(var(--ocx-space-12) * 1.5);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--_cell)), 1fr));
+    gap: var(--ocx-border-width);
+    margin-block: var(--ocx-space-5) var(--ocx-space-7);
+    overflow: clip;
+    background: var(--ocx-color-bg);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .showcase-states[data-wide] {
+    --_cell: calc(var(--ocx-space-12) * 2.5);
+  }
+  /* State */
+  .showcase-state {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    margin: 0;
+    background: var(--ocx-color-bg);
+    box-shadow: 0 0 0 var(--ocx-border-width) var(--ocx-color-border);
+  }
+  .showcase-state__stage {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ocx-space-3);
+    padding: var(--ocx-space-6) var(--ocx-space-5);
+  }
+  .showcase-state__label {
+    padding: var(--ocx-space-2) var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-muted);
+    background: var(--ocx-color-surface-subtle);
+    border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  /* PropsTable */
+  .showcase-props {
+    container-type: inline-size;
+    margin-block: var(--ocx-space-5) var(--ocx-space-7);
+    overflow-x: auto;
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .showcase-props:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  .showcase-props table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--ocx-text-base);
+  }
+  .showcase-props caption {
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    text-align: start;
+    color: var(--ocx-color-fg-muted);
+    background: var(--ocx-color-surface-subtle);
+    border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .showcase-props th,
+  .showcase-props td {
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    text-align: start;
+    vertical-align: top;
+    border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .showcase-props tbody tr:last-child > * {
+    border-block-end: 0;
+  }
+  .showcase-props thead th {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    font-weight: var(--ocx-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: var(--ocx-tracking-caps);
+    color: var(--ocx-color-fg-muted);
+  }
+  .showcase-props tbody th {
+    font-weight: var(--ocx-font-weight-regular);
+    white-space: nowrap;
+  }
+  .showcase-props code {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+  }
+  .showcase-props td code {
+    overflow-wrap: anywhere;
+  }
+  .showcase-props td[data-label='Default'] code {
+    white-space: nowrap;
+  }
+  /* Narrow: one stacked block per prop, each cell labelled. */
+  @container (width < 36rem) {
+    .showcase-props thead {
+      position: absolute;
+      clip-path: inset(50%);
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+    }
+    .showcase-props tr {
+      display: grid;
+      padding-block: var(--ocx-space-3);
+      border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .showcase-props tbody tr:last-child {
+      border-block-end: 0;
+    }
+    .showcase-props th,
+    .showcase-props td {
+      display: grid;
+      grid-template-columns: calc(var(--ocx-space-12) * 0.75) minmax(0, 1fr);
+      gap: var(--ocx-space-3);
+      padding-block: var(--ocx-space-1);
+      border-block-end: 0;
+    }
+    .showcase-props tbody th {
+      display: block;
+      white-space: normal;
+    }
+    .showcase-props td > * {
+      justify-self: start;
+    }
+    .showcase-props td::before {
+      content: attr(data-label);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-muted);
+    }
+  }
+  .showcase-props__required {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-muted);
+  }
+  /* EventLog */
+  .showcase-log {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    block-size: 100%;
+    min-block-size: calc(var(--ocx-space-12) * 1.5);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+  }
+  .showcase-log__title {
+    margin: 0;
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    color: var(--ocx-color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--ocx-tracking-caps);
+    border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .showcase-log__list {
+    grid-row: 2;
+    grid-column: 1;
+    margin: 0;
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    max-block-size: calc(var(--ocx-space-12) * 2);
+    overflow: auto;
+    list-style: none;
+    color: var(--ocx-color-fg);
+  }
+  .showcase-log__list:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: calc(var(--ocx-focus-offset) * -1);
+  }
+  .showcase-log__items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .showcase-log__items > li {
+    padding-block: var(--ocx-space-1);
+    overflow-wrap: anywhere;
+  }
+  .showcase-log__items > li > code:first-child {
+    color: var(--ocx-color-accent-fg); /* small text: the label-grade accent (4.5:1) */
+  }
+  .showcase-log__empty {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: start;
+    margin: 0;
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    color: var(--ocx-color-fg-muted);
+    pointer-events: none;
+  }
+  .showcase-log[data-has-events] .showcase-log__empty {
+    display: none;
+  }
+  /* ComponentIndex */
+  .showcase-index {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, calc(var(--ocx-space-12) * 2)), 1fr));
+    gap: var(--ocx-border-width);
+    margin: var(--ocx-space-6) 0 0;
+    padding: 0;
+    list-style: none;
+    overflow: clip;
+    background: var(--ocx-color-bg);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .showcase-index > li {
+    display: flex;
+    margin: 0;
+  }
+  .showcase-index__card {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--ocx-space-2);
+    padding: var(--ocx-space-5);
+    color: var(--ocx-color-fg);
+    text-decoration: none;
+    background: var(--ocx-color-bg);
+    box-shadow: 0 0 0 var(--ocx-border-width) var(--ocx-color-border);
+  }
+  .showcase-index__card:hover {
+    background: var(--ocx-color-surface-subtle);
+  }
+  .showcase-index__card:focus-visible {
+    position: relative;
+    outline: var(--ocx-focus-ring);
+    outline-offset: calc(var(--ocx-focus-offset) * -1);
+  }
+  .showcase-index__title {
+    font-size: var(--ocx-text-md);
+    font-weight: var(--ocx-font-weight-semibold);
+  }
+  .showcase-index__card:hover .showcase-index__title {
+    color: var(--ocx-color-accent);
+  }
+  .showcase-index__desc {
+    font-size: var(--ocx-text-base);
+    color: var(--ocx-color-fg-muted);
+  }
+  /* A demo's own control (e.g. the explorer's reload, C-222): the secondary s Button's look,
+     restated here so the demo page ships none of the Button's per-page CSS. */
+  .showcase-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ocx-space-3);
+    margin-block-end: var(--ocx-space-4);
+  }
+  .showcase-action {
+    block-size: var(--ocx-control-lg);
+    padding: 0 var(--ocx-space-4);
+    font: var(--ocx-font-weight-medium) var(--ocx-text-sm) / var(--ocx-lh-none) var(--ocx-font-mono);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+    cursor: pointer;
+  }
+  .showcase-action:hover {
+    border-color: var(--ocx-color-accent);
+  }
+  .showcase-action:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  /* TypeScale: live type specimens with their tokens and resolved values. */
+  .showcase-type {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .showcase-type__row {
+    display: grid;
+    gap: var(--ocx-space-2);
+    min-inline-size: 0;
+    margin: 0;
+    padding: var(--ocx-space-4) var(--ocx-space-5);
+    border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .showcase-type__row:last-child {
+    border-block-end: 0;
+  }
+  .showcase-type__sample {
+    overflow-wrap: anywhere;
+    color: var(--ocx-color-fg);
+  }
+  .showcase-type__sample[data-rule] {
+    padding-block-start: var(--ocx-prose-h2-pad);
+    border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .showcase-type__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ocx-space-1) var(--ocx-space-3);
+    margin: 0;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-muted);
+  }
+  .showcase-type__meta code {
+    padding: 0;
+    font-size: inherit;
+    background: none;
+    overflow-wrap: anywhere;
+  }
+  .showcase-type__meta code:first-child {
+    color: var(--ocx-color-fg);
+  }
+  .showcase-type__resolved {
+    margin-inline-start: auto;
+  }
+
+  /* Stories (C-125): here, in the shared sheet, not a stylesheet of its own: a fourth render-blocking
+   * sheet plus the first canvas cost storied pages a Lighthouse round trip before LCP (perf 0.99). */
+  .story-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ocx-space-3);
+    margin-block: var(--ocx-space-5) 0;
+  }
+  .story-chips a,
+  .story__bar a,
+  .story__bar label,
+  .story__code summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ocx-space-2);
+    min-block-size: var(--ocx-control-md);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-muted);
+    text-decoration: none;
+  }
+  .story-chips a {
+    padding-inline: var(--ocx-space-4);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-sm);
+  }
+  :is(.story-chips a, .story__bar a, .story__bar label, .story__code summary):hover {
+    color: var(--ocx-color-fg);
+  }
+  .story-chips a:hover {
+    border-color: var(--ocx-color-hover-border);
+  }
+  :is(.story-chips a, .story__bar a, .story__code summary):focus-visible,
+  .story__bar input:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  .story {
+    margin: var(--ocx-space-7) 0 0;
+    overflow: clip;
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+    scroll-margin-block-start: calc(var(--ocx-header-height) + var(--ocx-space-5));
+  }
+  .story figcaption {
+    padding: var(--ocx-space-4) var(--ocx-space-5);
+  }
+  .story h3 {
+    margin: 0;
+    font-size: var(--ocx-text-md);
+    font-weight: var(--ocx-font-weight-semibold);
+    line-height: var(--ocx-lh-heading);
+    color: var(--ocx-color-fg);
+  }
+  .story figcaption p {
+    margin: var(--ocx-space-2) 0 0;
+    font-size: var(--ocx-text-base);
+    color: var(--ocx-color-fg-muted);
+  }
+  .story__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--ocx-space-5);
+    padding-inline: var(--ocx-space-5);
+    background: var(--ocx-color-surface-subtle);
+    border-block: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .story__bar fieldset {
+    display: flex;
+    gap: var(--ocx-space-5);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .story__bar label {
+    cursor: pointer;
+  }
+  .story__bar input {
+    margin: 0;
+    accent-color: var(--ocx-color-accent);
+  }
+  .story__bar a:last-child {
+    margin-inline-start: auto;
+  }
+  /* The canvas: reserved height from the story (D-SB11); a fixed width scrolls sideways. */
+  .story__stage {
+    min-block-size: var(--story-h);
+    overflow-x: auto;
+    background: var(--ocx-color-bg);
+  }
+  .story iframe {
+    display: block;
+    inline-size: 100%;
+    border: 0;
+  }
+  .story__stage iframe {
+    block-size: var(--story-h);
+  }
+  .story:has(input[value='390']:checked) .story__stage iframe {
+    inline-size: 390px;
+  }
+  .story:has(input[value='768']:checked) .story__stage iframe {
+    inline-size: 768px;
+  }
+  .story__code {
+    border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .story__code summary {
+    display: flex;
+    padding-inline: var(--ocx-space-5);
+    cursor: pointer;
+  }
+  .story__code iframe {
+    block-size: calc(var(--code-lines) * var(--ocx-space-6) + var(--ocx-space-9));
+    border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+
+  /* Gallery filter and thumbnails (C-120, D-SB9; ComponentFilter), in the shared sheet for the same reason. */
+  .component-filter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ocx-space-2);
+    margin-top: var(--ocx-space-6);
+  }
+  .component-filter > p {
+    margin: 0;
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-subtle);
+  }
+  :is(.showcase-index, .showcase-index > li)[hidden] {
+    display: none;
+  }
+  .showcase-index__thumb {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    padding: var(--ocx-space-3);
+    font-size: var(--ocx-display-lead);
+    font-weight: var(--ocx-font-weight-semibold);
+    line-height: var(--ocx-lh-display);
+    letter-spacing: var(--ocx-tracking-display);
+    text-align: center;
+    color: var(--ocx-color-fg-muted);
+    background: var(--ocx-color-bg);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+  }
+  /* The story at twice the box's size, scaled to half: a 720-wide layout reads at thumbnail size. */
+  .showcase-index__thumb iframe {
+    position: absolute;
+    inset: 0 auto auto 0;
+    inline-size: 200%;
+    block-size: 200%;
+    border: 0;
+    transform: scale(0.5);
+    transform-origin: 0 0;
+    pointer-events: none;
+  }
+  .showcase-index__thumb iframe:not([data-ready]) {
+    visibility: hidden;
+  }
+  @media (scripting: none) {
+    .component-filter {
+      display: none;
+    }
+  }
+}

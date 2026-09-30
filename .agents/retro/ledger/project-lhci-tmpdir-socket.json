@@ -1,0 +1,27 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260927T221243Z-17073814.json",
+    "20260927T223948Z-f272c658.json",
+    "20260927T224129Z-5a9049f1.json"
+  ],
+  "first_seen": "2026-09-27T22:12:43Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:38Z",
+    "by": "scripts/lhci-posix-tmpdir.cjs",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-lhci-tmpdir-socket",
+  "kind": "pitfall",
+  "last_seen": "2026-09-27T22:41:29Z",
+  "occurrences": 3,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Long TMPDIR under a worktree breaks Chrome under lhci (socket path too long)",
+  "v": 1,
+  "versions": []
+}

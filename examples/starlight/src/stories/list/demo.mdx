@@ -1,0 +1,17 @@
+---
+title: Async catalog
+description: The first page renders with the page; Load more asks for the next one from a local loader (0.6 s per page). Filter or sort to reload; switch on Fail next load for the error state and Retry.
+height: 460
+order: 2
+block: true
+log: true
+---
+
+import List from '@ocx-sh/theme/components/ui/List.astro';
+import ListControls from '../../components/showcase/ListControls.astro';
+import { CATALOG, PAGE_SIZE } from '../../components/showcase/catalog.mjs';
+
+export const first = CATALOG.slice(0, PAGE_SIZE);
+
+<ListControls />
+<List label="Catalog" items={first} async cursor={String(PAGE_SIZE)} />

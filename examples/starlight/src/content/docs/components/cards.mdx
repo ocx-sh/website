@@ -1,0 +1,105 @@
+---
+title: Cards
+description: Starlight's Card, CardGrid and LinkCard, and the theme's .ocx-card, on one card design.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Every card is the same box: a hairline border, a 2px corner, the card padding and no shadow. An
+icon sits in a square neutral tile beside the title. A card that is a link lifts its border to
+the neutral hover border on hover and shows the focus ring on keyboard focus; it never turns
+coral, which is kept for links, the current item, primary actions and focus. A card that is not a
+link has no hover. Hover the link cards below, and switch the theme in the header for dark mode.
+
+## Card
+
+With an icon:
+
+<Card title="docs" icon="open-book">
+  Guides and reference for the ocx CLI.
+</Card>
+
+Without an icon:
+
+<Card title="catalog">Browse packages in the index.</Card>
+
+With a longer body of several paragraphs:
+
+<Card title="Install" icon="rocket">
+
+One command installs `ocx` into your shell.
+
+A second paragraph keeps the card's own spacing.
+
+</Card>
+
+## CardGrid
+
+Cards in a row are equal height, whatever their body length. The page reuses two icons: each
+Starlight icon is an inline SVG, and every distinct one costs this page's HTML budget.
+
+<CardGrid>
+  <Card title="docs" icon="open-book">
+    Guides and reference for the ocx CLI.
+  </Card>
+  <Card title="catalog" icon="rocket">
+    Browse packages in the index. This body runs longer, and the card beside it grows to the same height.
+  </Card>
+  <Card title="github" icon="open-book">
+    Star the repo, file issues, or contribute code.
+  </Card>
+  <Card title="discord" icon="rocket">
+    Ask questions and follow development.
+  </Card>
+</CardGrid>
+
+Staggered:
+
+<CardGrid stagger>
+  <Card title="Build" icon="open-book">
+    Pin toolchains per project.
+  </Card>
+  <Card title="Ship" icon="rocket">
+    Same tools in CI and on every laptop.
+  </Card>
+</CardGrid>
+
+## LinkCard
+
+With a description:
+
+<LinkCard title="Install ocx" href="/install/" description="One command, every shell." />
+
+Title only:
+
+<LinkCard title="All components" href="../" />
+
+In a grid:
+
+<CardGrid>
+  <LinkCard title="Tag" href="../tag/" description="Labels and status stamps." />
+  <LinkCard title="Badges" href="../badges/" description="Starlight's inline badge." />
+</CardGrid>
+
+## Theme card
+
+`.ocx-card` (base.css) is the same card for pages outside Starlight's components, such as
+hub and landing pages. As an `<a>` it takes the hover border and focus ring; `--planned`
+marks an entry that does not exist yet.
+
+<CardGrid>
+  <a class="ocx-card" href="../">
+    <strong>link card</strong>
+    <span>An anchor with the class: hover lifts the border.</span>
+  </a>
+  <div class="ocx-card">
+    <strong>static card</strong>
+    <span>A div with the class: no hover.</span>
+  </div>
+  <div class="ocx-card ocx-card--planned">
+    <strong>planned card</strong>
+    <span>Dashed and transparent: not there yet.</span>
+  </div>
+</CardGrid>
+
+The [dependency explorer](../dependency-explorer/)'s summary facts are this card too.

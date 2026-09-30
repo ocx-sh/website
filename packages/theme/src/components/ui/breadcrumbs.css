@@ -1,0 +1,118 @@
+/* Breadcrumbs (Breadcrumbs.astro). In base.css, not the component: every Starlight page renders the
+   trail, and a component sheet would be one more render-blocking request per page. Global, keyed off
+   the root class. */
+@layer ocx {
+  /* A size container has no intrinsic width: fill the line, or a flex/centering parent collapses it. */
+  .ocx-ui-crumbs {
+    container-type: inline-size;
+    inline-size: 100%;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-subtle);
+    text-transform: lowercase;
+  }
+  .ocx-ui-crumbs :is(ol, ul) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .ocx-ui-crumbs > ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ocx-space-2);
+  }
+  .ocx-ui-crumbs > ol > li {
+    display: flex;
+    align-items: center;
+    gap: var(--ocx-space-2);
+    min-inline-size: 0;
+    margin: 0;
+  }
+  /* Alt text "" keeps the slash out of the accessibility tree; the first line is the fallback. */
+  .ocx-ui-crumbs > ol > li + li::before {
+    content: '/';
+    content: '/' / '';
+  }
+  /* 24px targets (WCAG 2.5.8) from the line box; the label truncates, the full text sits in title. */
+  .ocx-ui-crumbs li > :is(a, span, button) {
+    display: block;
+    max-inline-size: calc(2 * var(--ocx-space-12));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: var(--ocx-space-6);
+  }
+  /* Link (neutral, underline on hover) owns the link ink; the plain crumbs match its rest colour. */
+  .ocx-ui-crumbs li > :is(span, button) {
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-crumbs [aria-current='page'] {
+    color: var(--ocx-color-fg);
+  }
+  .ocx-ui-crumbs .ocx-icon {
+    margin-inline-end: var(--ocx-space-2);
+  }
+
+  /* Fold: hidden while everything fits; below 480px the middle folds into the ellipsis. */
+  .ocx-ui-crumbs > ol > .ocx-ui-crumbs__more {
+    display: none;
+  }
+  @container (max-width: 480px) {
+    .ocx-ui-crumbs > ol > .ocx-ui-crumbs__more {
+      display: flex;
+    }
+    .ocx-ui-crumbs > ol > [data-mid] {
+      display: none;
+    }
+  }
+  .ocx-ui-crumbs__more > button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: var(--ocx-space-6);
+    min-block-size: var(--ocx-space-6);
+    padding: 0;
+    font: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .ocx-ui-crumbs__more > button:hover,
+  .ocx-ui-crumbs__more:has(:popover-open) > button {
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-hover);
+  }
+  .ocx-ui-crumbs__more .ocx-icon {
+    margin: 0;
+  }
+
+  /* Panel: floating surface, anchored under the button where anchor positioning exists; else
+     pinned under the header at the start edge (ponytail: same fallback shape as Menu). */
+  .ocx-ui-crumbs__more > ul {
+    position: fixed;
+    inset: var(--ocx-header-height) auto auto var(--ocx-space-5);
+    margin: 0;
+    padding: var(--ocx-space-2);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+    box-shadow: var(--ocx-shadow-overlay);
+    color: var(--ocx-color-fg-muted);
+  }
+  @supports (position-area: block-end) {
+    .ocx-ui-crumbs__more > ul {
+      inset: auto;
+      margin-block-start: var(--ocx-space-2);
+      position-area: block-end span-inline-end;
+      position-try-fallbacks: flip-inline;
+    }
+  }
+  .ocx-ui-crumbs__more > ul > li > :is(a, span) {
+    max-inline-size: none;
+    padding: 0 var(--ocx-space-3);
+  }
+  .ocx-ui-crumbs__more > ul > li > a:hover {
+    background: var(--ocx-color-hover);
+  }
+}

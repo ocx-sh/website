@@ -1,0 +1,136 @@
+---
+// CommandBar: one copyable command as a joined bar. Optional picker on the left (choices with
+// more than one entry: scope, platform) swaps the command; the whole field copies on click; the
+// slot `action` adds trailing controls (a link Button, icon-only by default: give it an aria-label
+// and wrap it in a Hint). The picker shows only its icon when every choice has one (`pickerText`
+// adds the label); the popup rows always show icon and label. The copy is CopyButton's machine, not a
+// second one: the field's wrapper is a Zag clipboard root (clipboard.zag.mjs, loaded on first
+// hover/focus/touch), so the toast, the "Copied" state and the failure path are shared. The picker
+// is the Select primitive in a compact, joined form. SSR renders the first choice; `detect`
+// swaps to the visitor's platform in an inline script during parsing, so first paint is final.
+// Zero choices is legal: the bar is then its action alone.
+import type { Props as ClipboardProps } from '@zag-js/clipboard';
+import type { IconName } from '../../icons/icons.mjs';
+import { connect, machine, triggerProps } from '../clipboard.zag.mjs';
+import Icon from './Icon.astro';
+import Select from './Select.astro';
+import { PRE_PAINT } from './command-bar.mjs';
+import { nextUiId } from './ids.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './command-bar.css';
+
+export interface CommandChoice {
+  /** Picker value; with `detect`, 'linux', 'macos' or 'windows' match the visitor's OS. */
+  value: string;
+  /** Picker text, and the toast and accessible name of the copy ("Linux install command"). */
+  label: string;
+  /** Shown in the field and copied verbatim. */
+  command: string;
+  /** Registry icon: the picker trigger while selected, and this choice's row in the popup. */
+  icon?: IconName;
+}
+
+export interface Props {
+  /** Commands on offer: none = action only, one = no picker, more = picker. */
+  choices: CommandChoice[];
+  /** Picker accessible name, e.g. "Platform". */
+  pickerLabel?: string;
+  /** Show the choice's label next to the picker icon. Without it the trigger is the icon alone
+   * (only when every choice has an icon; otherwise the label is always shown). */
+  pickerText?: boolean;
+  /** What the copy is called after the choice's label, e.g. "install command". */
+  noun?: string;
+  /** Preselect the visitor's OS before first paint (choice values 'linux', 'macos', 'windows'). */
+  detect?: boolean;
+  /** Zag clipboard machine props, e.g. timeout (default 1500 ms). */
+  zag?: ZagProps<ClipboardProps>;
+  class?: string;
+}
+
+const {
+  choices,
+  pickerLabel = 'Command',
+  pickerText = false,
+  noun = 'command',
+  detect = false,
+  zag = {},
+  class: className,
+} = Astro.props;
+const [first] = choices;
+const picker = choices.length > 1;
+const hasIcons = choices.some((c) => c.icon);
+// Icon-only trigger: every choice has an icon, so the trigger never falls back to an empty box.
+const iconOnly = picker && !pickerText && choices.every((c) => c.icon);
+const pickerName = (c?: CommandChoice) => (iconOnly && c ? `${pickerLabel}: ${c.label}` : pickerLabel);
+const name = (c: CommandChoice) => `${c.label} ${noun}`;
+const id = nextUiId('cmdbar');
+// `defaultValue`, not `value`: a pick moves the running machine through `setValue`.
+const props = { timeout: 1500, ...zag, defaultValue: first?.command ?? '' };
+const api = ssrApi(machine, connect, { ...props, id });
+// The popup keeps its own width (a label never truncates in it). Cast: Select's `zag` type demands
+// a `collection`, which its own machine builds from the options.
+const pickerZag = { positioning: { placement: 'bottom-start', sameWidth: false } } as never;
+// The picker's box is as wide as its longest label, whichever is selected: a pick never resizes it.
+const ch = Math.max(0, ...choices.map((c) => c.label.length));
+---
+
+<div
+  class:list={['ocx-cmdbar', className]}
+  data-choices={JSON.stringify(choices.map(({ value, label, command }) => ({ value, label, command })))}
+  data-noun={noun}
+  data-icons={hasIcons ? '' : undefined}
+  data-picker-icon={iconOnly ? '' : undefined}
+  data-picker-label={pickerLabel}
+  style={`--ocx-cmdbar-ch:${ch}`}
+>
+  {picker && (
+    <div class="ocx-cmdbar__picker" title={iconOnly ? pickerName(first) : undefined}>
+      <Select
+        label={pickerName(first)}
+        hideLabel
+        {...(first && { value: first.value })}
+        options={choices.map(({ value, label, icon }) => ({ value, label, ...(icon && { icon }) }))}
+        zag={pickerZag}
+      />
+    </div>
+  )}
+  {first && (
+    <div
+      class="ocx-cmdbar__copy"
+      data-zag-root="clipboard"
+      data-zag-state="idle"
+      data-zag-id={id}
+      data-zag-props={JSON.stringify(props)}
+      data-label={name(first)}
+      {...ssrAttrs(api.getRootProps())}
+    >
+      {/* The scroller wraps the button, never sits inside it: a scroller with a focusable child is no extra tab stop. */}
+      <div class="ocx-cmdbar__field">
+        <button class="ocx-cmdbar__trigger" {...ssrAttrs(triggerProps(api, name(first)))}>
+          <code class="ocx-cmdbar__text" dir="ltr">
+            {first.command}
+          </code>
+          {/* Straight after the text: no parser yield (a paint) can fall between the SSR text and its swap. */}
+          {picker && detect && <script is:inline set:html={PRE_PAINT} />}
+          <span class="ocx-cmdbar__icons" aria-hidden="true">
+            <Icon name="copy" class="ocx-cmdbar__idle" />
+            <Icon name="check" class="ocx-cmdbar__done" />
+          </span>
+        </button>
+      </div>
+      <span class="ocx-cmdbar__status" role="status" />
+    </div>
+  )}
+  {Astro.slots.has('action') && (
+    <div class="ocx-cmdbar__action">
+      <slot name="action" />
+    </div>
+  )}
+</div>
+
+<script>
+  import { install } from './command-bar.mjs';
+
+  install();
+</script>

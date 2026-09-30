@@ -1,0 +1,72 @@
+name: Previews
+
+# Builds the consumer preview sites (`task previews`: ocx docs, rules_ocx, the Python SDK, the catalog docs,
+# each a full site wearing @ocx-sh/theme) and uploads them as one artifact. Manual only: it clones the consumer
+# repos, so a run reflects their current default branches. The sites are planned at
+# https://<site>.preview.ocx.sh; hosting does not exist yet, so the deploy step below is off.
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: 'One site (ocx, rules_ocx, python-sdk, catalog); empty builds all'
+        required: false
+        default: ''
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  previews:
+    name: Build previews
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.3'
+          cache: false
+
+      - name: Install dependencies
+        run: ocx exec -- task install
+
+      # Anonymous clones: the consumer repos are public. `task previews` itself is offline and builds
+      # from this cache. An unknown site name fails in scripts/previews/sites.mjs, never in the shell.
+      - name: Pull consumer docs
+        env:
+          SITE: ${{ inputs.site }}
+        run: ocx exec -- task samples -- ${SITE:+"$SITE"}
+
+      - name: Build previews
+        env:
+          SITE: ${{ inputs.site }}
+        run: ocx exec -- task previews -- ${SITE:+"$SITE"}
+
+      - name: Upload previews
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: previews
+          path: .tmp/previews/*/dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      # Deploy to Bunny: off until hosting exists. Turn it on with the repository variable
+      # PREVIEWS_DEPLOY=true once .github/actions/deploy is in the repo, then replace this step with a call to it
+      # per site (the dist of <site> goes to the storage zone of <site>.preview.ocx.sh).
+      # Secrets it will need, all on the `previews` GitHub environment and none in any file:
+      #   one Bunny Storage zone access key per preview zone (a per-zone password, not account-wide);
+      #   the account-wide BUNNY_API_KEY never goes into CI, so a cache purge is not done from here.
+      - name: Deploy to Bunny (not wired)
+        if: ${{ vars.PREVIEWS_DEPLOY == 'true' && github.ref == 'refs/heads/main' }}
+        run: |
+          echo "::error::PREVIEWS_DEPLOY is set but the Bunny deploy step is not wired yet"
+          exit 1

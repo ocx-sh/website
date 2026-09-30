@@ -1,0 +1,140 @@
+---
+// ActionMenu (C-171) on Zag `menu` (menu.zag.mjs): a list of commands, APG menu (arrows over an
+// active descendant, Home/End, typeahead, Esc returns focus). `context` makes the default slot the
+// target: right-click (or long-press) opens the menu at the pointer. Zag positions the panel with a
+// fixed strategy (D-Z10). Navigation links stay on `Menu.astro` (D-Z8). Events:
+// `ocx:menu:select {value}`, `ocx:menu:change {open}`.
+import type { Props as MenuProps } from '@zag-js/menu';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import type { IconName } from '../../icons/icons.mjs';
+import { nextUiId } from './ids.mjs';
+import { connect, machine, parts } from './menu.zag.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './overlay.css';
+
+type Placement = NonNullable<NonNullable<MenuProps['positioning']>['placement']>;
+
+export interface ActionMenuItem {
+  /** Sent in `ocx:menu:select`. */
+  value: string;
+  label: string;
+  disabled?: boolean;
+  /** Leading registry icon; once one item has an icon, the others keep its slot so labels align. */
+  icon?: IconName;
+}
+
+interface Props {
+  /** Trigger text; in context mode the menu's accessible name. */
+  label: string;
+  items: ActionMenuItem[];
+  /** Open on right-click / long-press on the default slot instead of from a trigger button. */
+  context?: boolean;
+  /** Panel side and alignment relative to the trigger. */
+  placement?: Placement;
+  /** Zag machine props passed through verbatim (C-106). */
+  zag?: ZagProps<MenuProps>;
+}
+
+const { label, items, context = false, placement = 'bottom-start', zag } = Astro.props;
+const id = nextUiId('action-menu');
+const iconSlot = items.some((item) => item.icon);
+const zagProps = {
+  ...zag,
+  ...(context && { 'aria-label': label }),
+  positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const },
+};
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }), items)).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+---
+
+<div
+  class="ocx-ui-action-menu"
+  data-context={context ? '' : undefined}
+  data-zag-root="menu"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+>
+  {context ? (
+    <div class="ocx-ui-action-menu__target" tabindex="0" {...p.contextTrigger}>
+      <slot />
+    </div>
+  ) : (
+    <Button {...p.trigger}>
+      {label}
+      <Icon name="chevron-down" size="sm" />
+    </Button>
+  )}
+  <div class="ocx-ui-action-menu__positioner not-content" {...p.positioner}>
+    <div class="ocx-ui-overlay ocx-ui-action-menu__content" {...p.content}>
+      {items.map((item) => (
+        <div class="ocx-ui-action-menu__item" {...p[`item:${item.value}`]}>
+          {item.icon ? (
+            <Icon name={item.icon} class="ocx-ui-action-menu__icon" />
+          ) : (
+            iconSlot && <span class="ocx-ui-action-menu__icon" aria-hidden="true" />
+          )}
+          {item.label}
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-action-menu[data-zag-root]'))
+    mount(root, { load: () => import('./menu.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-action-menu {
+      display: inline-block;
+    }
+    .ocx-ui-action-menu[data-context] {
+      display: block;
+    }
+    [data-part='content'] {
+      display: flex;
+      flex-direction: column;
+      min-inline-size: calc(var(--ocx-space-12) + var(--ocx-space-9));
+      font-family: var(--ocx-font-sans);
+      outline: none;
+    }
+    [data-part='content'][hidden] {
+      display: none;
+    }
+    [data-part='item'] {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      font-size: var(--ocx-text-base);
+      font-weight: var(--ocx-font-weight-medium);
+      color: var(--ocx-color-fg);
+      white-space: nowrap;
+      border-radius: var(--ocx-radius-md);
+      cursor: default;
+    }
+    /* Pointer and keyboard both highlight: neutral hover tint, as the nav Menu; the ring marks keyboard use. */
+    [data-part='item'] > :global(.ocx-ui-action-menu__icon) {
+      flex-shrink: 0;
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+    }
+    [data-part='item'][data-highlighted] {
+      background: var(--ocx-color-hover);
+    }
+    [data-part='content']:focus-visible [data-part='item'][data-highlighted] {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    [data-part='item'][data-disabled] {
+      color: var(--ocx-color-fg-subtle);
+    }
+  }
+</style>

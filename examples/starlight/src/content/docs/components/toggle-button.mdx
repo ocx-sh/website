@@ -1,0 +1,50 @@
+---
+title: Toggle button
+description: A button that switches one option on or off and keeps its pressed state, with no client framework.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Use it for one independent on/off choice, such as pinning a version or showing hidden files. For a
+choice among two to five options, use a [toggle group](../toggle-group/). It is a native `<button>`
+with `aria-pressed`, so the pressed state is in the page before any script runs.
+
+## Stories
+
+<Stories of="toggle-button" />
+
+## Props
+
+<PropsTable
+  of="ui/ToggleButton.astro"
+  rows={[
+    { name: 'pressed', type: 'boolean', default: 'false', description: 'Initially pressed; rendered as aria-pressed.' },
+    { name: 'value', type: 'string', description: 'Reported as value in the change event; rendered as data-value.' },
+    { name: 'size', type: "'s' | 'm'", default: "'m'", description: 'Height 30 or 32, mono text.' },
+    { name: 'disabled', type: 'boolean', default: 'false', description: 'Flat and subtle; takes no focus or click.' },
+    {
+      name: 'iconOnly',
+      type: 'boolean',
+      default: 'false',
+      description: 'Square button holding only an icon; then aria-label is required.',
+    },
+    { name: 'aria-label', type: 'string', description: 'Accessible name; required with iconOnly.' },
+    {
+      name: 'rest → <button>',
+      type: 'HTMLAttributes',
+      description: 'Every other attribute goes to the button; type and aria-pressed are set by the component.',
+    },
+  ]}
+/>
+
+## Events
+
+| Event                      | Detail               | When                                                           |
+| -------------------------- | -------------------- | -------------------------------------------------------------- |
+| `ocx:toggle-button:change` | `{ pressed, value }` | The button is pressed or released. It bubbles from the button. |
+
+## Keyboard
+
+- <kbd>Tab</kbd> moves focus to the button.
+- <kbd>Space</kbd> <kbd>Enter</kbd> toggle it.

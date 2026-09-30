@@ -1,0 +1,65 @@
+---
+title: States
+description: The underline is the non-colour cue, so keep always for a link in running text; hover and none suit a link already set apart.
+height: 480
+order: 1
+block: true
+---
+
+import Link from '@ocx-sh/theme/components/ui/Link.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="underline=always">
+    <Link href="#states">Docs</Link>
+  </State>
+  <State label="underline=hover">
+    <Link href="#states" underline="hover">
+      {'Docs'}
+    </Link>
+  </State>
+  <State label="underline=none">
+    <Link href="#states" underline="none">
+      {'Docs'}
+    </Link>
+  </State>
+  <State label="tone=neutral">
+    <Link href="#states" tone="neutral">
+      {'Docs'}
+    </Link>
+  </State>
+  <State label="neutral, underline=hover">
+    <Link href="#states" tone="neutral" underline="hover">
+      {'Docs'}
+    </Link>
+  </State>
+  <State label="external (auto)">
+    <Link href="https://github.com/ocx-sh">GitHub</Link>
+  </State>
+  <State label="external=false">
+    <Link href="https://github.com/ocx-sh" external={false}>
+      {'GitHub'}
+    </Link>
+  </State>
+  <State label="external, newTab">
+    <Link href="https://github.com/ocx-sh" newTab>
+      {'GitHub'}
+    </Link>
+  </State>
+  <State label="newTab">
+    <Link href="#states" newTab>
+      {'Docs'}
+    </Link>
+  </State>
+  <State label="disabled">
+    <Link href="#states" aria-disabled="true">
+      {'Docs'}
+    </Link>
+  </State>
+  <State label="disabled, neutral">
+    <Link href="#states" tone="neutral" aria-disabled="true">
+      {'Docs'}
+    </Link>
+  </State>
+</StateGrid>

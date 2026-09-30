@@ -1,0 +1,253 @@
+/* Shared overlay layer for Select, Combobox and Menu (design c-select, c-combobox, c-menu).
+   Imported from each component's frontmatter: an imported sheet is neither scoped nor
+   layered, so the whole body sits in @layer ocx here. Select rows are also built at runtime
+   (no data-astro-cid), so option rows are styled here with plain class selectors. */
+@layer ocx {
+  :root {
+    --_ov-bg: var(--ocx-color-surface);
+    --_ov-border: var(--ocx-border-width) solid var(--ocx-color-border);
+    --_ov-radius: var(--ocx-radius-lg);
+    --_ov-shadow: var(--ocx-shadow-overlay);
+    --_ov-pad: var(--ocx-space-2);
+    --_ov-dur: var(--ocx-duration-base);
+  }
+
+  /* Popup surface: the Menu, Select and Combobox popups wear it. */
+  .ocx-ui-overlay {
+    margin: 0;
+    padding: var(--_ov-pad);
+    z-index: var(--ocx-z-popover);
+    color: var(--ocx-color-fg);
+    background: var(--_ov-bg);
+    border: var(--_ov-border);
+    border-radius: var(--_ov-radius);
+    box-shadow: var(--_ov-shadow);
+  }
+
+  /* Enter and exit motion (Popover, ActionMenu, Select, Menu): fade + a few px slide from the
+     placement side. Zag's vanilla `connect` sets `hidden` the moment the machine closes and has no
+     presence, so exit is a transition, not a keyframe: `display`/`overlay` with allow-discrete keep the
+     node (and its top layer) rendered until opacity/translate finish. Zag parts wait for
+     `data-zag-state='live'`, so an overlay rendered open by SSR never animates in on load.
+     tokens.css zeroes the durations under prefers-reduced-motion. */
+  .ocx-ui-overlay {
+    --_from: 0 calc(var(--ocx-space-2) * -1);
+  }
+  .ocx-ui-overlay[data-placement^='top'] {
+    --_from: 0 var(--ocx-space-2);
+  }
+  .ocx-ui-overlay[data-placement^='left'] {
+    --_from: var(--ocx-space-2) 0;
+  }
+  .ocx-ui-overlay[data-placement^='right'] {
+    --_from: calc(var(--ocx-space-2) * -1) 0;
+  }
+  /* Combobox and TagsInput: the surface wraps Zag's content (list), so it follows the list's
+     `hidden`. `display: none` here is the discrete end state the transition waits for. */
+  .ocx-ui-overlay:has(> [data-part='content'][data-placement^='top']) {
+    --_from: 0 var(--ocx-space-2);
+  }
+  .ocx-ui-overlay[popover],
+  [data-zag-state='live'] .ocx-ui-overlay[data-part='content'],
+  [data-zag-state='live'] .ocx-ui-overlay:has(> [data-part='content']) {
+    transition:
+      opacity var(--_ov-dur) var(--ocx-ease-out),
+      translate var(--_ov-dur) var(--ocx-ease-out),
+      display var(--_ov-dur) allow-discrete,
+      overlay var(--_ov-dur) allow-discrete;
+  }
+  .ocx-ui-overlay[popover]:not(:popover-open),
+  .ocx-ui-overlay[data-part='content'][hidden],
+  .ocx-ui-overlay:has(> [data-part='content'][hidden]) {
+    opacity: 0;
+    translate: var(--_from);
+    pointer-events: none;
+  }
+  .ocx-ui-overlay:has(> [data-part='content'][hidden]) {
+    display: none;
+  }
+  /* The UA `[hidden]` would drop the list at once and collapse the surface to its siblings while it
+     fades: keep the list laid out for the whole exit; the wrapper's `display: none` ends it. */
+  .ocx-ui-overlay > [data-part='content'][hidden] {
+    display: block;
+  }
+  .ocx-ui-overlay[popover]:popover-open,
+  [data-zag-state='live'] .ocx-ui-overlay[data-part='content']:not([hidden]),
+  [data-zag-state='live'] .ocx-ui-overlay:has(> [data-part='content']:not([hidden])) {
+    @starting-style {
+      opacity: 0;
+      translate: var(--_from);
+    }
+  }
+
+  /* Zag positions the popup (D-Z10); its positioner stacks at the popover layer. */
+  [data-part='positioner'] {
+    --z-index: var(--ocx-z-popover);
+  }
+  .ocx-ui-select__list {
+    box-sizing: border-box;
+    min-inline-size: var(--reference-width);
+    max-block-size: calc(var(--ocx-space-12) * 4);
+    margin: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+  /* Focus sits on the list; the highlighted row shows it. */
+  .ocx-ui-select__list:focus-visible {
+    outline: none;
+  }
+
+  /* Option row (Select and Combobox): check column, label, meta. */
+  .ocx-ui-option {
+    display: grid;
+    grid-template-columns: var(--ocx-space-5) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ocx-space-3);
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg);
+    background: transparent;
+    border-radius: var(--ocx-radius-md);
+    cursor: default;
+  }
+  /* The label sits in column 2 whether or not a checkmark occupies column 1. */
+  .ocx-ui-option__label {
+    grid-column: 2;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* An icon row adds a column between the check and the label. */
+  .ocx-ui-option[data-with-icon] {
+    grid-template-columns: var(--ocx-space-5) var(--ocx-icon-md) minmax(0, 1fr) auto;
+  }
+  .ocx-ui-option__icon {
+    grid-column: 2;
+    display: flex;
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-option[data-with-icon] .ocx-ui-option__label {
+    grid-column: 3;
+  }
+  .ocx-ui-option[data-with-icon] .ocx-ui-option__meta {
+    grid-column: 4;
+  }
+  .ocx-ui-option__meta {
+    grid-column: 3;
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-subtle);
+  }
+  /* Pointer hover = neutral hover tint; keyboard highlight = accent tint (contract divergence 9). */
+  .ocx-ui-option:hover {
+    background: var(--ocx-color-hover);
+  }
+  .ocx-ui-option[hidden] {
+    display: none;
+  }
+  .ocx-ui-option[data-highlighted] {
+    outline: none;
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-accent-tint);
+  }
+  .ocx-ui-option[data-state='checked'] {
+    color: var(--ocx-color-accent-fg);
+  }
+  .ocx-ui-option[data-state='checked']::before {
+    content: '✓' / '';
+    grid-column: 1;
+    grid-row: 1;
+    font-weight: var(--ocx-font-weight-semibold);
+  }
+  .ocx-ui-option[data-disabled] {
+    color: var(--ocx-color-fg-subtle);
+  }
+
+  /* Select closed box (Select.astro). */
+  /* Closed box = the Input box (38px, mono, hairline, square) + chevron room. */
+  .ocx-ui-select__control {
+    position: relative;
+    align-self: start;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    /* Fixed: runtime options (DependencyExplorer licences) never resize the box. */
+    inline-size: calc(var(--ocx-space-12) * 2 - var(--ocx-space-5));
+    block-size: var(--ocx-control-2xl);
+    margin: 0;
+    padding: 0 calc(var(--ocx-space-4) + var(--ocx-icon-md) + var(--ocx-space-3)) 0 var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    line-height: var(--ocx-lh-none);
+    color: var(--ocx-color-fg);
+    text-align: start;
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+    cursor: pointer;
+  }
+  /* Trigger icon: the selected option's, before its text. */
+  .ocx-ui-select__glyph {
+    display: flex;
+    flex: none;
+    margin-inline-end: var(--ocx-space-3);
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-select__value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ocx-ui-select__control:hover {
+    border-color: var(--ocx-color-hover-border);
+  }
+  /* Fields: focus is the border in the focus colour (5.4:1, meets 1.4.11), no ring. */
+  .ocx-ui-select__control:is(:focus-visible, [aria-expanded='true']) {
+    outline: none;
+    border-color: var(--ocx-color-focus);
+  }
+  .ocx-ui-select__control[aria-invalid='true'] {
+    border-color: var(--ocx-color-danger);
+  }
+  .ocx-ui-select__control:disabled {
+    color: var(--ocx-color-fg-subtle);
+    background: var(--ocx-color-surface-subtle);
+    border-color: var(--ocx-color-border);
+    cursor: not-allowed;
+  }
+  .ocx-ui-select__icon {
+    position: absolute;
+    inset-inline-end: var(--ocx-space-4);
+    display: block;
+    inline-size: var(--ocx-icon-md);
+    block-size: var(--ocx-icon-md);
+    fill: none;
+    stroke: var(--ocx-color-fg-subtle);
+    stroke-width: var(--ocx-icon-stroke);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .ocx-ui-select__icon * {
+    vector-effect: non-scaling-stroke;
+  }
+  .ocx-ui-select__icon[data-state='open'] {
+    stroke: var(--ocx-color-fg);
+    rotate: 180deg;
+  }
+
+  /* Combobox and TagsInput match: the typed part strong + coral underline; the rest of the row muted.
+     `mark` is re-created at runtime by the *.zag.mjs modules, so no scope class reaches it. */
+  .ocx-ui-option:has(mark) {
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-option mark {
+    color: var(--ocx-color-fg);
+    font-weight: var(--ocx-font-weight-semibold);
+    background: none;
+    text-decoration: underline;
+    text-decoration-color: var(--ocx-color-accent);
+    text-underline-offset: var(--ocx-prose-link-offset);
+  }
+}

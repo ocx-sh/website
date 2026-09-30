@@ -1,0 +1,13 @@
+---
+title: Badges
+description: Starlight's inline badge, restyled onto the tokens, and how it differs from Tag.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+Badge is Starlight's own component: a short inline stamp for a heading or the sidebar frontmatter
+(`badge: New`). [Tag](../tag/) is this theme's standalone label, meant to sit in page content —
+lists, tables, demo rows — with five tones and a label/stamp variant. Reach for Badge only where
+Starlight itself reads it (page frontmatter, sidebar entries); reach for Tag everywhere else.
+
+<Badge text="stable" variant="success" /> <Badge text="planned" variant="caution" /> <Badge text="new" variant="note" />

@@ -1,0 +1,41 @@
+---
+// ToggleButton (C-267, HeroUI ToggleButton): a native <button aria-pressed> in the segmented-cell
+// look (toggle-button.css). SSR already carries the final pressed state; the script only flips it
+// on click, so Space and Enter work natively and there is no machine (D-P5).
+import type { HTMLAttributes } from 'astro/types';
+import './toggle-button.css';
+
+interface Common {
+  /** Initially pressed. */
+  pressed?: boolean;
+  /** Reported as `value` in `ocx:toggle-button:change`. */
+  value?: string;
+  /** s = 30 · m = 32. */
+  size?: 's' | 'm';
+  disabled?: boolean;
+}
+/** Square button holding only an icon; the type requires its accessible name. */
+type IconOnly = { iconOnly: true; 'aria-label': string } | { iconOnly?: false };
+export type Props = Common & IconOnly & Omit<HTMLAttributes<'button'>, 'type'>;
+
+// `type` and `aria-pressed` are ours: they follow `rest` in one object, since Astro renders a spread
+// and a later attribute side by side.
+const { pressed = false, value, size = 'm', iconOnly = false, class: className, ...rest } = Astro.props;
+const attrs = { ...rest, type: 'button' as const, 'aria-pressed': pressed ? ('true' as const) : ('false' as const) };
+---
+
+<button
+  {...attrs}
+  class:list={['ocx-ui-toggle-button', className]}
+  data-size={size}
+  data-icon-only={iconOnly ? '' : undefined}
+  data-value={value}
+>
+  <slot />
+</button>
+
+<script>
+  import { install } from './toggle-button.mjs';
+
+  install();
+</script>

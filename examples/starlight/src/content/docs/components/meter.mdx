@@ -1,0 +1,51 @@
+---
+title: Meter
+description: A read-out of a value inside a known range, such as disk use or a quota, with no JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A `role="meter"` bar, named by `label`, that reports where a value sits between `min` and `max`. It
+is read-only and ships no JavaScript. For progress of a task, use
+[ProgressCircle](../progress-circle/); to let the reader pick a number, use [Slider](../slider/).
+
+## Stories
+
+<Stories of="meter" />
+
+## Props
+
+<PropsTable
+  of="ui/Meter.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Visible label, also the accessible name.' },
+    {
+      name: 'hideLabel',
+      type: 'boolean',
+      default: 'false',
+      description: 'Hide the label visually. It stays the name.',
+    },
+    { name: 'value', type: 'number', required: true, description: 'Current value, clamped to min and max.' },
+    { name: 'min', type: 'number', default: '0', description: 'Bottom of the range.' },
+    { name: 'max', type: 'number', default: '100', description: 'Top of the range.' },
+    {
+      name: 'format',
+      type: 'Intl.NumberFormatOptions',
+      description: 'Formats the value itself (locale en). Default: the percent of the range.',
+    },
+    {
+      name: 'valueText',
+      type: 'string',
+      description: 'Replaces the shown text and aria-valuetext, e.g. "3.2 of 5 GB".',
+    },
+    {
+      name: 'tone',
+      type: "'neutral' | 'success' | 'warning' | 'danger'",
+      default: "'neutral'",
+      description: 'Fill colour. Accent is not offered.',
+    },
+    { name: 'size', type: "'s' | 'm'", default: "'m'", description: 'Track thickness and value text size.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

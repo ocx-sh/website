@@ -1,0 +1,226 @@
+---
+// Drawer (C-173) on Zag `drawer` (drawer.zag.mjs): Dialog's contract plus swipe to close, as a
+// full-height sheet at the start or end edge (width token) or a bottom sheet (design question 1,
+// interim). The machine loads on the first hover/focus of the trigger (C-104).
+// `ocx:drawer:change {open}`.
+import type { Props as DrawerProps } from '@zag-js/drawer';
+import Button from './Button.astro';
+import { connect, machine, parts } from './drawer.zag.mjs';
+import Icon from './Icon.astro';
+import { nextUiId } from './ids.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+
+interface Props {
+  /** Heading of the drawer; also its accessible name. */
+  title: string;
+  /** One line under the title; linked as the accessible description. */
+  description?: string;
+  /** Open on first paint (defaultOpen). */
+  open?: boolean;
+  /** Trap focus, lock scroll and hide the page from assistive tech. */
+  modal?: boolean;
+  /** Edge the sheet comes from; it swipes back towards it to close. */
+  side?: 'start' | 'end' | 'bottom';
+  /** Zag machine props passed through verbatim (C-106). */
+  zag?: ZagProps<DrawerProps>;
+}
+
+const { title, description, open = false, modal = true, side = 'start', zag } = Astro.props;
+const id = nextUiId('drawer');
+const swipeDirection = side === 'bottom' ? 'down' : side;
+const zagProps = { ...zag, defaultOpen: open, modal, swipeDirection };
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }))).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+---
+
+<div
+  class="ocx-ui-drawer"
+  data-side={side}
+  data-zag-root="drawer"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+>
+  {Astro.slots.has('trigger') && (
+    <Button {...p.trigger}>
+      <slot name="trigger" />
+    </Button>
+  )}
+  <div class="ocx-ui-drawer__backdrop" {...p.backdrop}></div>
+  <div class="ocx-ui-drawer__positioner not-content" {...p.positioner}>
+    <div class="ocx-ui-drawer__content" {...p.content}>
+      <div class="ocx-ui-drawer__head">
+        <h2 class="ocx-ui-drawer__title" {...p.title}>
+          {title}
+        </h2>
+        <Button variant="ghost" size="s" iconOnly aria-label="Close" {...p.closeTrigger}>
+          <Icon name="close" class="ocx-ui-drawer__x" />
+        </Button>
+      </div>
+      {description && (
+        <p class="ocx-ui-drawer__description" {...p.description}>
+          {description}
+        </p>
+      )}
+      <div class="ocx-ui-drawer__body">
+        <slot />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-drawer[data-zag-root]')) {
+    const handle = mount(root, { load: () => import('./drawer.zag.mjs') });
+    // Rendered open (`open`): trap, lock and Esc must work before any hover or focus.
+    if (root.querySelector('[data-part="content"]:not([hidden])')) void handle.start();
+  }
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-drawer {
+      display: inline-block;
+    }
+    [data-part='backdrop'] {
+      position: fixed;
+      inset: 0;
+      z-index: var(--ocx-z-drawer-backdrop);
+      background: var(--ocx-color-overlay);
+      opacity: calc(1 - var(--drawer-swipe-progress, 0));
+    }
+    [data-part='positioner'] {
+      position: fixed;
+      inset: 0;
+      /* Full window, not the scrollbar-less viewport: when the scroll lock lifts on close the
+         scrollbar returns mid-fade, and `inset: 0` would shift the content sideways. */
+      inset-inline-end: auto;
+      inline-size: 100vw;
+      z-index: var(--ocx-z-drawer);
+      display: flex;
+      justify-content: flex-start;
+    }
+    [data-part='positioner'][hidden] {
+      display: none;
+    }
+    [data-side='end'] [data-part='positioner'] {
+      justify-content: flex-end;
+    }
+    [data-side='bottom'] [data-part='positioner'] {
+      align-items: flex-end;
+    }
+    [data-part='content'] {
+      box-sizing: border-box;
+      inline-size: var(--ocx-drawer-width);
+      block-size: 100%;
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: var(--ocx-space-6) var(--ocx-space-5);
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-base);
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface);
+      border-inline-end: var(--ocx-border-width) solid var(--ocx-color-border);
+      box-shadow: var(--ocx-shadow-overlay);
+      touch-action: pan-y;
+    }
+    [data-side='end'] [data-part='content'] {
+      border-inline-start: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-inline-end: 0;
+    }
+    [data-side='bottom'] [data-part='content'] {
+      inline-size: 100%;
+      block-size: auto;
+      max-block-size: calc(100% - var(--ocx-header-height));
+      border: 0;
+      border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+      touch-action: pan-x;
+    }
+    [data-part='content']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(var(--ocx-focus-offset) * -1);
+    }
+    /* Enter and exit: the sheet slides from its edge, the backdrop fades. Zag's vanilla connect has no
+       presence and hides at once, so `display` (allow-discrete) holds the node until the transition
+       ends. `translate`, not `transform`: Zag's inline transform follows the swipe. Live only: a
+       drawer rendered open by SSR must not animate in on load. */
+    [data-part='content'] {
+      --_off: -100% 0;
+    }
+    [data-side='end'] [data-part='content'] {
+      --_off: 100% 0;
+    }
+    :global([dir='rtl']) [data-side='start'] [data-part='content'] {
+      --_off: 100% 0;
+    }
+    :global([dir='rtl']) [data-side='end'] [data-part='content'] {
+      --_off: -100% 0;
+    }
+    [data-side='bottom'] [data-part='content'] {
+      --_off: 0 100%;
+    }
+    [data-part='backdrop'][hidden] {
+      opacity: 0;
+    }
+    [data-part='content'][hidden] {
+      translate: var(--_off);
+    }
+    .ocx-ui-drawer[data-zag-state='live'] [data-part='positioner'] {
+      transition: display var(--ocx-duration-slow) allow-discrete;
+    }
+    .ocx-ui-drawer[data-zag-state='live'] [data-part='backdrop']:not([data-swiping]) {
+      transition:
+        opacity var(--ocx-duration-slow) var(--ocx-ease-out),
+        display var(--ocx-duration-slow) allow-discrete;
+    }
+    .ocx-ui-drawer[data-zag-state='live'] [data-part='content']:not([data-swiping]) {
+      transition:
+        translate var(--ocx-duration-slow) var(--ocx-ease-out),
+        display var(--ocx-duration-slow) allow-discrete;
+    }
+    .ocx-ui-drawer[data-zag-state='live'] [data-part='backdrop']:not([hidden], [data-swiping]) {
+      @starting-style {
+        opacity: 0;
+      }
+    }
+    .ocx-ui-drawer[data-zag-state='live'] [data-part='content']:not([hidden], [data-swiping]) {
+      @starting-style {
+        translate: var(--_off);
+      }
+    }
+    .ocx-ui-drawer__head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--ocx-space-4);
+    }
+    /* Outranks the prose h2 rule (margin, rule line, padding) when the drawer sits in page content. */
+    .ocx-ui-drawer__head > [data-part='title'] {
+      margin: 0;
+      padding-top: 0;
+      border-top: 0;
+      font-size: var(--ocx-text-lg);
+      font-weight: var(--ocx-font-weight-semibold);
+      line-height: var(--ocx-lh-heading);
+      color: var(--ocx-color-fg);
+    }
+    [data-part='description'] {
+      margin: var(--ocx-space-3) 0 0;
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-ui-drawer__body {
+      margin-block-start: var(--ocx-space-5);
+    }
+    .ocx-ui-drawer__x {
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+  }
+</style>

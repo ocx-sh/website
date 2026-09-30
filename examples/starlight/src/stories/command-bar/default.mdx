@@ -1,0 +1,18 @@
+---
+title: Install command
+description: The picker preselects your OS before first paint (detect); pick another to swap the command.
+height: 180
+log: true
+block: true
+toaster: true
+---
+
+import CommandBar from '@ocx-sh/theme/components/ui/CommandBar.astro';
+
+export const install = [
+  { value: 'linux', label: 'Linux', icon: 'linux', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+  { value: 'macos', label: 'macOS', icon: 'apple', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+  { value: 'windows', label: 'Windows', icon: 'windows', command: 'irm https://setup.ocx.sh/pwsh | iex' },
+];
+
+<CommandBar choices={install} pickerLabel="Platform" noun="install command" detect />

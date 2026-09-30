@@ -1,0 +1,86 @@
+---
+// Breadcrumbs (design "Prev / next · breadcrumb" tile: the mono eyebrow above every h1, "/" between
+// segments, last segment in fg). Zero JS: the last item is the current page (aria-current, not a
+// link); with more than three items a narrow container folds the middle ones into an ellipsis
+// button whose native popover lists them (Escape and outside click close it, no script).
+// ponytail: popover stays open on tab-out (Menu's focusout script skipped to keep chrome JS at zero).
+// Styles: breadcrumbs.css, loaded by base.css (every page shows the trail: no extra stylesheet request).
+import Icon from './Icon.astro';
+import Link from './Link.astro';
+import type { IconName } from '../../icons/icons.mjs';
+import { nextUiId } from './ids.mjs';
+
+export interface BreadcrumbItem {
+  label: string;
+  /** Omitted: plain text (a group without a page). Ignored on the last item, the current page. */
+  href?: string | undefined;
+  /** Leading registry icon. */
+  icon?: IconName;
+}
+
+export interface Props {
+  /** Outermost first; the last item is the current page. */
+  items: BreadcrumbItem[];
+  /** Accessible name of the landmark. */
+  label?: string;
+  /** Id of the collapsed-items popover. */
+  id?: string;
+  class?: string;
+}
+
+const { items, label = 'Breadcrumbs', id = nextUiId('crumbs'), class: className } = Astro.props;
+// ponytail: a label longer than the CSS cap (2 × space-12 = 224px ≈ 31 mono chars at text-xs) gets
+// its full text as a title; the count is a heuristic, not a measurement.
+const LONG = 28;
+const title = (it: BreadcrumbItem) => (it.label.length > LONG ? it.label : undefined);
+// First + last two stay; anything between folds on narrow widths.
+const middle = items.length > 3 ? items.slice(1, -2) : [];
+const last = items.length - 1;
+---
+
+<nav class:list={['ocx-ui-crumbs', className]} aria-label={label}>
+  <ol>
+    {items.map((it, i) => (
+      <>
+        {i === 1 && middle.length > 0 && (
+          <li class="ocx-ui-crumbs__more">
+            <button type="button" popovertarget={id} aria-label={`Show ${middle.length} more`}>
+              <Icon name="more" />
+            </button>
+            <ul id={id} popover>
+              {middle.map((m) => (
+                <li>
+                  {m.href ? (
+                    <Link href={m.href} tone="neutral" underline="hover">
+                      {m.label}
+                    </Link>
+                  ) : (
+                    <span>{m.label}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </li>
+        )}
+        <li data-mid={i > 0 && i < items.length - 2 && middle.length > 0 ? '' : undefined}>
+          {i === last ? (
+            <span aria-current="page" title={title(it)}>
+              {it.icon && <Icon name={it.icon} size="sm" />}
+              {it.label}
+            </span>
+          ) : it.href ? (
+            <Link href={it.href} title={title(it)} tone="neutral" underline="hover">
+              {it.icon && <Icon name={it.icon} size="sm" />}
+              {it.label}
+            </Link>
+          ) : (
+            <span title={title(it)}>
+              {it.icon && <Icon name={it.icon} size="sm" />}
+              {it.label}
+            </span>
+          )}
+        </li>
+      </>
+    ))}
+  </ol>
+</nav>

@@ -1,0 +1,148 @@
+---
+// Starlight `Sidebar` override (C-230, D-Z5). The top level is the design's flat list: a group is a
+// mono-caps label over its entries, never collapsed. Nested groups are Zag collapsibles
+// (collapsible.zag.mjs), mounted by Search.astro's every-page script on their first touch, so no
+// page pays a script request for them. Starlight's persistence is kept: `sl-sidebar-state-persist`
+// with Starlight's sidebar hash inside `#starlight__sidebar`, the `sl-sidebar-state` sessionStorage
+// entry (`open[]` by nested-group index, `scroll`), restored at ≥ 50em by an inline script right
+// after the list, before first paint; Starlight's own script (Page.astro) still saves the scroll on
+// page hide. Styles: starlight.css, badges included: Starlight's Badge component would inline
+// its stylesheet into every page (htmlGz), so a badge is its `.sl-badge <variant>` span only.
+// DOM budget (C-112): a link's and a group's label is bare text, not Starlight's wrapping <span>, and a
+// nested group is its <li> (root), <button> (trigger) and <ul> (content), no wrapper <div>s.
+import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+import MobileMenuFooter from 'virtual:starlight/components/MobileMenuFooter';
+import { connect, machine } from '../components/collapsible.zag.mjs';
+import { ssrApi, ssrAttrs } from '../components/ui/zag-runtime.mjs';
+
+type Entry = StarlightRouteData['sidebar'][number];
+type Group = Extract<Entry, { type: 'group' }>;
+
+interface Props {
+  /** Internal (recursion): the list to render and its depth; the sidebar itself renders with none. */
+  entries?: Entry[];
+  depth?: number;
+  /** Internal: each nested group's index in document order (its id and its `open[]` slot). */
+  index?: Map<Group, number>;
+  /** Internal: a nested group's content part, spread on its list (no wrapper element). */
+  attrs?: Record<string, unknown>;
+}
+
+const { depth = 0 } = Astro.props;
+const top = Astro.props.entries === undefined;
+const entries = Astro.props.entries ?? Astro.locals.starlightRoute.sidebar;
+
+const hasCurrent = (g: Group): boolean => g.entries.some((e) => (e.type === 'link' ? e.isCurrent : hasCurrent(e)));
+
+// Top call only: number the nested groups (pre-order = document order) and hash the sidebar.
+const index = Astro.props.index ?? new Map<Group, number>();
+let hash = '';
+if (top) {
+  const walk = (list: Entry[], d: number) => {
+    for (const e of list)
+      if (e.type === 'group') {
+        if (d > 0) index.set(e, index.size);
+        walk(e.entries, d + 1);
+      }
+  };
+  walk(entries, 0);
+  // Starlight 0.42's getSidebarHash (utils/navigation, not exported): labels and hrefs, not the current page.
+  const identity = (list: Entry[]): string =>
+    list.map((e) => (e.type === 'group' ? e.label + identity(e.entries) : e.label + e.href)).join('');
+  const id = identity(entries);
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h << 5) - h + id.charCodeAt(i);
+  hash = (h >>> 0).toString(36).padStart(7, '0');
+}
+const groups = index.size > 0;
+
+// Pre-paint restore, inline and hand-minified: every page carries it (htmlGz). `p` is the persist
+// element, `s` the stored state when it names this sidebar. With nested groups it also flips each
+// stored group (the SSR parts and the machine's `defaultOpen`) and saves every change. When no mount
+// marked `p` by DOMContentLoaded (Search overridden, or its script failed), the groups take the error
+// state, whose rule shows their content: no page becomes unreachable.
+const SCROLL = `p.closest('#starlight__sidebar').scrollTop=s.scroll`;
+const persist = groups
+  ? `(()=>{try{const p=document.currentScript.parentElement,k='sl-sidebar-state',h=p.dataset.hash,g=[...p.querySelectorAll('[data-zag-root=collapsible]')],r=()=>{try{const s=JSON.parse(sessionStorage.getItem(k)||'0');if(s&&s.hash===h&&Array.isArray(s.open))return s}catch{}return{hash:h,open:[]}},s=r();p.addEventListener('ocx:collapsible:change',e=>{try{const t=r();t.open[g.indexOf(e.target)]=e.detail.open;sessionStorage.setItem(k,JSON.stringify(t))}catch{}});addEventListener('DOMContentLoaded',()=>'mounted'in p.dataset||g.forEach(d=>d.dataset.zagState='error'));if(!matchMedia('(min-width: 50em)').matches)return;g.forEach((d,i)=>{const o=s.open[i];if(typeof o!='boolean')return;const t=d.firstElementChild,c=t.nextElementSibling,v=o?'open':'closed',z=JSON.parse(d.dataset.zagProps);z.defaultOpen=o;d.dataset.zagProps=JSON.stringify(z);d.dataset.state=t.dataset.state=v;o?c.removeAttribute('data-state'):c.dataset.state=v;t.setAttribute('aria-expanded',o);c.hidden=!o});if(s.scroll)${SCROLL}}catch{}})()`
+  : `(()=>{try{const p=document.currentScript.parentElement,s=JSON.parse(sessionStorage.getItem('sl-sidebar-state')||'0');if(s.hash===p.dataset.hash&&matchMedia('(min-width: 50em)').matches)${SCROLL}}catch{}})()`;
+
+/** A link's own attributes; its `class` joins ours (as Starlight's). */
+const omitClass = (attrs: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(attrs).filter(([k]) => k !== 'class'));
+
+/** SSR of one nested group (C-130a): its machine's parts for its id and open state. */
+function group(g: Group) {
+  const id = `sb-${index.get(g)}`;
+  const props = { defaultOpen: hasCurrent(g) || !g.collapsed };
+  const api = ssrApi(machine, connect, { ...props, id });
+  return {
+    id,
+    props: JSON.stringify(props),
+    root: ssrAttrs(api.getRootProps()),
+    trigger: ssrAttrs(api.getTriggerProps()),
+    content: ssrAttrs(api.getContentProps()),
+  };
+}
+---
+
+{top ? (
+  <>
+    <sl-sidebar-state-persist data-hash={hash}>
+      <Astro.self entries={entries} depth={0} index={index} />
+      {groups && (
+        <noscript>
+          <Fragment set:html="<style>@layer ocx{#starlight__sidebar [data-collapsible][hidden]{display:block}}</style>" />
+        </noscript>
+      )}
+      <script is:inline aria-hidden="true" set:html={persist} />
+    </sl-sidebar-state-persist>
+    <div class="md:sl-hidden">
+      <MobileMenuFooter />
+    </div>
+  </>
+) : (
+  <ul class={depth === 0 ? 'top-level' : undefined} {...Astro.props.attrs}>
+    {entries.map((e) =>
+      e.type === 'link' ? (
+        <li>
+          <a
+            href={e.href}
+            aria-current={e.isCurrent ? 'page' : undefined}
+            {...omitClass(e.attrs)}
+            class:list={[{ large: depth === 0 }, e.attrs.class]}
+          >
+            {e.label}
+            {e.badge && <span class:list={['sl-badge', e.badge.variant, e.badge.class]}>{e.badge.text}</span>}
+          </a>
+        </li>
+      ) : depth === 0 ? (
+        <li>
+          <span class="group-label">
+            {e.label}
+            {e.badge && <span class:list={['sl-badge', e.badge.variant, e.badge.class]}>{e.badge.text}</span>}
+          </span>
+          <Astro.self entries={e.entries} depth={1} index={index} />
+        </li>
+      ) : (
+        (() => {
+          const p = group(e);
+          return (
+            <li
+              data-zag-root="collapsible"
+              data-zag-state="idle"
+              data-zag-id={p.id}
+              data-zag-props={p.props}
+              {...p.root}
+            >
+              <button {...p.trigger}>
+                {e.label}
+                {e.badge && <span class:list={['sl-badge', e.badge.variant, e.badge.class]}>{e.badge.text}</span>}
+              </button>
+              <Astro.self entries={e.entries} depth={depth + 1} index={index} attrs={p.content} />
+            </li>
+          );
+        })()
+      ),
+    )}
+  </ul>
+)}

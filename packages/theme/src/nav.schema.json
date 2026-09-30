@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ocx.sh navigation and path registry",
+  "description": "Shape only. Cross-reference rules (path grammar, claim nesting, zones, entry links) are enforced by validate() in registry.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "brand", "sections", "hubs", "claims", "entries", "actions", "footer"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 4, "description": "Schema version; bump on any breaking change." },
+    "brand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["wordmark", "href"],
+      "properties": {
+        "wordmark": { "type": "string", "minLength": 1 },
+        "href": { "type": "string", "minLength": 1 }
+      }
+    },
+    "sections": {
+      "description": "Top-level header items: a link or a menu over hubs.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "href"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "label": { "type": "string", "minLength": 1 },
+              "href": { "type": "string", "minLength": 1 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label", "hubs"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "label": { "type": "string", "minLength": 1 },
+              "hubs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } }
+            }
+          }
+        ]
+      }
+    },
+    "hubs": {
+      "description": "Mount points that host ecosystem claims and group entries into categories.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "href", "blurb", "all", "categories"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1 },
+          "href": { "type": "string", "minLength": 1 },
+          "blurb": { "type": "string", "minLength": 1 },
+          "all": { "type": "string", "minLength": 1 },
+          "categories": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "label"],
+              "properties": {
+                "id": { "$ref": "#/$defs/id" },
+                "label": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "claims": {
+      "description": "The path registry: which repo deploys which path prefix.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "repo", "search"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "repo": { "type": "string", "minLength": 1 },
+          "search": { "type": "boolean", "description": "Ships its own Pagefind index for cross-site search." }
+        }
+      }
+    },
+    "entries": {
+      "description": "Menu and hub-page items.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "hub", "category", "label", "meta", "desc"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "hub": { "$ref": "#/$defs/id" },
+          "category": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1 },
+          "meta": { "type": "string", "minLength": 1 },
+          "desc": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "href": { "type": "string", "minLength": 1 },
+          "planned": { "type": "boolean" }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "href", "kind"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "label": { "type": "string", "minLength": 1 },
+          "href": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["button", "icon"] }
+        }
+      }
+    },
+    "footer": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "href"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "href": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1 }
+  }
+}

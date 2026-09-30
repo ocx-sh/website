@@ -1,0 +1,94 @@
+---
+// ToggleGroup (C-153, design c-choice "segmented"): one or several of 2–5 always-visible
+// options on Zag `toggle-group`. One = a radio group (not deselectable), several = pressed buttons.
+import type { Props as ToggleGroupMachineProps } from '@zag-js/toggle-group';
+import type { IconName } from '../icons/icons.mjs';
+import { connect, machine } from './toggle-group.zag.mjs';
+import Icon from './ui/Icon.astro';
+import './ui/toggle-button.css';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+
+export interface ToggleItem {
+  /** Id-safe value (no whitespace): Zag builds the item id from it. */
+  value: string;
+  label: string;
+  disabled?: boolean;
+  /** Registry icon shown before the label. */
+  icon?: IconName;
+  /** Render only the icon (a square cell); the label becomes the aria-label. Needs `icon`. */
+  iconOnly?: boolean;
+}
+
+export interface Props {
+  items: ToggleItem[];
+  /** Allow several pressed options (buttons with aria-pressed) instead of one (a radio group). */
+  multiple?: boolean;
+  /** Initially pressed value(s). */
+  value?: string | string[];
+  /** Accessible name of the group. */
+  label: string;
+  /** Zag `toggle-group` machine props (data only). */
+  zag?: ZagProps<ToggleGroupMachineProps>;
+}
+
+const { items, multiple = false, value = [], label, zag } = Astro.props;
+const id = nextUiId('toggle-group');
+const props = {
+  defaultValue: Array.isArray(value) ? value : [value],
+  ...(multiple ? { multiple } : { deselectable: false }),
+  ...zag,
+};
+const api = ssrApi(machine, connect, { id, ...props });
+---
+
+<div
+  class="ocx-toggle-group"
+  data-zag-root="toggle-group"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(props)}
+  aria-label={label}
+  {...ssrAttrs(api.getRootProps())}
+>
+  {items.map((item) => (
+    <button
+      {...ssrAttrs(api.getItemProps(item))}
+      class="ocx-ui-toggle-button"
+      aria-label={item.iconOnly && item.icon ? item.label : undefined}
+      data-icon-only={item.iconOnly && item.icon ? '' : undefined}
+    >
+      {item.icon && <Icon name={item.icon} size="md" />}
+      {!(item.iconOnly && item.icon) && item.label}
+    </button>
+  ))}
+</div>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+
+  // Replay on: the items are plain buttons, so an early click did nothing natively (C-104).
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="toggle-group"]'))
+    mount(root, { load: () => import('./toggle-group.zag.mjs') });
+</script>
+
+<style is:global>
+  @layer ocx {
+    /* Segmented (design c-choice): the cell look is toggle-button.css; only the joining lives here. */
+    .ocx-toggle-group {
+      display: inline-flex;
+    }
+    .ocx-toggle-group[data-orientation='vertical'] {
+      flex-direction: column;
+    }
+    /* Scoped to the group: TagGroup chips share Zag's toggle-group scope. */
+    .ocx-toggle-group > [data-part='item'] + [data-part='item'] {
+      margin-inline-start: calc(-1 * var(--ocx-border-width));
+    }
+    .ocx-toggle-group[data-orientation='vertical'] > [data-part='item'] + [data-part='item'] {
+      margin-inline-start: 0;
+      margin-block-start: calc(-1 * var(--ocx-border-width));
+    }
+  }
+</style>

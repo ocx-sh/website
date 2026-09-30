@@ -1,0 +1,77 @@
+---
+// Accordion (C-141): an APG accordion on Zag `accordion`; its items are <AccordionItem>s in the
+// default slot. SSR renders the machine's parts (first paint is final); the machine loads on the
+// first hover, focus or touch.
+import type { Props as AccordionMachineProps } from '@zag-js/accordion';
+import { connect, locked, machine } from './accordion.zag.mjs';
+import { nextUiId } from './ui/ids.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+
+interface Props {
+  /** Several items may be open at once. */
+  multiple?: boolean;
+  /**
+   * The open item closes when its trigger is selected again (default). `false` keeps one item open
+   * in single mode: that item's trigger then carries aria-disabled and shows no chevron.
+   */
+  collapsible?: boolean;
+  /** Values of the items open on first paint. */
+  value?: string[];
+  /** Further Zag accordion props, data only (C-106); `value` stays ours (controlled mode needs an owner). */
+  zag?: ZagProps<Omit<AccordionMachineProps, 'value'>>;
+}
+
+const { multiple = false, collapsible = true, value = [], zag = {} } = Astro.props;
+const id = nextUiId('accordion');
+const props = { ...zag, multiple, collapsible, defaultValue: value };
+const keepOne = !multiple && !collapsible;
+const api = ssrApi(machine, connect, { ...props, id });
+// Each item marked its parts (see AccordionItem.astro); a nested accordion has already replaced its own.
+const parts = {
+  item: api.getItemProps,
+  'item-trigger': (v: { value: string }) => ({
+    ...api.getItemTriggerProps(v),
+    ...(locked(api, keepOne, v) && { 'aria-disabled': 'true' }),
+  }),
+  'item-content': api.getItemContentProps,
+};
+const html = (v: string) => v.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+const seen = new Set<string>();
+const items = (await Astro.slots.render('default')).replace(
+  / data-ocx-accordion="(item|item-trigger|item-content):([\w-]+)"/g,
+  (_, part: keyof typeof parts, item: string) => {
+    if (part === 'item' && seen.size === seen.add(item).size)
+      throw new Error(`<Accordion>: two items share value="${item}"`);
+    return Object.entries(ssrAttrs(parts[part]({ value: item })))
+      .map(([k, v]) => (v === '' || v === true ? ` ${k}` : ` ${k}="${html(v)}"`))
+      .join('');
+  },
+);
+---
+
+<div
+  class="ocx-accordion"
+  data-zag-root="accordion"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(props)}
+  data-keep-one={keepOne || undefined}
+  {...ssrAttrs(api.getRootProps())}
+  set:html={items}
+/>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-accordion[data-zag-root]'))
+    mount(root, { load: () => import('./accordion.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    /* No frame: the items (see AccordionItem.astro) sit in the prose flow like Tabs and Toc. */
+    .ocx-accordion {
+      inline-size: 100%;
+    }
+  }
+</style>

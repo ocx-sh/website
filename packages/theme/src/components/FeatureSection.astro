@@ -1,0 +1,140 @@
+---
+// Alternating ("chess layout") landing-page block (WP13.4, port of ocx
+// FeatureSection.vue): `text` slot one side, default slot (the visual) the other.
+// Reveal: one-shot IntersectionObserver flag (ocx 43d3f2dc9), see feature-section.mjs.
+// ponytail: the Vue original tracked scroll position every frame to drive a
+// continuous focus glow; this port keeps only its end-state transition, played once.
+interface Props {
+  /** Section heading, rendered as an `<h2>`. */
+  title: string;
+  /** Put the visual on the left (desktop only; mobile always stacks text first). */
+  flip?: boolean;
+}
+
+const { title, flip = false } = Astro.props;
+---
+
+<section class="ocx-feature" data-flip={flip ? '' : undefined}>
+  <div class="ocx-feature__text">
+    <h2 class="ocx-feature__title">{title}</h2>
+    <div class="ocx-feature__body">
+      <slot name="text" />
+    </div>
+  </div>
+  <div class="ocx-feature__visual">
+    <slot />
+  </div>
+</section>
+
+<script>
+  import { revealOnIntersect } from './feature-section.mjs';
+
+  revealOnIntersect(document.querySelectorAll('.ocx-feature'));
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-feature {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: var(--ocx-space-9);
+      align-items: center;
+      margin: var(--ocx-space-6) 0 0;
+      padding: var(--ocx-space-8);
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-xl);
+    }
+    .ocx-feature[data-flip] {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    }
+    .ocx-feature[data-flip] .ocx-feature__visual {
+      order: -1;
+    }
+
+    .ocx-feature__text,
+    .ocx-feature__visual {
+      margin: 0;
+    }
+
+    /* Two classes: outranks the prose h2 rule (border, margins) under a :where() scope strategy. */
+    .ocx-feature .ocx-feature__title {
+      margin: 0 0 var(--ocx-space-5);
+      padding: 0;
+      border: 0;
+      font-size: var(--ocx-prose-h2);
+      font-weight: var(--ocx-font-weight-bold);
+      line-height: var(--ocx-lh-heading);
+      color: var(--ocx-color-fg);
+    }
+
+    .ocx-feature__body {
+      font-size: var(--ocx-prose-body);
+      line-height: var(--ocx-prose-lh);
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-feature__body > :global(*) {
+      margin: 0 0 var(--ocx-space-4);
+    }
+    .ocx-feature__body > :global(:last-child) {
+      margin-bottom: 0;
+    }
+
+    .ocx-feature__visual {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .ocx-feature__visual > :global(*) {
+      width: 100%;
+      margin: 0;
+    }
+    .ocx-feature__visual :global(.feature-img) {
+      /* As FeatureSection.vue: an illustration never outgrows 240px. */
+      max-width: 240px;
+      height: auto;
+    }
+
+    @media (width < 50rem) {
+      .ocx-feature,
+      .ocx-feature[data-flip] {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--ocx-space-7);
+        padding: var(--ocx-space-7) var(--ocx-space-6);
+      }
+      .ocx-feature[data-flip] .ocx-feature__visual {
+        order: 0;
+      }
+    }
+
+    /* Hide-before-reveal only where the reveal can run and is wanted: without
+       JS or under reduced motion the section is simply there. */
+    @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+      .ocx-feature {
+        --_reveal: calc(var(--ocx-duration-slow) * 2);
+      }
+      /* Off-screen sections hide at once (no transition), then fade in on reveal. */
+      .ocx-feature[data-pending] {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+      /* The live site's in-focus brand border and glow, settling to rest. */
+      .ocx-feature[data-revealed] {
+        transition:
+          opacity var(--_reveal) ease-out,
+          transform var(--_reveal) ease-out;
+        animation: ocx-feature-settle calc(var(--_reveal) * 2) ease-out;
+      }
+    }
+
+    @keyframes ocx-feature-settle {
+      from,
+      40% {
+        border-color: var(--ocx-color-accent);
+        box-shadow: 0 0 var(--ocx-space-6) calc(-1 * var(--ocx-space-3))
+          color-mix(in srgb, var(--ocx-color-accent) 12%, transparent);
+      }
+    }
+  }
+</style>

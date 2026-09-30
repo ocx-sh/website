@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "lib": ["ES2023"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
@@ -16,7 +16,29 @@
     "noImplicitOverride": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": true
   },
-  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts", "scripts/**/*.ts", "*.config.ts"]
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.mjs",
+    "packages/*/bin/**/*.ts",
+    "packages/*/bin/**/*.mjs",
+    "packages/*/test/**/*.ts",
+    "packages/*/test/**/*.mjs",
+    "infra/**/*.ts",
+    "infra/**/*.mjs",
+    "tests/**/*.ts",
+    "tests/*.mjs",
+    ".github/actions/deploy/**/*.ts",
+    ".github/actions/deploy/**/*.mjs",
+    "scripts/**/*.ts",
+    "scripts/**/*.mjs",
+    "*.config.ts",
+    "*.config.cjs",
+    "*.config.mjs",
+    "*.config.js",
+    ".lighthouserc.cjs"
+  ]
 }

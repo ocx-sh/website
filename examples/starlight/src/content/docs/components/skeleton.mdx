@@ -1,0 +1,23 @@
+---
+title: Skeleton
+description: The placeholder that reserves the final box so nothing moves when content lands.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A skeleton is decorative, so pair it with a [Loader](../loader/) for the announcement.
+
+## Stories
+
+<Stories of="skeleton" />
+
+## Props
+
+<PropsTable
+  of="ui/Skeleton.astro"
+  rows={[
+    { name: 'lines', type: 'number', default: '3', description: 'Text lines to reserve, each one line-height tall.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

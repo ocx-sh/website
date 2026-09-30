@@ -1,0 +1,48 @@
+---
+// The toast showcase's live buttons: each fires `toast()` (the public API, `@ocx-sh/theme/toast`)
+// from `data-toast`, on the button itself — so the Demo's EventLog catches `ocx:toast` too. Loads
+// its wiring as a lazy chunk, out of the page HTML, same shape as DepsControls (C-222).
+---
+
+<div class="showcase-actions">
+  <button type="button" class="showcase-action" data-toast="info">
+    info
+  </button>
+  <button type="button" class="showcase-action" data-toast="success">
+    success
+  </button>
+  <button type="button" class="showcase-action" data-toast="warning">
+    warning
+  </button>
+  <button type="button" class="showcase-action" data-toast="error">
+    error
+  </button>
+  <button type="button" class="showcase-action" data-toast="description">
+    with description
+  </button>
+  <button type="button" class="showcase-action" data-toast="action">
+    with action
+  </button>
+  <button type="button" class="showcase-action" data-toast="persistent">
+    persistent
+  </button>
+  <button type="button" class="showcase-action" data-toast="dismiss-persistent">
+    dismiss it (id)
+  </button>
+  <button type="button" class="showcase-action" data-toast="promise">
+    promise: loading → success
+  </button>
+  <button type="button" class="showcase-action" data-toast="promise-error">
+    promise: loading → error
+  </button>
+  <button type="button" class="showcase-action" data-toast="update">
+    show, then update (same id)
+  </button>
+  <button type="button" class="showcase-action" data-toast="stack">
+    stack 5 at once
+  </button>
+</div>
+
+<script>
+  void import('./toast-controls.mjs');
+</script>

@@ -1,0 +1,54 @@
+---
+// Tag chip (design c-tags): label / stamp are passive, filter is the one chip that responds.
+// Behaviour-free: `pressed` state and the remove button do nothing alone; TagGroup and TagsInput drive them.
+import type { HTMLAttributes } from 'astro/types';
+import Icon from './Icon.astro';
+import './tag.css';
+
+interface Common {
+  /** label = tint fill, a passive category · stamp = outline caps, a status fact · filter = toggle chip. */
+  variant?: 'label' | 'stamp' | 'filter';
+  tone?: 'neutral' | 'keyword' | 'success' | 'warning' | 'danger';
+  class?: string;
+  /** Written to `data-value` (the item value a group reads). */
+  value?: string;
+  /** Spread on the remove button (Zag item-delete-trigger props). */
+  removeProps?: Record<string, unknown>;
+}
+/** A removable chip is a span (a button cannot hold the remove button) and its type requires the button's name. */
+type Removal =
+  | { removable?: false; removeLabel?: never; as?: 'span' | 'button' }
+  | { removable: true; removeLabel: string; as?: 'span' };
+export type Props = Common & Removal & Omit<HTMLAttributes<'button'>, 'value' | 'type'>;
+
+const {
+  variant = 'label',
+  tone = 'neutral',
+  value,
+  removable = false,
+  removeLabel,
+  removeProps,
+  as = 'span',
+  class: className,
+  ...rest
+} = Astro.props;
+const Root = as;
+---
+
+<Root
+  class:list={['ocx-ui-tag', className]}
+  data-variant={variant}
+  data-tone={tone}
+  data-value={value}
+  data-removable={removable ? '' : undefined}
+  type={Root === 'button' ? 'button' : undefined}
+  {...rest}
+>
+  <slot />
+  {variant === 'filter' && <Icon name="check" size="xs" class="ocx-ui-tag__check" />}
+  {removable && (
+    <button type="button" class="ocx-ui-tag__remove" aria-label={removeLabel} {...removeProps}>
+      <Icon name="close" size="xs" />
+    </button>
+  )}
+</Root>

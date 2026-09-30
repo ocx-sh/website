@@ -1,12 +1,47 @@
 /* OCX base · v1.2 — layer 2 of 3. Generator-agnostic; load after ocx-tokens.css.
  *
- * One rule set for every generator. Prose rules target all known content roots
- * through one :is() list, so heading/link/code/table behaviour cannot drift
- * between Starlight and the catalog. Adapters (layer 3) only
- * map native variables and restyle chrome that has no shared equivalent.
+ * Generator-agnostic only: prose rules target .ocx-prose and each supported
+ * generator's content root in one :is() list; adapters (layer 3) map native
+ * variables and restyle chrome that has no shared equivalent.
  *
- * Specificity budget: :is() takes its heaviest argument (.content main = 0,1,1).
- * Never add an #id to the list — adapters must be able to override. */
+ * Never add an #id — adapters must be able to override. */
+
+/* UI primitives that the chrome (breadcrumb trail), most composites or a composite's first viewport
+ * render: in this sheet, not per component, so none costs a render-blocking request of its own.
+ * Lighthouse's simulation (six connections, four held by the preloaded fonts) puts LCP a round trip
+ * later once a page has a few more. Each file wraps itself in @layer ocx. */
+@import './components/ui/link.css';
+@import './components/ui/breadcrumbs.css';
+@import './components/ui/button.css';
+@import './components/ui/loader.css';
+
+/* Metric fallbacks for IBM Plex: shown until the web font swaps in, sized so the
+ * swap does not shift layout. Every local() in a set shares one advance-width
+ * metric (Arial, Arial Bold, Courier New), so one override set fits all of them.
+ * Overrides per Plex weight, computed as Astro's Fonts API does (capsize
+ * xWidthAvg ratio); Plex Mono has one advance width at every weight. The
+ * unicode-range is Plex's latin subset, so glyphs outside it (↗) keep falling
+ * through to the system font exactly as they do once Plex has loaded. */
+@font-face {
+  font-family: "OCX Sans Fallback"; font-weight: 400;
+  src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Nimbus Sans"), local("Helvetica");
+  size-adjust: 101.1663%; ascent-override: 101.3184%; descent-override: 27.183%; line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "OCX Sans Fallback"; font-weight: 600;
+  src: local("Arial Bold"), local("Liberation Sans Bold"), local("Arimo Bold"), local("Nimbus Sans Bold"), local("Helvetica Bold");
+  size-adjust: 97.2956%; ascent-override: 105.349%; descent-override: 28.2644%; line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "OCX Mono Fallback";
+  src: local("Courier New"), local("Liberation Mono"), local("Cousine"), local("Nimbus Mono PS"), local("Courier");
+  size-adjust: 99.9837%; ascent-override: 102.5167%; descent-override: 27.5045%; line-gap-override: 0%;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@layer ocx {
 
 /* ── Header ─────────────────────────────────────────────────────────────────
  * Markup contract: theme/header/ocx-header.html. Active section = one attribute
@@ -25,24 +60,24 @@
 }
 .ocx-header a { text-decoration: none; }
 .ocx-header__brand { flex: 0 0 auto; display: inline-flex; align-items: center; gap: var(--ocx-space-3); color: var(--ocx-color-fg); }
-.ocx-header__brand img { width: 20px; height: 20px; flex-shrink: 0; }
-.ocx-header__brand span { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-base); font-weight: 600; }
+.ocx-header__brand :is(img, svg) { width: var(--ocx-icon-lg); height: var(--ocx-icon-lg); flex-shrink: 0; }
+.ocx-header__brand span { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-base); font-weight: var(--ocx-font-weight-semibold); }
 
 /* Search trigger: identical look everywhere; the generator's own search behind it. */
 .ocx-header__search {
   box-sizing: border-box; display: inline-flex; align-items: center; gap: var(--ocx-space-3);
-  width: clamp(220px, 30vw, 360px); height: 32px; padding: 0 var(--ocx-space-4);
+  width: var(--ocx-search-width); height: var(--ocx-control-xl); padding: 0 var(--ocx-space-4);
   background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg-subtle);
   border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-md);
   font: inherit; cursor: pointer; transition: border-color var(--ocx-duration-base);
 }
-.ocx-header__search:hover { border-color: var(--ocx-color-accent); }
+.ocx-header__search:hover { border-color: var(--ocx-color-hover-border); }
 .ocx-header__search-label { flex: 1; text-align: left; font-family: var(--ocx-font-mono); font-size: var(--ocx-text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ocx-kbd {
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 18px; padding: 0 var(--ocx-space-2); box-sizing: border-box;
-  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 500; line-height: 1; color: var(--ocx-color-fg-subtle);
+  min-width: var(--ocx-control-xs); height: var(--ocx-control-xs); padding: 0 var(--ocx-space-2); box-sizing: border-box;
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-medium); line-height: 1; color: var(--ocx-color-fg-subtle);
   background: var(--ocx-color-surface);
   border: var(--ocx-border-width) solid var(--ocx-color-border); border-bottom-width: var(--ocx-border-width-strong);
   border-radius: var(--ocx-radius-sm);
@@ -53,39 +88,42 @@
 .ocx-header__nav a {
   display: inline-flex; align-items: center; gap: var(--ocx-space-2);
   padding: var(--ocx-space-5) var(--ocx-space-1);
-  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-weight: 500; white-space: nowrap;
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-weight: var(--ocx-font-weight-medium); white-space: nowrap;
   color: var(--ocx-color-fg-muted);
   border-bottom: var(--ocx-border-width-strong) solid transparent;
   transition: color var(--ocx-duration-base);
 }
 .ocx-header__nav a:hover { color: var(--ocx-color-fg); }
-.ocx-header__nav a svg { width: 11px; height: 11px; color: var(--ocx-color-fg-subtle); }
+.ocx-header__nav a svg { width: var(--ocx-icon-sm); height: var(--ocx-icon-sm); color: var(--ocx-color-fg-subtle); }
 .ocx-header[data-ocx-active='docs']         [data-ocx-section='docs'],
 .ocx-header[data-ocx-active='catalog']      [data-ocx-section='catalog'],
 .ocx-header[data-ocx-active='integrations'] [data-ocx-section='integrations'],
 .ocx-header[data-ocx-active='apps']         [data-ocx-section='apps'],
 .ocx-header[data-ocx-active='install']      [data-ocx-section='install'],
 .ocx-header__nav a[aria-current] {
-  color: var(--ocx-color-accent-fg); border-bottom-color: var(--ocx-color-accent);
+  color: var(--ocx-color-accent-fg); border-bottom-color: var(--ocx-color-focus);
 }
-.ocx-header__rule { width: 1px; height: 20px; background: var(--ocx-color-border); flex-shrink: 0; }
+.ocx-header__rule { width: var(--ocx-border-width); height: var(--ocx-icon-lg); background: var(--ocx-color-border); flex-shrink: 0; }
 .ocx-header__tool {
-  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center; width: var(--ocx-control-md); height: var(--ocx-control-md);
   padding: 0; background: none; border: 0; border-radius: var(--ocx-radius-md);
   color: var(--ocx-color-fg-subtle); cursor: pointer;
 }
 .ocx-header__tool:hover { color: var(--ocx-color-fg); }
 .ocx-header__menu { display: none; }
 
-@media (max-width: 960px) {
+/* Breakpoints query the header's own box, not the viewport: the parent of
+ * .ocx-header (whatever the generator wraps it in) is the container. */
+:has(> .ocx-header) { container: ocx-header / inline-size; }
+@container ocx-header (max-width: 960px) {
   .ocx-header { gap: var(--ocx-space-4); padding: 0 var(--ocx-space-5); }
-  .ocx-header__search { width: 32px; padding: 0; justify-content: center; }
+  .ocx-header__search { width: var(--ocx-control-xl); padding: 0; justify-content: center; }
   .ocx-header__search-label, .ocx-header__search .ocx-kbd { display: none; }
   .ocx-header__brand { flex: 0 0 auto; }
   .ocx-header__end { gap: var(--ocx-space-4); }
   .ocx-header__nav { gap: var(--ocx-space-4); }
 }
-@media (max-width: 640px) {
+@container ocx-header (max-width: 640px) {
   .ocx-header__nav, .ocx-header__rule { display: none; }
   .ocx-header__menu { display: inline-flex; }           /* opens the generator's drawer */
 }
@@ -97,91 +135,114 @@
 .ocx-eyebrow [aria-current] { color: var(--ocx-color-fg-muted); }
 
 /* ── Chips: fill = label · outline = stamp · outline + coral = toggle ──── */
-.ocx-chip { display: inline-flex; align-items: center; gap: var(--ocx-space-2); height: 20px; padding: 0 var(--ocx-space-3); box-sizing: border-box; font-family: var(--ocx-font-mono); font-size: var(--ocx-text-xs); font-weight: 500; border-radius: var(--ocx-radius-sm); border: var(--ocx-border-width) solid transparent; background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg-muted); }
+.ocx-chip { display: inline-flex; align-items: center; gap: var(--ocx-space-2); height: var(--ocx-control-sm); padding: 0 var(--ocx-space-3); box-sizing: border-box; font-family: var(--ocx-font-mono); font-size: var(--ocx-text-xs); font-weight: var(--ocx-font-weight-medium); border-radius: var(--ocx-radius-sm); border: var(--ocx-border-width) solid transparent; background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg-muted); }
 .ocx-chip--stamp { background: transparent; border-color: var(--ocx-color-border); text-transform: uppercase; letter-spacing: var(--ocx-tracking-caps); font-size: var(--ocx-text-2xs); }
 .ocx-chip--toggle { background: transparent; border-color: var(--ocx-color-border); cursor: pointer; }
-.ocx-chip--toggle[aria-pressed='true'] { border-color: var(--ocx-color-accent); color: var(--ocx-color-accent-fg); }
+.ocx-chip--toggle[aria-pressed='true'] { border-color: var(--ocx-color-focus); color: var(--ocx-color-accent-fg); }
 .ocx-chip--success { background: var(--ocx-color-success-tint); color: var(--ocx-color-success); }
 .ocx-chip--warning { background: var(--ocx-color-warning-tint); color: var(--ocx-color-warning); }
 .ocx-chip--keyword { background: var(--ocx-color-keyword-tint); color: var(--ocx-color-keyword); }
 .ocx-chip--accent  { background: var(--ocx-color-accent-tint);  color: var(--ocx-color-accent-fg); }
 
-/* ── Card — hover lifts the border, never the shadow ─────────────────── */
-.ocx-card { display: flex; flex-direction: column; gap: var(--ocx-space-4); padding: 18px; background: var(--ocx-color-surface); color: inherit; text-decoration: none; border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg); transition: border-color var(--ocx-duration-base); }
-a.ocx-card:hover { border-color: var(--ocx-color-accent); }
+/* ── Card — hover lifts the border (neutral hover border, never accent or shadow) ── */
+.ocx-card { display: flex; flex-direction: column; gap: var(--ocx-space-3); padding: var(--ocx-card-pad); background: var(--ocx-color-surface); color: inherit; text-decoration: none; border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg); transition: border-color var(--ocx-duration-base); }
+a.ocx-card:hover { border-color: var(--ocx-color-hover-border); }
+a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset-inset); } /* inset: square on radius-lg */
 .ocx-card--planned { background: transparent; border-style: dashed; border-color: var(--ocx-color-border-strong); }
 
-/* ── Prose — one rule set for every generator's content root ─────────── */
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) {
+/* ── Prose — one rule set for every content root (.ocx-prose, Starlight, VitePress) ── */
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) {
   font-size: var(--ocx-prose-body); line-height: var(--ocx-prose-lh); color: var(--ocx-color-fg-muted);
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) :is(h1, h2, h3, h4) {
-  color: var(--ocx-color-fg); font-family: var(--ocx-font-sans); line-height: var(--ocx-lh-heading); letter-spacing: var(--ocx-tracking-heading); font-weight: 600; text-wrap: balance;
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :is(h1, h2, h3, h4) {
+  color: var(--ocx-color-fg); font-family: var(--ocx-font-sans); line-height: var(--ocx-lh-heading); letter-spacing: var(--ocx-tracking-heading); font-weight: var(--ocx-font-weight-semibold); text-wrap: balance;
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) h1 { font-size: var(--ocx-prose-h1); font-weight: 700; letter-spacing: var(--ocx-tracking-display); margin: 0 0 .6em; }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) h2 { font-size: var(--ocx-prose-h2); margin: 2em 0 .6em; padding-top: .5em; border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) h3 { font-size: var(--ocx-prose-h3); margin: 1.6em 0 .5em; }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) h4 { font-size: var(--ocx-prose-h4); margin: 1.4em 0 .4em; }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) h1 { font-size: var(--ocx-prose-h1); font-weight: var(--ocx-font-weight-bold); letter-spacing: var(--ocx-tracking-display); margin: var(--ocx-prose-h1-margin); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) h2 { font-size: var(--ocx-prose-h2); margin: var(--ocx-prose-h2-margin); padding-top: var(--ocx-prose-h2-pad); border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) h3 { font-size: var(--ocx-prose-h3); margin: var(--ocx-prose-h3-margin); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) h4 { font-size: var(--ocx-prose-h4); margin: var(--ocx-prose-h4-margin); }
 /* API symbol as page title (Stardoc rule, mkdocstrings class): mono, never bold. */
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) h1:has(> code:only-child),
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) .ocx-symbol {
-  font-family: var(--ocx-font-mono); font-size: var(--ocx-prose-h1-symbol); font-weight: 600; letter-spacing: var(--ocx-tracking-heading);
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) h1:has(> code:only-child),
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) .ocx-symbol {
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-prose-h1-symbol); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-heading);
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) h1 > code:only-child { font: inherit; background: none; padding: 0; }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) h1 > code:only-child { font: inherit; background: none; padding: 0; }
 
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) a:not([class]) {
-  color: var(--ocx-color-accent-fg); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: .18em;
+/* Links carry a quiet underline at rest, so they never rely on colour alone (WCAG 1.4.1); hover inks it. */
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) a:not([class]) {
+  color: var(--ocx-color-accent-fg); text-decoration: underline; text-decoration-thickness: var(--ocx-border-width);
+  text-decoration-color: var(--ocx-color-accent-tint-border); text-underline-offset: var(--ocx-prose-link-offset);
   transition: text-decoration-color var(--ocx-duration-base);
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) a:not([class]):hover { color: var(--ocx-color-accent-fg); text-decoration-color: currentColor; }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) :not(pre) > code {
-  font-family: var(--ocx-font-mono); font-size: var(--ocx-prose-code); color: var(--ocx-color-fg);
-  background: var(--ocx-color-surface-subtle); border: 0; border-radius: var(--ocx-radius-sm); padding: .15em .45em;
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) a:not([class]):hover { color: var(--ocx-color-accent-fg); text-decoration-color: currentColor; }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :not(pre) > code {
+  /* Floor at the legible UI size: 0.88em of a 12.5px table cell is 11px, which fails Lighthouse font-size. */
+  font-family: var(--ocx-font-mono); font-size: max(var(--ocx-prose-code), var(--ocx-text-xs)); color: var(--ocx-color-fg);
+  background: var(--ocx-color-surface-subtle); border: 0; border-radius: var(--ocx-radius-sm); padding: var(--ocx-prose-code-pad);
 }
-:is(.ocx-prose, .content main, .md-typeset, .vp-doc) pre {
-  font-family: var(--ocx-font-mono); font-size: .85em; line-height: 1.75;
+/* Not on Starlight: Expressive Code styles its code frames. */
+:is(.ocx-prose, .vp-doc, .content main) pre {
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-prose-pre); line-height: var(--ocx-lh-code);
   background: var(--ocx-color-code-bg); color: var(--ocx-color-code-fg);
   border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg);
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) kbd {
-  font-family: var(--ocx-font-mono); font-size: .8em; padding: .1em .4em; background: var(--ocx-color-surface); color: var(--ocx-color-fg);
-  border: var(--ocx-border-width) solid var(--ocx-color-border); border-bottom-width: var(--ocx-border-width-strong); border-radius: var(--ocx-radius-sm); box-shadow: none;
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) kbd {
+  display: inline-block; min-width: var(--ocx-control-xs); box-sizing: border-box; text-align: center; white-space: nowrap; line-height: var(--ocx-lh-heading);
+  font-family: var(--ocx-font-mono); font-size: max(var(--ocx-prose-code-sm), var(--ocx-text-xs)); font-weight: var(--ocx-font-weight-medium);
+  padding: var(--ocx-prose-kbd-pad); background: var(--ocx-color-surface); color: var(--ocx-color-fg);
+  border: var(--ocx-border-width) solid var(--ocx-color-border-strong); border-bottom-width: var(--ocx-border-width-strong); border-radius: var(--ocx-radius-sm); box-shadow: none;
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) table:not([class]) {
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) table:not([class]) {
   width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--ocx-text-sm);
   border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-lg); overflow: hidden;
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) table:not([class]) th {
-  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600; letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase;
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) table:not([class]) th {
+  font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase;
   color: var(--ocx-color-fg-subtle); background: var(--ocx-color-surface-subtle); text-align: left;
   padding: var(--ocx-space-3) var(--ocx-space-5); border: 0; border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) table:not([class]) td {
-  padding: var(--ocx-space-3) var(--ocx-space-5); border: 0; border-bottom: var(--ocx-border-width) solid var(--ocx-color-border); vertical-align: top; background: none;
+/* Body at the 13px UI scale (design: data stays at UI density), rows at the design's 10px/16px. */
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) table:not([class]) td {
+  font-size: var(--ocx-text-base); padding: calc(var(--ocx-space-3) + var(--ocx-space-1)) var(--ocx-space-5); border: 0; border-bottom: var(--ocx-border-width) solid var(--ocx-color-border); vertical-align: top; background: none;
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) table:not([class]) tr:last-child td { border-bottom: 0; }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) blockquote {
-  margin-inline: 0; padding: 0 0 0 var(--ocx-space-5); background: none; color: var(--ocx-color-fg-subtle);
-  border: 0; border-inline-start: var(--ocx-border-width-marker) solid var(--ocx-color-border);
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) table:not([class]) tr:last-child td { border-bottom: 0; }
+/* A quote reads as set-apart body text: full ink on a marker rule the eye can find (3:1 line). */
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) blockquote {
+  margin-inline: 0; padding: var(--ocx-space-2) 0 var(--ocx-space-2) var(--ocx-space-5); background: none; color: var(--ocx-color-fg); font-style: normal;
+  border: 0; border-inline-start: var(--ocx-border-width-marker) solid var(--ocx-color-border-control);
 }
-:is(.ocx-prose, .sl-markdown-content, .content main, .md-typeset, .vp-doc) hr { border: 0; border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) blockquote > :first-child { margin-top: 0; }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) hr { margin-block: var(--ocx-space-8); border: 0; border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
+
+/* Lists: a hanging indent, square bullets and mono ordinals in the subtle ink, and item rhythm
+ * tighter than paragraphs so a list reads as one block. Zero specificity (:where): a component's
+ * own list styles (Pagination, Tabs) always win over these Markdown defaults. */
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(:is(ul, ol):not([class], .not-content *)) { padding-inline-start: var(--ocx-space-6); }
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(ul:not([class], .not-content *)) { list-style-type: square; }
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(:is(ul, ol):not([class], .not-content *) > li)::marker { color: var(--ocx-color-fg-subtle); }
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(ol:not([class], .not-content *) > li)::marker { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-variant-numeric: tabular-nums; }
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(:is(ul, ol):not([class], .not-content *) > li) { padding-inline-start: var(--ocx-space-2); }
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(:is(ul, ol):not([class], .not-content *) > li + li) { margin-top: var(--ocx-space-2); }
+:where(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :where(li > :is(ul, ol):not([class], .not-content *)) { margin-top: var(--ocx-space-2); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) :is(strong, b) { color: var(--ocx-color-fg); font-weight: var(--ocx-font-weight-semibold); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) dt { color: var(--ocx-color-fg); font-weight: var(--ocx-font-weight-semibold); }
+:is(.ocx-prose, .sl-markdown-content, .vp-doc, .content main) dd { margin-inline-start: 0; padding-inline-start: var(--ocx-space-6); }
 
 /* Callout — every generator's admonition maps onto this shape in its adapter. */
 .ocx-callout { padding: var(--ocx-space-4) var(--ocx-space-5); background: var(--ocx-color-surface); border: var(--ocx-border-width) solid var(--ocx-color-border); border-inline-start: var(--ocx-border-width-marker) solid var(--ocx-color-keyword); border-radius: var(--ocx-radius-md); }
-.ocx-callout__title { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: 600; letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
+.ocx-callout__title { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
 
 /* ── Global a11y ─────────────────────────────────────────────────────── */
 :focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); }
 ::selection { background: var(--ocx-color-accent-tint-border); color: var(--ocx-color-fg); }
-.ocx-skip { position: absolute; left: var(--ocx-space-5); top: -100px; z-index: var(--ocx-z-skip-link); padding: var(--ocx-space-3) var(--ocx-space-4); background: var(--ocx-color-surface); color: var(--ocx-color-fg); border: var(--ocx-border-width-strong) solid var(--ocx-color-accent); }
+.ocx-skip { position: absolute; left: var(--ocx-space-5); top: var(--ocx-skip-offset); z-index: var(--ocx-z-skip-link); padding: var(--ocx-space-3) var(--ocx-space-4); background: var(--ocx-color-surface); color: var(--ocx-color-fg); border: var(--ocx-border-width-strong) solid var(--ocx-color-focus); }
 .ocx-skip:focus { top: var(--ocx-space-3); }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; } }
 
 /* ── Header v2: ecosystem menu + install button ─────────────────────── */
-.ocx-header__menu-trigger { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-weight: 500; color: var(--ocx-color-fg-muted); padding: 16px 2px; border-bottom: var(--ocx-border-width-strong) solid transparent; }
-.ocx-header__menu-trigger svg { width: 10px; height: 10px; }
+.ocx-header__menu-trigger { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: var(--ocx-header-menu-gap); font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-weight: var(--ocx-font-weight-medium); color: var(--ocx-color-fg-muted); padding: var(--ocx-space-5) var(--ocx-space-1); border-bottom: var(--ocx-border-width-strong) solid transparent; }
+.ocx-header__menu-trigger svg { width: var(--ocx-icon-xs); height: var(--ocx-icon-xs); }
 .ocx-header[data-ocx-active='integrations'] .ocx-header__menu-trigger,
-.ocx-header[data-ocx-active='apps'] .ocx-header__menu-trigger { color: var(--ocx-color-accent-fg); border-bottom-color: var(--ocx-color-accent); }
+.ocx-header[data-ocx-active='apps'] .ocx-header__menu-trigger { color: var(--ocx-color-accent-fg); border-bottom-color: var(--ocx-color-focus); }
 .ocx-header__menu-root[open] .ocx-header__menu-trigger { color: var(--ocx-color-accent-fg); }
 /* Ecosystem panel. FIXED SIZE — never resizes while navigating:
    width 620px; rail 168px; body height = tallest tab across ALL tabs (computed
@@ -191,24 +252,109 @@ a.ocx-card:hover { border-color: var(--ocx-color-accent); }
    page, item = its page. The strip is display-only (aria-live): hovering or
    focusing an item previews its description, when no item is hovered or focused it
    shows the selected tab's blurb. Nothing in the strip is clickable, so no pointer path can "lose" it. */
-.ocx-header__panel { display: grid; grid-template-columns: 168px minmax(0, 1fr); grid-template-rows: var(--ocx-panel-body, 290px) 76px; width: 620px; background: var(--ocx-color-surface); border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-xl); box-shadow: var(--ocx-shadow-overlay); }
+.ocx-header__panel { display: grid; grid-template-columns: var(--ocx-panel-rail) minmax(0, 1fr); grid-template-rows: var(--ocx-panel-body) var(--ocx-panel-detail); width: var(--ocx-panel-width); background: var(--ocx-color-surface); border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-xl); box-shadow: var(--ocx-shadow-overlay); }
 .ocx-header__panel-rail { grid-row: 1 / span 2; background: var(--ocx-color-surface-subtle); border-right: var(--ocx-border-width) solid var(--ocx-color-border); padding: var(--ocx-space-2); }
-.ocx-header__panel-rail-row { display: flex; height: 40px; }
+.ocx-header__panel-rail-row { display: flex; height: var(--ocx-panel-row); }
 .ocx-header__panel-rail-row > button { flex: 1; }
-.ocx-header__panel-rail-row > a { flex: 0 0 32px; display: inline-flex; align-items: center; justify-content: center; color: var(--ocx-color-fg-subtle); }
+.ocx-header__panel-rail-row > a { flex: 0 0 var(--ocx-control-xl); display: inline-flex; align-items: center; justify-content: center; color: var(--ocx-color-fg-subtle); }
 .ocx-header__panel-rail-row > a:hover { color: var(--ocx-color-accent); }
 .ocx-header__panel-rail button:focus { outline: none; }
-.ocx-header__panel-rail button:focus-visible { outline: 2px solid var(--ocx-color-accent); outline-offset: -2px; }
+.ocx-header__panel-rail button:focus-visible { outline: var(--ocx-focus-ring); outline-offset: calc(-1 * var(--ocx-focus-offset)); }
 .ocx-header__panel-rail [aria-selected='true'] { background: var(--ocx-color-surface); outline: var(--ocx-border-width) solid var(--ocx-color-border); color: var(--ocx-color-accent-fg); }
-.ocx-header__panel-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 20px var(--ocx-space-4); padding: 18px var(--ocx-space-4); overflow: hidden; }
-.ocx-header__panel-cats a { height: 30px; }
-.ocx-header__panel-detail { border-top: var(--ocx-border-width) solid var(--ocx-color-border); background: var(--ocx-color-surface-subtle); padding: 0 24px; }
+.ocx-header__panel-cats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: var(--ocx-panel-row-gap) var(--ocx-space-4); padding: var(--ocx-card-pad) var(--ocx-space-4); overflow: hidden; }
+.ocx-header__panel-cats a { height: var(--ocx-control-lg); }
+.ocx-header__panel-detail { border-top: var(--ocx-border-width) solid var(--ocx-color-border); background: var(--ocx-color-surface-subtle); padding: 0 var(--ocx-space-6); }
 /* Item hover = neutral: subtle surface, fg text, grey → icon (same 14px arrow as the rail). No accent on accent. */
-.ocx-header__panel-cats a:hover, .ocx-header__panel-cats a:focus-visible { background: var(--ocx-color-surface-subtle); }
-.ocx-header__panel-cats a .ocx-arrow { margin-left: auto; width: 14px; height: 14px; color: var(--ocx-color-fg-subtle); visibility: hidden; }
+.ocx-header__panel-cats a:hover, .ocx-header__panel-cats a:focus-visible { background: var(--ocx-color-hover); }
+.ocx-header__panel-cats a .ocx-arrow { margin-left: auto; width: var(--ocx-icon-md); height: var(--ocx-icon-md); color: var(--ocx-color-fg-subtle); visibility: hidden; }
 .ocx-header__panel-cats a:hover .ocx-arrow, .ocx-header__panel-cats a:focus-visible .ocx-arrow { visibility: visible; }
 .ocx-header__panel-detail > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ocx-header__install { display: inline-flex; align-items: center; height: 30px; padding: 0 var(--ocx-space-4); font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-weight: 500; color: var(--ocx-color-fg); border: var(--ocx-border-width) solid var(--ocx-color-border); }
+.ocx-header__install { display: inline-flex; align-items: center; height: var(--ocx-control-lg); padding: 0 var(--ocx-space-4); font-family: var(--ocx-font-mono); font-size: var(--ocx-text-sm); font-weight: var(--ocx-font-weight-medium); color: var(--ocx-color-fg); border: var(--ocx-border-width) solid var(--ocx-color-border); }
 .ocx-header__install:hover { border-color: var(--ocx-color-accent); }
-.ocx-header[data-ocx-active='install'] .ocx-header__install { color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); border: var(--ocx-border-width-emphasis) solid var(--ocx-color-accent); }
+.ocx-header[data-ocx-active='install'] .ocx-header__install { color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); border: var(--ocx-border-width-emphasis) solid var(--ocx-color-focus); }
 .ocx-header__rule { display: none; } /* v2: no divider — icons group themselves */
+
+/* ── scrollbars — thin, themed, native ──────────────────────────────────
+ * `scrollbar-color` is inherited, so one declaration on :root themes every
+ * scrollbar. `scrollbar-width` is NOT inherited (CSS Overflow 4): it is set on
+ * each scroller in the zero-specificity list below. The thumb is border-control
+ * (3:1, WCAG 1.4.11) and hover goes to fg-muted; neutral, never accent. Chromium
+ * >= 121 ignores `::-webkit-scrollbar*` once scrollbar-color/width is non-auto,
+ * so those rules are a Safari/old-WebKit fallback only (size, track, thumb; the
+ * hover darkening applies there alone). No JS; `scrollbar-gutter` stays default. */
+:root {
+  scrollbar-color: var(--ocx-color-scrollbar-thumb) var(--ocx-color-scrollbar-track);
+}
+:where(
+  html,
+  pre,
+  .expressive-code pre,
+  .ocx-table-scroll,
+  .ocx-tabs > [data-part='list'],
+  dialog,
+  [role='dialog'],
+  [role='listbox'],
+  [role='menu'],
+  .sl-sidebar
+) {
+  scrollbar-width: thin;
+}
+:where(
+  html,
+  pre,
+  .expressive-code pre,
+  .ocx-table-scroll,
+  .ocx-tabs > [data-part='list'],
+  dialog,
+  [role='dialog'],
+  [role='listbox'],
+  [role='menu'],
+  .sl-sidebar
+)::-webkit-scrollbar {
+  width: var(--ocx-scrollbar-size);
+  height: var(--ocx-scrollbar-size);
+}
+:where(
+  html,
+  pre,
+  .expressive-code pre,
+  .ocx-table-scroll,
+  .ocx-tabs > [data-part='list'],
+  dialog,
+  [role='dialog'],
+  [role='listbox'],
+  [role='menu'],
+  .sl-sidebar
+)::-webkit-scrollbar-track {
+  background: var(--ocx-color-scrollbar-track);
+}
+:where(
+  html,
+  pre,
+  .expressive-code pre,
+  .ocx-table-scroll,
+  .ocx-tabs > [data-part='list'],
+  dialog,
+  [role='dialog'],
+  [role='listbox'],
+  [role='menu'],
+  .sl-sidebar
+)::-webkit-scrollbar-thumb {
+  background: var(--ocx-color-scrollbar-thumb);
+}
+:where(
+  html,
+  pre,
+  .expressive-code pre,
+  .ocx-table-scroll,
+  .ocx-tabs > [data-part='list'],
+  dialog,
+  [role='dialog'],
+  [role='listbox'],
+  [role='menu'],
+  .sl-sidebar
+)::-webkit-scrollbar-thumb:hover {
+  background: var(--ocx-color-scrollbar-thumb-hover);
+}
+
+} /* @layer ocx */

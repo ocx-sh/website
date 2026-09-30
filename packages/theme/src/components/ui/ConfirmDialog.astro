@@ -1,0 +1,43 @@
+---
+// ConfirmDialog (Track G, owner finding: "predefined Confirm, Error, … dialogs for quick use").
+// A preset on top of Dialog.astro (C-172): same Zag dialog, same focus trap/Esc/lazy mount, just
+// the action row: cancel is the secondary Button, confirm the primary (no danger variant exists). No trigger slot — place once, open with `ocx:dialog:open` (detail `{ id }`), read
+// the outcome off `ocx:dialog-result` (detail `{ id, value }`: 'confirm', 'cancel', or 'dismiss' for
+// Esc/X/outside click); Dialog.astro emits it once per close from the `data-dialog-action` buttons.
+import Button from './Button.astro';
+import Dialog from './Dialog.astro';
+import { nextUiId } from './ids.mjs';
+
+interface Props {
+  /** Also what `ocx:dialog:open` / `ocx:dialog-result` key on. Defaults to an auto id. */
+  id?: string;
+  title: string;
+  message?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+}
+
+const { id = nextUiId('confirm'), title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel' } = Astro.props;
+---
+
+<Dialog id={id} title={title} description={message}>
+  <div class="ocx-ui-confirm__actions">
+    <Button variant="secondary" data-dialog-action="cancel">
+      {cancelLabel}
+    </Button>
+    <Button variant="primary" data-dialog-action="confirm">
+      {confirmLabel}
+    </Button>
+  </div>
+</Dialog>
+
+<style>
+  @layer ocx {
+    .ocx-ui-confirm__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--ocx-space-3);
+      margin-block-start: var(--ocx-space-6);
+    }
+  }
+</style>

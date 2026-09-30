@@ -1,0 +1,30 @@
+---
+title: Feature sections
+description: Alternating text-and-visual blocks that fade in once as they scroll into view.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A text column and a visual, side by side on wide screens and stacked on narrow ones. Each section
+fades in once as it scrolls into view; with reduced motion it is shown at once.
+
+With `flip` the visual moves to the left on wide screens; sections alternate. The visual slot takes
+an image or a code block. The canvases are 720px wide, so they show the stacked layout; open a story
+in a new tab for the two-column one.
+
+## Stories
+
+<Stories of="feature-section" />
+
+## Props
+
+The `text` slot holds the prose column; the default slot is the visual.
+
+<PropsTable
+  of="FeatureSection.astro"
+  rows={[
+    { name: 'title', type: 'string', required: true, description: 'Section heading, rendered as an <h2>.' },
+    { name: 'flip', type: 'boolean', default: 'false', description: 'Put the visual on the left (wide screens only; narrow screens stack text first).' },
+  ]}
+/>

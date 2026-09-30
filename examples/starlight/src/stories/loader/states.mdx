@@ -1,0 +1,20 @@
+---
+title: States
+description: The two sizes, inline (s) and block (m).
+height: 190
+order: 1
+block: true
+---
+
+import Loader from '@ocx-sh/theme/components/ui/Loader.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="size=m">
+    <Loader label="Loading dependency data…" />
+  </State>
+  <State label="size=s">
+    <Loader size="s" label="Fetching index…" />
+  </State>
+</StateGrid>

@@ -1,0 +1,21 @@
+---
+title: Cycle button
+description: Each click shows the next state's icon and wraps after the last; the change is logged as ocx:cycle-button:change.
+height: 220
+log: true
+---
+
+import CycleButton from '@ocx-sh/theme/components/ui/CycleButton.astro';
+
+export const threeState = [
+  { value: 'light', label: 'Light', icon: 'sun' },
+  { value: 'dark', label: 'Dark', icon: 'moon' },
+  { value: 'auto', label: 'Auto', icon: 'monitor' },
+];
+export const sort = [
+  { value: 'asc', label: 'Ascending', icon: 'sort-asc' },
+  { value: 'desc', label: 'Descending', icon: 'sort-desc' },
+];
+
+<CycleButton states={threeState} value="light" />
+<CycleButton states={sort} name="order" variant="ghost" />

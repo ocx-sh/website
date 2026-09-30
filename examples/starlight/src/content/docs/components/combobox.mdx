@@ -1,0 +1,52 @@
+---
+title: Combobox
+description: The searchable select on the Zag combobox, filtering its options as you type.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A text input with a filtered list, on the Zag combobox (loaded on first hover or focus). Filtering
+is fuzzy by default: a subsequence match ("cfo" finds "CMake · find_ocx") ranked best-first and
+tolerant of a single typo, with the match(es) marked in each option. Pass `matchMode="contains"` or
+`matchMode="startsWith"` for a plain substring filter instead. The `start` and `end` slots put a
+control inside the box, such as a sort-direction toggle.
+
+## Stories
+
+<Stories of="combobox" />
+
+## Props
+
+<PropsTable
+  of="ui/Combobox.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Accessible name, shown as the visible label unless hideLabel.' },
+    { name: 'hideLabel', type: 'boolean', default: 'false', description: 'Keep the label for assistive tech only.' },
+    { name: 'options', type: '{ value, label, meta? }[]', required: true, description: 'The options.' },
+    { name: 'value', type: 'string', description: 'Committed value.' },
+    { name: 'placeholder', type: 'string', description: 'Placeholder of the text input.' },
+    { name: 'id', type: 'string', default: 'generated', description: 'Input id.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+    { name: 'open', type: 'boolean', default: 'false', description: 'Start with the popup open.' },
+    { name: 'highlighted', type: 'string', description: 'Initially highlighted option value.' },
+    { name: 'query', type: 'string', description: 'Initially typed text: filters the options and is marked in their labels.' },
+    { name: 'empty', type: 'string', default: "'No match'", description: 'Text shown when the typed text matches no option.' },
+    { name: 'matchMode', type: "'fuzzy' | 'contains' | 'startsWith'", default: "'fuzzy'", description: 'How typed text matches a label: fuzzy (subsequence, ranked, one typo tolerated), contains, or startsWith.' },
+    { name: 'disabled', type: 'boolean', default: 'false', description: 'Disables the input.' },
+    { name: 'zag', type: 'ZagProps<combobox.Props>', description: 'Zag machine props.' },
+  ]}
+/>
+
+## Events
+
+- `ocx:combobox:input` `{ query }`: The input text changes.
+- `ocx:combobox:change` `{ value }`: An option is committed.
+
+## Keyboard
+
+- Typing: Filters the options and opens the list.
+- <kbd>↓</kbd> <kbd>↑</kbd>: Opens the list, moves the highlight.
+- <kbd>Enter</kbd>: Commits the highlighted option and closes.
+- <kbd>Esc</kbd>: Closes the list; pressed again, restores the input to the committed option.
+- <kbd>Tab</kbd>: A control in the `start` or `end` slot is its own tab stop.

@@ -1,0 +1,19 @@
+---
+title: Live previews
+description: Real consumer docs, built as full sites wearing the theme, linked out to their preview subdomains.
+---
+
+import { CardGrid } from '@astrojs/starlight/components';
+import LivePreviews from '../../components/showcase/LivePreviews.astro';
+
+Each consumer site below is its own build: the repo's real docs tree, converted and served at
+the root of a preview subdomain, so it reads as the site will once it deploys under its path on
+ocx.sh. The components on the other pages show the parts; these show them holding real content.
+
+Hosting is pending: the links go live when the previews are deployed. Until then, build any of
+them locally with `task previews` (or `task previews -- <site>`); each lands in
+`.tmp/previews/<site>/dist`. `task samples` refreshes the docs they are built from.
+
+<CardGrid>
+  <LivePreviews />
+</CardGrid>

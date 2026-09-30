@@ -1,0 +1,15 @@
+---
+title: Menu
+description: A trigger and a panel of navigation links; the current page carries aria-current. Open it to see the panel.
+height: 240
+---
+
+import Menu from '@ocx-sh/theme/components/ui/Menu.astro';
+
+export const sections = [
+  { label: 'Docs', href: '#demo' },
+  { label: 'Integrations', href: '#states', current: true },
+  { label: 'Apps', href: '#props' },
+];
+
+<Menu label="Sections" items={sections} />

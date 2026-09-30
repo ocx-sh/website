@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OCX visual report</title>
+<style>
+  /* Internal tool: plain CSS, no theme tokens. Image paths are relative to .tmp/visual/. */
+  :root { color-scheme: light dark; font: 14px/1.5 system-ui, sans-serif; }
+  body { margin: 0; padding: 16px; background: Canvas; color: CanvasText; }
+  h1 { font-size: 18px; margin: 0 0 16px; }
+  .row { border-top: 1px solid GrayText; padding: 16px 0; }
+  .row h2 { font-size: 15px; margin: 0 0 8px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .row h2 small { font-weight: normal; color: GrayText; }
+  .kind { font: 12px ui-monospace, monospace; padding: 0 6px; border: 1px solid currentColor; }
+  .kind--ok { color: green; }
+  .kind--mock-missing, .kind--site-unavailable, .kind--no-tile { color: darkorange; }
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  figure a { display: block; max-height: 80vh; overflow: auto; }
+  .legend { color: GrayText; margin: -12px 0 16px; }
+  .stamp { position: fixed; top: 8px; right: 16px; margin: 0; font: 12px ui-monospace, monospace; color: GrayText; }
+  .error { color: darkorange; margin: 0 0 8px; }
+  .radius { font-size: 13px; margin: 0 0 8px; }
+  .radius--ok { color: green; }
+  .radius ul { margin: 4px 0; padding-left: 20px; columns: 2; }
+  .radius summary { color: darkorange; cursor: pointer; }
+  .variants { display: grid; grid-template-columns: 1fr 3fr 1fr; gap: 8px; margin-top: 8px; }
+  figure { margin: 0; min-width: 0; }
+  figcaption { font: 12px ui-monospace, monospace; color: GrayText; }
+  figure img { display: block; width: 100%; height: auto; border: 1px solid GrayText; }
+  .placeholder { display: grid; place-items: center; min-height: 120px; border: 1px dashed GrayText; color: GrayText; }
+  @media (max-width: 800px) { .grid, .variants { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<h1>OCX visual report</h1>
+<p class="legend">mock | site light desktop | diff, then light mobile, dark desktop, dark mobile · click an image for full size</p>
+<!--ROWS-->
+<p class="stamp">generated <!--STAMP--></p>
+</body>
+</html>

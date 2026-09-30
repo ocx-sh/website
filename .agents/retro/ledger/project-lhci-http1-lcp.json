@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260927T233045Z-6cd9981c.json"
+  ],
+  "first_seen": "2026-09-27T23:30:45Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:11Z",
+    "by": "0959635",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-lhci-http1-lcp",
+  "kind": "pitfall",
+  "last_seen": "2026-09-27T23:30:45Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "lhci HTTP/1.1 simulation makes early-request-heavy pages flap at perf 0.99",
+  "v": 1,
+  "versions": []
+}

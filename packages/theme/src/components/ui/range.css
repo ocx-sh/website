@@ -1,0 +1,147 @@
+/* Meter and Slider (C-266, C-270): the track look they share, plus the slider's own parts.
+   Imported from each component's frontmatter, so the whole body sits in @layer ocx. Tokens only.
+   The head row (label + value text) and the field column come from field.css / the field class. */
+@layer ocx {
+  .ocx-ui-meter__head,
+  .ocx-ui-slider__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ocx-space-4);
+  }
+  .ocx-ui-meter__value,
+  .ocx-ui-slider__value {
+    margin-inline-start: auto;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The track, both components. */
+  .ocx-ui-meter__track,
+  .ocx-ui-slider__track {
+    box-sizing: border-box;
+    block-size: var(--ocx-track-size);
+    background: var(--ocx-color-border);
+  }
+
+  /* Meter: a fill whose width is the clamped percent SSR wrote into --_value. */
+  .ocx-ui-meter {
+    --_tone: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-meter[data-tone='success'] {
+    --_tone: var(--ocx-color-success);
+  }
+  .ocx-ui-meter[data-tone='warning'] {
+    --_tone: var(--ocx-color-warning);
+  }
+  .ocx-ui-meter[data-tone='danger'] {
+    --_tone: var(--ocx-color-danger);
+  }
+  .ocx-ui-meter[data-size='s'] .ocx-ui-meter__track {
+    block-size: calc(var(--ocx-track-size) / 2);
+  }
+  .ocx-ui-meter[data-size='s'] .ocx-ui-meter__value {
+    font-size: var(--ocx-text-xs);
+  }
+  .ocx-ui-meter__fill {
+    block-size: 100%;
+    inline-size: calc(var(--_value) * 1%);
+    background: var(--_tone);
+  }
+
+  /* Slider. The thumb edge and the range are non-text UI, so they take the thin-marker token
+     (--ocx-color-focus, 3:1 on bg and surface); coral is 2.8:1 on the light page. The control
+     keeps the track's full width (Zag turns pointer positions into values from its box), so the
+     inline margin, not padding, keeps the thumbs inside the component. */
+  .ocx-ui-slider {
+    --_half-thumb: calc(var(--ocx-slider-thumb) / 2);
+  }
+  .ocx-ui-slider__control {
+    display: flex;
+    align-items: center;
+    block-size: var(--ocx-control-md);
+    margin-inline: var(--_half-thumb);
+    cursor: pointer;
+  }
+  .ocx-ui-slider__track {
+    flex: 1;
+  }
+  .ocx-ui-slider__range {
+    inset-block: 0;
+    background: var(--ocx-color-focus);
+  }
+  .ocx-ui-slider__thumb {
+    box-sizing: border-box;
+    inline-size: var(--ocx-slider-thumb);
+    block-size: var(--ocx-slider-thumb);
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width-emphasis) solid var(--ocx-color-focus);
+    cursor: grab;
+  }
+  .ocx-ui-slider__thumb:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  .ocx-ui-slider__thumb[data-dragging],
+  .ocx-ui-slider__control[data-dragging] {
+    cursor: grabbing;
+  }
+  .ocx-ui-slider[data-disabled] .ocx-ui-slider__control,
+  .ocx-ui-slider[data-disabled] .ocx-ui-slider__thumb {
+    cursor: not-allowed;
+  }
+  .ocx-ui-slider[data-disabled] .ocx-ui-slider__range {
+    background: var(--ocx-color-border-control);
+  }
+  .ocx-ui-slider[data-disabled] .ocx-ui-slider__thumb {
+    border-color: var(--ocx-color-border-control);
+  }
+  .ocx-ui-slider[data-disabled] .ocx-ui-slider__value {
+    color: var(--ocx-color-fg-subtle);
+  }
+
+  /* Marks: a tick and a label under the control, at the same width as the track. */
+  .ocx-ui-slider__marks {
+    block-size: calc(1lh + var(--ocx-space-3));
+    margin-inline: var(--_half-thumb);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-2xs);
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-ui-slider__mark {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ocx-space-1);
+    font-variant-numeric: tabular-nums;
+  }
+  .ocx-ui-slider__mark::before {
+    content: '';
+    inline-size: var(--ocx-border-width);
+    block-size: var(--ocx-space-2);
+    background: var(--ocx-color-border-control);
+  }
+
+  /* Forced colours drop backgrounds: the track gets an outline, the fill and range paint in system ink. */
+  @media (forced-colors: active) {
+    .ocx-ui-meter__track,
+    .ocx-ui-slider__track {
+      outline: var(--ocx-border-width) solid CanvasText;
+    }
+    .ocx-ui-meter__fill,
+    .ocx-ui-slider__range {
+      forced-color-adjust: none;
+      background: CanvasText;
+    }
+    .ocx-ui-slider__range {
+      background: Highlight;
+    }
+    .ocx-ui-slider[data-disabled] .ocx-ui-slider__range {
+      background: GrayText;
+    }
+  }
+}

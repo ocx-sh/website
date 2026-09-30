@@ -1,0 +1,21 @@
+---
+// One card per preview site (scripts/previews/sites.mjs), each linking out to its planned subdomain.
+// Renders bare cards: the page wraps them in a Starlight CardGrid.
+import Link from '@ocx-sh/theme/components/ui/Link.astro';
+import Tag from '@ocx-sh/theme/components/ui/Tag.astro';
+import { SITES, previewUrl } from '../../../../../scripts/previews/sites.mjs';
+---
+
+{SITES.map((site) => (
+  <div class="ocx-card">
+    <strong>
+      <Link href={previewUrl(site)} underline="hover">
+        {site.title}
+      </Link>
+    </strong>
+    <span>{site.blurb}</span>
+    <span>
+      <Tag variant="stamp">hosting pending</Tag>
+    </span>
+  </div>
+))}

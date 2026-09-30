@@ -1,0 +1,14 @@
+---
+title: Known empty list
+description: A known empty list reserves its empty state from first paint.
+height: 410
+order: 1
+block: true
+---
+
+import DependencyExplorer from '@ocx-sh/theme/components/DependencyExplorer.astro';
+
+{/* Raw JSON in the data: URL: percent-encoding tripled its share of the page HTML. */}
+export const empty = `data:application/json,${JSON.stringify({ generated: '2026-09-27', binaries: { ocx: { summary: { total: 0, uniqueLicenses: 0, licenses: {} }, components: [] } } })}`;
+
+<DependencyExplorer src={empty} />

@@ -1,0 +1,46 @@
+---
+title: Synced with the demo
+description: Two groups share syncKey="shell", so a pick in either switches both and the page does not jump.
+height: 260
+order: 1
+prose: true
+---
+
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+
+<Tabs syncKey="shell">
+  <TabItem label="Shell" icon="shell">
+    ```sh
+    curl -fsSL setup.ocx.sh | sh
+    ```
+  </TabItem>
+  <TabItem label="PowerShell" icon="powershell">
+    ```powershell
+    Set-ExecutionPolicy Bypass
+    irm setup.ocx.sh/pwsh | iex
+    ```
+  </TabItem>
+  <TabItem label="Nushell" icon="nushell">
+    ```nushell
+    curl -fsSL setup.ocx.sh/nu | nu
+    ```
+  </TabItem>
+  <TabItem label="cmd" icon="cmd">
+    ```cmd
+    curl -fsSL setup.ocx.sh/cmd -o setup.cmd && setup.cmd
+    ```
+  </TabItem>
+  <TabItem label="Elvish" icon="elvish">
+    ```sh
+    curl -fsSL setup.ocx.sh/elv | elvish
+    ```
+  </TabItem>
+</Tabs>
+
+<Tabs syncKey="shell">
+  <TabItem label="Shell" icon="shell">Edit `~/.profile`.</TabItem>
+  <TabItem label="PowerShell" icon="powershell">Edit `$PROFILE`.</TabItem>
+  <TabItem label="cmd" icon="cmd">Edit the `cmd` AutoRun script.</TabItem>
+  <TabItem label="Elvish" icon="elvish">Edit `rc.elv`.</TabItem>
+</Tabs>

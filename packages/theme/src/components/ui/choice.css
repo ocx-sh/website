@@ -1,0 +1,170 @@
+/* Choice look (design c-choice) shared by Choice and RadioGroup items. Imported from each
+   component's frontmatter, so the whole body sits in @layer ocx (an imported sheet is neither
+   scoped nor layered). The native input is the control and stays visually hidden; the box draws
+   its state from :checked / :disabled / :focus-visible, which hold with JS off (D-Z7). */
+@layer ocx {
+  .ocx-ui-choice[hidden] {
+    display: none;
+  }
+  .ocx-ui-choice {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ocx-space-3);
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-text-base);
+    color: var(--ocx-color-fg);
+    cursor: pointer;
+  }
+  .ocx-ui-choice:has(> :disabled) {
+    color: var(--ocx-color-fg-subtle);
+    cursor: not-allowed;
+  }
+  /* Visually hidden, still focusable and announced (Zag writes the same inline for its inputs). */
+  .ocx-ui-choice__input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .ocx-ui-choice__box {
+    position: relative;
+    flex: none;
+    box-sizing: border-box;
+    inline-size: var(--ocx-control-choice);
+    block-size: var(--ocx-control-choice);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border-control);
+    border-radius: var(--ocx-radius-sm);
+    /* Motion runs on state change only: SSR paints the final state, so nothing animates on load.
+       Reduced motion zeroes the duration tokens. */
+    transition:
+      background-color var(--ocx-duration-base),
+      border-color var(--ocx-duration-base);
+  }
+  .ocx-ui-choice:has(> :checked) > .ocx-ui-choice__box {
+    background: var(--ocx-color-accent);
+    border-color: var(--ocx-color-accent);
+  }
+  .ocx-ui-choice:has(> :focus-visible) > .ocx-ui-choice__box {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  /* The radio box is round, and an outline follows it: ring the whole row instead (square). */
+  .ocx-ui-choice[data-type='radio']:has(> :focus-visible) > .ocx-ui-choice__box {
+    outline: none;
+  }
+  .ocx-ui-choice[data-type='radio']:has(> :focus-visible) {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  .ocx-ui-choice:has(> :disabled) > .ocx-ui-choice__box {
+    background: var(--ocx-color-border-strong);
+    border-color: var(--ocx-color-border-strong);
+  }
+
+  /* Checkbox tick: an L of two borders, rotated. Ink on coral. Always present, fades and scales in. */
+  .ocx-ui-choice[data-type='checkbox'] > .ocx-ui-choice__box::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 12%;
+    inset-inline-start: 32%;
+    box-sizing: border-box;
+    inline-size: 36%;
+    block-size: 64%;
+    border: solid var(--ocx-color-on-accent);
+    border-width: 0 var(--ocx-border-width-strong) var(--ocx-border-width-strong) 0;
+    opacity: 0;
+    transform: rotate(45deg) scale(0.5);
+    transition:
+      opacity var(--ocx-duration-base),
+      transform var(--ocx-duration-moderate) var(--ocx-ease-out);
+  }
+  .ocx-ui-choice[data-type='checkbox']:has(> :checked) > .ocx-ui-choice__box::before {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
+
+  /* Radio keeps the round shape: surface fill, coral ring + dot (sheet). */
+  .ocx-ui-choice[data-type='radio'] > .ocx-ui-choice__box {
+    border-radius: var(--ocx-radius-full);
+  }
+  .ocx-ui-choice[data-type='radio']:has(> :checked) > .ocx-ui-choice__box {
+    background: var(--ocx-color-surface);
+  }
+  .ocx-ui-choice[data-type='radio'] > .ocx-ui-choice__box::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    inline-size: var(--ocx-space-3);
+    block-size: var(--ocx-space-3);
+    background: var(--ocx-color-accent);
+    border-radius: var(--ocx-radius-full);
+    opacity: 0;
+    transform: scale(0.5);
+    transition:
+      opacity var(--ocx-duration-base),
+      transform var(--ocx-duration-moderate) var(--ocx-ease-out);
+  }
+  .ocx-ui-choice[data-type='radio']:has(> :checked) > .ocx-ui-choice__box::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .ocx-ui-choice[data-type='radio']:has(> :disabled) > .ocx-ui-choice__box::before {
+    background: var(--ocx-color-fg-subtle);
+  }
+
+  /* Switch: the track is exactly the checkbox box high (--ocx-control-choice), 2:1 wide. One geometry
+     token, --ocx-switch-inset, is the gap between thumb and track fill on all four sides, both states
+     (the thumb sits in the padding box, inside the border). Thumb = track height - 2 x border - 2 x inset;
+     travel = track width - thumb - 2 x border - 2 x inset, so the right gap when on equals the left when off. */
+  .ocx-ui-choice[data-type='switch'] > .ocx-ui-choice__box {
+    --ocx-switch-inset: var(--ocx-space-1);
+    --ocx-switch-thumb: calc(var(--ocx-control-choice) - 2 * var(--ocx-border-width) - 2 * var(--ocx-switch-inset));
+    inline-size: var(--ocx-control-xl);
+    background: var(--ocx-color-surface-subtle);
+  }
+  .ocx-ui-choice[data-type='switch'] > .ocx-ui-choice__box::before {
+    content: '';
+    position: absolute;
+    inset-block-start: var(--ocx-switch-inset);
+    inset-inline-start: var(--ocx-switch-inset);
+    inline-size: var(--ocx-switch-thumb);
+    block-size: var(--ocx-switch-thumb);
+    /* Same tone as the track edge (3:1 on the track fill): a paler thumb on the dark track glows
+       larger than the ink thumb on coral, so it read as shrinking when switched on. */
+    background: var(--ocx-color-border-control);
+    transition:
+      inset-inline-start var(--ocx-duration-moderate) var(--ocx-ease-out),
+      background-color var(--ocx-duration-base);
+  }
+  .ocx-ui-choice[data-type='switch']:has(> :checked) > .ocx-ui-choice__box {
+    background: var(--ocx-color-accent);
+  }
+  .ocx-ui-choice[data-type='switch']:has(> :checked) > .ocx-ui-choice__box::before {
+    inset-inline-start: calc(100% - var(--ocx-switch-thumb) - var(--ocx-switch-inset));
+    background: var(--ocx-color-on-accent);
+  }
+  .ocx-ui-choice[data-type='switch']:has(> :disabled) > .ocx-ui-choice__box {
+    background: var(--ocx-color-border-strong);
+  }
+
+  /* Forced colours drop backgrounds: tick, dot and thumb paint in system ink. */
+  @media (forced-colors: active) {
+    .ocx-ui-choice__box::before {
+      forced-color-adjust: none;
+      background-color: CanvasText;
+      border-color: CanvasText;
+    }
+    .ocx-ui-choice[data-type='checkbox'] > .ocx-ui-choice__box::before {
+      background: none;
+    }
+  }
+}

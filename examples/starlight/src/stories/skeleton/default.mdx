@@ -1,0 +1,14 @@
+---
+title: Placeholder for a description
+description: A skeleton reserves the final box, paired with a Loader for the announcement.
+height: 170
+block: true
+---
+
+import Loader from '@ocx-sh/theme/components/ui/Loader.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+
+<div aria-busy="true">
+  <Loader size="s" label="Loading package description…" />
+  <Skeleton lines={3} />
+</div>

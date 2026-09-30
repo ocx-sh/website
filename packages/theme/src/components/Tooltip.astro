@@ -1,0 +1,182 @@
+---
+// Inline term with a hover/focus popup (DOC-EX-33/34). Phrasing content only so
+// it nests inside a <p>. Popup = `popover="manual"` in the top layer, placed by
+// CSS anchor positioning (preferred side on the root, flipped by position-try);
+// tooltip.mjs opens/closes it and writes the side actually used to the popup.
+import { nextTooltipId } from './tooltip.mjs';
+
+export interface Props {
+  /** The trigger text shown inline with a dashed underline. */
+  term: string;
+  side?: 'top' | 'bottom' | 'left' | 'right';
+  /** Hover-intent delay in ms before the popup opens. */
+  delayDuration?: number;
+}
+
+const { term, side = 'top', delayDuration = 400 } = Astro.props;
+const id = nextTooltipId();
+---
+
+<span class="ocx-tooltip" data-ocx-tooltip data-side={side} data-delay={delayDuration}>
+  <button type="button" class="ocx-tooltip__trigger" aria-describedby={id}>
+    {term}
+  </button>
+  <span id={id} class="ocx-tooltip__content" popover="manual" role="tooltip" data-side={side}>
+    <slot />
+    <span class="ocx-tooltip__arrow" aria-hidden="true"></span>
+  </span>
+</span>
+
+<script>
+  import { initTooltip } from './tooltip.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-ocx-tooltip]')) initTooltip(root);
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-tooltip__trigger {
+      display: inline;
+      margin: 0;
+      padding: 0;
+      font: inherit;
+      color: inherit;
+      background: none;
+      border: 0;
+      border-bottom: var(--ocx-border-width) dashed var(--ocx-color-fg-subtle);
+      border-radius: 0;
+      cursor: help;
+    }
+    .ocx-tooltip__trigger:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+    /* Only one tooltip is ever open, so one shared anchor name is unique. */
+    .ocx-tooltip:has(> :popover-open) > .ocx-tooltip__trigger {
+      anchor-name: --ocx-tooltip;
+    }
+
+    .ocx-tooltip__content {
+      --_offset: var(--ocx-space-3); /* 8px side offset, as reka's sideOffset */
+      --_arrow-w: var(--ocx-space-4); /* 12×6 arrow, as reka's TooltipArrow */
+      --_arrow-h: calc(var(--_arrow-w) / 2);
+      --_max: 300px; /* the Vue original's max-width; no tooltip width token yet */
+
+      position: fixed;
+      position-anchor: --ocx-tooltip;
+      inset: auto;
+      margin: 0;
+      /* Never wider than the viewport minus a gutter. */
+      max-width: min(var(--_max), calc(100vw - var(--ocx-space-5) * 2));
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      overflow: visible;
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface);
+      border: 0;
+      border-radius: var(--ocx-radius-lg);
+      /* drop-shadow, not box-shadow, so the arrow is shadowed too. */
+      filter: drop-shadow(var(--ocx-shadow-overlay));
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-base);
+      font-weight: var(--ocx-font-weight-regular);
+      line-height: var(--ocx-prose-lh);
+      text-align: start;
+    }
+    /* Preferred side (root) → position-area plus the offset margin toward the
+       trigger; flip first, then the perpendicular axis for narrow viewports. */
+    .ocx-tooltip[data-side='top'] > .ocx-tooltip__content {
+      position-area: top;
+      margin-block-end: var(--_offset);
+      position-try-fallbacks: flip-block;
+    }
+    .ocx-tooltip[data-side='bottom'] > .ocx-tooltip__content {
+      position-area: bottom;
+      margin-block-start: var(--_offset);
+      position-try-fallbacks: flip-block;
+    }
+    .ocx-tooltip[data-side='left'] > .ocx-tooltip__content {
+      position-area: left;
+      margin-inline-end: var(--_offset);
+      position-try-fallbacks: flip-inline, --ocx-tooltip-bottom, --ocx-tooltip-top;
+    }
+    .ocx-tooltip[data-side='right'] > .ocx-tooltip__content {
+      position-area: right;
+      margin-inline-start: var(--_offset);
+      position-try-fallbacks: flip-inline, --ocx-tooltip-bottom, --ocx-tooltip-top;
+    }
+
+    /* Arrow: a clipped square pointing at the trigger; tooltip.mjs sets --_arrow
+       to the trigger's centre along the popup edge (default: the middle). */
+    .ocx-tooltip__arrow {
+      position: absolute;
+      width: var(--_arrow-w);
+      height: var(--_arrow-h);
+      background: inherit;
+      translate: -50% 0;
+    }
+    .ocx-tooltip__content[data-side='top'] > .ocx-tooltip__arrow {
+      top: 100%;
+      left: var(--_arrow, 50%);
+      clip-path: polygon(0 0, 100% 0, 50% 100%);
+    }
+    .ocx-tooltip__content[data-side='bottom'] > .ocx-tooltip__arrow {
+      bottom: 100%;
+      left: var(--_arrow, 50%);
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    }
+    .ocx-tooltip__content:is([data-side='left'], [data-side='right']) > .ocx-tooltip__arrow {
+      top: var(--_arrow, 50%);
+      width: var(--_arrow-h);
+      height: var(--_arrow-w);
+      translate: 0 -50%;
+    }
+    .ocx-tooltip__content[data-side='left'] > .ocx-tooltip__arrow {
+      left: 100%;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+    }
+    .ocx-tooltip__content[data-side='right'] > .ocx-tooltip__arrow {
+      right: 100%;
+      clip-path: polygon(100% 0, 100% 100%, 0 50%);
+    }
+
+    /* Fade + 4px slide away from the trigger, in and out (display/overlay allow-discrete keep the
+       top-layer popup rendered through the exit); tokens.css zeroes the duration under reduced motion. */
+    .ocx-tooltip__content {
+      opacity: 0;
+      translate: var(--_from);
+      transition:
+        opacity var(--ocx-duration-enter) var(--ocx-ease-out),
+        translate var(--ocx-duration-enter) var(--ocx-ease-out),
+        display var(--ocx-duration-enter) allow-discrete,
+        overlay var(--ocx-duration-enter) allow-discrete;
+    }
+    .ocx-tooltip__content:popover-open {
+      opacity: 1;
+      translate: none;
+      @starting-style {
+        opacity: 0;
+        translate: var(--_from);
+      }
+    }
+    .ocx-tooltip__content[data-side='top'] {
+      --_from: 0 var(--ocx-space-2);
+    }
+    .ocx-tooltip__content[data-side='bottom'] {
+      --_from: 0 calc(var(--ocx-space-2) * -1);
+    }
+    .ocx-tooltip__content[data-side='left'] {
+      --_from: var(--ocx-space-2) 0;
+    }
+    .ocx-tooltip__content[data-side='right'] {
+      --_from: calc(var(--ocx-space-2) * -1) 0;
+    }
+
+    @position-try --ocx-tooltip-top {
+      position-area: top;
+      margin: 0 0 var(--ocx-space-3);
+    }
+    @position-try --ocx-tooltip-bottom {
+      position-area: bottom;
+      margin: var(--ocx-space-3) 0 0;
+    }
+  }
+</style>

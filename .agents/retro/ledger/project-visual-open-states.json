@@ -1,0 +1,21 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T125942Z-1a83e4e4.json"
+  ],
+  "first_seen": "2026-09-28T13:05:00Z",
+  "fixed": null,
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-visual-open-states",
+  "kind": "inconvenient",
+  "last_seen": "2026-09-28T13:05:00Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "deferred",
+  "title": "task visual cannot crop components or shoot open states",
+  "v": 1,
+  "versions": []
+}

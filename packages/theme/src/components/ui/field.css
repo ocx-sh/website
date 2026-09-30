@@ -1,0 +1,212 @@
+/* Field chrome shared by Input, InputGroup and Label (D-P2). Imported from each component's
+   frontmatter, so the whole body sits in @layer ocx (an imported sheet is neither scoped nor layered). */
+@layer ocx {
+  .ocx-ui-field[hidden],
+  .ocx-ui-field__msg[hidden] {
+    display: none;
+  }
+  .ocx-ui-field {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--ocx-space-2) + var(--ocx-space-1)); /* sheet 6px; no token */
+    min-inline-size: 0;
+  }
+  .ocx-ui-field__label {
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-text-sm);
+    font-weight: var(--ocx-font-weight-medium);
+    color: var(--ocx-color-fg);
+  }
+  /* Visually hidden, still the input's accessible name. */
+  .ocx-ui-field__label[data-hidden] {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .ocx-ui-field:has(.ocx-ui-input:disabled) .ocx-ui-field__label {
+    color: var(--ocx-color-fg-subtle);
+  }
+
+  .ocx-ui-input {
+    box-sizing: border-box;
+    inline-size: 100%;
+    block-size: var(--ocx-control-2xl);
+    margin: 0;
+    padding: 0 var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+    appearance: none;
+  }
+  .ocx-ui-input::placeholder {
+    color: var(--ocx-color-fg-subtle);
+    opacity: 1;
+  }
+  /* Fields: focus is a border colour, no ring (sheet; focus token meets 1.4.11). */
+  .ocx-ui-input:focus {
+    border-color: var(--ocx-color-focus);
+    outline: none;
+  }
+  .ocx-ui-input[aria-invalid='true'] {
+    border-color: var(--ocx-color-danger);
+  }
+  /* Focus wins over the error border: the user must see where they type. */
+  .ocx-ui-input[aria-invalid='true']:focus {
+    border-color: var(--ocx-color-focus);
+  }
+  /* Number fields: the native spin buttons give way to the stepper (Input.astro). */
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+  .ocx-ui-input:disabled {
+    color: var(--ocx-color-fg-subtle);
+    background: var(--ocx-color-surface-subtle);
+    cursor: not-allowed;
+  }
+
+  .ocx-ui-field__msg {
+    margin: 0;
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-ui-field[data-invalid] .ocx-ui-field__msg {
+    color: var(--ocx-color-danger);
+  }
+
+  .ocx-ui-field__label[data-disabled] {
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-ui-field__required {
+    margin-inline-start: var(--ocx-space-1);
+    color: var(--ocx-color-fg-subtle);
+  }
+
+  /* The c-input box as a flex row around start / control / end (InputGroup). */
+  .ocx-ui-input-group {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--ocx-space-3);
+    inline-size: 100%;
+    min-inline-size: 0;
+    block-size: var(--ocx-control-2xl);
+    margin: 0;
+    padding-inline: var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+  }
+  .ocx-ui-input-group:has(> :where(.ocx-ui-button, .ocx-ui-stepper):last-child) {
+    padding-inline-end: var(--ocx-space-3);
+  }
+  /* A start button (a sort-direction CycleButton) hugs the start edge like an end button. */
+  .ocx-ui-input-group:has(> .ocx-ui-button:first-child) {
+    padding-inline-start: var(--ocx-space-3);
+  }
+  /* Select with slots: the box around its trigger, which drops its own box and keeps chevron room. */
+  .ocx-ui-select > .ocx-ui-input-group {
+    align-self: start;
+    inline-size: auto;
+  }
+  .ocx-ui-input-group > .ocx-ui-select__control {
+    align-self: stretch;
+    block-size: auto;
+    padding: 0 calc(var(--ocx-icon-md) + var(--ocx-space-3)) 0 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+  }
+  .ocx-ui-input-group > .ocx-ui-select__control > .ocx-ui-select__icon {
+    inset-inline-end: 0;
+  }
+  .ocx-ui-input-group[data-wrap] {
+    flex-wrap: wrap;
+    block-size: auto;
+    min-block-size: var(--ocx-control-2xl);
+    padding: var(--ocx-space-2);
+    gap: var(--ocx-space-2);
+  }
+  .ocx-ui-input-group[data-invalid],
+  .ocx-ui-input-group:has([aria-invalid='true']) {
+    border-color: var(--ocx-color-danger);
+  }
+  /* Declared after the danger border: focus wins, the user must see where they type. */
+  .ocx-ui-input-group:focus-within {
+    border-color: var(--ocx-color-focus);
+  }
+  /* Zag's control part (Select, Combobox): an open popup keeps the focus border while focus sits in the list. */
+  .ocx-ui-input-group[data-part='control'][data-state='open'] {
+    border-color: var(--ocx-color-focus);
+  }
+  /* The control's own :disabled decides, so a disabled end button does not grey the box. */
+  .ocx-ui-input-group[data-disabled],
+  .ocx-ui-input-group:has(.ocx-ui-input-group__input:disabled) {
+    background: var(--ocx-color-surface-subtle);
+    cursor: not-allowed;
+  }
+  .ocx-ui-input-group__input {
+    appearance: none;
+    align-self: stretch;
+    flex: 1;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--ocx-color-fg);
+    caret-color: var(--ocx-color-accent);
+    background: transparent;
+    border: 0;
+    outline: none;
+  }
+  .ocx-ui-input-group__input::placeholder {
+    color: var(--ocx-color-fg-subtle);
+    opacity: 1;
+  }
+  .ocx-ui-input-group__input:disabled {
+    color: var(--ocx-color-fg-subtle);
+    cursor: not-allowed;
+  }
+  .ocx-ui-input-group__addon {
+    flex: none;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-subtle);
+    white-space: nowrap;
+  }
+  .ocx-ui-input-group > .ocx-icon {
+    flex: none;
+    color: var(--ocx-color-fg-subtle);
+  }
+  /* Decrease / increase: two ghost icon buttons hugging the end edge (minus / plus); keyboard arrows keep stepping the input natively. */
+  .ocx-ui-stepper {
+    display: inline-flex;
+    flex: none;
+  }
+
+  /* Forced colours replace border-color, so focus needs an outline (WCAG 2.4.7). */
+  @media (forced-colors: active) {
+    .ocx-ui-input:focus,
+    .ocx-ui-input-group:focus-within {
+      outline: var(--ocx-border-width-strong) solid Highlight;
+      outline-offset: calc(var(--ocx-border-width) * -1);
+    }
+  }
+}

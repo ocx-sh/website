@@ -1,0 +1,27 @@
+---
+title: Sorted ascending
+description: The table opens sorted by size, ascending.
+height: 400
+order: 1
+block: true
+---
+
+import DataTable from '@ocx-sh/theme/components/ui/DataTable.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+export const columns = [
+  { key: 'name', label: 'Package', mono: true },
+  { key: 'kind', label: 'Kind' },
+  { key: 'size', label: 'Size (MB)', numeric: true },
+];
+
+export const packages = [
+  { name: 'bazel', kind: 'build system', size: 61 },
+  { name: 'buf', kind: 'tool', size: 32 },
+  { name: 'clang', kind: 'compiler', size: 412 },
+];
+
+<StateGrid wide>
+  <State label="sorted, size ascending"><DataTable caption="Packages by size, ascending" columns={columns} rows={packages} sort={{ key: 'size' }} /></State>
+</StateGrid>

@@ -1,0 +1,48 @@
+---
+title: States
+description: Single, range, marks, step 5 with labelled marks, disabled, a formatted value and a hidden label.
+height: 680
+order: 1
+block: true
+---
+
+import Slider from '@ocx-sh/theme/components/ui/Slider.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid wide>
+  <State label="single">
+    <Slider label="Volume" value={40} />
+  </State>
+  <State label="range">
+    <Slider label="Price" value={[20, 80]} name="price" />
+  </State>
+  <State label="with marks">
+    <Slider label="Cache age" value={50} marks={[0, 50, 100]} />
+  </State>
+  <State label="step 5, marks with labels">
+    <Slider
+      label="Retries"
+      value={10}
+      max={30}
+      step={5}
+      marks={[{ value: 0, label: 'off' }, 10, 20, { value: 30, label: 'max' }]}
+    />
+  </State>
+  <State label="disabled">
+    <Slider label="Bandwidth" value={60} disabled />
+  </State>
+  <State label="formatted value">
+    <Slider
+      label="Budget"
+      value={[200, 800]}
+      min={0}
+      max={1000}
+      step={50}
+      format={{ style: 'currency', currency: 'USD', maximumFractionDigits: 0 }}
+    />
+  </State>
+  <State label="hideLabel, showValue=false">
+    <Slider label="Brightness" value={70} hideLabel showValue={false} />
+  </State>
+</StateGrid>

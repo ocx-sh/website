@@ -1,0 +1,69 @@
+/* ToggleButton look (design c-choice "segmented" cell), shared by ToggleButton and the Zag
+   toggle-group items that wear the same class (C-271). Imported from each component's frontmatter,
+   so the whole body sits in @layer ocx. Pressed is keyed on aria-pressed (native) and data-state
+   (Zag). Segment joining (shared borders, vertical) stays with ToggleGroup. */
+@layer ocx {
+  .ocx-ui-toggle-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ocx-space-3);
+    box-sizing: border-box;
+    block-size: var(--ocx-control-xl);
+    margin: 0;
+    padding: 0 var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    font-weight: var(--ocx-font-weight-medium);
+    line-height: var(--ocx-lh-heading);
+    white-space: nowrap;
+    color: var(--ocx-color-fg-muted);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    cursor: pointer;
+  }
+  .ocx-ui-toggle-button[data-size='s'] {
+    block-size: var(--ocx-control-lg);
+  }
+  .ocx-ui-toggle-button[data-icon-only] {
+    inline-size: auto;
+    aspect-ratio: 1;
+    padding: 0;
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-ui-toggle-button:hover:not(:disabled, [aria-pressed='true'], [data-state='on']) {
+    color: var(--ocx-color-fg);
+  }
+  .ocx-ui-toggle-button:is([aria-pressed='true'], [data-state='on']) {
+    position: relative;
+    z-index: 1;
+    color: var(--ocx-color-accent-fg);
+    background: var(--ocx-color-accent-tint);
+    border-color: var(--ocx-color-accent);
+    /* The design's emphasis edge without growing the box: the rest is drawn inside. */
+    box-shadow: inset 0 0 0 calc(var(--ocx-border-width-emphasis) - var(--ocx-border-width)) var(--ocx-color-accent);
+  }
+  .ocx-ui-toggle-button:focus-visible {
+    position: relative;
+    z-index: 2;
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  /* Forced colours repaint tint and edge alike: pressed reads as the system highlight. */
+  @media (forced-colors: active) {
+    .ocx-ui-toggle-button:is([aria-pressed='true'], [data-state='on']) {
+      forced-color-adjust: none;
+      color: HighlightText;
+      background: Highlight;
+      border-color: Highlight;
+    }
+  }
+  /* Disabled is flat and subtle, pressed or not. */
+  .ocx-ui-toggle-button:disabled {
+    color: var(--ocx-color-fg-subtle);
+    background: var(--ocx-color-surface-subtle);
+    border-color: var(--ocx-color-border);
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T104315Z-ddf4e8c8.json"
+  ],
+  "first_seen": "2026-09-28T10:45:00Z",
+  "fixed": {
+    "at": "2026-09-28T17:52:14Z",
+    "by": "779cf80",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-starlight-css-inline",
+  "kind": "pitfall",
+  "last_seen": "2026-09-28T10:45:00Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "fixed",
+  "title": "Importing styled Starlight components into chrome inlines their CSS on every page",
+  "v": 1,
+  "versions": []
+}

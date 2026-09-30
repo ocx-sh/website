@@ -1,0 +1,13 @@
+---
+title: Release archives
+description: mode="os-arch" adds the OS name and one neutral Tag per architecture.
+height: 170
+order: 1
+---
+
+import PlatformIcons from '@ocx-sh/theme/components/PlatformIcons.astro';
+
+<PlatformIcons
+  mode="os-arch"
+  platforms={['linux/amd64', 'linux/arm64', 'darwin/amd64', 'darwin/arm64', 'windows/amd64']}
+/>

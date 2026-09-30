@@ -1,0 +1,18 @@
+---
+// Test fixture: two sibling accordions and one nested in a panel.
+import Accordion from '../../src/components/Accordion.astro';
+import AccordionItem from '../../src/components/AccordionItem.astro';
+---
+
+<Accordion value={['a']}>
+  <AccordionItem value="a" label="A">x</AccordionItem>
+  <AccordionItem value="b" label="B">y</AccordionItem>
+</Accordion>
+<Accordion value={['b']}>
+  <AccordionItem value="a" label="A2">x</AccordionItem>
+  <AccordionItem value="b" label="B2">
+    <Accordion>
+      <AccordionItem value="n" label="N">z</AccordionItem>
+    </Accordion>
+  </AccordionItem>
+</Accordion>

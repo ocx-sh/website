@@ -1,0 +1,129 @@
+---
+// Avatar (design c-avatar): initials underneath, the image stacked over them in the same reserved
+// box. No flicker and no JS on first paint (AGENTS.md assets rule): a slow or blocked image shows
+// the initials until it paints over them; `alt=""` keeps a failed one invisible. The script only
+// hides a failed image (no browser's broken glyph) and reports `ocx:avatar:status`.
+// ponytail: no Zag `avatar` machine (D-Z17 deviation) — the native <img> stack does its job; its
+// visible-trigger chunk cost ~6 KB gz on first load for one status event.
+
+export interface Props {
+  /** Accessible name; also the source for derived initials. */
+  name: string;
+  /** Image URL. Omit to always show the initials fallback. */
+  src?: string | undefined;
+  srcset?: string | undefined;
+  /** Overrides the initials derived from `name` (first letter of up to its first two words). */
+  initials?: string | undefined;
+  size?: 'sm' | 'md' | 'lg' | undefined;
+  /** Optional presence dot. */
+  status?: 'online' | 'away' | 'busy' | 'offline' | undefined;
+  class?: string | undefined;
+}
+
+const { name, src, srcset, initials, size = 'sm', status, class: className } = Astro.props;
+const glyph =
+  initials ??
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
+---
+
+<span
+  class:list={['ocx-avatar', className]}
+  data-size={size}
+  role="img"
+  aria-label={status ? `${name} (${status})` : name}
+>
+  <span class="ocx-avatar__fallback" aria-hidden="true">
+    {glyph}
+  </span>
+  {(src || srcset) && <img class="ocx-avatar__image" src={src} srcset={srcset} alt="" />}
+  {status && <span class="ocx-avatar-status" data-tone={status} aria-hidden="true" />}
+</span>
+
+<script>
+  for (const img of document.querySelectorAll<HTMLImageElement>('.ocx-avatar__image')) {
+    const report = () => {
+      const status = img.naturalWidth ? 'loaded' : 'error';
+      img.hidden = status === 'error';
+      img.parentElement?.dispatchEvent(new CustomEvent('ocx:avatar:status', { detail: { status }, bubbles: true }));
+    };
+    img.addEventListener('load', report);
+    img.addEventListener('error', report);
+    if (img.complete) report();
+  }
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-avatar {
+      --_size: var(--ocx-control-sm);
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      inline-size: var(--_size);
+      block-size: var(--_size);
+      overflow: hidden;
+      background: var(--ocx-color-surface-subtle);
+      color: var(--ocx-color-fg-muted);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+      font-family: var(--ocx-font-mono);
+      font-weight: var(--ocx-font-weight-semibold);
+      /* Ratios, not tokens: the glyph and dot scale with the tile; no fixed size token fits all three. */
+      font-size: calc(var(--_size) * 0.42);
+      line-height: var(--ocx-lh-none);
+      user-select: none;
+    }
+    .ocx-avatar[data-size='md'] {
+      --_size: var(--ocx-control-lg);
+    }
+    .ocx-avatar[data-size='lg'] {
+      --_size: var(--ocx-control-2xl);
+    }
+    .ocx-avatar__image {
+      position: absolute;
+      inset: 0;
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+    }
+    .ocx-avatar__fallback {
+      text-transform: uppercase;
+    }
+    .ocx-avatar-status {
+      position: absolute;
+      inset-block-end: calc(-1 * var(--ocx-border-width));
+      inset-inline-end: calc(-1 * var(--ocx-border-width));
+      inline-size: calc(var(--_size) * 0.3);
+      block-size: calc(var(--_size) * 0.3);
+      border-radius: var(--ocx-radius-full);
+      border: var(--ocx-border-width-strong) solid var(--ocx-color-surface);
+      background: var(--ocx-color-fg-subtle);
+    }
+    /* Shape carries the state too, never hue alone (WCAG 1.4.1): online solid, busy solid with a bar,
+       away half-filled, offline hollow. Ratios, not tokens, as for the dot size. */
+    .ocx-avatar-status[data-tone='online'] {
+      background: var(--ocx-color-success);
+    }
+    .ocx-avatar-status[data-tone='busy'] {
+      background:
+        linear-gradient(var(--ocx-color-surface), var(--ocx-color-surface)) center / 60% var(--ocx-border-width)
+          no-repeat,
+        var(--ocx-color-danger);
+    }
+    .ocx-avatar-status[data-tone='away'] {
+      border-color: var(--ocx-color-warning);
+      background: linear-gradient(to right, var(--ocx-color-warning) 50%, var(--ocx-color-surface) 50%);
+    }
+    .ocx-avatar-status[data-tone='offline'] {
+      border-color: var(--ocx-color-fg-subtle);
+      background: var(--ocx-color-surface);
+    }
+  }
+</style>

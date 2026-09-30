@@ -1,0 +1,45 @@
+---
+title: Selectable file tree
+description: Everything ocx stores lives under a single root. Click a row to select it (a directory also collapses); click it again, press Escape, or click outside to clear.
+height: 380
+block: true
+---
+
+import Tree from '@ocx-sh/theme/components/Tree.astro';
+import Node from '@ocx-sh/theme/components/TreeNode.astro';
+import Description from '@ocx-sh/theme/components/TreeDescription.astro';
+
+<Tree selectable>
+  <Node name="~/.ocx/" icon="🏠" open>
+    <Node name="packages/" icon="📦">
+      <Description slot="description">immutable, content-addressed assembled packages</Description>
+    </Node>
+    <Node name="layers/" icon="🗂️">
+      <Description slot="description">extracted OCI layers, shared across packages</Description>
+    </Node>
+    <Node name="blobs/" icon="📋">
+      <Description slot="description">raw OCI blobs: manifests, indexes, referrers</Description>
+    </Node>
+    <Node name="index/" icon="🏷️">
+      <Description slot="description">local index collection, one subtree per source</Description>
+    </Node>
+    <Node name="toolchain/" icon="🧰">
+      <Description slot="description">the global tier's rendered toolchain tree</Description>
+    </Node>
+    <Node name="state/" icon="🗄️">
+      <Description slot="description">persistent runtime state, one directory per concern</Description>
+      <Node name="projects/" icon="📁">
+        <Description slot="description">one directory per project key</Description>
+      </Node>
+      <Node name="update-check/" icon="⏱️">
+        <Description slot="description">throttle markers for the background update-check probe</Description>
+      </Node>
+    </Node>
+    <Node name="temp/" icon="🧪">
+      <Description slot="description">download staging — cleaned on successful install</Description>
+    </Node>
+    <Node name="locks/" icon="🔒">
+      <Description slot="description">cross-process lock files, safe to delete when ocx is idle</Description>
+    </Node>
+  </Node>
+</Tree>

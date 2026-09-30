@@ -1,0 +1,49 @@
+---
+title: Input
+description: The labelled text field with hint and error text, restyled on the theme tokens.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A native `<input>` with its `<label>`. The `start` and `end` slots hold an icon, a text addon or a ghost button inside the same box ([InputGroup](../input-group/)). Focus a field to see its border turn the focus colour. A `type="number"` field gets a stepper; the arrow keys keep stepping it too.
+Switch the theme in the header to check dark mode.
+
+## Stories
+
+<Stories of="input" />
+
+## Props
+
+<PropsTable
+  of="ui/Input.astro"
+  rows={[
+    {
+      name: 'label',
+      type: 'string',
+      required: true,
+      description: 'Accessible name, shown as the visible label unless hideLabel.',
+    },
+    { name: 'hideLabel', type: 'boolean', default: 'false', description: 'Keep the label for assistive tech only.' },
+    {
+      name: 'type',
+      type: "'text' | 'search' | 'url' | 'email' | 'password' | 'number'",
+      default: "'text'",
+      description: 'Input type.',
+    },
+    {
+      name: 'stepper',
+      type: 'boolean',
+      default: 'true',
+      description:
+        'type="number" only: Decrease and Increase buttons at the end of the field, disabled at min and max. The native spin buttons are always hidden.',
+    },
+    { name: 'hint', type: 'string', description: 'Help text below the field.' },
+    {
+      name: 'error',
+      type: 'string',
+      description: 'Error text; replaces the hint and sets aria-invalid. Says how to fix it.',
+    },
+    { name: 'rest → <input>', type: 'HTMLAttributes', description: 'Every other attribute goes to the <input>.' },
+  ]}
+/>

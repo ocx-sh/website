@@ -1,0 +1,147 @@
+---
+// One item of an <Accordion> (C-141): a heading with the trigger button, then the region panel
+// (the default slot). MDX renders slot content before its parent, so an item cannot see its
+// Accordion: it marks its three parts (`data-ocx-accordion="<part>:<value>"`) and the Accordion
+// replaces each mark with the part's SSR attributes.
+import './ui/disclosure.css';
+import Icon from './ui/Icon.astro';
+
+interface Props {
+  /** Unique within the accordion; part of the element ids, so a slug (letters, digits, `_`, `-`). */
+  value: string;
+  /** Trigger text. */
+  label: string;
+}
+
+const { value, label } = Astro.props;
+if (!/^[\w-]+$/.test(value)) throw new Error(`<AccordionItem value="${value}">: value must be a slug ([A-Za-z0-9_-])`);
+---
+
+<div class="ocx-accordion__item" data-ocx-accordion={`item:${value}`}>
+  <h3 class="ocx-accordion__heading">
+    <button class="ocx-accordion__trigger" data-ocx-accordion={`item-trigger:${value}`}>
+      <span class="ocx-accordion__label">{label}</span>
+      <Icon name="chevron-down" class="ocx-accordion__chevron" />
+    </button>
+  </h3>
+  <div class="ocx-accordion__content" data-ocx-accordion={`item-content:${value}`}>
+    <slot />
+  </div>
+</div>
+
+<style>
+  @layer ocx {
+    /* Rows in the prose flow, no frame (owner 2026-09-29: fewer lines): one hairline between items,
+     * none around them. Open = the current-item marker of Toc and Tabs: a 2px focus-coloured start
+     * bar down the whole item, accent-fg title and chevron, the chevron turned up. Hover stays the
+     * neutral tint. The <h3> is the APG heading; its prose look is reset, one class above the prose
+     * `h3` rule (scoped classes sit in :where() and add nothing). Same look as Collapsible. */
+    .ocx-accordion__item {
+      margin: 0;
+    }
+    .ocx-accordion__item + .ocx-accordion__item {
+      border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    /* An inset shadow, so opening shifts nothing. Closed = the same bar, transparent, so it fades while
+     * the panel shrinks (disclosure.css transitions it on live roots).
+     * ponytail: physical left edge; a :dir(rtl) mirror when an RTL consumer appears. */
+    .ocx-accordion__item {
+      box-shadow: inset var(--ocx-border-width-strong) 0 0 transparent;
+    }
+    .ocx-accordion__item[data-state='open'] {
+      box-shadow: inset var(--ocx-border-width-strong) 0 0 var(--ocx-color-focus);
+    }
+    .ocx-accordion__item > .ocx-accordion__heading {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font: inherit;
+    }
+    .ocx-accordion__trigger {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      box-sizing: border-box;
+      inline-size: 100%;
+      margin: 0;
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      border: 0;
+      border-radius: 0;
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-prose-body);
+      font-weight: var(--ocx-font-weight-medium);
+      line-height: var(--ocx-lh-heading);
+      text-align: start;
+      color: var(--ocx-color-fg);
+      background: none;
+      cursor: pointer;
+      /* On the base rule, not only :focus-visible: the ring's geometry is part of the look. */
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    .ocx-accordion__label {
+      flex: 1;
+      min-inline-size: 0;
+    }
+    .ocx-accordion__trigger > :global(.ocx-accordion__chevron) {
+      color: var(--ocx-color-fg-muted);
+      transition: rotate var(--ocx-duration-moderate) var(--ocx-ease-in-out);
+    }
+    .ocx-accordion__trigger:hover:not(:disabled, [data-disabled]) {
+      background: var(--ocx-color-hover);
+    }
+    .ocx-accordion__trigger:hover:not(:disabled, [data-disabled], [data-state='open'])
+      > :global(.ocx-accordion__chevron) {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-accordion__trigger[data-state='open'],
+    .ocx-accordion__trigger[data-state='open'] > :global(.ocx-accordion__chevron) {
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-accordion__trigger[data-state='open'] > :global(.ocx-accordion__chevron) {
+      rotate: 180deg;
+    }
+    /* The open item of an accordion that must keep one open (`collapsible={false}`): selecting it does
+       nothing, so it shows no chevron (a chevron promises it closes) and no hover; aria-disabled per
+       APG. Its title keeps the open accent. */
+    .ocx-accordion__trigger[aria-disabled='true'] {
+      cursor: default;
+    }
+    .ocx-accordion__trigger[aria-disabled='true']:hover {
+      background: none;
+    }
+    .ocx-accordion__trigger[aria-disabled='true'] > :global(.ocx-accordion__chevron) {
+      visibility: hidden;
+    }
+    .ocx-accordion__trigger:is(:disabled, [data-disabled]) {
+      color: var(--ocx-color-fg-subtle);
+      cursor: not-allowed;
+    }
+    .ocx-accordion__trigger:is(:disabled, [data-disabled]) > :global(.ocx-accordion__chevron) {
+      color: inherit;
+    }
+    .ocx-accordion__trigger:focus-visible {
+      outline: var(--ocx-focus-ring);
+    }
+    /* Open/close motion: ui/disclosure.css, live roots only. */
+    .ocx-accordion__content {
+      margin: 0;
+      padding: 0 var(--ocx-space-4) var(--ocx-space-4);
+    }
+    .ocx-accordion__content > :global(:first-child) {
+      margin-top: 0;
+    }
+    .ocx-accordion__content > :global(:last-child) {
+      margin-bottom: 0;
+    }
+    /* Forced colours drop box-shadow: the open bar becomes a system-coloured border. Every item
+     * reserves it (Canvas), so opening only recolours it and shifts nothing. */
+    @media (forced-colors: active) {
+      .ocx-accordion__item {
+        border-inline-start: var(--ocx-border-width-strong) solid Canvas;
+      }
+      .ocx-accordion__item[data-state='open'] {
+        border-inline-start-color: Highlight;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,28 @@
+---
+title: Icon
+description: One icon from the theme's registry as inline SVG, in four token sizes, decorative unless named.
+---
+
+import PropsTable from '../../../../components/showcase/PropsTable.astro';
+import Stories from '../../../../components/showcase/Stories.astro';
+
+Every icon in the theme comes from one registry, generated from Lucide, Simple Icons and a few
+custom glyphs, and renders through `<Icon>`: inline SVG in the
+text colour, painted with the page, never loaded later. The [Iconography](../) page
+says when to use which icon; the [catalog](../catalog/) lists them all with a search.
+
+## Stories
+
+<Stories of="iconography/icon" />
+
+## Props
+
+<PropsTable
+  of="ui/Icon.astro"
+  rows={[
+    { name: 'name', type: 'IconName', required: true, description: 'Registry name; an unknown name fails the build.' },
+    { name: 'label', type: 'string', description: 'Accessible name (role=img). Without it the icon is decorative and aria-hidden.' },
+    { name: 'size', type: "'xs' | 'sm' | 'md' | 'lg'", default: "'md'", description: 'Edge length from --ocx-icon-*: 10, 11, 14 or 20px.' },
+    { name: 'class', type: 'string', description: 'Extra class on the <svg>; a parent may size the icon through it.' },
+  ]}
+/>

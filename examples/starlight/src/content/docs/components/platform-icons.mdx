@@ -1,0 +1,25 @@
+---
+title: Platform icons
+description: OS glyphs for os/arch platform strings, with a native tooltip and no client JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+OS glyphs for `os/arch` platform strings, each with its name as a native tooltip. No client
+JavaScript. The glyphs come from the icon registry; [OS icons](../iconography/os/) lists them and
+says when to use a single `<Icon>` instead.
+
+## Stories
+
+<Stories of="platform-icons" />
+
+## Props
+
+<PropsTable
+  of="PlatformIcons.astro"
+  rows={[
+    { name: 'platforms', type: 'string[]', required: true, description: 'Platform strings in os/arch form (linux/amd64); a bare os is fine.' },
+    { name: 'mode', type: "'os' | 'os-arch'", default: "'os'", description: 'Glyphs only, or glyph plus OS name plus one tag per architecture.' },
+  ]}
+/>

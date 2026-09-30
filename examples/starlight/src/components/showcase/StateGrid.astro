@@ -1,0 +1,12 @@
+---
+// Grid of labelled State cells, hairline-separated like the design's component sheet.
+interface Props {
+  /** Wider cells for form fields and panels. */
+  wide?: boolean;
+}
+const { wide = false } = Astro.props;
+---
+
+<div class="showcase-states not-content" data-wide={wide ? '' : undefined}>
+  <slot />
+</div>

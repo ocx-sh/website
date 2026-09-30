@@ -1,0 +1,120 @@
+/* DependencyExplorer rows (C-220): injected by dependency-explorer.mjs before the first row
+   renders, so none of it rides in the page HTML (the SSR half lives in DependencyExplorer.astro). */
+@layer ocx {
+  .ocx-deps tbody tr[data-key]:hover {
+    background: var(--ocx-color-surface-subtle);
+  }
+  .ocx-deps .ocx-deps__expandable {
+    cursor: pointer;
+  }
+  .ocx-deps .ocx-deps__toggle:focus-visible,
+  .ocx-deps .ocx-deps__link:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+
+  .ocx-deps .ocx-deps__name {
+    font-weight: var(--ocx-font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+  /* A filtered-out row takes its detail with it. */
+  .ocx-deps tr[hidden] + .ocx-deps__detail {
+    display: none;
+  }
+  .ocx-deps .ocx-deps__toggle {
+    /* Top-aligned, so the button adds nothing to the cell's line box: every one-line row keeps the
+       placeholder rows' pitch (C-221). */
+    vertical-align: top;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ocx-space-2);
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: start;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .ocx-deps .ocx-deps__toggle svg,
+  .ocx-deps .ocx-deps__spacer {
+    flex-shrink: 0;
+    display: inline-block;
+    width: var(--ocx-icon-md);
+    height: var(--ocx-icon-md);
+    vertical-align: middle;
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-deps .ocx-deps__spacer {
+    margin-inline-end: var(--ocx-space-2);
+  }
+  .ocx-deps .ocx-deps__toggle path {
+    fill: none;
+    /* currentColor (not the token directly) so forced-colors mode, which repaints
+       `color` but not arbitrary custom properties, still renders a visible stroke. */
+    stroke: currentColor;
+    stroke-width: var(--ocx-border-width-emphasis);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ocx-deps .ocx-deps__toggle[data-state='open'] svg {
+    transform: rotate(90deg);
+  }
+
+  .ocx-deps .ocx-deps__version {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    overflow-wrap: anywhere;
+  }
+  .ocx-deps .ocx-deps__license {
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-muted);
+  }
+
+  .ocx-deps .ocx-deps__links {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--ocx-space-2) var(--ocx-space-4);
+  }
+  .ocx-deps .ocx-deps__link {
+    font-size: var(--ocx-text-sm);
+    font-weight: var(--ocx-font-weight-medium);
+    color: var(--ocx-color-accent-fg);
+    text-decoration: none;
+  }
+  .ocx-deps .ocx-deps__link:hover {
+    text-decoration: underline;
+  }
+
+  .ocx-deps .ocx-deps__detail td {
+    padding-inline-start: calc(var(--ocx-space-4) + var(--ocx-icon-md) + var(--ocx-space-2));
+    font-size: var(--ocx-text-base);
+    line-height: var(--ocx-prose-lh);
+  }
+  .ocx-deps .ocx-deps__desc,
+  .ocx-deps .ocx-deps__author {
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-deps .ocx-deps__author {
+    font-size: var(--ocx-text-sm);
+  }
+  .ocx-deps .ocx-deps__narrow {
+    display: none;
+  }
+
+  @media (width < 40rem) {
+    .ocx-deps .ocx-deps__detail td {
+      padding-inline-start: var(--ocx-space-4);
+    }
+    .ocx-deps .ocx-deps__narrow {
+      display: block;
+      margin-top: var(--ocx-space-2);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .ocx-deps .ocx-deps__toggle svg {
+      transition: transform var(--ocx-duration-base);
+    }
+  }
+}

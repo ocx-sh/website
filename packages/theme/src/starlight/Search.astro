@@ -1,0 +1,628 @@
+---
+// Starlight `Search` override on Zag `dialog` (C-210, D-Z4, D-Z11). Starlight 0.42.4's hooks stay:
+// `<site-search>`, `button[data-open-modal]`, `button[data-close-modal]`, `#starlight__search`,
+// `body[data-search-modal-open]`, and its Pagefind options. The machine loads on the first trigger
+// click or Ctrl/⌘K (manual trigger); Pagefind UI loads on the first open, never at idle.
+import project from 'virtual:starlight/project-context';
+import Icon from '../components/ui/Icon.astro';
+import { ssrApi, ssrAttrs } from '../components/ui/zag-runtime.mjs';
+import { connect, machine } from './search.zag.mjs';
+
+const label = Astro.locals.t('search.label');
+// Starlight's Pagefind translations, unchanged.
+const translations = {
+  placeholder: label,
+  ...Object.fromEntries(
+    Object.entries(Astro.locals.t.all())
+      .filter(([key]) => key.startsWith('pagefind.'))
+      .map(([key, value]) => [key.replace('pagefind.', ''), value]),
+  ),
+};
+const id = 'search';
+const zag = { 'aria-label': label };
+const api = ssrApi(machine, connect, { ...zag, id });
+// Zag assumes a description part (its `rendered` defaults to true) and points aria-describedby
+// at it; there is none, so SSR and `render` (search.zag.mjs) both drop the reference.
+const content = { ...api.getContentProps(), 'aria-describedby': undefined };
+---
+
+<site-search
+  class={Astro.props.class}
+  data-zag-root="dialog"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zag)}
+  data-zag-state="idle"
+  data-zag-trigger="manual"
+  data-translations={JSON.stringify(translations)}
+  data-strip-trailing-slash={project.trailingSlash === 'never' ? '' : undefined}
+>
+  <button {...ssrAttrs(api.getTriggerProps())} data-open-modal aria-label={label} aria-keyshortcuts="Control+K">
+    <Icon name="search" />
+    <span class="sl-hidden md:sl-block" aria-hidden="true">
+      {label}
+    </span>
+    {/* The platform key is CSS (`html[data-platform]`, set before paint by Head.astro): no script here. */}
+    <kbd class="sl-hidden md:sl-flex">
+      <kbd class="ocx-search__ctrl">{Astro.locals.t('search.ctrlKey')}</kbd>
+      <kbd class="ocx-search__cmd">⌘</kbd>
+      <kbd>K</kbd>
+    </kbd>
+  </button>
+  {/* Top layer (manual popover): the header's stacking context and the fixed mobile menu toggle
+  stay below the open dialog, as they did below Starlight's modal <dialog>. */}
+  <div class="ocx-search__layer" popover="manual">
+    <div {...ssrAttrs(api.getBackdropProps())}></div>
+    <div {...ssrAttrs(content)}>
+      <button {...ssrAttrs(api.getCloseTriggerProps())} data-close-modal class="sl-flex md:sl-hidden">
+        {Astro.locals.t('search.cancelLabel')}
+      </button>
+      {import.meta.env.DEV ? (
+        <p class="ocx-search__dev" dir="ltr">
+          {Astro.locals.t('search.devWarning')}
+        </p>
+      ) : (
+        <div id="starlight__search" />
+      )}
+    </div>
+  </div>
+</site-search>
+
+<script>
+  import { mount } from '../components/ui/zag.mjs';
+  import { installToaster } from './toaster.mjs';
+  import { wireThemeToggles } from './theme-toggle.mjs';
+
+  // The Footer's toaster (C-181) starts here too: a Footer script was one more early request.
+  installToaster(document);
+  // The theme toggle (ThemeSelect) is a CycleButton; its one delegated click listener installs here
+  // for every CycleButton on the page, so neither ThemeSelect nor CycleButton ships a script.
+  wireThemeToggles();
+
+  type Api = { open: boolean; setOpen: (open: boolean) => void };
+
+  // The header section nav (Header.astro, C-192) mounts here, in the header's one early script: a
+  // script of its own was one more early request (a Lighthouse round trip). It loads on the first
+  // pointerenter/focusin on the nav (C-113); with this Search overridden, it stays native (C-192).
+  const nav = document.querySelector<HTMLElement>('.ocx-header [data-zag-root="navigation-menu"]');
+  if (nav) mount(nav, { load: () => import('../components/navigation-menu.zag.mjs') });
+
+  // The sidebar and the mobile menu mount here too, for the same reason (C-230, C-231). With this
+  // Search overridden, nested sidebar groups show their content (the error fallback) and the pane
+  // stays Starlight's native popover. Each nested group loads its collapsible on first touch.
+  // The mark tells the sidebar's inline script a mount runs; without it the groups open as a fallback.
+  const sidebar = document.getElementById('starlight__sidebar');
+  const persist = sidebar?.querySelector<HTMLElement>('sl-sidebar-state-persist');
+  if (persist) persist.dataset['mounted'] = '';
+  for (const group of sidebar?.querySelectorAll<HTMLElement>('[data-zag-root="collapsible"]') ?? [])
+    mount(group, { load: () => import('../components/collapsible.zag.mjs') });
+  // The mobile menu toggle's first tap loads the drawer and opens it on that tap; after a load error
+  // the pane opens through its native popover instead (S-102), and later taps are the popover's.
+  const menu = document.querySelector<HTMLElement>('.ocx-menu[data-zag-root="drawer"]');
+  if (menu) {
+    const drawer = mount(menu, { load: () => import('./mobile-menu.zag.mjs'), trigger: 'manual', replay: false });
+    menu.querySelector('button')?.addEventListener('click', () => {
+      if (menu.dataset['zagState'] !== 'idle') return;
+      // Opened natively by a tap before this script ran: this tap is the popover's (it closes it);
+      // the machine starts on the next one.
+      if (sidebar?.matches(':popover-open')) return;
+      void drawer.start().then(() => {
+        const api = drawer.api as Api | undefined;
+        if (api) api.setOpen(true);
+        else sidebar?.showPopover();
+      });
+    });
+  }
+
+  const root = document.querySelector<HTMLElement>('site-search[data-zag-root="dialog"]');
+  if (root) {
+    // No replay: the start signal is outside the root (Ctrl/⌘K) or already consumed, so each
+    // signal sets the open state itself once the machine is live.
+    const handle = mount(root, { load: () => import('./search.zag.mjs'), trigger: 'manual', replay: false });
+    // The state the reader asked for, until the machine reports it: presses that land before the
+    // machine is live (or before its api refreshes) each flip this, not a stale `api.open`.
+    let wanted: boolean | undefined;
+    root.addEventListener('ocx:search:change', () => (wanted = undefined));
+    const toggle = (open?: boolean) => {
+      const next = open ?? !(wanted ?? (handle.api as Api | undefined)?.open ?? false);
+      wanted = next;
+      return handle.start().then(() => (handle.api as Api | undefined)?.setOpen(next));
+    };
+    const trigger = root.querySelector('[data-open-modal]');
+    // The name only (not painted): the hint's ⌘ is CSS, from Head.astro's `html[data-platform]`.
+    if (document.documentElement.dataset['platform'] === 'mac') trigger?.setAttribute('aria-keyshortcuts', 'Meta+K');
+    // Before the machine is live the trigger opens it; after, Zag's own trigger props do.
+    trigger?.addEventListener('click', () => void (root.dataset['zagState'] === 'idle' && toggle(true)));
+    // The one Ctrl/⌘K listener on the page (Starlight's is gone with its component). After a load
+    // error the browser keeps its own shortcut.
+    window.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k' && root.dataset['zagState'] !== 'error') {
+        event.preventDefault();
+        void toggle();
+      }
+    });
+  }
+</script>
+
+<style is:global>
+  /* Pagefind UI's own sheet, Starlight 0.42.4's skin for it and its trigger rules, verbatim and in
+   * Starlight's layer as its Search.astro ships them (bound to that component, so they move with
+   * the override). The theme's `starlight.css` and Header.astro (layer ocx) restyle on top, unchanged. */
+  @import '@pagefind/default-ui/css/ui.css' layer(starlight.core);
+
+  @layer starlight.core {
+    /* Starlight's component-scoped trigger and cancel-button rules, scoped here by `site-search`. */
+    site-search {
+      display: contents;
+    }
+    site-search button[data-open-modal] {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 0;
+      background-color: transparent;
+      color: var(--sl-color-gray-1);
+      cursor: pointer;
+      height: 2.5rem;
+      font-size: var(--sl-text-xl);
+    }
+    @media (min-width: 50rem) {
+      site-search button[data-open-modal] {
+        border: 1px solid var(--sl-color-gray-5);
+        border-radius: 0.5rem;
+        padding-inline-start: 0.75rem;
+        padding-inline-end: 0.5rem;
+        background-color: var(--sl-color-black);
+        color: var(--sl-color-gray-2);
+        font-size: var(--sl-text-sm);
+        width: 100%;
+        max-width: 22rem;
+      }
+      site-search button[data-open-modal]:hover {
+        border-color: var(--sl-color-gray-2);
+        color: var(--sl-color-white);
+      }
+      site-search button[data-open-modal] > :last-child {
+        margin-inline-start: auto;
+      }
+    }
+    site-search button[data-open-modal] > svg {
+      font-size: 1em;
+      width: 1em;
+      height: 1em;
+    }
+    site-search button > kbd {
+      border-radius: 0.25rem;
+      font-size: var(--sl-text-2xs);
+      gap: 0.25em;
+      padding-inline: 0.375rem;
+      background-color: var(--sl-color-gray-6);
+    }
+    site-search kbd {
+      font-family: var(--__sl-font);
+    }
+    site-search button[data-close-modal] {
+      position: absolute;
+      z-index: 1;
+      align-items: center;
+      align-self: flex-end;
+      height: calc(64px * var(--pagefind-ui-scale));
+      padding: 0.25rem;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: var(--sl-color-text-accent);
+    }
+
+    #starlight__search {
+      --pagefind-ui-primary: var(--sl-color-text);
+      --pagefind-ui-text: var(--sl-color-gray-2);
+      --pagefind-ui-font: var(--__sl-font);
+      --pagefind-ui-background: var(--sl-color-black);
+      --pagefind-ui-border: var(--sl-color-gray-5);
+      --pagefind-ui-border-width: 1px;
+      --pagefind-ui-tag: var(--sl-color-gray-5);
+      --sl-search-cancel-space: 5rem;
+    }
+    :root[data-theme='light'] #starlight__search {
+      --pagefind-ui-tag: var(--sl-color-gray-6);
+    }
+    @media (min-width: 50rem) {
+      #starlight__search {
+        --sl-search-cancel-space: 0px;
+      }
+    }
+
+    #starlight__search {
+      --sl-search-result-spacing: calc(1.25rem * var(--pagefind-ui-scale));
+      --sl-search-result-pad-inline-start: calc(3.75rem * var(--pagefind-ui-scale));
+      --sl-search-result-pad-inline-end: calc(1.25rem * var(--pagefind-ui-scale));
+      --sl-search-result-pad-block: calc(0.9375rem * var(--pagefind-ui-scale));
+      --sl-search-result-nested-pad-block: calc(0.625rem * var(--pagefind-ui-scale));
+      --sl-search-corners: calc(0.3125rem * var(--pagefind-ui-scale));
+      --sl-search-page-icon-size: calc(1.875rem * var(--pagefind-ui-scale));
+      --sl-search-page-icon-inline-start: calc(
+        (var(--sl-search-result-pad-inline-start) - var(--sl-search-page-icon-size)) / 2
+      );
+      --sl-search-tree-diagram-size: calc(2.5rem * var(--pagefind-ui-scale));
+      --sl-search-tree-diagram-inline-start: calc(
+        (var(--sl-search-result-pad-inline-start) - var(--sl-search-tree-diagram-size)) / 2
+      );
+    }
+
+    #starlight__search .pagefind-ui__form::before {
+      --pagefind-ui-text: var(--sl-color-gray-1);
+      opacity: 1;
+    }
+
+    #starlight__search .pagefind-ui__search-input {
+      color: var(--sl-color-white);
+      font-weight: 400;
+      width: calc(100% - var(--sl-search-cancel-space));
+    }
+
+    #starlight__search input:focus {
+      --pagefind-ui-border: var(--sl-color-accent);
+    }
+
+    #starlight__search .pagefind-ui__search-clear {
+      inset-inline-end: var(--sl-search-cancel-space);
+      width: calc(60px * var(--pagefind-ui-scale));
+      padding: 0;
+      background-color: transparent;
+      overflow: hidden;
+    }
+    #starlight__search .pagefind-ui__search-clear:focus {
+      outline: 1px solid var(--sl-color-accent);
+    }
+    #starlight__search .pagefind-ui__search-clear::before {
+      content: '';
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m13.41 12 6.3-6.29a1 1 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1 1 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 .33 1.64 1 1 0 0 0 1.09-.22l6.29-6.3 6.29 6.3a1 1 0 0 0 1.64-.33 1 1 0 0 0-.22-1.09L13.41 12Z'/%3E%3C/svg%3E")
+        center / 50% no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m13.41 12 6.3-6.29a1 1 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1 1 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 .33 1.64 1 1 0 0 0 1.09-.22l6.29-6.3 6.29 6.3a1 1 0 0 0 1.64-.33 1 1 0 0 0-.22-1.09L13.41 12Z'/%3E%3C/svg%3E")
+        center / 50% no-repeat;
+      background-color: var(--sl-color-text-accent);
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #starlight__search .pagefind-ui__results > * + * {
+      margin-top: var(--sl-search-result-spacing);
+    }
+    #starlight__search .pagefind-ui__result {
+      border: 0;
+      padding: 0;
+    }
+
+    #starlight__search .pagefind-ui__result-nested {
+      position: relative;
+      padding: var(--sl-search-result-nested-pad-block) var(--sl-search-result-pad-inline-end);
+      padding-inline-start: var(--sl-search-result-pad-inline-start);
+    }
+
+    #starlight__search .pagefind-ui__result-title:not(:where(.pagefind-ui__result-nested *)),
+    #starlight__search .pagefind-ui__result-nested {
+      position: relative;
+      background-color: var(--sl-color-black);
+    }
+
+    #starlight__search .pagefind-ui__result-title:not(:where(.pagefind-ui__result-nested *)):hover,
+    #starlight__search .pagefind-ui__result-title:not(:where(.pagefind-ui__result-nested *)):focus-within,
+    #starlight__search .pagefind-ui__result-nested:hover,
+    #starlight__search .pagefind-ui__result-nested:focus-within {
+      outline: 1px solid var(--sl-color-accent-high);
+    }
+
+    #starlight__search .pagefind-ui__result-title:not(:where(.pagefind-ui__result-nested *)):focus-within,
+    #starlight__search .pagefind-ui__result-nested:focus-within {
+      background-color: var(--sl-color-accent-low);
+    }
+
+    #starlight__search .pagefind-ui__result-thumb,
+    #starlight__search .pagefind-ui__result-inner {
+      margin-top: 0;
+    }
+
+    #starlight__search .pagefind-ui__result-inner > :first-child {
+      border-radius: var(--sl-search-corners) var(--sl-search-corners) 0 0;
+    }
+    #starlight__search .pagefind-ui__result-inner > :last-child {
+      border-radius: 0 0 var(--sl-search-corners) var(--sl-search-corners);
+    }
+
+    #starlight__search .pagefind-ui__result-inner > .pagefind-ui__result-title {
+      padding: var(--sl-search-result-pad-block) var(--sl-search-result-pad-inline-end);
+      padding-inline-start: var(--sl-search-result-pad-inline-start);
+    }
+    #starlight__search .pagefind-ui__result-inner > .pagefind-ui__result-title::before {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: var(--sl-search-page-icon-inline-start);
+      width: var(--sl-search-page-icon-size);
+      background: var(--sl-color-gray-3);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' viewBox='0 0 24 24'%3E%3Cpath d='M9 10h1a1 1 0 1 0 0-2H9a1 1 0 0 0 0 2Zm0 2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2H9Zm11-3V8l-6-6a1 1 0 0 0-1 0H7a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V9Zm-6-4 3 3h-2a1 1 0 0 1-1-1V5Zm4 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5v3a3 3 0 0 0 3 3h3v9Zm-3-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Z'/%3E%3C/svg%3E")
+        center no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' viewBox='0 0 24 24'%3E%3Cpath d='M9 10h1a1 1 0 1 0 0-2H9a1 1 0 0 0 0 2Zm0 2a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2H9Zm11-3V8l-6-6a1 1 0 0 0-1 0H7a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V9Zm-6-4 3 3h-2a1 1 0 0 1-1-1V5Zm4 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5v3a3 3 0 0 0 3 3h3v9Zm-3-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Z'/%3E%3C/svg%3E")
+        center no-repeat;
+    }
+
+    #starlight__search .pagefind-ui__result-inner {
+      align-items: stretch;
+      gap: 1px;
+    }
+
+    #starlight__search .pagefind-ui__result-link {
+      position: unset;
+      --pagefind-ui-text: var(--sl-color-white);
+      font-weight: 600;
+    }
+
+    #starlight__search .pagefind-ui__result-link:hover {
+      text-decoration: none;
+    }
+
+    #starlight__search .pagefind-ui__result-nested .pagefind-ui__result-link::before {
+      content: unset;
+    }
+
+    #starlight__search .pagefind-ui__result-nested::before {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      inset-inline-start: var(--sl-search-tree-diagram-inline-start);
+      width: var(--sl-search-tree-diagram-size);
+      background: var(--sl-color-gray-4);
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' viewBox='0 0 16 1000' preserveAspectRatio='xMinYMin slice'%3E%3Cpath d='M8 0v1000m6-988H8'/%3E%3C/svg%3E")
+        0% 0% / 100% no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' viewBox='0 0 16 1000' preserveAspectRatio='xMinYMin slice'%3E%3Cpath d='M8 0v1000m6-988H8'/%3E%3C/svg%3E")
+        0% 0% / 100% no-repeat;
+    }
+    #starlight__search .pagefind-ui__result-nested:last-of-type::before {
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 16 16'%3E%3Cpath d='M8 0v12m6 0H8'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 16 16'%3E%3Cpath d='M8 0v12m6 0H8'/%3E%3C/svg%3E");
+    }
+
+    /* Flip page and tree icons around the vertical axis when in an RTL layout. */
+    [dir='rtl'] .pagefind-ui__result-title::before,
+    [dir='rtl'] .pagefind-ui__result-nested::before {
+      transform: matrix(-1, 0, 0, 1, 0, 0);
+    }
+
+    #starlight__search .pagefind-ui__result-link::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+    }
+
+    #starlight__search .pagefind-ui__result-excerpt {
+      font-size: calc(1rem * var(--pagefind-ui-scale));
+      overflow-wrap: anywhere;
+    }
+
+    #starlight__search mark {
+      color: var(--sl-color-gray-2);
+      background-color: transparent;
+      font-weight: 600;
+    }
+
+    #starlight__search .pagefind-ui__filter-value::before {
+      border-color: var(--sl-color-text-invert);
+    }
+
+    #starlight__search .pagefind-ui__result-tags {
+      background-color: var(--sl-color-black);
+      margin-top: 0;
+      padding: var(--sl-search-result-nested-pad-block) var(--sl-search-result-pad-inline-end);
+    }
+  }
+
+  /* The dialog: Starlight's geometry on tokens, a full-screen sheet below 50rem and a centred card
+   * above (design question 1: no mock yet). */
+  @layer ocx {
+    site-search .ocx-search__layer {
+      inset: 0;
+      /* Full window, not the scrollbar-less viewport: when the scroll lock lifts on close the
+         scrollbar returns mid-fade, and `inset: 0` would shift the content sideways. */
+      inset-inline-end: auto;
+      inline-size: 100vw;
+      block-size: auto;
+      max-inline-size: none;
+      max-block-size: none;
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+      color: inherit;
+      background: none;
+      border: 0;
+    }
+    site-search [data-part='backdrop'] {
+      position: fixed;
+      inset: 0;
+      background: var(--ocx-color-overlay);
+      backdrop-filter: blur(var(--ocx-space-2)); /* Starlight's 0.25rem blur; no blur token */
+    }
+    site-search [data-part='content'] {
+      --_h: var(--ocx-control-2xl); /* read by starlight.css: Pagefind input, clear and cancel height */
+      position: fixed;
+      inset: 0;
+      inset-inline-end: auto; /* full window, as on the layer */
+      inline-size: 100vw;
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-5);
+      overflow: auto;
+      padding: var(--ocx-space-5);
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface-subtle);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-xl);
+      box-shadow: var(--ocx-shadow-overlay);
+    }
+    site-search [data-part='content'][hidden] {
+      display: none;
+      opacity: 0;
+    }
+    site-search [data-part='backdrop'][hidden] {
+      opacity: 0;
+    }
+    /* Enter and exit: the backdrop fades, the card fades and scales. search.zag.mjs hides parts and
+       the top-layer popover at once, so `display`/`overlay` (allow-discrete) hold them through the
+       transition; tokens.css zeroes the duration under reduced motion. */
+    site-search[data-zag-state='live'] .ocx-search__layer {
+      transition:
+        display var(--ocx-duration-moderate) allow-discrete,
+        overlay var(--ocx-duration-moderate) allow-discrete;
+    }
+    site-search[data-zag-state='live'] [data-part='backdrop'] {
+      transition:
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-out),
+        display var(--ocx-duration-moderate) allow-discrete;
+    }
+    site-search[data-zag-state='live'] [data-part='content'] {
+      transition:
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-out),
+        scale var(--ocx-duration-moderate) var(--ocx-ease-out),
+        display var(--ocx-duration-moderate) allow-discrete;
+    }
+    /* Exit is quicker and fades only: scaling down on close reads as heavy. */
+    site-search[data-zag-state='live'] [data-part='backdrop'][hidden],
+    site-search[data-zag-state='live'] [data-part='content'][hidden] {
+      transition:
+        opacity var(--ocx-duration-base) var(--ocx-ease-in-out),
+        display var(--ocx-duration-base) allow-discrete;
+    }
+    site-search[data-zag-state='live'] [data-part='backdrop']:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+      }
+    }
+    site-search[data-zag-state='live'] [data-part='content']:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+        scale: var(--ocx-scale-enter);
+      }
+    }
+    site-search .ocx-search__dev {
+      margin: auto;
+      text-align: center;
+      white-space: pre-line;
+    }
+    @media (min-width: 50rem) {
+      site-search [data-part='content'] {
+        /* Centred on the full window (inset-inline-start + translate, not margin auto): the scrollbar
+           returning on close must not shift the card. Logical, like the layer, so RTL follows. */
+        inset: var(--ocx-space-10) auto auto;
+        inset-inline-start: 50vw;
+        translate: -50% 0;
+        inline-size: 90vw; /* Starlight's 90% dialog width below the max */
+        max-inline-size: var(--ocx-dialog-width);
+        min-block-size: calc(var(--ocx-space-10) * 3.75); /* Starlight's 15rem; no dialog min-size token */
+        max-block-size: calc(100% - 2 * var(--ocx-space-10));
+        margin-inline: 0;
+        padding: var(--ocx-space-6);
+      }
+      site-search [data-part='content']:dir(rtl) {
+        translate: 50% 0;
+      }
+    }
+  }
+
+  /* Pagefind's input wears the SearchField look (D-P11, C-274; ui/SearchField.astro + field.css):
+   * the c-input box (surface, hairline, radius-md, control-2xl, mono text-sm), focus = a border
+   * colour and no ring, the search icon at the start in fg-subtle, and the clear as a ghost icon
+   * button. Pagefind draws both glyphs as CSS masks, so they stay inline data URIs (no late
+   * request); their paths are the registry's `search` and `close` (a test pins that), stroked at
+   * 2.6 of 24 so a 14px icon draws the 1.5px line of `--ocx-icon-stroke`. The `#starlight__search`
+   * id outranks the older `site-search` rules in starlight.css, whatever the sheet order. */
+  @layer ocx {
+    #starlight__search .pagefind-ui__search-input {
+      box-sizing: border-box;
+      block-size: var(--_h, var(--ocx-control-2xl));
+      padding: 0 calc(var(--ocx-control-lg) + var(--ocx-space-3)) 0
+        calc(var(--ocx-space-4) + var(--ocx-icon-md) + var(--ocx-space-3));
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      font-weight: var(--ocx-font-weight-regular);
+      color: var(--ocx-color-fg);
+      caret-color: var(--ocx-color-accent);
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-md);
+    }
+    #starlight__search .pagefind-ui__search-input::placeholder {
+      color: var(--ocx-color-fg-subtle);
+      opacity: 1;
+    }
+    #starlight__search .pagefind-ui__search-input:focus {
+      border-color: var(--ocx-color-focus);
+      outline: none;
+    }
+    /* Forced colours replace border-color: focus needs an outline (as in field.css). */
+    @media (forced-colors: active) {
+      #starlight__search .pagefind-ui__search-input:focus-visible {
+        outline: var(--ocx-border-width-strong) solid Highlight;
+        outline-offset: calc(var(--ocx-border-width) * -1);
+      }
+    }
+
+    #starlight__search .pagefind-ui__form::before {
+      inset-block-start: calc((var(--_h, var(--ocx-control-2xl)) - var(--ocx-icon-md)) / 2);
+      inset-inline-start: calc(var(--ocx-border-width) + var(--ocx-space-4));
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+      background-color: var(--ocx-color-fg-subtle);
+      opacity: 1;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21l-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3C/svg%3E")
+        center / 100% no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21l-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3C/svg%3E")
+        center / 100% no-repeat;
+    }
+
+    /* Ghost icon button (Button ghost s iconOnly): fg-subtle, neutral hover, square focus ring.
+       Pagefind's text label stays as the accessible name, pushed out of the box by the block ::before. */
+    #starlight__search .pagefind-ui__search-clear {
+      box-sizing: border-box;
+      inset-block-start: calc((var(--_h, var(--ocx-control-2xl)) - var(--ocx-control-lg)) / 2);
+      inset-inline-end: calc(var(--sl-search-cancel-space) + var(--ocx-border-width) + var(--ocx-space-3));
+      inline-size: var(--ocx-control-lg);
+      block-size: var(--ocx-control-lg);
+      padding: 0;
+      overflow: hidden;
+      color: var(--ocx-color-fg-subtle);
+      background: none;
+      border: var(--ocx-border-width) solid transparent;
+      border-radius: var(--ocx-radius-md);
+      outline: none;
+    }
+    #starlight__search .pagefind-ui__search-clear:hover {
+      color: var(--ocx-color-fg);
+    }
+    #starlight__search .pagefind-ui__search-clear:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset);
+    }
+    #starlight__search .pagefind-ui__search-clear::before {
+      content: '';
+      display: block;
+      inline-size: 100%;
+      block-size: 100%;
+      background-color: currentColor;
+      -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E")
+        center / var(--ocx-icon-md) no-repeat;
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E")
+        center / var(--ocx-icon-md) no-repeat;
+    }
+  }
+
+  /* The shortcut hint (Starlight's inline script, as CSS): Head.astro sets `html[data-platform]` before
+   * paint, so the key is final on first paint; without script there is no shortcut, so no hint. In
+   * ocx, after starlight.utils' `md:sl-flex`. */
+  @layer ocx {
+    :root:not([data-platform]) site-search button > kbd,
+    :root[data-platform='mac'] .ocx-search__ctrl,
+    :root:not([data-platform='mac']) .ocx-search__cmd {
+      display: none;
+    }
+  }
+</style>

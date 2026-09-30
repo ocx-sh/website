@@ -1,0 +1,36 @@
+---
+title: States
+description: Each state is live, so open it to see the menu. Once one item has an icon, the others keep an empty slot.
+height: 620
+order: 1
+---
+
+import ActionMenu from '@ocx-sh/theme/components/ui/ActionMenu.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const actions = [
+  { value: 'copy', label: 'Copy digest', icon: 'copy' },
+  { value: 'pin', label: 'Pin version', icon: 'pin' },
+  { value: 'remove', label: 'Remove', icon: 'trash' },
+  { value: 'publish', label: 'Publish', icon: 'external', disabled: true },
+];
+
+export const plain = [
+  { value: 'copy', label: 'Copy digest' },
+  { value: 'pin', label: 'Pin version' },
+  { value: 'remove', label: 'Remove' },
+];
+
+export const mixed = [
+  { value: 'copy', label: 'Copy digest', icon: 'copy' },
+  { value: 'pin', label: 'Pin version' },
+  { value: 'remove', label: 'Remove', icon: 'trash' },
+];
+
+<StateGrid wide>
+  <State label="placement=top-end"><ActionMenu label="More" items={actions} placement="top-end" /></State>
+  <State label="context"><ActionMenu label="Package actions" items={actions} context><p>Right-click here.</p></ActionMenu></State>
+  <State label="no icons"><ActionMenu label="Actions" items={plain} /></State>
+  <State label="some icons"><ActionMenu label="Actions" items={mixed} /></State>
+</StateGrid>

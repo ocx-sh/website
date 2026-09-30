@@ -1,0 +1,51 @@
+---
+title: States
+description: Tones, sizes, custom value text, formatted ranges, a hidden label, and the empty and full ends.
+height: 610
+order: 1
+block: true
+---
+
+import Meter from '@ocx-sh/theme/components/ui/Meter.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid wide>
+  <State label="tone=neutral">
+    <Meter label="Cache" value={45} />
+  </State>
+  <State label="tone=success">
+    <Meter label="Tests passing" value={92} tone="success" />
+  </State>
+  <State label="tone=warning">
+    <Meter label="Quota" value={78} tone="warning" />
+  </State>
+  <State label="tone=danger">
+    <Meter label="Disk used" value={96} tone="danger" />
+  </State>
+  <State label="size=s">
+    <Meter label="Cache" value={45} size="s" />
+  </State>
+  <State label="size=m">
+    <Meter label="Cache" value={45} size="m" />
+  </State>
+  <State label="custom valueText">
+    <Meter label="Storage" value={64} valueText="3.2 of 5 GB" tone="warning" />
+  </State>
+  <State label="format, min and max">
+    <Meter
+      label="Download"
+      value={3.2}
+      min={0}
+      max={5}
+      format={{ style: 'unit', unit: 'gigabyte', maximumFractionDigits: 1 }}
+    />
+  </State>
+  <State label="hideLabel">
+    <Meter label="Battery" value={30} tone="danger" hideLabel />
+  </State>
+  <State label="empty and full">
+    <Meter label="Empty" value={0} />
+    <Meter label="Full" value={100} />
+  </State>
+</StateGrid>

@@ -1,0 +1,108 @@
+---
+// Text input (design c-input): label above, message (hint or error) below. Slots `start` / `end`
+// put an icon, addon or button inside the box (InputGroup); without them the markup is the bare input.
+// type="number" gets a stepper (two ghost buttons, number-stepper.mjs) instead of the native spin buttons.
+import type { HTMLAttributes } from 'astro/types';
+import './field.css';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import InputGroup from './InputGroup.astro';
+import Label from './Label.astro';
+import { nextUiId } from './ids.mjs';
+
+export interface Props extends Omit<HTMLAttributes<'input'>, 'type'> {
+  /** Accessible name, rendered as the visible <label> unless `hideLabel`. */
+  label: string;
+  /** Keep the label for assistive tech only (e.g. a search box with a placeholder). */
+  hideLabel?: boolean;
+  type?: 'text' | 'search' | 'url' | 'email' | 'password' | 'number';
+  /** Help text below the field. */
+  hint?: string;
+  /** Error text; replaces the hint and sets `aria-invalid`. Says how to fix it. */
+  error?: string;
+  /** type="number" only: show the decrease / increase buttons at the end of the field. */
+  stepper?: boolean;
+}
+
+const {
+  label,
+  hideLabel = false,
+  type = 'text',
+  hint,
+  error,
+  stepper = true,
+  required,
+  id: idProp,
+  class: className,
+  'aria-describedby': describedBy,
+  ...rest
+} = Astro.props;
+// step="any" has no step for stepUp() to take.
+const stepped = type === 'number' && stepper && rest.step !== 'any';
+const grouped = stepped || Astro.slots.has('start') || Astro.slots.has('end');
+const id = idProp ?? nextUiId('input');
+const disabled = Boolean(rest.disabled);
+const readonly = Boolean(rest.readonly);
+// Buttons already at a bound render disabled; the script keeps them in sync afterwards.
+const value = rest.value === undefined || rest.value === '' ? NaN : Number(rest.value);
+const atBound = (bound: unknown) => bound !== undefined && bound !== '' && !Number.isNaN(value);
+const down = disabled || readonly || (atBound(rest.min) && value <= Number(rest.min));
+const up = disabled || readonly || (atBound(rest.max) && value >= Number(rest.max));
+const message = error ?? hint;
+const msgId = message ? `${id}-msg` : undefined;
+const describedByIds = [describedBy, msgId].filter(Boolean).join(' ') || undefined;
+const attrs = {
+  id,
+  type,
+  required,
+  'aria-invalid': error ? ('true' as const) : undefined,
+  ...rest,
+  'aria-describedby': describedByIds,
+};
+---
+
+<div class:list={['ocx-ui-field', className]} data-invalid={error ? '' : undefined}>
+  <Label for={id} hidden={hideLabel} required={Boolean(required)} disabled={disabled}>
+    {label}
+  </Label>
+  {grouped ? (
+    <InputGroup disabled={disabled} invalid={Boolean(error)}>
+      <slot name="start" slot="start" />
+      <input class="ocx-ui-input-group__input" {...attrs} />
+      <Fragment slot="end">
+        <slot name="end" />
+        {stepped && (
+          <span class="ocx-ui-stepper">
+            <Button
+              variant="ghost"
+              size="s"
+              iconOnly
+              aria-label="Decrease"
+              tabindex={-1}
+              data-step="down"
+              disabled={down}
+            >
+              <Icon name="minus" />
+            </Button>
+            <Button variant="ghost" size="s" iconOnly aria-label="Increase" tabindex={-1} data-step="up" disabled={up}>
+              <Icon name="plus" />
+            </Button>
+          </span>
+        )}
+      </Fragment>
+    </InputGroup>
+  ) : (
+    <input class="ocx-ui-input" {...attrs} />
+  )}
+  {message && (
+    <p class="ocx-ui-field__msg" id={msgId}>
+      {message}
+    </p>
+  )}
+</div>
+
+<script>
+  import { install } from './number-stepper.mjs';
+
+  install();
+</script>

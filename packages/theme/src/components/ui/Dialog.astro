@@ -1,0 +1,250 @@
+---
+// Dialog (C-172) on Zag `dialog` (dialog.zag.mjs): a surface-raised card, max 640px (design
+// question 1, interim). Focus trap, scroll lock, Esc, outside click and return focus are Zag's;
+// the machine loads on the first hover/focus of the trigger (C-104). `ocx:dialog:change {open}`.
+import type { Props as DialogProps } from '@zag-js/dialog';
+import Button from './Button.astro';
+import { connect, machine, parts } from './dialog.zag.mjs';
+import Icon from './Icon.astro';
+import { nextUiId } from './ids.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+
+interface Props {
+  /** Root id; also what `ocx:dialog:open` and `ocx:dialog-result` key on (ConfirmDialog, AlertDialog). */
+  id?: string;
+  /** Heading of the dialog; also its accessible name. */
+  title: string;
+  /** One line under the title; linked as the accessible description. */
+  description?: string | undefined;
+  /** Open on first paint (defaultOpen). */
+  open?: boolean;
+  /** Trap focus, lock scroll and hide the page from assistive tech. */
+  modal?: boolean;
+  /** Zag machine props passed through verbatim (C-106). */
+  zag?: ZagProps<DialogProps>;
+}
+
+const { id = nextUiId('dialog'), title, description, open = false, modal = true, zag } = Astro.props;
+const zagProps = { ...zag, defaultOpen: open, modal };
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }))).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+---
+
+<div
+  class="ocx-ui-dialog"
+  data-zag-root="dialog"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+  data-zag-trigger={Astro.slots.has('trigger') ? undefined : 'manual'}
+>
+  {Astro.slots.has('trigger') && (
+    <Button {...p.trigger}>
+      <slot name="trigger" />
+    </Button>
+  )}
+  <div class="ocx-ui-dialog__backdrop" {...p.backdrop}></div>
+  <div class="ocx-ui-dialog__positioner not-content" {...p.positioner}>
+    <div class="ocx-ui-dialog__content" {...p.content}>
+      <div class="ocx-ui-dialog__head">
+        <div class="ocx-ui-dialog__head-main">
+          {Astro.slots.has('icon') && (
+            <span class="ocx-ui-dialog__icon" aria-hidden="true">
+              <slot name="icon" />
+            </span>
+          )}
+          <h2 class="ocx-ui-dialog__title" {...p.title}>
+            {title}
+          </h2>
+        </div>
+        <Button variant="ghost" size="s" iconOnly aria-label="Close" {...p.closeTrigger}>
+          <Icon name="close" class="ocx-ui-dialog__x" />
+        </Button>
+      </div>
+      {description && (
+        <p class="ocx-ui-dialog__description" {...p.description}>
+          {description}
+        </p>
+      )}
+      <div class="ocx-ui-dialog__body">
+        <slot />
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+  type Api = { setOpen: (open: boolean) => void } | undefined;
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-dialog[data-zag-root]')) {
+    // No trigger (ConfirmDialog, AlertDialog): nothing to hover/focus, so load only on demand.
+    const trigger = root.dataset.zagTrigger === 'manual' ? 'manual' : 'interaction';
+    const handle = mount(root, { load: () => import('./dialog.zag.mjs'), trigger });
+    // Rendered open (`open`): trap, lock and Esc must work before any hover or focus.
+    if (root.querySelector('[data-part="content"]:not([hidden])')) void handle.start();
+    // Programmatic open, id-scoped, mirrors the toast pattern (`ocx:toast`): any script can pop a
+    // preset dialog placed once on the page without holding a reference to it.
+    document.addEventListener('ocx:dialog:open', (event) => {
+      if ((event as CustomEvent<{ id?: string }>).detail?.id !== root.dataset.zagId) return;
+      void handle.start().then(() => (handle.api as Api)?.setOpen(true));
+    });
+    // Presets: a `data-dialog-action` button closes with its value; every other close (Esc, X,
+    // outside click) is 'dismiss'. One `ocx:dialog-result` per close, so a waiting caller always hears back.
+    if (!root.querySelector('[data-dialog-action]')) continue;
+    let value: string | undefined;
+    root.addEventListener('click', (event) => {
+      const button = (event.target as Element).closest<HTMLElement>('[data-dialog-action]');
+      if (!button || button.closest('.ocx-ui-dialog') !== root) return;
+      value = button.dataset.dialogAction;
+      (handle.api as Api)?.setOpen(false);
+    });
+    root.addEventListener('ocx:dialog:change', (event) => {
+      if (event.target !== root) return;
+      const { open } = (event as CustomEvent<{ open: boolean }>).detail;
+      if (!open) {
+        const detail = { id: root.dataset.zagId, value: value ?? 'dismiss' };
+        root.dispatchEvent(new CustomEvent('ocx:dialog-result', { detail, bubbles: true }));
+      }
+      value = undefined;
+    });
+  }
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-dialog {
+      display: inline-block;
+    }
+    [data-part='backdrop'] {
+      position: fixed;
+      inset: 0;
+      z-index: var(--ocx-z-modal-backdrop);
+      background: var(--ocx-color-overlay);
+    }
+    [data-part='positioner'] {
+      position: fixed;
+      inset: 0;
+      /* Full window, not the scrollbar-less viewport: when the scroll lock lifts on close the
+         scrollbar returns mid-fade, and `inset: 0` would shift the content sideways. */
+      inset-inline-end: auto;
+      inline-size: 100vw;
+      z-index: var(--ocx-z-modal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--ocx-space-5);
+    }
+    [data-part='content'] {
+      box-sizing: border-box;
+      inline-size: 100%;
+      max-inline-size: var(--ocx-dialog-width);
+      max-block-size: 100%;
+      overflow: auto;
+      padding: var(--ocx-space-6);
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-base);
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+      box-shadow: var(--ocx-shadow-overlay);
+    }
+    [data-part='content']:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset); /* inset: square on radius-lg */
+    }
+    /* Enter and exit: the backdrop fades, the card fades and scales. Zag's vanilla connect has no
+       presence and sets `hidden` at once, so `display` (allow-discrete) holds the node until the
+       transition ends. Live only: a dialog rendered open by SSR must not animate in on load. */
+    [data-part='backdrop'][hidden] {
+      opacity: 0;
+    }
+    [data-part='content'][hidden] {
+      opacity: 0;
+    }
+    .ocx-ui-dialog[data-zag-state='live'] [data-part='backdrop'] {
+      transition:
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-out),
+        display var(--ocx-duration-moderate) allow-discrete;
+    }
+    .ocx-ui-dialog[data-zag-state='live'] [data-part='content'] {
+      transition:
+        opacity var(--ocx-duration-moderate) var(--ocx-ease-out),
+        scale var(--ocx-duration-moderate) var(--ocx-ease-out),
+        display var(--ocx-duration-moderate) allow-discrete;
+    }
+    /* Exit is quicker and fades only: scaling down on close reads as heavy. */
+    .ocx-ui-dialog[data-zag-state='live'] [data-part='backdrop'][hidden],
+    .ocx-ui-dialog[data-zag-state='live'] [data-part='content'][hidden] {
+      transition:
+        opacity var(--ocx-duration-base) var(--ocx-ease-in-out),
+        display var(--ocx-duration-base) allow-discrete;
+    }
+    .ocx-ui-dialog[data-zag-state='live'] [data-part='backdrop']:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+      }
+    }
+    .ocx-ui-dialog[data-zag-state='live'] [data-part='content']:not([hidden]) {
+      @starting-style {
+        opacity: 0;
+        scale: var(--ocx-scale-enter);
+      }
+    }
+    .ocx-ui-dialog__head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--ocx-space-4);
+      padding-bottom: var(--ocx-space-4);
+      border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    /* Centre the first title line on the size-s close box; a wrapped title stays top-anchored. */
+    .ocx-ui-dialog__head-main {
+      display: flex;
+      align-items: start;
+      margin-block-start: max(0px, (var(--ocx-control-lg) - var(--ocx-text-lg) * var(--ocx-lh-heading)) / 2);
+      min-inline-size: 0;
+      gap: var(--ocx-space-3);
+    }
+    /* Icon box = one title line box, glyph centred in it: stays on the first line when the title wraps. */
+    .ocx-ui-dialog__icon {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      inline-size: var(--ocx-icon-md);
+      block-size: calc(var(--ocx-text-lg) * var(--ocx-lh-heading));
+    }
+    .ocx-ui-dialog__icon :global(svg) {
+      display: block;
+    }
+    /* Outranks the prose h2 rule (margin, rule line, padding) when the dialog sits in page content. */
+    .ocx-ui-dialog__head [data-part='title'] {
+      margin: 0;
+      padding-top: 0;
+      border-top: 0;
+      font-size: var(--ocx-text-lg);
+      font-weight: var(--ocx-font-weight-semibold);
+      line-height: var(--ocx-lh-heading);
+      color: var(--ocx-color-fg);
+    }
+    [data-part='description'] {
+      margin: var(--ocx-space-3) 0 0;
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-ui-dialog__body {
+      margin-block-start: var(--ocx-space-5);
+    }
+    .ocx-ui-dialog__x {
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+  }
+</style>

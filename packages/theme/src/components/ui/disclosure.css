@@ -1,0 +1,39 @@
+/* Open/close motion for Accordion and Collapsible content: the box grows while it fades in, and on
+   close shrinks and fades before `display: none` lands. Imported from each component's frontmatter:
+   an imported sheet is neither scoped nor layered, so the body sits in @layer ocx here.
+   Both machines set the UA `[hidden]` (Accordion at once, Collapsible one frame after a close with
+   no animation of its own); `display` and `height` transition around that flip, so hidden content
+   stays out of the tree and the tab order once the exit ends.
+   Live roots only: an item rendered open by SSR is final on first paint and never animates. Height
+   needs `interpolate-size` (Chromium); elsewhere the box snaps and only the fade runs. The
+   durations read tokens, so reduced motion zeroes them. */
+@layer ocx {
+  [data-zag-state='live'] :is(.ocx-accordion__content, .ocx-collapsible__content) {
+    interpolate-size: allow-keywords;
+    /* `clip` plus a margin for the focus rings of the content's own children. */
+    overflow: clip;
+    overflow-clip-margin: var(--ocx-space-2);
+    transition:
+      height var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      padding-block-end var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      display var(--ocx-duration-moderate) allow-discrete;
+  }
+  /* The open bar (an inset shadow, transparent when closed) fades with the panel; its width stays. */
+  [data-zag-state='live'] .ocx-accordion__item,
+  [data-zag-state='live'].ocx-collapsible {
+    transition: box-shadow var(--ocx-duration-moderate) var(--ocx-ease-in-out);
+  }
+  [data-zag-state='live'] :is(.ocx-accordion__content, .ocx-collapsible__content)[hidden] {
+    height: 0;
+    padding-block-end: 0;
+    opacity: 0;
+  }
+  [data-zag-state='live'] :is(.ocx-accordion__content, .ocx-collapsible__content):not([hidden]) {
+    @starting-style {
+      height: 0;
+      padding-block-end: 0;
+      opacity: 0;
+    }
+  }
+}

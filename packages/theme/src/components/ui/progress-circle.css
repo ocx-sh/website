@@ -1,0 +1,77 @@
+/* ProgressCircle (C-265): a static SVG ring, markup from progress-circle.mjs. Imported by the
+ * component and inlined by the toast chunk. Tokens only; accent is deliberately not a tone.
+ * A consumer moves a determinate ring with `style="--_value:N"` (unitless 0-100) on the root plus
+ * `aria-valuenow`; without `--_value` the fill's own `stroke-dasharray` attribute (SSR) stands. */
+@layer ocx {
+  .ocx-ui-progress-circle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ocx-space-3);
+    vertical-align: middle;
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-progress-circle__value {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--ocx-color-fg-muted);
+  }
+  /* Reserved box: the ring never changes size, so nothing shifts. */
+  .ocx-ui-progress-circle__ring {
+    flex: none;
+    box-sizing: border-box;
+    inline-size: var(--ocx-control-sm);
+    block-size: var(--ocx-control-sm);
+    overflow: visible;
+    --_tone: var(--ocx-color-fg-muted);
+  }
+  .ocx-ui-progress-circle__ring[data-size='s'] {
+    inline-size: var(--ocx-icon-md);
+    block-size: var(--ocx-icon-md);
+  }
+  .ocx-ui-progress-circle__ring[data-size='l'] {
+    inline-size: var(--ocx-control-xl);
+    block-size: var(--ocx-control-xl);
+  }
+  .ocx-ui-progress-circle[data-tone='success'] .ocx-ui-progress-circle__ring {
+    --_tone: var(--ocx-color-success);
+  }
+  .ocx-ui-progress-circle[data-tone='warning'] .ocx-ui-progress-circle__ring {
+    --_tone: var(--ocx-color-warning);
+  }
+  .ocx-ui-progress-circle[data-tone='danger'] .ocx-ui-progress-circle__ring {
+    --_tone: var(--ocx-color-danger);
+  }
+  .ocx-ui-progress-circle__ring circle {
+    fill: none;
+    stroke-width: var(--ocx-border-width-strong);
+    stroke-linecap: square;
+    vector-effect: non-scaling-stroke;
+  }
+  .ocx-ui-progress-circle__ring [data-part='track'] {
+    stroke: var(--ocx-color-border);
+  }
+  .ocx-ui-progress-circle__ring [data-part='fill'] {
+    stroke: var(--_tone);
+  }
+  /* Consumer-driven value (see the header). Opacity hides the square-cap dot a 0-length dash paints. */
+  .ocx-ui-progress-circle[style*='--_value'] [data-state='determinate'] [data-part='fill'],
+  .ocx-ui-progress-circle__ring[style*='--_value'][data-state='determinate'] [data-part='fill'] {
+    stroke-dasharray: calc(var(--_value) * 1) 100;
+    opacity: min(1, calc(var(--_value) * 1000));
+  }
+  /* Indeterminate: a quarter arc, spun. */
+  .ocx-ui-progress-circle__ring[data-state='indeterminate'] [data-part='fill'] {
+    stroke-dasharray: 25 100;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ocx-ui-progress-circle__ring[data-state='indeterminate'] {
+      animation: ocx-ui-progress-circle-spin calc(var(--ocx-duration-slow) * 4) linear infinite;
+    }
+  }
+  @keyframes ocx-ui-progress-circle-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+}

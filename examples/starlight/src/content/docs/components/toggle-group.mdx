@@ -1,0 +1,55 @@
+---
+title: Toggle group
+description: A segmented choice of two to five always-visible options, single or multiple.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Use it for a few options that stay visible, such as a platform or a scope. Past five options, use a select.
+
+## Stories
+
+<Stories of="toggle-group" />
+
+## Props
+
+<PropsTable
+  of="ToggleGroup.astro"
+  rows={[
+    {
+      name: 'items',
+      type: '{ value, label, disabled?, icon?, iconOnly? }[]',
+      required: true,
+      description:
+        'The options; a value holds no whitespace. icon is a registry icon shown before the label; iconOnly shows just the icon in a square cell and the label becomes its aria-label.',
+    },
+    {
+      name: 'multiple',
+      type: 'boolean',
+      default: 'false',
+      description: 'Several pressed buttons (aria-pressed) instead of one radio choice.',
+    },
+    { name: 'value', type: 'string | string[]', description: 'Initially pressed value(s).' },
+    { name: 'label', type: 'string', required: true, description: 'Accessible name of the group.' },
+    {
+      name: 'zag',
+      type: 'ZagProps<toggle-group.Props>',
+      description: 'Zag toggle-group machine props, data only (e.g. orientation, loopFocus).',
+    },
+  ]}
+/>
+
+## Events
+
+| Event                     | Detail                                   | When                              |
+| ------------------------- | ---------------------------------------- | --------------------------------- |
+| `ocx:toggle-group:change` | `{ value }`, the pressed values in order | An option is pressed or released. |
+
+## Keyboard
+
+The group is one Tab stop; focus enters on the first option.
+
+- <kbd>←</kbd> <kbd>→</kbd> move focus between options, wrapping at the ends.
+- <kbd>Home</kbd> <kbd>End</kbd> move focus to the first or last option.
+- <kbd>Space</kbd> <kbd>Enter</kbd> press the focused option.

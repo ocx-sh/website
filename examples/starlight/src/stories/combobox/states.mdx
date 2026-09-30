@@ -1,0 +1,26 @@
+---
+title: States
+description: No match, disabled, typed, fuzzy, one typo tolerated, and contains mode. Every one is live, so focus the input and press the down arrow.
+height: 540
+order: 2
+block: true
+---
+
+import Combobox from '@ocx-sh/theme/components/ui/Combobox.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const packages = [
+  { value: 'kitware/cmake', label: 'kitware/cmake', meta: '4.0.2' },
+  { value: 'cmark-cli', label: 'cmark-cli', meta: '0.3.1' },
+  { value: 'cmake-find-ocx', label: 'CMake · find_ocx', meta: '0.3.1' },
+];
+
+<StateGrid wide>
+  <State label="no match"><div style="inline-size: 100%"><Combobox label="Package, no match" options={packages} query="zzz" empty="no package matches" /></div></State>
+  <State label="disabled"><div style="inline-size: 100%"><Combobox label="Package (disabled)" options={packages} placeholder="Search packages" disabled /></div></State>
+  <State label="typed, filtered"><div style="inline-size: 100%"><Combobox label="Package, typed" options={packages} query="cm" highlighted="kitware/cmake" /></div></State>
+  <State label="fuzzy, scattered match"><div style="inline-size: 100%"><Combobox label="Package, fuzzy" options={packages} query="cfo" /></div></State>
+  <State label="fuzzy, one typo tolerated"><div style="inline-size: 100%"><Combobox label="Package, typo" options={packages} query="cmage" /></div></State>
+  <State label="contains mode (no fuzzy)"><div style="inline-size: 100%"><Combobox label="Package, contains" options={packages} matchMode="contains" query="cm" /></div></State>
+</StateGrid>

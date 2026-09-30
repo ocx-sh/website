@@ -1,0 +1,35 @@
+---
+// C-122: live log of the `ocx:*` events dispatched inside `for` (a CSS selector), newest first.
+// The trigger is an inline script, not a bundled module: as a module it was one more request before
+// first paint, and past ~16 of those Lighthouse's simulation (six HTTP/1.1 connections) queued LCP
+// a round trip later (perf 0.99). It carries no comments: inline JS ships unminified. The logger
+// stays out of the page HTML (inline it cost ~350 B gz on every showcase page) and is fetched at
+// idle after load, or on the first input if that comes sooner. Machines load on first input too,
+// behind a larger fetch, so it installs before any of them can emit. Repeat calls are harmless:
+// the import is cached and the install idempotent. The logger file is raw: `?url` emits
+// event-log.mjs as is (it imports nothing); `no-inline` keeps Vite from inlining it as a data: URL
+// under the 4 KB asset limit.
+import src from './event-log.mjs?url&no-inline';
+
+interface Props {
+  for: string;
+}
+const { for: target } = Astro.props;
+---
+
+<div class="showcase-log" data-showcase-log={target}>
+  <p class="showcase-log__title">Events</p>
+  <div class="showcase-log__list" role="log" aria-label="Events from the demo" tabindex="0">
+    <ol class="showcase-log__items"></ol>
+  </div>
+  <p class="showcase-log__empty">
+    Use the demo: each <code>ocx:*</code> event it fires appears here.
+  </p>
+</div>
+
+<script is:inline define:vars={{ src }}>
+  const install = () => import(src).then((m) => m.installEventLogs(document));
+  for (const type of ['pointerover', 'focusin', 'touchstart', 'keydown'])
+    addEventListener(type, install, { capture: true, passive: true, once: true });
+  addEventListener('load', () => (window.requestIdleCallback ?? setTimeout)(install), { once: true });
+</script>

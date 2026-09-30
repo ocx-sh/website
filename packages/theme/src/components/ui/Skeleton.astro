@@ -1,0 +1,38 @@
+---
+// Skeleton: static placeholder bars that reserve the final box (no-flicker rule).
+// Decorative only; pair it with a <Loader> for the announcement. No animation.
+export interface Props {
+  /** Number of text lines to reserve (each one line-height tall). */
+  lines?: number;
+  class?: string;
+}
+
+const { lines = 3, class: className } = Astro.props;
+---
+
+<span class:list={['ocx-ui-skeleton', className]} aria-hidden="true" style={`--_lines: ${lines}`}>
+  {Array.from({ length: lines }, () => (
+    <span class="ocx-ui-skeleton__line" />
+  ))}
+</span>
+
+<style>
+  @layer ocx {
+    /* Reserves the final box at first paint: lines × line-height, nothing moves when content lands. */
+    .ocx-ui-skeleton {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      block-size: calc(var(--_lines) * 1lh);
+    }
+    .ocx-ui-skeleton__line {
+      display: block;
+      block-size: 0.6lh; /* ponytail: bar inside its line box, raw fraction until a skeleton token exists */
+      background: var(--ocx-color-surface-subtle);
+      border-radius: var(--ocx-radius-sm);
+    }
+    .ocx-ui-skeleton__line:last-child {
+      inline-size: 60%; /* ponytail: ragged last line, raw until a skeleton token exists */
+    }
+  }
+</style>

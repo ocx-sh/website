@@ -1,0 +1,187 @@
+---
+// Combobox (design c-combobox, C-162) on Zag combobox, loaded on first interaction: an APG
+// editable combobox with list autocomplete. Typing filters `options` (case-insensitive substring)
+// and marks the match; ArrowUp/Down highlight, Enter commits, Escape closes and restores the input.
+// The popup is Zag-positioned (D-Z10). `open`, `highlighted` and `query` are initial state.
+// Slots `start` / `end` put a control (a sort-direction toggle) inside the box, before the search
+// icon and before the clear button: each is its own tab stop, and a click on one opens nothing.
+// ponytail: option groups, the foot count and the "search the docs" empty link skipped — no consumer.
+import type { Props as ComboboxMachineProps } from '@zag-js/combobox';
+import { segmentsOf, toCollection } from './combobox.zag.mjs';
+import { connect, machine } from './combobox.zag.mjs';
+import type { MatchMode } from './combobox.zag.mjs';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import InputGroup from './InputGroup.astro';
+import Label from './Label.astro';
+import { nextUiId } from './ids.mjs';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './field.css';
+import './overlay.css';
+
+export interface ComboboxOption {
+  value: string;
+  label: string;
+  /** Right-aligned muted detail, e.g. a version. */
+  meta?: string;
+}
+
+export interface Props {
+  label: string;
+  hideLabel?: boolean;
+  options: ComboboxOption[];
+  /** Committed value. */
+  value?: string;
+  placeholder?: string;
+  /** Input id. */
+  id?: string;
+  class?: string;
+  /** Start with the popup open. */
+  open?: boolean;
+  /** Initially highlighted option's value. */
+  highlighted?: string;
+  /** Initially typed text: filters the options and is marked in their labels. */
+  query?: string;
+  /** Text shown when the typed text matches no option. */
+  empty?: string;
+  /** How typed text matches an option's label. Default `fuzzy` (subsequence + one-typo tolerance). */
+  matchMode?: MatchMode;
+  disabled?: boolean;
+  /** Zag machine props. */
+  zag?: ZagProps<ComboboxMachineProps>;
+}
+
+const {
+  label,
+  hideLabel = false,
+  options,
+  value,
+  placeholder,
+  id,
+  class: className,
+  open = false,
+  highlighted,
+  query,
+  empty = 'No match',
+  matchMode = 'fuzzy',
+  disabled = false,
+  zag,
+} = Astro.props;
+const zagId = nextUiId('combobox');
+// SSR renders these; on start the machine reads them back from the input and the rendered items
+// (combobox.zag.mjs), so `data-zag-props` carries only the `zag` passthrough (C-106).
+const props = {
+  ...(value !== undefined && { defaultValue: [value] }),
+  ...(query && { defaultInputValue: query }),
+  ...(open && { defaultOpen: true }),
+  ...(highlighted && { defaultHighlightedValue: highlighted }),
+  ...(placeholder && { placeholder }),
+  ...(disabled && { disabled: true }),
+  ...(id && { ids: { input: id } }),
+  ...zag,
+  // Fixed: the popup escapes clipping ancestors (StateGrid, scroll boxes). Merged as readDom does.
+  positioning: { strategy: 'fixed', ...zag?.positioning },
+  translations: { clearTriggerLabel: `Clear ${label}`, ...zag?.translations },
+};
+const api = ssrApi(machine, connect, { ...props, id: zagId, collection: toCollection(options, query, matchMode) });
+const clear = ssrAttrs(api.getClearTriggerProps());
+---
+
+<div
+  class:list={['ocx-ui-field', 'ocx-ui-combobox', className]}
+  data-zag-root="combobox"
+  data-zag-id={zagId}
+  data-zag-state="idle"
+  data-zag-props={JSON.stringify(zag ?? {})}
+  data-ocx-match-mode={matchMode}
+  {...ssrAttrs(api.getRootProps())}
+>
+  <Label hidden={hideLabel} {...ssrAttrs(api.getLabelProps())}>
+    {label}
+  </Label>
+  <InputGroup {...ssrAttrs(api.getControlProps())}>
+    <Fragment slot="start">
+      <slot name="start" />
+      <Icon name="search" />
+    </Fragment>
+    <input class="ocx-ui-input-group__input" {...ssrAttrs(api.getInputProps())} />
+    <Fragment slot="end">
+      <slot name="end" />
+      <Button variant="ghost" size="s" iconOnly {...clear} aria-label={String(clear['aria-label'])}>
+        <Icon name="close" />
+      </Button>
+    </Fragment>
+  </InputGroup>
+  <div class="ocx-ui-combobox__positioner" {...ssrAttrs(api.getPositionerProps())}>
+    <div class="ocx-ui-overlay ocx-ui-combobox__popup">
+      <ul class="ocx-ui-combobox__list" {...ssrAttrs(api.getContentProps())}>
+        {options.map((item) => {
+          const segments = segmentsOf(item.label, query, matchMode);
+          return (
+            <li
+              class="ocx-ui-option"
+              {...ssrAttrs(api.getItemProps({ item }))}
+              hidden={!api.collection.has(item.value)}
+            >
+              <span class="ocx-ui-option__label" {...ssrAttrs(api.getItemTextProps({ item }))}>
+                {segments.map((seg) => (seg.mark ? <mark>{seg.text}</mark> : seg.text))}
+              </span>
+              {item.meta && <span class="ocx-ui-option__meta">{item.meta}</span>}
+            </li>
+          );
+        })}
+      </ul>
+      <p class="ocx-ui-combobox__empty" hidden={api.collection.size > 0}>
+        {empty}
+      </p>
+      <p class="ocx-ui-combobox__foot" aria-hidden="true">
+        <kbd class="ocx-kbd">↑</kbd>
+        <kbd class="ocx-kbd">↓</kbd> move · <kbd class="ocx-kbd">↵</kbd> pick · <kbd class="ocx-kbd">esc</kbd> close
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { mount } from './zag.mjs';
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="combobox"]'))
+    mount(root, { load: () => import('./combobox.zag.mjs') });
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-ui-combobox__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ocx-ui-combobox__empty {
+      margin: 0;
+      padding: var(--ocx-space-4);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-subtle);
+      border: var(--ocx-border-width) dashed var(--ocx-color-border-strong);
+    }
+    .ocx-ui-combobox__foot {
+      margin: var(--ocx-space-2) 0 0;
+      padding: var(--ocx-space-3) var(--ocx-space-4) var(--ocx-space-2);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      color: var(--ocx-color-fg-subtle);
+      border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .ocx-ui-option[data-highlighted]::after {
+      content: '↵' / '';
+      grid-row: 1;
+      grid-column: 4;
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-ui-combobox__empty[hidden] {
+      display: none;
+    }
+  }
+</style>

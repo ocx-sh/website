@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260928T043332Z-06e7ba48.json"
+  ],
+  "first_seen": "2026-09-28T04:33:32Z",
+  "fixed": {
+    "at": "2026-09-28T17:49:11Z",
+    "by": "1e4b6ff",
+    "stale_versions": []
+  },
+  "folded_at": "2026-09-28T17:49:11Z",
+  "folds": 1,
+  "id": "project-eventlog-contrast",
+  "kind": "defect",
+  "last_seen": "2026-09-28T04:33:32Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "low",
+  "status": "fixed",
+  "title": "Showcase EventLog used accent colour as text and failed axe contrast",
+  "v": 1,
+  "versions": []
+}

@@ -1,0 +1,66 @@
+---
+title: Link
+description: The prose link as a component, in two tones and three underline modes, with no client JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A native `<a>` in the look of a prose link: accent ink and a quiet underline that inks on hover.
+Use it where a link sits outside prose, or needs the neutral tone, an external marker or a new tab.
+Inside Markdown prose a plain `[text](url)` already looks like this. Hover a link and tab to it to
+see the hover and the square focus ring. Switch the theme in the header to check dark mode.
+
+An absolute `http(s)` link to another origin than the site gets the external icon by itself; without
+a configured site every absolute link does. `newTab` is never implied: it sets `target="_blank"`,
+`rel="noopener noreferrer"` and a visually hidden "(opens in a new tab)" for screen readers. A
+disabled link drops its `href`, so it takes no focus and cannot navigate, and keeps `role="link"`.
+
+## Stories
+
+<Stories of="link" />
+
+## Props
+
+<PropsTable
+  of="ui/Link.astro"
+  rows={[
+    { name: 'href', type: 'string', required: true, description: 'The destination.' },
+    {
+      name: 'underline',
+      type: "'always' | 'hover' | 'none'",
+      default: "'always'",
+      description: 'Quiet underline at rest, on hover only, or never.',
+    },
+    {
+      name: 'tone',
+      type: "'accent' | 'neutral'",
+      default: "'accent'",
+      description: 'Accent is the prose link ink; neutral is muted and firms to the text colour on hover.',
+    },
+    {
+      name: 'external',
+      type: 'boolean',
+      description:
+        'Appends the external icon. Default: an absolute http(s) URL off the site (any, when no site is set).',
+    },
+    {
+      name: 'newTab',
+      type: 'boolean',
+      default: 'false',
+      description: 'Opens in a new tab with rel noopener noreferrer and a hidden note for screen readers.',
+    },
+    { name: 'class', type: 'string', description: 'Extra class on the <a>.' },
+    {
+      name: 'rest → <a>',
+      type: 'HTMLAttributes',
+      description: 'Every other attribute goes to the anchor; aria-disabled="true" drops href.',
+    },
+  ]}
+/>
+
+## Keyboard
+
+- <kbd>Tab</kbd> moves focus to the link; the ring is square.
+- <kbd>Enter</kbd> follows the link (a native `<a href>`).
+- A disabled link is not in the tab order.

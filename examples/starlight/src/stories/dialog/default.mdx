@@ -1,0 +1,14 @@
+---
+title: Confirm removal
+description: A modal card that traps focus and returns it to the trigger when it closes.
+height: 340
+log: true
+---
+
+import Dialog from '@ocx-sh/theme/components/ui/Dialog.astro';
+
+<Dialog title="Remove package" description="The package leaves this project's lock file.">
+  <span slot="trigger">Remove…</span>
+
+  Run `ocx lock` again to write the new lock file.
+</Dialog>

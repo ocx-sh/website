@@ -1,0 +1,52 @@
+---
+title: States
+description: Plain, required, disabled, visually hidden, and a span that names a group.
+height: 520
+order: 1
+block: true
+---
+
+import Label from '@ocx-sh/theme/components/ui/Label.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<StateGrid wide>
+  <State label="plain">
+    <div class="ocx-ui-field">
+      <Label for="label-plain">{'Namespace'}</Label>
+      <input id="label-plain" class="ocx-ui-input" />
+    </div>
+  </State>
+  <State label="required">
+    <div class="ocx-ui-field">
+      <Label for="label-required" required>
+        {'Registry'}
+      </Label>
+      <input id="label-required" class="ocx-ui-input" required />
+    </div>
+  </State>
+  <State label="disabled">
+    <div class="ocx-ui-field">
+      <Label for="label-disabled" disabled>
+        {'Default registry'}
+      </Label>
+      <input id="label-disabled" class="ocx-ui-input" value="ocx.sh" disabled />
+    </div>
+  </State>
+  <State label="hidden (the input below still has its name)">
+    <div class="ocx-ui-field">
+      <Label for="label-hidden" hidden>
+        {'Search packages'}
+      </Label>
+      <input id="label-hidden" class="ocx-ui-input" type="search" placeholder="Search packages…" />
+    </div>
+  </State>
+  <State label="as span (names a group)">
+    <div class="ocx-ui-field" role="group" aria-labelledby="label-span">
+      <Label as="span" id="label-span">
+        {'Platforms'}
+      </Label>
+      <p>linux, macos, windows</p>
+    </div>
+  </State>
+</StateGrid>
