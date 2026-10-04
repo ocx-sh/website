@@ -2,6 +2,7 @@
   "claudeMdExcludes": [
     "**/.claude/rules/typescript-quality/**",
     "**/.claude/rules/docs-quality/**",
-    "**/.claude/rules/css-theming/**"
+    "**/.claude/rules/css-theming/**",
+    "**/.claude/rules/code-docs/**"
   ]
 }
