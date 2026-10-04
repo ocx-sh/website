@@ -1,6 +1,6 @@
 {
   "name": "@ocx-sh/theme",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Shared tokens, base styles, navigation and Starlight plugin for the ocx.sh sites",
   "license": "Apache-2.0",
   "type": "module",
