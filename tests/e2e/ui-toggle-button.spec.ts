@@ -3,6 +3,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { computed, resolve } from './tokens.ts';
+import { settle } from './helpers/settle.ts';
 
 const DEFAULT = '/docs/stories/toggle-button/default/';
 const STATES = '/docs/stories/toggle-button/states/';
@@ -13,6 +14,7 @@ for (const theme of ['light', 'dark'])
     test(`ToggleButton: axe reports no violations in ${path.split('/')[4]} (${theme})`, async ({ page }) => {
       await page.goto(path);
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       // Pressed and disabled states are on the page; press one more so the flipped state is covered too.
       await page.locator('#story .ocx-ui-toggle-button:not([aria-pressed="true"]):not(:disabled)').first().click();
       const { violations } = await new AxeBuilder({ page }).include('#story').analyze();

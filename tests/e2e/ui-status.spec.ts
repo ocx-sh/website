@@ -5,6 +5,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { computed, resolve } from './tokens.ts';
+import { settle } from './helpers/settle.ts';
 
 const PAGE = {
   Tag: '/docs/components/tag/',
@@ -53,6 +54,7 @@ test.describe('WP14a status primitives', () => {
         for (const route of routes) {
           await page.goto(route);
           await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+          await settle(page); // axe must read final colours, not a theme crossfade
           // Tag colours fade on theme flip; axe must read the settled colours. CSSTransition only:
           // the Loader's infinite spinner never finishes.
           await page.evaluate(() =>
@@ -128,6 +130,7 @@ test.describe('WP14a status primitives', () => {
     const label = page.locator('#story .ocx-ui-loader__label').first();
     for (const theme of ['light', 'dark']) {
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       expect(await computed(layer, 'background-color'), theme).toBe(
         await resolve(page, 'background-color', 'var(--ocx-color-border-control)'),
       );

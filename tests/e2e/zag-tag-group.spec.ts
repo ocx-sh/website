@@ -5,6 +5,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoLeak } from './helpers/leak.ts';
+import { settle } from './helpers/settle.ts';
 
 test.skip(({ isMobile }) => isMobile, 'desktop (chromium) project only');
 
@@ -162,6 +163,7 @@ for (const theme of ['light', 'dark'])
     test(`C-130e axe is clean in ${path}, idle and live, after toggles (${theme})`, async ({ page }) => {
       await page.goto(path);
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       await axe(page);
       for (const root of await page.locator('[data-zag-root="tag-group"]').all()) await live(root);
       if (path === DEMO) await chip(demo(page), 'macos').click();

@@ -5,6 +5,7 @@
 //   opt out) · NO_COLLAPSE collapsible={false} with default icons. Each story holds its trees from 0.
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 
 const DEFAULT = '/docs/stories/tree/default/';
 const OPEN = '/docs/stories/tree/open-icons-not-selectable/';
@@ -341,6 +342,7 @@ for (const route of [DEFAULT, OPEN, INLINE, PER_NODE, NO_COLLAPSE])
       await page.evaluate((t) => {
         document.documentElement.dataset['theme'] = t;
       }, theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       await expect(page.locator('.ocx-tree__row .ocx-tree__icon').first()).toBeVisible(); // guard: real rows
       if (route === DEFAULT) await row(tree(page, 0), 'packages/').click(); // include the selected-row colours
       const { violations } = await new AxeBuilder({ page }).analyze();

@@ -2,6 +2,7 @@
 // (/docs/stories/terminal/default/) and an open one with cols/rows given (.../open/).
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page, type Request } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 
 const STORY = '/docs/stories/terminal/';
 const PAGE = `${STORY}default/`; // collapsed
@@ -295,11 +296,13 @@ for (const theme of ['light', 'dark'] as const) {
   test(`WP13.1 Terminal: axe reports no violations, both terminals rendered (${theme})`, async ({ page }) => {
     await page.goto(PAGE);
     await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+    await settle(page); // axe must read final colours, not a theme crossfade
     await toggle(page).click();
     await expect(page.locator('.ap-player')).toHaveCount(1);
     const first = await new AxeBuilder({ page }).include('#story').analyze();
     await page.goto(OPEN_PAGE);
     await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+    await settle(page); // axe must read final colours, not a theme crossfade
     await open(page).hover();
     await expect(page.locator('.ap-player')).toHaveCount(1);
     const second = await new AxeBuilder({ page }).include('#story').analyze();

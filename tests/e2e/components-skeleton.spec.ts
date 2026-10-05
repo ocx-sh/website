@@ -5,6 +5,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { resolve } from './tokens.ts';
+import { settle } from './helpers/settle.ts';
 
 const story = (name: string) => `/docs/stories/skeleton/${name}/`;
 const SKELETON = '#story .ocx-ui-skeleton';
@@ -141,6 +142,7 @@ test.describe('C-301 Skeleton a11y', () => {
       test(`C-301 Skeleton: axe reports no violations on the ${name} story (${theme})`, async ({ page }) => {
         await page.goto(story(name));
         await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+        await settle(page); // axe must read final colours, not a theme crossfade
         await expect(page.locator(SKELETON).first()).toBeVisible();
         const { violations } = await new AxeBuilder({ page }).analyze();
         expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);

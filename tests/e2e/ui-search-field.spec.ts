@@ -4,6 +4,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { computed, resolve } from './tokens.ts';
+import { settle } from './helpers/settle.ts';
 
 const PAGE = '/docs/stories/search-field/default/';
 const STATES = '/docs/stories/search-field/states/';
@@ -14,6 +15,7 @@ for (const theme of ['light', 'dark'])
     test(`SearchField: axe reports no violations in ${path.split('/')[4]} (${theme})`, async ({ page }) => {
       await page.goto(path);
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       if (path === PAGE) await page.locator(`${DEMO} input`).fill('linux');
       const { violations } = await new AxeBuilder({ page }).include(DEMO).analyze();
       expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);

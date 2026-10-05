@@ -2,6 +2,7 @@
 // `default` is the first one, `states` the other five (flip on the first, third and fifth).
 import { AxeBuilder } from '@axe-core/playwright';
 import { type Page, expect, test } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 
 const STORY = '/docs/stories/feature-section/';
 const ONE = `${STORY}default/`; // one section, above the fold
@@ -164,6 +165,7 @@ test.describe('WP13.4 FeatureSection', () => {
       for (const path of [ONE, PAGE]) {
         await page.goto(path);
         await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+        await settle(page); // axe must read final colours, not a theme crossfade
         const { violations } = await new AxeBuilder({ page }).include('#story').analyze();
         expect(violations.map((v) => `${path} ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual(
           [],
@@ -177,6 +179,7 @@ test.describe('WP13.4 FeatureSection', () => {
       await page.emulateMedia({ reducedMotion: 'no-preference' });
       await page.goto(PAGE);
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       await expect(sections(page).last()).not.toHaveAttribute('data-revealed'); // guard: still below the fold
       await expect(sections(page).first()).toHaveCSS('opacity', '1'); // let the reveal transition finish
       const { violations } = await new AxeBuilder({ page }).include('#story').withRules(['color-contrast']).analyze();

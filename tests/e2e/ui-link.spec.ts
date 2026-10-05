@@ -3,6 +3,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { computed } from './tokens.ts';
+import { settle } from './helpers/settle.ts';
 
 const STATES_STORY = '/docs/stories/link/states/';
 const STORIES = ['/docs/stories/link/default/', STATES_STORY, '/docs/stories/link/states-2/'];
@@ -17,8 +18,11 @@ const link = (page: Page, label: string) =>
     .locator('a.ocx-ui-link')
     .first();
 
-const setTheme = (page: Page, theme: string) =>
-  page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+/** Switches the scheme and waits out the colour crossfade, so contrast reads final colours. */
+async function setTheme(page: Page, theme: string) {
+  await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+  await settle(page);
+}
 
 /** WCAG contrast of a link's ink over the page background, both read as computed rgb(a). */
 const contrast = (page: Page, sel: string) =>

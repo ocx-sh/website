@@ -3,6 +3,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { computed, resolve } from './tokens.ts';
+import { settle } from './helpers/settle.ts';
 
 const DOC = {
   Button: '/docs/components/button/',
@@ -72,6 +73,7 @@ test.describe('WP14a form primitives', () => {
         test(`WP14a form: axe reports no violations on the ${name} ${label} story (${theme})`, async ({ page }) => {
           await page.goto(path);
           await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+          await settle(page); // axe must read final colours, not a theme crossfade
           const { violations } = await new AxeBuilder({ page }).include('#story').analyze();
           expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
         });
@@ -121,11 +123,13 @@ test.describe('WP14a form primitives', () => {
     for (const theme of ['light', 'dark']) {
       await page.goto(PAGE.Button);
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       expect(await computed(primary, 'background-color'), theme).toBe(
         await resolve(page, 'background-color', 'var(--ocx-color-accent)'),
       );
       await page.goto(PAGE.Input);
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       expect(await computed(input, 'background-color'), theme).toBe(
         await resolve(page, 'background-color', 'var(--ocx-color-surface)'),
       );

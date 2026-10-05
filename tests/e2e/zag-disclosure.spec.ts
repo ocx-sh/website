@@ -5,6 +5,7 @@ import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoLeak } from './helpers/leak.ts';
 import { repaint } from './helpers/repaint.ts';
+import { settle } from './helpers/settle.ts';
 
 // Each component has a `default` story (the demo, with an event log) and a `states` story.
 const story = (name: string, which: 'default' | 'states') => `/docs/stories/${name}/${which}/`;
@@ -93,6 +94,7 @@ for (const name of Object.keys(PAGES) as Name[])
       }) => {
         await page.goto(path);
         await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+        await settle(page); // axe must read final colours, not a theme crossfade
         const scan = async () => {
           const { violations } = await new AxeBuilder({ page }).include('main').analyze();
           return violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);

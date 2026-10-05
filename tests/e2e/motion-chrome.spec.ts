@@ -3,6 +3,7 @@
 // the state in the page, waits two frames and reads what runs (the plan's Motion probe, inline);
 // under reduced motion the same change is final at once and nothing runs.
 import { expect, test, type Page } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 
 const LONG = '/docs/probe/long/';
 
@@ -37,6 +38,7 @@ test('R6 mega menu: opens and closes with a fade and slide; reduced motion snaps
 
   expect(await probe(page, menu, click)).toEqual(expect.arrayContaining(['opacity', 'translate']));
   expect(await page.locator(menu).evaluate((el) => el.matches(':popover-open'))).toBe(true);
+  await settle(page); // closing mid-entry reverses it, and a loaded host reads after the short reversal ends
   // Exit: the panel stays rendered while it fades (display/overlay allow-discrete).
   expect(await probe(page, menu, click)).toEqual(expect.arrayContaining(['opacity']));
   expect(await page.locator(menu).evaluate((el) => el.matches(':popover-open'))).toBe(false);
@@ -64,6 +66,7 @@ test('R6 sidebar group: opens and closes by the disclosure pattern; reduced moti
   await expect(root).toHaveAttribute('data-zag-state', 'live');
 
   expect(await probe(page, scope, click)).toEqual(expect.arrayContaining(['height', 'opacity']));
+  await settle(page); // closing mid-opening reverses it, and a loaded host reads after the short reversal ends
   expect(await probe(page, scope, click)).toEqual(expect.arrayContaining(['height', 'opacity']));
 
   await page.emulateMedia({ reducedMotion: 'reduce' });

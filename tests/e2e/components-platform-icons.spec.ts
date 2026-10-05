@@ -1,6 +1,7 @@
 // WP13.4 PlatformIcons on its story pages (installation.md's shells table).
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 
 const STORY = '/docs/stories/platform-icons/';
 const PAGE = `${STORY}default/`; // the shells table
@@ -37,6 +38,7 @@ test.describe('WP13.4 PlatformIcons', () => {
     await page.goto(PAGE);
     for (const theme of ['light', 'dark']) {
       await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+      await settle(page); // axe must read final colours, not a theme crossfade
       const [color, fill] = await page
         .locator('table .ocx-platform[data-os="linux"]')
         .first()
@@ -96,6 +98,7 @@ test.describe('WP13.4 PlatformIcons', () => {
       for (const path of [PAGE, ARCHIVES, UNKNOWN]) {
         await page.goto(path);
         await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+        await settle(page); // axe must read final colours, not a theme crossfade
         const { violations } = await new AxeBuilder({ page }).include('#story').analyze();
         expect(violations.map((v) => `${path} ${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual(
           [],

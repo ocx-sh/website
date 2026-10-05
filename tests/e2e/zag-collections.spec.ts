@@ -276,6 +276,7 @@ test.describe('C-130e axe and images', () => {
       test(`C-130e axe reports no violations on the ${name} page, SSR and live (${theme})`, async ({ page }) => {
         await page.goto(path);
         await page.evaluate((t) => (document.documentElement.dataset['theme'] = t), theme);
+        await settle(page); // axe must read final colours, not a theme crossfade
         const check = async (when: string) => {
           // Colours fade on the theme flip and on state changes (C-302): axe reads the end state.
           await settle(page);
