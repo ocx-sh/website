@@ -212,7 +212,7 @@ describe('bunny:onboard', () => {
       expect(r.err).toContain(
         `gh api -X PUT repos/ocx-sh/website/environments/${environment} -F 'deployment_branch_policy[protected_branches]=false' -F 'deployment_branch_policy[custom_branch_policies]=true'`,
       );
-      expect(r.err).toContain('deployment-branches -f name=main -f type=branch');
+      expect(r.err).toContain('deployment-branch-policies -f name=main -f type=branch');
     },
   );
 

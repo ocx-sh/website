@@ -507,7 +507,7 @@ result here.
 |---|---|---|---|---|
 | OG-R | publish `@ocx-sh/theme@0.1.0` by hand (`RELEASING.md`), then configure the trusted publisher (S-122) | — | WP8b merge (owner sequence: release, then root site) | done 2026-10-04: `0.1.0` published, trusted publisher set by the owner |
 | M0 | probes P1, P7–P9 | WP7b (runbook; may run by hand earlier) | WP7d | done 2026-10-05, topology B (Milestone M0 › Result) |
-| OG-D | `ocx-sh/ocx` Home-link PR merged (C-327), environments `ocx.sh` + `previews`, Bunny dev up (S-114) | WP7a, WP7b, WP7c, WP7d, WP8b, WP10, WP12 | OG-P, OG-V | pending |
+| OG-D | `ocx-sh/ocx` Home-link PR merged (C-327), environments `ocx.sh` + `previews`, Bunny dev up (S-114) | WP7a, WP7b, WP7c, WP7d, WP8b, WP10, WP12 | OG-P, OG-V | partial 2026-10-06: environments, onboard, dev zone and rules up, root site deployed (`BUNNY_DEPLOY=true`), `bunny:verify` green; `cutover:verify` red only on `home-link`, waiting for the `ocx-sh/ocx` Home-link PR. Prod edge rules applied early so `next.ocx.sh` carries `noindex` |
 | ~~OG-Q1~~ | superseded by ADR 0002 AM1: registry stays on hetzner1 nginx; no `origin.ocx.sh`, no P-C4 | — | — | superseded |
 | OG-P | prod zone apply, hostname `ocx.sh` by Seamless Domain Migration (needed for OG-N's `Host`/SNI `ocx.sh`), Force SSL, `--resolve <bunny ip>` rehearsal (S-117) | OG-D | OG-N | pending |
 | OG-N | nginx upstream → Bunny prod: Cloudflare cache audit, `next.ocx.sh` rehearsal + P-N1, switch `ocx.sh` `location /` (AM1 snippet), 48 h watch; rollback = revert upstream (S-123, S-119) | OG-P | phase 3 | pending |

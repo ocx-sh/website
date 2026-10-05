@@ -34,12 +34,12 @@ for env in ocx.sh previews; do
   gh api -X PUT "repos/ocx-sh/website/environments/$env" \
     -F 'deployment_branch_policy[protected_branches]=false' \
     -F 'deployment_branch_policy[custom_branch_policies]=true'
-  gh api -X POST "repos/ocx-sh/website/environments/$env/deployment-branches" \
+  gh api -X POST "repos/ocx-sh/website/environments/$env/deployment-branch-policies" \
     -f name=main -f type=branch
 done
 ```
 
-Verify: `gh api repos/ocx-sh/website/environments/ocx.sh/deployment-branches` lists `main`, and so does the same call for `previews`.
+Verify: `gh api repos/ocx-sh/website/environments/ocx.sh/deployment-branch-policies` lists `main`, and so does the same call for `previews`.
 
 Rollback: `gh api -X DELETE repos/ocx-sh/website/environments/ocx.sh`, and the same for `previews`.
 

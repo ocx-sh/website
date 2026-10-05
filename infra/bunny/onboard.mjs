@@ -59,7 +59,7 @@ function gh(args, env, input = '') {
  */
 const CREATE_HINT = (base) =>
   `create it with: gh api -X PUT ${base} -F 'deployment_branch_policy[protected_branches]=false' -F 'deployment_branch_policy[custom_branch_policies]=true' ` +
-  `then gh api -X POST ${base}/deployment-branches -f name=main -f type=branch (infra/cutover/README.md, "create the GitHub environments")`;
+  `then gh api -X POST ${base}/deployment-branch-policies -f name=main -f type=branch (infra/cutover/README.md, "create the GitHub environments")`;
 
 /**
  * @param {string} body stdout of `gh api repos/<repo>/environments/<name>`
