@@ -17,8 +17,9 @@ and open questions. Read it before any design or code change.** Research trail:
 
 ## Working here
 
-- Current phase: 1, the library (`packages/theme/`). Do not touch consumer
-  repos before it is published.
+- Current phase: 2, the root site (`site/`) and Bunny as code (`infra/`), the deploy
+  action and the cutover suite. Phase 1, the library (`packages/theme/`), shipped as
+  `v0.1.0`. Do not touch consumer repos before their phase-3 plan exists.
 - Tokens only, never raw values; colour is the only per-scheme token family.
   Rules: `css-theming`, `typescript-quality`, `typescript-packaging`,
   `docs-quality`.
@@ -90,6 +91,21 @@ Tools come from `ocx.toml`; run everything through it: `ocx exec -- task <name>`
   asset it references, tool versions, config, budgets, runner, preset);
   `LH_NO_CACHE=1` audits all, `LH_HTML=1` adds HTML reports.
   `task lighthouse:changed` is the dev alias (`LH_PRESET=desktop` allowed).
+- `task site:dev` / `task site:test` — the root site (`site/`) live at
+  http://localhost:4321/ and its Vitest suite. `task deploy:dev` dry-runs the deploy
+  action against an in-memory fake Bunny; `task deploy:test` runs only its tests.
+- `task bunny:*` — Bunny as code (`infra/bunny/`, [`README.md`](infra/bunny/README.md)).
+  Offline: `bunny:test`, `bunny:plan`, `bunny:dev`. No credentials, but they hit the
+  network: `bunny:verify`, `bunny:old-urls`. Write tasks read `BUNNY_API_KEY` from `.env`
+  and refuse under `CI`: `bunny:onboard`, `bunny:zone:apply`, `bunny:apply`, `bunny:purge`,
+  `bunny:gc`. They run locally only. The agent runs them under the owner's grant of
+  2026-10-04 ([ADR 0002 Amendment 2](.agents/adr/adr_0002_phase2-bunny-cutover.md#amendment-2-2026-10-04-owner-delegation-and-rehearsal-topology));
+  never put the key in CI.
+- `task cutover:verify -- --host <h> [--resolve <ip>] [--dns] [--registry]` — read-only
+  checks for the `ocx.sh` move; the owner runbook is
+  [`infra/cutover/README.md`](infra/cutover/README.md). Edge rules derive from
+  `nav.json` claims plus `infra/bunny/legacy.json`: change them in code, never in the
+  dashboard.
 
 ## Agent config
 
