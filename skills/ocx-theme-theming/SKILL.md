@@ -13,6 +13,8 @@ metadata:
 property. Styles reference tokens only. This skill covers using them in a
 consumer site and adding one to the theme. Families, names and values:
 [references/tokens.md](references/tokens.md).
+The design rules (colour, type, shape, depth, assets, icons) as do and
+don't pairs: [references/design-rules.md](references/design-rules.md).
 
 For the generic cascade and token discipline this builds on, see the
 `css-theming` rule (`grim add ghcr.io/ocx-sh/lore/css-theming:latest`).
