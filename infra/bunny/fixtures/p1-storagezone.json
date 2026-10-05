@@ -1,0 +1,23 @@
+{
+  "Id": 1970040,
+  "UserId": "",
+  "Name": "sh-ocx-m0-scratch",
+  "Password": "",
+  "DateModified": "2026-10-05T19:04:29",
+  "Deleted": false,
+  "StorageUsed": 0,
+  "FilesStored": 0,
+  "Region": "DE",
+  "ReplicationRegions": [],
+  "PullZones": [],
+  "ReadOnlyPassword": "",
+  "Rewrite404To200": false,
+  "Custom404FilePath": null,
+  "StorageHostname": "storage.bunnycdn.com",
+  "S3Hostname": "de-s3.storage.bunnycdn.com",
+  "ZoneTier": 0,
+  "ReplicationChangeInProgress": false,
+  "PriceOverride": 0,
+  "Discount": 0,
+  "StorageZoneType": 0
+}
