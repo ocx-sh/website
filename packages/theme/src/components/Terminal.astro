@@ -227,11 +227,6 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       display: grid;
       place-items: center;
       cursor: pointer;
-      /* Exit only: it fades out on the first play (display allow-discrete holds it meanwhile) and is
-         never shown again, so it has no enter. */
-      transition:
-        opacity var(--ocx-duration-base) var(--ocx-ease-out),
-        display var(--ocx-duration-base) allow-discrete;
     }
     /* A bare accent play mark (owner: no button box, no rounding): the Lucide play glyph filled, with
      * mitred joins so its corners stay sharp. */
@@ -258,10 +253,17 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       fill: currentColor;
       stroke-linejoin: miter;
     }
+    /* Exit only: it fades out on the first play (display allow-discrete holds it meanwhile) and is
+     * never shown again. The transition lives on the hidden state alone: on the base rule, a style pass
+     * before the sheet applies starts a display transition from block, and the start mark paints at the
+     * top of the poster for half the duration (a layout shift on a loaded host). */
     .ocx-terminal__start[hidden] {
       display: none;
       opacity: 0;
       pointer-events: none;
+      transition:
+        opacity var(--ocx-duration-base) var(--ocx-ease-out),
+        display var(--ocx-duration-base) allow-discrete;
     }
     .ocx-terminal__player .ap-overlay-start {
       display: none;

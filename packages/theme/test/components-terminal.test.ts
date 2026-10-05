@@ -84,8 +84,10 @@ describe('Terminal chevron and start overlay styles', () => {
   });
 
   it('R5 the overlay fades out (display allow-discrete); the control glyphs crossfade only when live', () => {
-    expect(rule('.ocx-terminal__start')).toMatch(/opacity var\(--ocx-duration-base\) var\(--ocx-ease-out\)/);
-    expect(rule('.ocx-terminal__start')).toMatch(/display var\(--ocx-duration-base\) allow-discrete/);
+    // Exit only, on the hidden state: a transition on the base rule runs from UA defaults at load.
+    expect(rule('.ocx-terminal__start')).not.toMatch(/transition/);
+    expect(rule('.ocx-terminal__start[hidden]')).toMatch(/opacity var\(--ocx-duration-base\) var\(--ocx-ease-out\)/);
+    expect(rule('.ocx-terminal__start[hidden]')).toMatch(/display var\(--ocx-duration-base\) allow-discrete/);
     expect(rule('.ocx-terminal__start[hidden]')).toMatch(/display: none;\s*opacity: 0;/);
     expect(rule('.ocx-terminal__start-button')).toMatch(/transition: color var\(--ocx-duration-base\)/);
     expect(src).toMatch(/\.ocx-terminal\[data-live\] \.ocx-terminal__controls svg \{\s*transition:/);
