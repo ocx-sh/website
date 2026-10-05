@@ -37,7 +37,7 @@ one-way door (ADR OW1).
 | R4 | A claim nests only directly under a hub claim. Nothing nests under `/docs/`, `/catalog/`, `/install/`, `/schemas/` or an ecosystem claim |
 | R5 | The root claim `/` owns `/` itself, top-level **files** (`/favicon.ico`, `/logo.svg`, `/robots.txt`, `/404.html`) and the root site's own build dirs `/_astro/` and `/pagefind/` (the list `ROOT_DIRS` in `registry.mjs`; extending it is a registry change). It owns no other directory |
 | R6 | REMOVED — version namespaces dropped (ADR Q2); `v<N>` stays reserved (R8) |
-| R7 | One claim → one repo. One repo → one storage zone `sh-ocx-web-<name>`, where `<name>` is the repo name lowercased with `.` and `_` replaced by `-`. A repo may own several claims |
+| R7 | One claim → one repo. One repo → one storage zone `sh-ocx-<name>`, where `<name>` is the repo name lowercased with `.` and `_` replaced by `-`. A repo may own several claims |
 | R8 | Reserved: never a `top` or a `slug`: `_astro`, `pagefind`, `artifactory`, `bunnycdn_errors`, `.well-known`, `api`, `lore`, `team`, `preview`, and anything matching `v` 1*DIGIT [`.` 1*DIGIT] |
 | R9 | REMOVED — registry clients only request `/v2/…`; site segments cannot collide with package namespaces |
 
@@ -106,7 +106,7 @@ client ──▶ Cloudflare (DNS + proxy)
             └─ lore.ocx.sh, setup.ocx.sh — unchanged
 ocx-sh.b-cdn.net ──▶ Bunny pull zone `ocx-sh`
             edge rules ──▶ storage zone of the claim's repo (OriginStorage)
-            default origin ──▶ sh-ocx-web-website
+            default origin ──▶ sh-ocx-website
 ```
 
 End state (§2.8 step 8, after the OCI registry is removed): `ocx.sh` is a DNS-only
@@ -116,16 +116,16 @@ CNAME to the pull zone; hetzner1 leaves the `ocx.sh` path.
 
 | Zone | Kind | Purpose | Region |
 |---|---|---|---|
-| `ocx-sh` (hostname `ocx-sh.b-cdn.net`; `ocx.sh` added at §2.8 step 8) | Pull zone | the one public edge; origin = `sh-ocx-web-website` | — |
-| `sh-ocx-web-website` | Storage | `/`, `/integrations/`, `/apps/`, `/install/` | FRA + setup's replication |
-| `sh-ocx-web-ocx` | Storage | `/docs/`, `/schemas/` | same |
-| `sh-ocx-web-index` | Storage | `/catalog/` | same |
-| `sh-ocx-web-rules-ocx` | Storage | `/integrations/bazel/` | same |
-| `sh-ocx-web-ocx-sdk-python` | Storage | `/integrations/python/` | same |
-| `sh-ocx-web-catalog` | Storage | `/apps/catalog/` | same |
+| `ocx-sh` (hostname `ocx-sh.b-cdn.net`; `ocx.sh` added at §2.8 step 8) | Pull zone | the one public edge; origin = `sh-ocx-website` | — |
+| `sh-ocx-website` | Storage | `/`, `/integrations/`, `/apps/`, `/install/` | FRA + setup's replication |
+| `sh-ocx-ocx` | Storage | `/docs/`, `/schemas/` | same |
+| `sh-ocx-index` | Storage | `/catalog/` | same |
+| `sh-ocx-rules-ocx` | Storage | `/integrations/bazel/` | same |
+| `sh-ocx-ocx-sdk-python` | Storage | `/integrations/python/` | same |
+| `sh-ocx-catalog` | Storage | `/apps/catalog/` | same |
 | one per future claiming repo | Storage | its claims | same |
 
-Files are stored under the **full public path** (`sh-ocx-web-ocx/docs/index.html`).
+Files are stored under the **full public path** (`sh-ocx-ocx/docs/index.html`).
 That keeps the topology a two-way door (ADR D1.2). Storage zones are created
 S3-enabled if P1 shows S3 zones work as `OriginStorage` targets (S3 is settable only
 at creation).
@@ -156,18 +156,18 @@ path first, and the first match wins.
 | 1 | Hashed assets, edge | `https://*/_astro/*` | Override Cache Time 31536000 | 1 |
 | 2 | Hashed assets, browser | `https://*/_astro/*` | Override Browser Cache Time 31536000 | 1 |
 | 3 | Legacy `/team` | `https://{ocx.sh,ocx-sh.b-cdn.net}/team`, `…/team/` | Redirect 301 `https://ocx.sh/docs/team/` | 1 |
-| 4 | `ocx-sh/ocx` | `{2 hosts} × {/docs, /docs/*, /schemas/*}` (6 → 2 triggers) | OriginStorage `sh-ocx-web-ocx` | 1 |
-| 5 | `ocx-sh/catalog` (before #6: longer path) | `{2 hosts} × {/apps/catalog, /apps/catalog/*}` | OriginStorage `sh-ocx-web-catalog` | 1 |
-| 6 | `ocx-sh/index` | `{2 hosts} × {/catalog, /catalog/*}` | OriginStorage `sh-ocx-web-index` | 1 |
-| 7 | `ocx-sh/rules_ocx` | `{2 hosts} × {/integrations/bazel, …/*}` | OriginStorage `sh-ocx-web-rules-ocx` | 1 |
-| 8 | `ocx-sh/ocx-sdk-python` | `{2 hosts} × {/integrations/python, …/*}` | OriginStorage `sh-ocx-web-ocx-sdk-python` | 1 |
+| 4 | `ocx-sh/ocx` | `{2 hosts} × {/docs, /docs/*, /schemas/*}` (6 → 2 triggers) | OriginStorage `sh-ocx-ocx` | 1 |
+| 5 | `ocx-sh/catalog` (before #6: longer path) | `{2 hosts} × {/apps/catalog, /apps/catalog/*}` | OriginStorage `sh-ocx-catalog` | 1 |
+| 6 | `ocx-sh/index` | `{2 hosts} × {/catalog, /catalog/*}` | OriginStorage `sh-ocx-index` | 1 |
+| 7 | `ocx-sh/rules_ocx` | `{2 hosts} × {/integrations/bazel, …/*}` | OriginStorage `sh-ocx-rules-ocx` | 1 |
+| 8 | `ocx-sh/ocx-sdk-python` | `{2 hosts} × {/integrations/python, …/*}` | OriginStorage `sh-ocx-ocx-sdk-python` | 1 |
 | 9–16 | reserve: one per planned repo (§1.2) | — | OriginStorage | 8 |
 | — | Registry `/v2`, `/artifactory` | — | none. nginx routes them. 2 reserved only if DNS moves before registry removal (ADR D1.4 option 2) | 0 |
 | — | Directory index, 404, SPA fallback | — | native / per-zone (F2) | 0 |
 | | **Now: 8. Fully planned: 16. Ceiling: 50** | | | |
 
 If P1 fails (fallback C), rules 4–16 become "Change Origin URL →
-`https://sh-ocx-web-<repo>.b-cdn.net`" on each repo's own pull zone. The count is
+`https://sh-ocx-<repo>.b-cdn.net`" on each repo's own pull zone. The count is
 unchanged.
 
 ### 2.5 Cache policy
@@ -193,7 +193,7 @@ unchanged.
 
 | Secret | Scope | Location | Set by |
 |---|---|---|---|
-| `BUNNY_STORAGE_KEY` | password of `sh-ocx-web-<repo>` | the repo's GitHub environment `ocx.sh` (deployment branches: `main`) | `task bunny:onboard` |
+| `BUNNY_STORAGE_KEY` | password of `sh-ocx-<repo>` | the repo's GitHub environment `ocx.sh` (deployment branches: `main`) | `task bunny:onboard` |
 | `BUNNY_API_KEY` | account | owner's gitignored `.env` | owner. Never in CI |
 | `LORE_ANNOUNCE_TOKEN` | GitHub App or fine-grained PAT, PR write on `ocx-sh/grimoire-lore` only | this repo's environment `lore` (deployment branches: `main`) | owner |
 
@@ -292,7 +292,7 @@ deploy:
 
 | # | Step | Writes? |
 |---|---|---|
-| 1 | Resolve repo (`GITHUB_REPOSITORY`), zone (`sh-ocx-web-<name>`), path. Validate the registry claim and a non-empty `storage-key` | no |
+| 1 | Resolve repo (`GITHUB_REPOSITORY`), zone (`sh-ocx-<name>`), path. Validate the registry claim and a non-empty `storage-key` | no |
 | 2 | Run the `ocx-site check` logic on `dist` (link, layout, Pagefind version). `dist/index.html` must exist. If `search`, `dist/pagefind/pagefind-entry.json` must exist | no |
 | 3 | Recursive list of `<zone>/<path>` (GET per directory) | no |
 | 4 | Phase 1: PUT every file **except** phase-2 files. Parallel (8), `Checksum` = SHA-256 uppercase hex, retry ×3 | yes |
@@ -504,7 +504,7 @@ Each contract can be tested from outside, without reading the implementation.
 - **C-004** Claim paths are unique. A claim under a non-hub claim is rejected. The root
   claim owns no directory except `ROOT_DIRS` (`/_astro/`, `/pagefind/`, R5).
 - **C-005** `repo` matches `^ocx-sh/[A-Za-z0-9._-]+$`. `zoneName("ocx-sh/rules_ocx")` =
-  `sh-ocx-web-rules-ocx`. Two repos that map to the same zone name are rejected.
+  `sh-ocx-rules-ocx`. Two repos that map to the same zone name are rejected.
 - **C-006** Entries: `hub` exists. `category` ∈ that hub's categories. A hub has ≤ 4
   categories. `id` is unique per hub. An internal `href` equals a claim path.
   `planned: true` ⇔ no `href`. An external `href` is `https:`. `desc` ≤ 60 chars.
@@ -601,7 +601,7 @@ Each contract can be tested from outside, without reading the implementation.
 - **C-036** Against a fake Bunny that counts requests: any step-1/2 failure (§3.4
   rows 1–3) exits 1 with zero PUT/DELETE requests. An empty `storage-key` exits 1 with
   zero requests of any kind.
-- **C-037** Request URLs have the form `https://<storage-host>/sh-ocx-web-<name>/<path without
+- **C-037** Request URLs have the form `https://<storage-host>/sh-ocx-<name>/<path without
   leading slash><file>`, and every request carries `AccessKey`.
 - **C-038** No phase-2 request (`*.html`, top-level files of `pagefind/` such as
   `pagefind.js`, `pagefind-entry.json`, `pagefind-ui.*` and wasm, and
