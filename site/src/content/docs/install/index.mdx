@@ -1,0 +1,44 @@
+---
+title: Install
+description: Install ocx on your machine.
+---
+
+{/* doc_type: how-to */}
+{/* doc_tier: first-steps */}
+
+import { Code } from '@astrojs/starlight/components';
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+import { elvish, fish, nu, pwsh, sh } from '../../../install.mjs';
+
+Install ocx so that `ocx` runs in your shell. One command, any platform, no root required. Pick your shell and paste:
+
+<Tabs syncKey="shell">
+  <TabItem label="Shell" icon="shell">
+    <Code code={sh} lang="sh" />
+  </TabItem>
+  <TabItem label="PowerShell" icon="powershell">
+    <Code code={pwsh} lang="powershell" />
+  </TabItem>
+  <TabItem label="Nushell" icon="nushell">
+    <Code code={nu} lang="sh" />
+  </TabItem>
+  <TabItem label="fish" icon="fish">
+    <Code code={fish} lang="sh" />
+  </TabItem>
+  <TabItem label="Elvish" icon="elvish">
+    <Code code={elvish} lang="sh" />
+  </TabItem>
+</Tabs>
+
+Open a new terminal and run `ocx --remote --global add uv:0.10` to install your first package.
+
+The commands are thin per-shell installers served by [setup.ocx.sh](https://setup.ocx.sh/). See [Installation](/docs/installation) for pinned versions, manual downloads and the other install options.
+
+## Install in CI
+
+In GitHub Actions, add the [`ocx-sh/setup-ocx`](https://github.com/ocx-sh/setup-ocx) step. It installs ocx, and in a project with an `ocx.lock` it pulls the pinned toolchain and exports its environment. Pin the action to a commit SHA:
+
+```yaml
+- uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+```

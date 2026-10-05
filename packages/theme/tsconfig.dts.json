@@ -9,7 +9,8 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "allowJs": true,
-    "checkJs": true
+    "checkJs": true,
+    "types": ["node", "astro/client"]
   },
   "include": ["src/**/*.mjs"]
 }

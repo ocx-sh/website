@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+# The root site (`site/`). Included by the root Taskfile as `site:`; tasks run from the repo root.
+version: '3'
+
+tasks:
+  dev:
+    desc: Live-reload the root site (http://localhost:4321/)
+    deps: [':install']
+    cmds: [pnpm --filter site dev]
+
+  test:
+    desc: Vitest for site/ (the dist tests build the site themselves)
+    deps: [':install']
+    cmds: [pnpm exec vitest run site/]

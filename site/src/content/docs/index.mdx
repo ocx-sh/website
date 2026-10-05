@@ -1,0 +1,139 @@
+---
+title: 'ocx: The Simple Package Manager'
+description: Turn any OCI registry into a cross-platform binary distribution platform. Zero extra infrastructure.
+template: splash
+hero:
+  title: ocx
+  tagline: The Simple Package Manager. Turn any OCI registry into a cross-platform binary distribution platform. Zero extra infrastructure.
+  actions:
+    - text: Get Started
+      link: /docs/getting-started
+      icon: right-arrow
+    - text: Install
+      link: /install/
+      variant: secondary
+    - text: User Guide
+      link: /docs/user-guide
+      variant: minimal
+---
+
+{/* doc_type: landing */}
+{/* doc_tier: first-steps */}
+
+import { Aside, Code } from '@astrojs/starlight/components';
+import FeatureCards from '../../components/FeatureCards.astro';
+import FeatureIcon from '../../components/FeatureIcon.astro';
+import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+import { elvish, fish, nu, pwsh, sh } from '../../install.mjs';
+
+<Aside type="caution" title="Early Development">
+  ocx is in early development. The CLI is functional but APIs may change.
+</Aside>
+
+<FeatureCards />
+
+## Quick Install
+
+One command. Any platform. No root required.
+
+<Tabs syncKey="shell">
+  <TabItem label="Shell" icon="shell">
+    <Code code={sh} lang="sh" />
+  </TabItem>
+  <TabItem label="PowerShell" icon="powershell">
+    <Code code={pwsh} lang="powershell" />
+  </TabItem>
+  <TabItem label="Nushell" icon="nushell">
+    <Code code={nu} lang="sh" />
+  </TabItem>
+  <TabItem label="fish" icon="fish">
+    <Code code={fish} lang="sh" />
+  </TabItem>
+  <TabItem label="Elvish" icon="elvish">
+    <Code code={elvish} lang="sh" />
+  </TabItem>
+</Tabs>
+
+See [Installation](/docs/installation) for pinned versions, manual downloads, and CI setup.
+
+Open a new terminal and run `ocx --remote --global add uv:0.10` to install your first package.
+
+## Integrations
+
+Wire ocx into your editor, your CI, and your shell. See [all integrations](/integrations/).
+
+- **VSCode extension**: install from the [VS Marketplace](https://marketplace.visualstudio.com/items?itemName=ocx-sh.ocx) or [Open VSX](https://open-vsx.org/extension/ocx-sh/ocx).
+- **GitHub Action**: [`ocx-sh/setup-ocx`](https://github.com/ocx-sh/setup-ocx) installs ocx, pulls the project toolchain, and exports its environment in one step.
+- **direnv**: `ocx direnv init` drops an `.envrc` so [direnv](https://direnv.net/) activates the project toolchain on `cd`.
+
+## How it works
+
+A closer look at what makes ocx different.
+
+<FeatureSection title="Your Registry is the Package Server">
+  <Fragment slot="text">
+
+Install packages directly from any OCI-compliant registry. No taps, no formulas, no Artifactory. The same infrastructure you already run for container images now serves your development tools.
+
+One command installs and activates a package. Switch versions instantly. Every install is content-addressed by SHA-256 digest: what you download is what you run.
+
+  </Fragment>
+  <FeatureIcon name="box" />
+</FeatureSection>
+
+<FeatureSection title="Same Command on Every Platform" flip>
+  <Fragment slot="text">
+
+Think `docker pull`, but for standalone binaries. You name the package, and OCI multi-platform manifests resolve the right build for your OS and architecture. No platform conditionals, no filename guessing, no architecture mapping tables.
+
+Write `ocx add astral-sh/uv:0.10` once. It works on your Mac, your CI runner's Linux, and your colleague's Windows machine.
+
+  </Fragment>
+  <FeatureIcon name="layers" />
+</FeatureSection>
+
+<FeatureSection title="Composable Environments">
+  <Fragment slot="text">
+
+Every package declares its own environment variables. `ocx package exec` layers them on top of your current shell, and with `--clean` it strips everything back to only what the packages provide: no host pollution, no PATH conflicts, no stale state.
+
+Compose multiple packages in a single invocation. Each one contributes its variables. Pass `--clean` when you need a hermetic, reproducible scope, ideal for CI pipelines and build systems.
+
+  </Fragment>
+  <FeatureIcon name="blocks" />
+</FeatureSection>
+
+<FeatureSection title="Built for Automation" flip>
+  <Fragment slot="text">
+
+Every command returns structured JSON with `--format json`. Exit codes are meaningful. Environment variables compose cleanly. There is no interactive prompt, no "press Y to continue", no color code that breaks your parser.
+
+`ocx package exec` runs commands with package-declared variables. `ocx package env` prints them for your build system. `ocx env --ci` writes them directly into GitHub Actions or GitLab CI runtime files. The entire CLI is designed to be called by other tools, not typed by humans.
+
+  </Fragment>
+  <FeatureIcon name="workflow" />
+</FeatureSection>
+
+<FeatureSection title="Relocatable and Air-Gap Ready">
+  <Fragment slot="text">
+
+Every install is a self-contained directory: no global state, no registry database, no fragile symlinks into system paths. Copy the store to a USB drive, zip it into a CI cache artifact, or `scp` it to a machine behind a firewall.
+
+The local index snapshot plus the content-addressed object store is everything `ocx --offline` needs. Bundle a toolchain once, redistribute it to air-gapped hosts, and `ocx --offline exec` resolves it without ever touching the network.
+
+  </Fragment>
+  <FeatureIcon name="hard-drive" />
+</FeatureSection>
+
+## Still reading?
+
+Join the community and help shape what comes next.
+
+- [Roadmap](/docs/roadmap): see what we are building and what is coming next.
+- [Package catalog](https://index.ocx.sh): browse available packages on the public registry.
+- [Discord](https://discord.gg/mT2UCF8CVe): ask questions, share feedback, and follow development.
+- [GitHub](https://github.com/ocx-sh/ocx): star the repo, file issues, or contribute code.
+
+**ocx**: your registry, your binaries, no extra infrastructure. Free to use, fork, and extend.

@@ -1,9 +1,10 @@
 /**
  * Lighthouse CI config for `task lighthouse` (C-057), read by `scripts/lighthouse.mjs`
  * (lanes, retry-on-fail, cache; it judges with lhci's own assertion engine) and still a valid
- * `lhci autorun` config. `scripts/lhci-stage.mjs` copies `examples/starlight/dist` to
- * `<tmp>/ocx-website-lhci/docs/`; `staticDistDir` below serves that same root, and every URL is
- * a `/docs/...` path the static server resolves.
+ * `lhci autorun` config. `scripts/lhci-stage.mjs` copies `site/dist` to `STAGE_ROOT`
+ * and `examples/starlight/dist` to its `docs/`; `staticDistDir` below serves that same root, and
+ * every URL is a site path or a `/docs/...` path the static server resolves. Requiring this file
+ * needs `site/dist` (`missing dist: site/dist`).
  *
  * `STAGE_ROOT` is `scripts/lhci-stage.mjs`'s own export, `require()`d
  * directly (Node 24's `require(esm)` support) rather than duplicated.
@@ -15,11 +16,11 @@
  */
 const { chromium } = require('playwright-core');
 const { STAGE_ROOT } = require('./scripts/lhci-stage.mjs');
-const { BUDGETS, CLASS_PATTERNS, PRE_JS_VISIBLE, budgetOf, examplePages } = require('./tests/budgets.mjs');
+const { BUDGETS, CLASS_PATTERNS, PRE_JS_VISIBLE, budgetOf, examplePages, sitePages } = require('./tests/budgets.mjs');
 
-// C-111 / D-Z15: every committed example page (minus samples/**) plus the
-// static 404.html, derived from the source tree by tests/budgets.mjs.
-const AUDITED_URLS = examplePages();
+// C-111 / D-Z15: every committed example page (minus samples/**) plus the static 404.html, derived
+// from the source tree by tests/budgets.mjs, then every HTML page of the built root site (C-309).
+const AUDITED_URLS = [...examplePages(), ...sitePages()];
 
 const CATEGORIES = Object.fromEntries(
   ['performance', 'accessibility', 'best-practices', 'seo'].map((c) => [`categories:${c}`, ['error', { minScore: 1 }]]),

@@ -5,7 +5,7 @@
 // committed page).
 import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
-import { budgetOf, classOf, examplePages, HTML_GZ_MAX, PAGEFIND_GZ_MAX } from '../budgets.mjs';
+import { budgetOf, classOf, examplePages, HTML_GZ_MAX, PAGEFIND_GZ_MAX, sitePages } from '../budgets.mjs';
 import { expectNoLeak } from './helpers/leak.ts';
 import { activate, MANUAL_ROOT, startManual, tagRoots, ZAG_ROOT } from './helpers/zag.ts';
 
@@ -61,22 +61,32 @@ function scriptMeter(page: Page) {
 
 const sumOf = (s: { own: number; pagefind: number }) => s.own + s.pagefind;
 
-for (const path of examplePages()) {
+// Example pages run in the `chromium` project (the example preview, base `/docs/`), the root site's
+// pages in the `site` project (the combined stage, `site/dist` at `/`): each page in exactly one.
+const gated = [
+  ...examplePages().map((path) => ({ path, project: 'chromium' })),
+  ...sitePages().map((path) => ({ path, project: 'site' })),
+];
+
+for (const { path, project } of gated) {
   const cls = classOf(path);
   const budget = budgetOf(path);
 
-  test(`C-112 ${path} stays within the ${cls} budget`, async ({ page }) => {
+  test(`C-112 ${path} stays within the ${cls} budget`, async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== project, `${path} is gated in the ${project} project`);
     const within = (metric: string, value: number, cap: number, unit: string) => {
       test.info().annotations.push({ type: 'budget', description: `${path} ${metric}=${value}` });
       expect.soft(value, `${path}: ${metric} = ${value} ${unit}, budget ${cap} ${unit}`).toBeLessThanOrEqual(cap);
     };
     // The example merges other sections' Pagefind bundles (absent locally, as in the search-dialog
-    // spec): serve them from this section's own bundle so a query can complete.
+    // spec): serve them from this section's own bundle so a query can complete. The root site merges
+    // none today (legacy sections are filtered out); a section merged later is served the same way.
+    const own = project === 'site' ? '/pagefind/' : '/docs/pagefind/';
     await page.route(
-      (u) => u.pathname.includes('/pagefind/') && !u.pathname.startsWith('/docs/'),
+      (u) => u.pathname.includes('/pagefind/') && !u.pathname.startsWith(project === 'site' ? own : '/docs/'),
       async (r) => {
         const u = new URL(r.request().url());
-        u.pathname = `/docs/pagefind/${u.pathname.split('/pagefind/')[1] ?? ''}`;
+        u.pathname = `${own}${u.pathname.split('/pagefind/')[1] ?? ''}`;
         await r.fulfill({ response: await r.fetch({ url: u.href }) });
       },
     );

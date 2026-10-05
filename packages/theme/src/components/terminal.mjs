@@ -51,7 +51,6 @@ async function loadPlayerAndSheet() {
   const mods = await Promise.all([
     // @ts-expect-error asciinema-player ships no types; cast to PlayerModule below
     import('asciinema-player'),
-    // @ts-expect-error Vite `?url` import; tsc has no asset module types
     import('./terminal-player.css?url'),
   ]);
   const href = /** @type {{ default: string }} */ (mods[1]).default;
