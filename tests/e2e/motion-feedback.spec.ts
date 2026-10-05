@@ -4,6 +4,8 @@
 // the state final at once, and a fresh load runs no animation in the component (first paint is final).
 // CDP slows the document timeline tenfold, so a 150 ms fade is still running when the probe reads it.
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { startsAfterFirstFrame, watchStarts } from './helpers/fresh-load.ts';
+import { settle } from './helpers/settle.ts';
 
 const story = (slug: string, name = 'default') => `/docs/stories/${slug}/${name}/`;
 
@@ -65,8 +67,10 @@ interface Row {
 /** One audit row: fresh load is still, `act` animates `props`, and under reduced motion `final` holds at once. */
 function row({ name, path, root, self = false, props, ready, act, final }: Row) {
   test(`${name}: first paint is still`, async ({ page }) => {
+    await watchStarts(page, root, self);
     await page.goto(path);
     await ready?.(page);
+    expect(await startsAfterFirstFrame(page)).toEqual([]);
     expect(await animating(page, root, self)).toEqual([]);
   });
   test(`${name}: ${props.join(' + ')} animate`, async ({ page }) => {
@@ -297,6 +301,10 @@ row({
   props: ['opacity', 'scale'],
   act: async (page) => {
     await startPlayer(page);
+    // Pausing mid-way through the crossfade that went live reverses it, and a reversed transition
+    // lasts only as long as the first one ran: a loaded host reads the page after it has ended.
+    // Settle first so the pause starts a whole crossfade.
+    await settle(page);
     await page.locator(`${TERMINAL} .ocx-terminal__play`).click();
     await expect(page.locator(`${TERMINAL} .ocx-terminal__controls`)).not.toHaveAttribute('data-state', 'playing');
   },
