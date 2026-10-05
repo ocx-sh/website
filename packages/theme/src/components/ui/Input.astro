@@ -8,6 +8,7 @@ import Button from './Button.astro';
 import Icon from './Icon.astro';
 import InputGroup from './InputGroup.astro';
 import Label from './Label.astro';
+import NumberStepperScript from './NumberStepperScript.astro';
 import { nextUiId } from './ids.mjs';
 
 export interface Props extends Omit<HTMLAttributes<'input'>, 'type'> {
@@ -73,6 +74,7 @@ const attrs = {
         <slot name="end" />
         {stepped && (
           <span class="ocx-ui-stepper">
+            <NumberStepperScript />
             <Button
               variant="ghost"
               size="s"
@@ -100,9 +102,3 @@ const attrs = {
     </p>
   )}
 </div>
-
-<script>
-  import { install } from './number-stepper.mjs';
-
-  install();
-</script>

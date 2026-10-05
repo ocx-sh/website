@@ -59,7 +59,9 @@ Slot `action` adds trailing controls: an icon-only link Button with an
 **`ui/Input.astro`**: `label` (required), `hideLabel`, `type` `text`, `search`,
 `url`, `email`, `password`, `number`, `hint`, `error` (replaces the hint, sets
 `aria-invalid`; say how to fix it), `stepper` (number only). Slots `start` and
-`end` wrap the input in an `InputGroup`.
+`end` wrap the input in an `InputGroup`. A stepper input renders
+`ui/NumberStepperScript.astro` (its one delegated script); a text or search
+input carries no script. Never import it directly.
 
 **`ui/InputGroup.astro`**: box around slots `start`, default (the control) and
 `end`. `disabled`, `invalid`, `wrap` (chips before the control). No JS: focus,

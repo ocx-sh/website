@@ -62,6 +62,13 @@ export const NAME_MAP = {
   // CommandBar scope picker: user-wide vs. this project.
   globe: [['lucide', 'globe'], 'interface', 'global world scope user internet'],
   folder: [['lucide', 'folder'], 'interface', 'project directory scope local files'],
+  // Landing feature cards and sections (root site): one icon, one idea. `box` is Lucide's package (a reserved word as an export).
+  box: [['lucide', 'package'], 'interface', 'box registry artifact oci bundle'],
+  layers: [['lucide', 'layers'], 'interface', 'stack platforms cross-platform multi'],
+  lock: [['lucide', 'lock'], 'interface', 'locked reproducible pinned secure'],
+  workflow: [['lucide', 'workflow'], 'interface', 'automation pipeline ci steps flow'],
+  blocks: [['lucide', 'blocks'], 'interface', 'compose environment modules building blocks'],
+  'hard-drive': [['lucide', 'hard-drive'], 'interface', 'disk offline storage air-gap usb'],
   // Brand.
   github: [['simple-icons', 'github'], 'brand', 'git repository source code'],
   // Operating systems (PlatformIcons).

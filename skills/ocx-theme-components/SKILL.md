@@ -1,6 +1,6 @@
 ---
 name: ocx-theme-components
-description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, accessibility contracts, events, lazy Zag loading (nothing loads before interaction, first paint is final). Use when writing or reviewing an .astro or .mdx page that imports from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, Choice, RadioGroup, Slider, Tag, TagGroup, TagsInput, Dialog, AlertDialog, ConfirmDialog, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, Skeleton, toast, Avatar, Terminal, Kbd, Breadcrumbs, Toc, Icon, PlatformIcons, FeatureSection or DependencyExplorer or when a component fires no event, loads JavaScript early, shifts layout or fails an a11y check. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
+description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, accessibility contracts, events, lazy Zag loading (nothing loads before interaction, first paint is final). Use when writing or reviewing an .astro or .mdx page that imports from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, Choice, RadioGroup, Slider, Tag, TagGroup, TagsInput, Dialog, AlertDialog, ConfirmDialog, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, Skeleton, toast, Avatar, Terminal, Kbd, Breadcrumbs, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer or when a component fires no event, loads JavaScript early, shifts layout or fails an a11y check. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
 license: Apache-2.0
 metadata:
   summary: Which @ocx-sh/theme component to use, how to import it, the props and a11y contracts that matter, and the lazy-loading rules
@@ -64,6 +64,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ToggleGroup.astro` | 2 to 5 always-visible options, one or several selected | [actions-forms](references/actions-forms.md) |
 | `ui/Input.astro` | A text, search, url, email, password or number field with hint and error | [actions-forms](references/actions-forms.md) |
 | `ui/InputGroup.astro` | Box around a control with `start` and `end` addons | [actions-forms](references/actions-forms.md) |
+| `ui/NumberStepperScript.astro` | The number stepper's script, rendered by `Input`; never import it | [actions-forms](references/actions-forms.md) |
 | `ui/SearchField.astro` | Search box with icon and clear button | [actions-forms](references/actions-forms.md) |
 | `ui/Label.astro` | A standalone field label | [actions-forms](references/actions-forms.md) |
 | `ui/Select.astro` | Pick one of a fixed option list; `start` / `end` slots | [actions-forms](references/actions-forms.md) |
@@ -100,6 +101,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `DependencyExplorer.astro` | SBOM viewer over a `dependencies.json` | [data-feedback](references/data-feedback.md) |
 | `Terminal.astro` | A recorded asciinema cast in terminal chrome | [content](references/content-navigation.md) |
 | `FeatureSection.astro` | Alternating text-and-visual block on landing pages | [content](references/content-navigation.md) |
+| `HubGrid.astro` | One hub's entries from `nav.json` as category groups of cards | [content](references/content-navigation.md) |
 | `ui/Kbd.astro` | Keyboard keys, OS-adaptive (`Mod+K`) | [content](references/content-navigation.md) |
 | `ui/Breadcrumbs.astro` | A breadcrumb trail outside the page title | [content](references/content-navigation.md) |
 | `Toc.astro` | Scroll-spy table of contents inside a page | [content](references/content-navigation.md) |

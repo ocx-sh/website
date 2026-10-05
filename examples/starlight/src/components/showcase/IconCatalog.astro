@@ -7,7 +7,9 @@
 // reads name and group from the card's text.
 // The glyph is Icon.astro's markup minus `data-icon`: the name already sits in the card's <code>,
 // and a per-card unique attribute splits the otherwise identical attribute run into separate gzip
-// matches (~600 B gz over the catalog). Same class and attributes, so Icon's global styles apply.
+// matches (~600 B gz over the catalog). Same class, so Icon's global styles apply. Also minus the
+// stroke-width (Icon's `[stroke]` rule sets it from a token) and the round caps and joins (the rule
+// below), ~400 B gz over the 49 cards.
 import Input from '@ocx-sh/theme/components/ui/Input.astro';
 import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
 ---
@@ -28,9 +30,6 @@ import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
             viewBox={viewBox}
             fill={stroke ? 'none' : 'currentColor'}
             stroke={stroke ? 'currentColor' : undefined}
-            stroke-width={stroke}
-            stroke-linecap={stroke ? 'round' : undefined}
-            stroke-linejoin={stroke ? 'round' : undefined}
             aria-hidden="true"
             set:html={body}
           />
@@ -117,6 +116,10 @@ import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
     }
     .icon-catalog li[hidden] {
       display: none;
+    }
+    .icon-catalog svg[stroke] {
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     .icon-catalog li > code {
       font-size: var(--ocx-text-sm);

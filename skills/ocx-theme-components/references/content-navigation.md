@@ -6,6 +6,7 @@ logo.
 Import path prefix: `@ocx-sh/theme/components/`.
 
 Contents: [Terminal](#terminal) · [FeatureSection](#featuresection) ·
+[HubGrid](#hubgrid) ·
 [Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Toc](#toc) · [Icon](#icon) ·
 [Logo](#logo) · [Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
 
@@ -33,6 +34,15 @@ Record casts from a real command run; do not hand-write them.
 rendered as `<h2>`), `flip` (visual on the left on desktop; mobile always
 stacks text first). Slot `text` is the copy, the default slot the visual. A
 one-shot reveal plays once when the block scrolls in.
+
+## HubGrid
+
+**`HubGrid.astro`**: one hub page's body, read from `nav.json`. `hub`
+(required, a hub id: `integrations` or `apps`; an unknown id throws). One
+group per category in `nav.json` order, one card per entry. A `planned`
+entry is a dashed card with a "planned" stamp and no link; an external
+`href` adds the `external` icon (↗) named "(external)". Add entries in
+`nav.json`, never in the page. Zero JS.
 
 ## Kbd
 
