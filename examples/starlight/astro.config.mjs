@@ -123,6 +123,7 @@ export default defineConfig({
                 { label: 'Code', link: '/components/code/' },
                 { label: 'Code colours', link: '/components/code-colours/' },
                 { label: 'Feature sections', link: '/components/feature-section/' },
+                { label: 'Hub grid', link: '/components/hub-grid/' },
                 { label: 'Prose', link: '/components/prose/' },
                 { label: 'Terminal', link: '/components/terminal/' },
               ],

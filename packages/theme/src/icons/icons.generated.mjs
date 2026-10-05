@@ -266,6 +266,54 @@ export const folder = {
   keywords: 'project directory scope local files',
 };
 /** @satisfies {import('./icons.mjs').IconDef} */
+export const box = {
+  viewBox: '0 0 24 24',
+  body: '<path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73zm1 .27V12"/><path d="M3.29 7L12 12l8.71-5M7.5 4.27l9 5.15"/>',
+  stroke: 2,
+  group: 'interface',
+  keywords: 'box registry artifact oci bundle',
+};
+/** @satisfies {import('./icons.mjs').IconDef} */
+export const layers = {
+  viewBox: '0 0 24 24',
+  body: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/>',
+  stroke: 2,
+  group: 'interface',
+  keywords: 'stack platforms cross-platform multi',
+};
+/** @satisfies {import('./icons.mjs').IconDef} */
+export const lock = {
+  viewBox: '0 0 24 24',
+  body: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  stroke: 2,
+  group: 'interface',
+  keywords: 'locked reproducible pinned secure',
+};
+/** @satisfies {import('./icons.mjs').IconDef} */
+export const workflow = {
+  viewBox: '0 0 24 24',
+  body: '<rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/>',
+  stroke: 2,
+  group: 'interface',
+  keywords: 'automation pipeline ci steps flow',
+};
+/** @satisfies {import('./icons.mjs').IconDef} */
+export const blocks = {
+  viewBox: '0 0 24 24',
+  body: '<path d="M10 22V7a1 1 0 0 0-1-1H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5a1 1 0 0 0-1-1H2"/><rect width="8" height="8" x="14" y="2" rx="1"/>',
+  stroke: 2,
+  group: 'interface',
+  keywords: 'compose environment modules building blocks',
+};
+/** @satisfies {import('./icons.mjs').IconDef} */
+export const hardDrive = {
+  viewBox: '0 0 24 24',
+  body: '<path d="M10 16h.01m-7.798-4.423a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11zm19.734.436H2.054M6 16h.01"/>',
+  stroke: 2,
+  group: 'interface',
+  keywords: 'disk offline storage air-gap usb',
+};
+/** @satisfies {import('./icons.mjs').IconDef} */
 export const github = {
   viewBox: '0 0 24 24',
   body: '<path d="M12 .297c-6.63 0-12 5.373-12 12c0 5.303 3.438 9.8 8.205 11.385c.6.113.82-.258.82-.577c0-.285-.01-1.04-.015-2.04c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729c1.205.084 1.838 1.236 1.838 1.236c1.07 1.835 2.809 1.305 3.495.998c.108-.776.417-1.305.76-1.605c-2.665-.3-5.466-1.332-5.466-5.93c0-1.31.465-2.38 1.235-3.22c-.135-.303-.54-1.523.105-3.176c0 0 1.005-.322 3.3 1.23c.96-.267 1.98-.399 3-.405c1.02.006 2.04.138 3 .405c2.28-1.552 3.285-1.23 3.285-1.23c.645 1.653.24 2.873.12 3.176c.765.84 1.23 1.91 1.23 3.22c0 4.61-2.805 5.625-5.475 5.92c.42.36.81 1.096.81 2.22c0 1.606-.015 2.896-.015 3.286c0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>',
@@ -371,6 +419,12 @@ export const ICONS = {
   'fullscreen-exit': fullscreenExit,
   globe,
   folder,
+  box,
+  layers,
+  lock,
+  workflow,
+  blocks,
+  'hard-drive': hardDrive,
   github,
   linux,
   apple,

@@ -1,0 +1,11 @@
+---
+// The stepper's behaviour (number-stepper.mjs), kept in its own component so only a page that
+// renders a stepper carries the inline script: Astro bundles a component's <script> per page by
+// the components the page renders, so a text or search Input stays free of it.
+---
+
+<script>
+  import { install } from './number-stepper.mjs';
+
+  install();
+</script>

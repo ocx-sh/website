@@ -1,0 +1,117 @@
+---
+// HubGrid (C-067, C-303): one hub page's entries from nav.json, a group per category in nav.json
+// order. Cards are the base.css `.ocx-card`; a `planned` entry is the dashed `--planned` card with a
+// "planned" tag and no link; an external entry carries the registry `external` icon (↗) named
+// "(external)". Zero client JS.
+import Icon from './ui/Icon.astro';
+import Tag from './ui/Tag.astro';
+import nav from '../nav.json';
+
+interface Props {
+  /** Hub id in nav.json (`integrations`, `apps`). */
+  hub: string;
+}
+
+const { hub: hubId } = Astro.props;
+const hub = nav.hubs.find((h) => h.id === hubId);
+if (!hub) throw new Error(`HubGrid: no hub "${hubId}" in nav.json`);
+
+const groups = hub.categories
+  .map((c) => ({ ...c, items: nav.entries.filter((e) => e.hub === hub.id && e.category === c.id) }))
+  .filter((c) => c.items.length > 0);
+const isExternal = (href: string) => /^https?:\/\//i.test(href);
+---
+
+<div class="ocx-hub-grid" data-ocx-hub={hub.id}>
+  {groups.map((c) => (
+    <section class="ocx-hub-grid__group" data-ocx-category={c.id} aria-labelledby={`ocx-hub-${hub.id}-${c.id}`}>
+      <h2 class="ocx-hub-grid__heading" id={`ocx-hub-${hub.id}-${c.id}`}>
+        {c.label}
+      </h2>
+      <ul class="ocx-hub-grid__list">
+        {c.items.map((e) => {
+          const body = (
+            <>
+              <span class="ocx-hub-grid__head">
+                <span class="ocx-hub-grid__label">{e.label}</span>
+                {e.planned ? (
+                  <Tag variant="stamp">planned</Tag>
+                ) : (
+                  e.href && isExternal(e.href) && <Icon name="external" size="sm" label="(external)" />
+                )}
+              </span>
+              <span class="ocx-hub-grid__meta">{e.meta}</span>
+              <span class="ocx-hub-grid__desc">{e.desc}</span>
+            </>
+          );
+          return (
+            <li class="ocx-hub-grid__item" data-ocx-entry={e.id} data-planned={e.planned ? 'true' : undefined}>
+              {e.href && !e.planned ? (
+                <a class="ocx-card ocx-hub-grid__card" href={e.href}>
+                  {body}
+                </a>
+              ) : (
+                <div class="ocx-card ocx-card--planned ocx-hub-grid__card">{body}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  ))}
+</div>
+
+<style>
+  @layer ocx {
+    .ocx-hub-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-8);
+    }
+    .ocx-hub-grid__heading {
+      margin: 0 0 var(--ocx-space-4);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      font-weight: var(--ocx-font-weight-semibold);
+      letter-spacing: var(--ocx-tracking-caps);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-hub-grid__list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(calc(var(--ocx-space-12) * 2), 1fr));
+      gap: var(--ocx-space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ocx-hub-grid__item {
+      display: flex;
+      margin: 0;
+    }
+    .ocx-hub-grid__card {
+      flex: 1;
+    }
+    .ocx-hub-grid__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--ocx-space-3);
+    }
+    .ocx-hub-grid__label {
+      font-weight: var(--ocx-font-weight-semibold);
+      color: var(--ocx-color-fg);
+    }
+    .ocx-hub-grid__head > :global(.ocx-icon) {
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-hub-grid__meta {
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-hub-grid__desc {
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-muted);
+    }
+  }
+</style>

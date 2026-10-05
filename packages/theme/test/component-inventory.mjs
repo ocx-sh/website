@@ -10,6 +10,9 @@ export const COMPONENT_EXEMPT = {
   // EcosystemMenu is the header's mega-menu panel: opened from Header.astro's popovertarget button,
   // present as page chrome on every page, not a standalone showcase demo.
   'EcosystemMenu.astro': { parent: 'starlight/Header.astro', page: 'page chrome on every page' },
+  // The number stepper's script, rendered by Input only for a stepped number field, so a text or
+  // search Input keeps ~400 B gz of inline script out of its page.
+  'ui/NumberStepperScript.astro': { parent: 'ui/Input.astro', page: 'components/input' },
 };
 
 /**

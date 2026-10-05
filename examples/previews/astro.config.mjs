@@ -1,6 +1,6 @@
 // One Starlight site per consumer repo, selected by PREVIEW_SITE (scripts/previews/build.ts sets it and builds
 // from the generated project `.tmp/previews/<site>/`). Each is the real docs tree wearing @ocx-sh/theme at base
-// `/`, so `https://<site>.preview.ocx.sh` looks like the site will once it deploys under its claim path.
+// `/`, so `https://sh-ocx-preview-<slug>.b-cdn.net/` looks like the site will once it deploys under its claim path.
 // Not part of `task build`: the content is the consumers', so no budget or Lighthouse gate covers it.
 import starlight from '@astrojs/starlight';
 import ocxTheme from '@ocx-sh/theme/starlight';

@@ -1,0 +1,28 @@
+---
+title: Hub grid
+description: One hub page's entries from nav.json, a group per category, with planned entries unlinked and external ones marked.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A hub grid lists the entries of one ecosystem hub (`integrations` or `apps`), read from the theme's
+`nav.json`: one group per category in the file's order, each entry as a card under its category.
+It is the body of the `/integrations/` and `/apps/` pages.
+
+A `planned` entry is a dashed card with a "planned" stamp and no link. An entry whose `href` leaves
+the site carries the `external` icon (↗) and the accessible text "(external)". The canvases are
+720px wide; open a story in a new tab to see more columns.
+
+## Stories
+
+<Stories of="hub-grid" />
+
+## Props
+
+<PropsTable
+  of="HubGrid.astro"
+  rows={[
+    { name: 'hub', type: 'string', required: true, description: 'Hub id in nav.json, `integrations` or `apps`. An unknown id fails the build.' },
+  ]}
+/>
