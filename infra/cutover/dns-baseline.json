@@ -1,0 +1,5 @@
+{
+  "host": "ocx.sh",
+  "MX": ["10 _dc-mx.c9558f84e981.ocx.sh", "50 mx2f8f.netcup.net"],
+  "TXT": ["v=spf1 mx a include:_spf.webhosting.systems ~all"]
+}
