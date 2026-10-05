@@ -212,12 +212,14 @@ test.describe('C-251 / S-111 async List', () => {
     await page.locator('#story [data-list-controls]').evaluate((el) => (el.dataset['delay'] = '20'));
     await activate(root);
     await live(root);
-    const send = (text: string) =>
-      root.evaluate((el, t) => el.dispatchEvent(new CustomEvent('ocx:list:filter', { detail: { text: t } })), text);
+    // Both filters in one task: the second always aborts the first load in flight. Two round trips
+    // let the 20 ms load finish under CPU load, which swaps rows (a different, completed-load path).
+    const abortCycle = () =>
+      root.evaluate((el) => {
+        for (const text of ['c', '']) el.dispatchEvent(new CustomEvent('ocx:list:filter', { detail: { text } }));
+      });
     await expectNoLeak(page, async () => {
-      // The second filter aborts the first load in flight.
-      await send('c');
-      await send('');
+      await abortCycle();
       await expect(content(root)).not.toHaveAttribute('aria-busy', 'true');
       await expect(root.locator('[role="option"]')).toHaveCount(4);
     });

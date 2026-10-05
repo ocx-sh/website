@@ -3,6 +3,7 @@
 // with a token transition that reduced motion makes instant.
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { startsAfterFirstFrame, watchStarts } from './helpers/fresh-load.ts';
 
 const STORIES = ['/docs/stories/iconography/logo/default/', '/docs/stories/iconography/logo/states/'];
 const trigger = (page: Page) => page.locator('.ocx-header__nav button[data-ocx-section="ecosystem"]');
@@ -85,8 +86,10 @@ test.describe('Header', () => {
     test.skip(({ isMobile }) => isMobile, 'the section nav is hidden at ≤ 640px');
 
     test('no animation on a fresh load', async ({ page }) => {
+      await watchStarts(page, '.ocx-header');
       await page.goto('/docs/');
-      await page.evaluate(() => document.fonts.ready);
+      const late = await startsAfterFirstFrame(page);
+      expect(late).toEqual([]);
       expect(await animations(page, '.ocx-header', '')).toBe(0);
     });
 
