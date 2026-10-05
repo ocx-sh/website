@@ -1,7 +1,10 @@
 // C-110: the budgets module holds every page class at the plan's caps and
 // classifies every gated page into exactly one class.
-import { describe, expect, it } from 'vitest';
-import { BUDGETS, budgetOf, classOf, examplePages, PAGEFIND_GZ_MAX, PRE_JS_VISIBLE } from './budgets.mjs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { afterAll, describe, expect, it } from 'vitest';
+import { BUDGETS, budgetOf, classOf, examplePages, PAGEFIND_GZ_MAX, PRE_JS_VISIBLE, sitePages } from './budgets.mjs';
 
 const KB = 1024;
 
@@ -76,5 +79,38 @@ describe('C-110 budgets module', () => {
 
   it('fails on an unclassified page', () => {
     expect(() => classOf('/docs/guides/new-page/')).toThrow(/matches 0 classes/);
+    expect(() => classOf('/pricing/')).toThrow(/matches 0 classes/);
+  });
+});
+
+// The root site's pages share the `content` budget: no new class, no raised value.
+describe('C-309 site page classes', () => {
+  const dist = mkdtempSync(join(tmpdir(), 'budgets-site-'));
+  afterAll(() => rmSync(dist, { recursive: true, force: true }));
+  for (const f of [
+    'index.html',
+    '404.html',
+    'apps/index.html',
+    'install/index.html',
+    'pagefind/x.js',
+    '_astro/a.css',
+  ]) {
+    mkdirSync(dirname(join(dist, f)), { recursive: true });
+    writeFileSync(join(dist, f), '');
+  }
+
+  it('lists the HTML pages of a dist as routes', () => {
+    expect(sitePages(dist)).toEqual(['/', '/404.html', '/apps/', '/install/']);
+  });
+
+  it('classifies landing, hubs, install and 404 as content, with the content budget', () => {
+    for (const p of ['/', '/integrations/', '/apps/', '/install/', '/404.html']) {
+      expect(classOf(p), p).toBe('content');
+      expect(budgetOf(p), p).toBe(BUDGETS.content);
+    }
+  });
+
+  it('throws `missing dist: site/dist` without a dist', () => {
+    expect(() => sitePages(join(dist, 'absent'))).toThrow('missing dist: site/dist');
   });
 });

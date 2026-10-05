@@ -1,0 +1,27 @@
+---
+// The visual beside a "how it works" section: one registry icon, large, inline so it never loads late.
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+import type { IconName } from '@ocx-sh/theme/icons';
+
+interface Props {
+  name: IconName;
+}
+---
+
+<div class="landing-visual">
+  <Icon name={Astro.props.name} class="landing-visual__icon" />
+</div>
+
+<style>
+  @layer ocx {
+    .landing-visual {
+      display: flex;
+      justify-content: center;
+    }
+    .landing-visual .landing-visual__icon {
+      inline-size: var(--ocx-space-11);
+      block-size: var(--ocx-space-11);
+      color: var(--ocx-color-fg-muted);
+    }
+  }
+</style>

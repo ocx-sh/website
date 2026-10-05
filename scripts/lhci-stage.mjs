@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Stages the built example under `<tmp>/docs/` for lhci's `staticDistDir`
- * (C-057). `.lighthouserc.cjs` serves that same `<tmp>` root and lists its
- * audited URLs as `/docs/...` paths, so the two files must agree on the
- * staged root — `STAGE_ROOT` below is that single source of truth; keep
- * `.lighthouserc.cjs`'s copy of the path in sync if it ever moves.
+ * Stages the built root site at `STAGE_ROOT` and the built example under `<tmp>/docs/` for lhci's
+ * `staticDistDir`, mirroring how ocx.sh serves them. `.lighthouserc.cjs` serves that same root and
+ * lists its audited URLs as site paths and `/docs/...` paths, so the two files must agree on the
+ * staged root: `STAGE_ROOT` below is that single source of truth.
  *
  * Usage: `scripts/lighthouse.mjs` (`task lighthouse`) calls `stageExample()`;
- * `node scripts/lhci-stage.mjs` stages by hand.
+ * `node scripts/lhci-stage.mjs` stages by hand; `node scripts/lhci-stage.mjs --serve <port>` stages
+ * and keeps serving it (the Playwright `site` project's web server).
  *
  * No top-level `await`: `.lighthouserc.cjs` (CommonJS, required by lhci's own
  * loader) `require()`s this module for `STAGE_ROOT` — Node's `require(esm)`
@@ -15,27 +15,91 @@
  * ESM graph containing top-level await (`ERR_REQUIRE_ASYNC_MODULE`), so the
  * direct-invoke branch below chains `.then()/.catch()` instead of `await`ing.
  */
-import { cp, rm } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { createReadStream } from 'node:fs';
+import { cp, rm, stat } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Staged root lhci serves as `staticDistDir`; `<tmp>/docs/` is the example. */
-export const STAGE_ROOT = join(tmpdir(), 'ocx-website-lhci');
+const dist = (/** @type {string} */ rel) => fileURLToPath(new URL(rel, import.meta.url));
 
-/** Copies `examples/starlight/dist` to `<STAGE_ROOT>/docs/`, replacing any
- * previous staged copy, and returns the staged root.
+/**
+ * Staged root lhci serves as `staticDistDir`: `site/dist` at `/`, the example at `<tmp>/docs/`.
+ * Keyed by the repo path: every run wipes its stage, so parallel worktrees need separate ones.
+ */
+export const STAGE_ROOT = join(
+  tmpdir(),
+  `ocx-website-lhci-${createHash('sha256').update(dist('../')).digest('hex').slice(0, 12)}`,
+);
+
+/** Stages the root site at `root` and the built example at `<root>/docs/`, replacing any previous
+ * stage, and returns the root. A missing dist throws (`task` checks first).
+ * @param {{ root?: string, site?: string, example?: string }} [from] defaults: `STAGE_ROOT` and the repo's dists
  * @returns {Promise<string>}
  */
-export async function stageExample() {
-  const dist = fileURLToPath(new URL('../examples/starlight/dist', import.meta.url));
-  await rm(STAGE_ROOT, { recursive: true, force: true });
-  await cp(dist, join(STAGE_ROOT, 'docs'), { recursive: true });
-  return STAGE_ROOT;
+export async function stageExample({
+  root = STAGE_ROOT,
+  site = dist('../site/dist'),
+  example = dist('../examples/starlight/dist'),
+} = {}) {
+  await rm(root, { recursive: true, force: true });
+  await cp(site, root, { recursive: true });
+  await cp(example, join(root, 'docs'), { recursive: true });
+  return root;
+}
+
+const TYPES = /** @type {Record<string, string>} */ ({
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css',
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.txt': 'text/plain',
+  '.xml': 'application/xml',
+  '.woff2': 'font/woff2',
+});
+
+/**
+ * Serves `root` on `port` the way the CDN does: a directory with a trailing slash answers with its
+ * `index.html`, one without redirects to the slash. Playwright's `webServer` for the combined stage.
+ * ponytail: no gzip, no range requests; add when a spec measures transfer size here.
+ * @param {string} root
+ * @param {number} port
+ * @returns {Promise<import('node:http').Server>}
+ */
+export function serveStage(root, port) {
+  const server = createServer((req, res) => {
+    const { pathname } = new URL(req.url ?? '/', 'http://x');
+    let rel;
+    try {
+      rel = normalize(decodeURIComponent(pathname)); // `..` cannot climb above the root once normalized
+    } catch {
+      res.writeHead(400).end('bad request'); // malformed `%` escape
+      return;
+    }
+    const file = join(root, rel.endsWith('/') ? `${rel}index.html` : rel);
+    stat(file).then(
+      (st) => {
+        if (st.isDirectory()) {
+          res.writeHead(301, { location: `${pathname}/` }).end();
+        } else {
+          res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
+          createReadStream(file).pipe(res);
+        }
+      },
+      () => res.writeHead(404).end('not found'),
+    );
+  });
+  return new Promise((resolve) => server.listen(port, () => resolve(server)));
 }
 
 async function main() {
   const root = await stageExample();
+  const port = process.argv[2] === '--serve' ? Number(process.argv[3]) : 0;
+  if (port) await serveStage(root, port);
   process.stdout.write(`${root}\n`);
 }
 

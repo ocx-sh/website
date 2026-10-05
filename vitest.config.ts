@@ -12,8 +12,11 @@ export default getViteConfig(
         'scripts/**/*.test.{ts,mjs}',
         'tests/*.test.{ts,mjs}',
         'infra/**/*.test.{ts,mjs}',
+        'site/**/*.test.{ts,mjs}',
         '.github/actions/deploy/test/**/*.test.{ts,mjs}',
       ],
+      // Builds `site/dist` once for the dist-reading tests (site/src/build-site.ts).
+      globalSetup: ['site/src/global-setup.ts'],
       exclude: [...configDefaults.exclude, '**/.tmp/**', '**/.agents/worktrees/**'],
     },
   },

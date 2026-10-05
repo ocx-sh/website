@@ -99,15 +99,22 @@ export function budgetOf(path) {
   return pre === undefined ? budget : { ...budget, preJsGz: pre };
 }
 
-/** One pathname pattern per class (regex source, anchored at the path start). @type {Record<PageClass, string>} */
+/**
+ * One pathname pattern per class (regex source, anchored at the path start). The root site's pages
+ * (landing, hubs, install, 404) are `content`: a new site page matches no class until it is listed here.
+ * @type {Record<PageClass, string>}
+ */
 export const CLASS_PATTERNS = {
   showcase: '^/docs/components/',
   story: '^/docs/stories/',
-  content: '^/docs/(?:probe/[^/]+/|404\\.html|previews/)?$',
+  content: '^(?:/docs/(?:probe/[^/]+/|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/404\\.html)$',
 };
 
 /** Default docs tree of the Starlight example. */
 export const DOCS_DIR = fileURLToPath(new URL('../examples/starlight/src/content/docs/', import.meta.url));
+
+/** Built output of the root site. */
+export const SITE_DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
 
 /** Story sources of the Starlight example (C-125), one page each at `/docs/stories/<id>/`. */
 export const STORIES_DIR = fileURLToPath(new URL('../examples/starlight/src/stories/', import.meta.url));
@@ -157,4 +164,19 @@ export function examplePages(docsDir = DOCS_DIR, storiesDir = STORIES_DIR) {
     .filter((f) => f.endsWith('.mdx'))
     .map((f) => storyRoute(f.slice(0, -'.mdx'.length)));
   return [...docs, ...stories].sort();
+}
+
+/**
+ * Every HTML page of the built root site as a sorted route list (`index.html` → `/`, `x/index.html`
+ * → `/x/`, `404.html` as itself). Throws `missing dist: <dir>` like `scripts/require-dist.mjs`.
+ * @param {string} [distDir]
+ * @returns {string[]}
+ */
+export function sitePages(distDir = SITE_DIST) {
+  if (!existsSync(distDir)) throw new Error('missing dist: site/dist');
+  return readdirSync(distDir, { recursive: true, encoding: 'utf8' })
+    .map((f) => f.split('\\').join('/'))
+    .filter((f) => f.endsWith('.html'))
+    .map((f) => (f === 'index.html' ? '/' : `/${f.replace(/index\.html$/, '')}`))
+    .sort();
 }

@@ -1,0 +1,63 @@
+---
+// The landing's four feature cards: a theme `.ocx-card` with a registry icon, no image to load.
+import Icon from '@ocx-sh/theme/components/ui/Icon.astro';
+
+const cards = [
+  {
+    icon: 'box',
+    title: 'OCI-Native',
+    text: 'Your Docker Hub, GHCR, ECR, or Harbor is the package server. No new infrastructure, no new credentials, no new licenses.',
+  },
+  {
+    icon: 'layers',
+    title: 'Cross-Platform',
+    text: 'One identifier resolves to the right binary on Linux, macOS, Windows, or FreeBSD. OCI multi-platform manifests handle the rest.',
+  },
+  {
+    icon: 'lock',
+    title: 'Reproducible',
+    text: 'Content-addressed storage deduplicates automatically: if two tags resolve to the same build, they share one copy on disk. A local index snapshot locks every resolution. Same command, same result, today, tomorrow, offline.',
+  },
+  {
+    icon: 'workflow',
+    title: 'Automation-First',
+    text: 'JSON output, clean environments, composable commands. Designed from the ground up for CI pipelines and build systems.',
+  },
+] as const;
+---
+
+<ul class="landing-cards">
+  {cards.map((c) => (
+    <li class="ocx-card landing-cards__card">
+      <Icon name={c.icon} size="lg" class="landing-cards__icon" />
+      <strong class="landing-cards__title">{c.title}</strong>
+      <span class="landing-cards__text">{c.text}</span>
+    </li>
+  ))}
+</ul>
+
+<style>
+  @layer ocx {
+    .landing-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(calc(var(--ocx-space-12) * 2), 1fr));
+      gap: var(--ocx-space-4);
+      margin: var(--ocx-space-6) 0;
+      padding: 0;
+      list-style: none;
+    }
+    .landing-cards__card {
+      margin: 0;
+    }
+    .landing-cards__icon {
+      color: var(--ocx-color-fg-muted);
+    }
+    .landing-cards__title {
+      color: var(--ocx-color-fg);
+    }
+    .landing-cards__text {
+      font-size: var(--ocx-text-sm);
+      color: var(--ocx-color-fg-muted);
+    }
+  }
+</style>
