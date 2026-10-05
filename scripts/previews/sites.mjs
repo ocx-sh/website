@@ -53,9 +53,6 @@ export const SITES = [
 /** Host label of a site: DNS labels have no underscore, `rules_ocx` is `rules-ocx`. */
 export const slug = (/** @type {PreviewSite} */ site) => site.name.replaceAll('_', '-');
 
-/** Where the site is planned to be hosted (no hosting exists yet). */
-export const previewUrl = (/** @type {PreviewSite} */ site) => `https://${slug(site)}.preview.ocx.sh`;
-
 /**
  * The site a CLI argument names, by name or slug.
  * @param {string} arg
@@ -65,3 +62,27 @@ export function findSite(arg) {
   if (!site) throw new Error(`unknown preview site "${arg}"; known: ${SITES.map((s) => s.name).join(', ')}`);
   return site;
 }
+
+/** @param {string | PreviewSite} site a site, or the name or slug of one */
+const resolve = (site) => (typeof site === 'string' ? findSite(site) : site);
+
+/**
+ * GitHub secret of a site in the `previews` environment: `BUNNY_PREVIEW_KEY_` + the slug uppercased,
+ * `-` as `_`. Takes a name or slug.
+ * @param {string | PreviewSite} site
+ * @returns {string}
+ */
+export const secretName = (site) => `BUNNY_PREVIEW_KEY_${slug(resolve(site)).toUpperCase().replaceAll('-', '_')}`;
+
+/**
+ * Storage and pull zone name, `sh-ocx-preview-<slug>`. Takes a name or slug.
+ * @param {string | PreviewSite} site
+ * @returns {string}
+ */
+export const previewZone = (site) => `sh-ocx-preview-${slug(resolve(site))}`;
+
+/**
+ * Where the preview is served: the pull zone's own host, until `<slug>.preview.ocx.sh` exists.
+ * The one place that changes then.
+ */
+export const previewUrl = (/** @type {PreviewSite} */ site) => `https://${previewZone(site)}.b-cdn.net/`;

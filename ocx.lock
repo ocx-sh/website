@@ -1,9 +1,9 @@
 [metadata]
 lock_version = 3
 declaration_hash_version = 1
-declaration_hash = "sha256:d8b3814cacce36bb4e28a3fea97ec5f477b7369b245e54e5d6d38bc867a0a8cf"
-generated_by = "ocx 0.6.3"
-generated_at = "2026-09-27T15:02:51Z"
+declaration_hash = "sha256:7fde421b4ba542609d34cbfc4fa1a88d1be67e0790250d74040339e54de2234c"
+generated_by = "ocx 0.6.4"
+generated_at = "2026-10-05T08:12:36Z"
 
 [[tool]]
 name = "actionlint"
@@ -119,3 +119,18 @@ repository = "ocx.sh/go-task/task"
 "linux/arm64" = "sha256:f5440402699c1f53b2941aa6e26049747c56a10ba730ba9692ffeaea6f429454"
 "windows/amd64" = "sha256:ac4b71cb82926c9e282074ab218e75989efe243836c761a2f4974dd31d34d94c"
 "windows/arm64" = "sha256:4a29127f29db746ab7c1d3991e4b35caa61c0f6687cc4aa2914c6fbb63a7f527"
+
+[[tool]]
+name = "uv"
+group = "default"
+repository = "ocx.sh/astral-sh/uv"
+
+[tool.platforms]
+"darwin/amd64" = "sha256:b9b70e42d5efc9574e7688d9b41f31decb44eb25a2fa1369189b3f2397d987a6"
+"darwin/arm64" = "sha256:718eb8ab49a1771a2a79723ade7aa2509a112c8a7883dce6d92400fdb8717a7c"
+"linux/amd64" = "sha256:3ea81ae2b846adf1a9f3e76c3166ccb60e5bc997957e25fd865f33607dbc532b"
+"linux/amd64+libc.glibc" = "sha256:42b435e5aa31e37043f975224138a5c0b277c40f9f75eb70032bdc841114ab32"
+"linux/arm64" = "sha256:c74ad075e542aed0cedfebc9ee60d23277a5360d2fda4d49f6c2f8acc99e8608"
+"linux/arm64+libc.glibc" = "sha256:2f308f9ff7a6517167561e00228e972bb23db4b32b35b5392ad1ed6d2f0f37c1"
+"windows/amd64" = "sha256:ac127db1b8f53b4eda56c13f3823440b3ead630ebeaa29ba397caa1b24b5b6cd"
+"windows/arm64" = "sha256:80b3da2582a03a1fae1c420c19a42c097fe9bb224d7e1cbcc3fd6fec25d35852"
