@@ -1,0 +1,39 @@
+name: Deploy to ocx.sh
+description: Upload a built site to its Bunny storage zone, assets before pages, then prune stale HTML.
+inputs:
+  dist:
+    description: Build output directory. Its root maps to `path`.
+    required: true
+  storage-key:
+    description: The repository's storage zone password. An empty value fails the run before any request.
+    required: true
+  path:
+    description: Public path `dist` maps to, a claim the repository owns. Default is the repository's shortest claim.
+    required: false
+    default: ''
+  storage-host:
+    description: Bunny storage endpoint host.
+    required: false
+    default: storage.bunnycdn.com
+  dry-run:
+    description: List and plan only; send no PUT or DELETE.
+    required: false
+    default: 'false'
+  preview:
+    description: Preview site name; deploys to its preview zone instead of the repository's claim.
+    required: false
+    default: ''
+  force-prune:
+    description: Delete stale HTML even when the prune would remove more than half of the listed pages.
+    required: false
+    default: 'false'
+outputs:
+  url:
+    description: Public URL of the deployed site.
+  uploaded:
+    description: Number of files uploaded.
+  deleted:
+    description: Number of stale HTML files deleted.
+runs:
+  using: node24
+  main: index.mjs

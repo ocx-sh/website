@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import nav from '../../packages/theme/src/nav.json' with { type: 'json' };
 import { rewriteMdLinks } from './links.ts';
-import { SITES, findSite, previewUrl, slug } from './sites.mjs';
+import { SITES, findSite, previewUrl, previewZone, secretName, slug } from './sites.mjs';
 
 describe('preview sites', () => {
   it('names, host slugs and mounts are unique', () => {
@@ -13,13 +13,6 @@ describe('preview sites', () => {
     for (const s of SITES) expect(nav.claims.find((c) => c.path === s.mount)?.repo, s.name).toBe(s.repo);
   });
 
-  it('preview URLs are https subdomains of preview.ocx.sh with valid DNS labels', () => {
-    for (const s of SITES) {
-      expect(previewUrl(s)).toMatch(/^https:\/\/[a-z0-9]([a-z0-9-]*[a-z0-9])?\.preview\.ocx\.sh$/);
-    }
-    expect(previewUrl(findSite('rules_ocx'))).toBe('https://rules-ocx.preview.ocx.sh');
-  });
-
   it('a site is found by name or by host slug; an unknown one lists the known', () => {
     expect(findSite('rules-ocx')).toBe(findSite('rules_ocx'));
     expect(() => findSite('nope')).toThrow(/known: ocx, rules_ocx/);
@@ -27,6 +20,25 @@ describe('preview sites', () => {
 
   it('a landing route is a root-relative directory route', () => {
     for (const s of SITES) if (s.home) expect(s.home).toMatch(/^\/([a-z0-9-]+\/)*$/);
+  });
+});
+
+// Zone, secret and URL names of a site (C-317, C-321, C-330).
+describe('preview zone names', () => {
+  it('secretName is BUNNY_PREVIEW_KEY_ plus the slug uppercased, charset [A-Z0-9_]', () => {
+    expect(secretName('rules-ocx')).toBe('BUNNY_PREVIEW_KEY_RULES_OCX');
+    expect(secretName('rules_ocx')).toBe('BUNNY_PREVIEW_KEY_RULES_OCX');
+    for (const s of SITES) expect(secretName(s.name)).toMatch(/^BUNNY_PREVIEW_KEY_[A-Z0-9_]+$/);
+  });
+
+  it('previewZone is sh-ocx-preview-<slug>', () => {
+    expect(previewZone('rules_ocx')).toBe('sh-ocx-preview-rules-ocx');
+    for (const s of SITES) expect(previewZone(s.name)).toBe(`sh-ocx-preview-${slug(s)}`);
+  });
+
+  it('previewUrl is the zone b-cdn.net root', () => {
+    for (const s of SITES) expect(previewUrl(s)).toBe(`https://sh-ocx-preview-${slug(s)}.b-cdn.net/`);
+    expect(previewUrl(findSite('rules_ocx'))).toBe('https://sh-ocx-preview-rules-ocx.b-cdn.net/');
   });
 });
 

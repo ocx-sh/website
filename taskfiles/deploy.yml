@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: '3'
+
+tasks:
+  dev:
+    desc: Dry-run the deploy action against the in-memory fake Bunny (no network, no credentials)
+    deps: [':install']
+    cmds:
+      - cmd: |
+          node --input-type=module -e '
+          import { mkdtempSync, writeFileSync } from "node:fs";
+          import { tmpdir } from "node:os";
+          import { join } from "node:path";
+          import { run } from "./.github/actions/deploy/index.mjs";
+          import { fakeBunny } from "./.github/actions/deploy/test/fake-bunny.ts";
+          const dist = mkdtempSync(join(tmpdir(), "deploy-dev-"));
+          writeFileSync(join(dist, "index.html"), "<h1>dev</h1>");
+          const fake = fakeBunny({ zone: "sh-ocx-index", key: "dev-key", files: { "catalog/old.html": "stale" } });
+          process.exitCode = await run(
+            { "INPUT_STORAGE-KEY": "dev-key", INPUT_DIST: dist, INPUT_PATH: "/catalog/", "INPUT_DRY-RUN": "true", GITHUB_REPOSITORY: "ocx-sh/index" },
+            { fetch: fake.fetch },
+          );
+          const gets = fake.requests.every((r) => r.method === "GET");
+          console.log(fake.requests.length + " requests, only GET: " + gets);
+          if (!gets) process.exitCode = 1;
+          '
+
+  test:
+    desc: Vitest for the deploy action only
+    deps: [':install']
+    cmds: [pnpm exec vitest run .github/actions/deploy/test]
