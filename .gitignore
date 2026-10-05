@@ -21,3 +21,12 @@ examples/starlight/public/casts/*
 !examples/starlight/public/casts/fixture/
 # Vitest JSON reporter output (rtk wrapper).
 .vitest/
+
+# Owner-local credentials (Bunny account key, Cloudflare token); never CI
+.env
+.env.*
+!.env.example
+
+# Python bytecode from the docs-quality checks; zone files written by the cutover tasks.
+__pycache__/
+*.zone

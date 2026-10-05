@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ocx.sh legacy path claims",
+  "description": "Shape only. Paths that stay on a legacy origin until their repo deploys to its own storage zone (C-314).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entries"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "repo", "mode", "origin", "paths"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+          "repo": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+          "mode": { "enum": ["proxy", "redirect"] },
+          "origin": { "type": "string", "pattern": "^https://" },
+          "paths": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^/" } }
+        }
+      }
+    }
+  }
+}

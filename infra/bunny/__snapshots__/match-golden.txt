@@ -1,0 +1,45 @@
+prod ocx.sh               200 /                       -> (default origin)      | hsts frame
+prod ocx.sh               200 /integrations/          -> (default origin)      | hsts frame
+prod ocx.sh               200 /apps/                  -> (default origin)      | hsts frame
+prod ocx.sh               200 /install/               -> (default origin)      | hsts frame
+prod ocx.sh               200 /docs/                  -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /schemas/               -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /catalog/               -> legacy-index          | hsts frame
+prod ocx.sh               200 /integrations/bazel/    -> legacy-rules-ocx      | hsts frame
+prod ocx.sh               200 /integrations/python/   -> legacy-ocx-sdk-python | hsts frame
+prod ocx.sh               200 /apps/catalog/          -> legacy-catalog        | hsts frame
+prod ocx.sh               200 /x/                     -> (default origin)      | hsts frame
+prod ocx.sh               200 /integrations/x/        -> (default origin)      | hsts frame
+prod ocx.sh               200 /apps/x/                -> (default origin)      | hsts frame
+prod ocx.sh               200 /install/x/             -> (default origin)      | hsts frame
+prod ocx.sh               200 /docs/x/                -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /schemas/x/             -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /catalog/x/             -> legacy-index          | hsts frame
+prod ocx.sh               200 /integrations/bazel/x/  -> legacy-rules-ocx      | hsts frame
+prod ocx.sh               200 /integrations/python/x/ -> legacy-ocx-sdk-python | hsts frame
+prod ocx.sh               200 /apps/catalog/x/        -> legacy-catalog        | hsts frame
+prod ocx.sh               200 /assets/                -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /icons/                 -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /casts/                 -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /licensed/              -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /team/                  -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /logo.svg               -> legacy-ocx-files      | hsts frame
+prod ocx.sh               200 /favicon.ico            -> legacy-ocx-files      | hsts frame
+prod ocx.sh               200 /apple-touch-icon.png   -> legacy-ocx-files      | hsts frame
+prod ocx.sh               200 /site.webmanifest       -> legacy-ocx-files      | hsts frame
+prod ocx.sh               200 /vp-icons.css           -> legacy-ocx-files      | hsts frame
+prod ocx.sh               200 /hashmap.json           -> legacy-ocx-files      | hsts frame
+prod ocx.sh               200 /catalog.html           -> legacy-index          | hsts frame
+prod ocx.sh               200 /docs/v2/               -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /v2/                    -> (default origin)      | hsts frame
+prod ocx.sh               200 /unknown/               -> (default origin)      | hsts frame
+prod ocx.sh               200 /docs/getting-started   -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /assets/x.js            -> legacy-ocx-dirs       | hsts frame
+prod ocx.sh               200 /integrations/bazel/a/  -> legacy-rules-ocx      | hsts frame
+prod ocx.sh               200 /_astro/x.js            -> (default origin)      | assets-edge assets-browser hsts frame
+prod ocx.sh               404 /_astro/x.js            -> (default origin)      | hsts frame
+prod sh-ocx.b-cdn.net     200 /                       -> (default origin)      | noindex frame
+dev  sh-ocx-dev.b-cdn.net 200 /                       -> (default origin)      | noindex frame
+prod sh-ocx.b-cdn.net     200 /docs/getting-started   -> legacy-ocx-dirs       | noindex frame
+dev  sh-ocx-dev.b-cdn.net 200 /docs/getting-started   -> legacy-ocx-dirs       | noindex frame
+dev  sh-ocx-dev.b-cdn.net 200 /_astro/x.js            -> (default origin)      | assets-edge assets-browser noindex frame

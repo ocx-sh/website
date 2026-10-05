@@ -1,0 +1,60 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+# Bunny as code (ADR 0002). Included by the root Taskfile as `bunny:`; tasks run from the repo root.
+#
+# No top-level `dotenv`: Task 3.53.1 rejects it in an included Taskfile and breaks every `task` command.
+# The account key (`BUNNY_API_KEY`) is read from the gitignored `.env` only by the tasks that write to
+# Bunny, via a task-level `dotenv: ['.env']`. Plan, verify, test and the crawls never see it (C-318).
+# Every target is declared here so later work packages add scripts, never targets.
+version: '3'
+
+tasks:
+  dev:
+    desc: Plan the dev zone's edge rules (no credentials, no network)
+    cmds:
+      - task: plan
+        vars: { CLI_ARGS: --zone dev }
+
+  test:
+    desc: Vitest for infra/bunny
+    cmds: [pnpm exec vitest run infra/bunny]
+
+  plan:
+    desc: "Print a zone's planned edge rules as JSON: task bunny:plan -- --zone <dev|prod|preview:<slug>>"
+    cmds: ['node infra/bunny/rules.mjs {{.CLI_ARGS}}']
+
+  apply:
+    desc: "Upsert a zone's edge rules, prune stale ocx:* rules, read back (owner, .env): -- --zone <z> [--dry-run]"
+    dotenv: ['.env']
+    cmds: ['node infra/bunny/apply.mjs {{.CLI_ARGS}}']
+
+  zone:apply:
+    desc: 'Create or reconcile a pull zone (owner, .env): -- --zone <z>'
+    dotenv: ['.env']
+    cmds: ['node infra/bunny/zone.mjs {{.CLI_ARGS}}']
+
+  verify:
+    desc: 'Probe a zone host, b-cdn.net by default (no credentials): -- --zone <z> [--host <h>]'
+    cmds: ['node infra/bunny/verify.mjs {{.CLI_ARGS}}']
+
+  onboard:
+    desc: "Create a repo's storage zone and set its deploy secret (owner, .env): -- <repo> | --preview <site>"
+    dotenv: ['.env']
+    cmds: ['node infra/bunny/onboard.mjs {{.CLI_ARGS}}']
+
+  purge:
+    desc: "Purge a pull zone's cache (owner, .env): -- --zone <z>"
+    dotenv: ['.env']
+    cmds: ['node infra/bunny/purge.mjs {{.CLI_ARGS}}']
+
+  gc:
+    desc: 'Delete non-HTML files no recent deploy re-uploaded, by age (owner, .env): -- --zone <z> --older-than <n>d|<n>h [--dry-run]'
+    dotenv: ['.env']
+    cmds: ['node infra/bunny/gc.mjs {{.CLI_ARGS}}']
+
+  old-urls:
+    desc: Crawl the live site into infra/old-urls.txt (read-only, no credentials)
+    cmds: ['node infra/cutover/old-urls.mjs {{.CLI_ARGS}}']
+
+  cutover-verify:
+    desc: 'Cutover checks against a host (no credentials): -- --host <h> [--resolve <ip>] [--dns] [--registry]'
+    cmds: ['node infra/cutover/verify.mjs {{.CLI_ARGS}}']

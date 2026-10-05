@@ -11,6 +11,7 @@
     "pnpm-lock.yaml",
     "**/*.astro",
     "tests/fixtures/**",
+    "infra/bunny/__snapshots__/**",
     "packages/theme/test/fixtures/**",
     "packages/theme/src/**/*.css",
     "**/*.d.mts"

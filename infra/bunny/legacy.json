@@ -1,0 +1,54 @@
+{
+  "$schema": "./legacy.schema.json",
+  "entries": [
+    {
+      "id": "legacy-ocx-dirs",
+      "repo": "ocx-sh/ocx",
+      "mode": "proxy",
+      "origin": "https://ocx-website.pages.dev",
+      "paths": ["/docs/", "/schemas/", "/assets/", "/icons/", "/casts/", "/licensed/", "/team/"]
+    },
+    {
+      "id": "legacy-ocx-files",
+      "repo": "ocx-sh/ocx",
+      "mode": "proxy",
+      "origin": "https://ocx-website.pages.dev",
+      "paths": [
+        "/logo.svg",
+        "/favicon.ico",
+        "/apple-touch-icon.png",
+        "/site.webmanifest",
+        "/vp-icons.css",
+        "/hashmap.json"
+      ]
+    },
+    {
+      "id": "legacy-catalog",
+      "repo": "ocx-sh/catalog",
+      "mode": "redirect",
+      "origin": "https://ocx-sh.github.io/catalog/",
+      "paths": ["/apps/catalog/"]
+    },
+    {
+      "id": "legacy-rules-ocx",
+      "repo": "ocx-sh/rules_ocx",
+      "mode": "redirect",
+      "origin": "https://ocx-sh.github.io/rules_ocx/",
+      "paths": ["/integrations/bazel/"]
+    },
+    {
+      "id": "legacy-ocx-sdk-python",
+      "repo": "ocx-sh/ocx-sdk-python",
+      "mode": "redirect",
+      "origin": "https://ocx-sh.github.io/ocx-sdk-python/",
+      "paths": ["/integrations/python/"]
+    },
+    {
+      "id": "legacy-index",
+      "repo": "ocx-sh/index",
+      "mode": "redirect",
+      "origin": "https://index.ocx.sh/",
+      "paths": ["/catalog/", "/catalog.html"]
+    }
+  ]
+}

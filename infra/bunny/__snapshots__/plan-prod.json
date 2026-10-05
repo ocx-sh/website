@@ -1,0 +1,369 @@
+{
+  "zone": "prod",
+  "pullZone": "sh-ocx",
+  "hosts": [
+    "ocx.sh",
+    "next.ocx.sh",
+    "sh-ocx.b-cdn.net"
+  ],
+  "rules": [
+    {
+      "ActionType": 3,
+      "ActionParameter1": "31536000",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:assets-edge",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://*/_astro/*"
+          ]
+        },
+        {
+          "Type": 8,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "200"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 16,
+      "ActionParameter1": "31536000",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:assets-browser",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://*/_astro/*"
+          ]
+        },
+        {
+          "Type": 8,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "200"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Robots-Tag",
+      "ActionParameter2": "noindex, nofollow",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:noindex",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://next.ocx.sh/*",
+            "https://sh-ocx.b-cdn.net/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "Strict-Transport-Security",
+      "ActionParameter2": "max-age=31536000; includeSubDomains; preload",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:hsts",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/*",
+            "https://next.ocx.sh/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Frame-Options",
+      "ActionParameter2": "SAMEORIGIN",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:frame",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/*",
+            "https://next.ocx.sh/*",
+            "https://sh-ocx.b-cdn.net/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 2,
+      "ActionParameter1": "https://ocx-website.pages.dev",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-ocx-files",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/logo.svg",
+            "https://ocx.sh/favicon.ico",
+            "https://ocx.sh/apple-touch-icon.png",
+            "https://ocx.sh/site.webmanifest",
+            "https://ocx.sh/vp-icons.css"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/hashmap.json",
+            "https://next.ocx.sh/logo.svg",
+            "https://next.ocx.sh/favicon.ico",
+            "https://next.ocx.sh/apple-touch-icon.png",
+            "https://next.ocx.sh/site.webmanifest"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://next.ocx.sh/vp-icons.css",
+            "https://next.ocx.sh/hashmap.json",
+            "https://sh-ocx.b-cdn.net/logo.svg",
+            "https://sh-ocx.b-cdn.net/favicon.ico",
+            "https://sh-ocx.b-cdn.net/apple-touch-icon.png"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/site.webmanifest",
+            "https://sh-ocx.b-cdn.net/vp-icons.css",
+            "https://sh-ocx.b-cdn.net/hashmap.json"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 1,
+      "ActionParameter1": "https://ocx-sh.github.io/ocx-sdk-python/%{Path.2-}",
+      "ActionParameter2": "302",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-ocx-sdk-python",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/integrations/python",
+            "https://ocx.sh/integrations/python/*",
+            "https://next.ocx.sh/integrations/python",
+            "https://next.ocx.sh/integrations/python/*",
+            "https://sh-ocx.b-cdn.net/integrations/python"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/integrations/python/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 1,
+      "ActionParameter1": "https://ocx-sh.github.io/rules_ocx/%{Path.2-}",
+      "ActionParameter2": "302",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-rules-ocx",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/integrations/bazel",
+            "https://ocx.sh/integrations/bazel/*",
+            "https://next.ocx.sh/integrations/bazel",
+            "https://next.ocx.sh/integrations/bazel/*",
+            "https://sh-ocx.b-cdn.net/integrations/bazel"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/integrations/bazel/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 1,
+      "ActionParameter1": "https://ocx-sh.github.io/catalog/%{Path.2-}",
+      "ActionParameter2": "302",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-catalog",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/apps/catalog",
+            "https://ocx.sh/apps/catalog/*",
+            "https://next.ocx.sh/apps/catalog",
+            "https://next.ocx.sh/apps/catalog/*",
+            "https://sh-ocx.b-cdn.net/apps/catalog"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/apps/catalog/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 1,
+      "ActionParameter1": "https://index.ocx.sh/%{Path.1-}",
+      "ActionParameter2": "302",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-index",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/catalog",
+            "https://ocx.sh/catalog/*",
+            "https://ocx.sh/catalog.html",
+            "https://next.ocx.sh/catalog",
+            "https://next.ocx.sh/catalog/*"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://next.ocx.sh/catalog.html",
+            "https://sh-ocx.b-cdn.net/catalog",
+            "https://sh-ocx.b-cdn.net/catalog/*",
+            "https://sh-ocx.b-cdn.net/catalog.html"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 2,
+      "ActionParameter1": "https://ocx-website.pages.dev",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-ocx-dirs",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/docs/*",
+            "https://ocx.sh/schemas/*",
+            "https://ocx.sh/assets/*",
+            "https://ocx.sh/icons/*",
+            "https://ocx.sh/casts/*"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/licensed/*",
+            "https://ocx.sh/team",
+            "https://ocx.sh/team/*",
+            "https://next.ocx.sh/docs/*",
+            "https://next.ocx.sh/schemas/*"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://next.ocx.sh/assets/*",
+            "https://next.ocx.sh/icons/*",
+            "https://next.ocx.sh/casts/*",
+            "https://next.ocx.sh/licensed/*",
+            "https://next.ocx.sh/team"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://next.ocx.sh/team/*",
+            "https://sh-ocx.b-cdn.net/docs/*",
+            "https://sh-ocx.b-cdn.net/schemas/*",
+            "https://sh-ocx.b-cdn.net/assets/*",
+            "https://sh-ocx.b-cdn.net/icons/*"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/casts/*",
+            "https://sh-ocx.b-cdn.net/licensed/*",
+            "https://sh-ocx.b-cdn.net/team",
+            "https://sh-ocx.b-cdn.net/team/*"
+          ]
+        }
+      ]
+    }
+  ]
+}

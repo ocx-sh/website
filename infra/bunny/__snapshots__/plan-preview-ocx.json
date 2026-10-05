@@ -1,0 +1,45 @@
+{
+  "zone": "preview:ocx",
+  "pullZone": "sh-ocx-preview-ocx",
+  "hosts": [
+    "sh-ocx-preview-ocx.b-cdn.net"
+  ],
+  "rules": [
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Robots-Tag",
+      "ActionParameter2": "noindex, nofollow",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:noindex",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-preview-ocx.b-cdn.net/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Frame-Options",
+      "ActionParameter2": "SAMEORIGIN",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:frame",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-preview-ocx.b-cdn.net/*"
+          ]
+        }
+      ]
+    }
+  ]
+}
