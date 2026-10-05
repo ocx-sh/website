@@ -207,12 +207,12 @@ export function claimsOf(nav, repo) {
 }
 
 /**
- * The Bunny storage zone of `repo` (R7): `ocx-sh/rules_ocx` → `sh-ocx-web-rules-ocx`.
+ * The Bunny storage zone of `repo` (R7): `ocx-sh/rules_ocx` → `sh-ocx-rules-ocx`.
  * @param {string} repo
  * @returns {string}
  */
 export function zoneName(repo) {
-  return `sh-ocx-web-${repo
+  return `sh-ocx-${repo
     .replace(/^ocx-sh\//, '')
     .toLowerCase()
     .replace(/[._]/g, '-')}`;

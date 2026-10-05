@@ -37,7 +37,7 @@ A claim is `{ "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "searc
 | `validate(nav)` | Problems (`{ at, message }[]`), empty when valid |
 | `claimFor(nav, path)` | The longest claim owning `path` |
 | `claimsOf(nav, repo)` | Every claim `repo` deploys |
-| `zoneName(repo)` | The Bunny storage zone: `ocx-sh/rules_ocx` → `sh-ocx-web-rules-ocx` |
+| `zoneName(repo)` | The Bunny storage zone: `ocx-sh/rules_ocx` → `sh-ocx-rules-ocx` |
 | `mergeTargets(nav, ownPath)` | The search bundles a section merges |
 | `activeSection(nav, pathname)` | The header section id for a URL |
 | `PAGEFIND_VERSION` | The Pagefind version the theme was built against |
