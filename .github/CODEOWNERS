@@ -1,0 +1,6 @@
+# Slug claims and the legacy-URL table change the public URL space: the owner reviews both.
+/packages/theme/src/nav.json @michael-herwig
+/infra/bunny/legacy.json @michael-herwig
+# Workflows and the deploy action hold the credentials path; Bunny as code decides what the edge serves.
+/.github/ @michael-herwig
+/infra/bunny/ @michael-herwig

@@ -1,0 +1,10 @@
+title = "ocx-sh/website"
+
+[extend]
+useDefault = true
+
+# Fixtures only: fake keys the tests plant to prove a key is never echoed, and a CSS token name
+# the generic-api-key rule reads as a secret. A real key never starts with one of these.
+[allowlist]
+description = "test fixtures and a token name"
+stopwords = ["k-secret-", "wrong-key-", "fake-key-", "fake-account-key-", "ocx-prose-"]

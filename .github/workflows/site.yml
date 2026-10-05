@@ -1,0 +1,85 @@
+name: Site
+
+# Builds the root site (`site/`: /, /integrations/, /apps/, /install/) and deploys it to ocx.sh. The deploy job is
+# skipped, never failed, until the repository variable BUNNY_DEPLOY is `true` and the run is on main; the
+# `ocx.sh` environment admits only main and holds the one zone key, BUNNY_STORAGE_KEY. The
+# account-wide Bunny API key never goes into CI, so no cache purge runs here.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'packages/theme/**'
+      - 'infra/bunny/legacy.json' # the build drops search bundles of sections still on a legacy origin
+      - 'pnpm-lock.yaml'
+  schedule:
+    - cron: '41 4 * * *' # daily; an off-peak minute avoids the top-of-hour queue
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup OCX
+        uses: ocx-sh/setup-ocx@25fa771f8572572dc64528db89560de68a163a0e # v1.4.0
+        with:
+          version: '0.6.3'
+          cache: false
+
+      - name: Install dependencies
+        run: ocx exec -- task install
+
+      - name: Build site
+        run: ocx exec -- pnpm --dir site run build
+
+      - name: Upload site
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: site
+          path: site/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy to ocx.sh
+    needs: build
+    if: ${{ github.ref == 'refs/heads/main' && vars.BUNNY_DEPLOY == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: ocx.sh
+      url: ${{ steps.deploy.outputs.url }}
+    # A cancelled deploy stops between phases: never cancel one.
+    concurrency:
+      group: deploy-root
+      cancel-in-progress: false
+    permissions: {}
+    steps:
+      # The local action reads the claim registry and the site checker from this checkout.
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download site
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: site
+          path: dist
+
+      - name: Deploy
+        id: deploy
+        uses: ./.github/actions/deploy
+        with:
+          dist: dist
+          storage-key: ${{ secrets.BUNNY_STORAGE_KEY }}

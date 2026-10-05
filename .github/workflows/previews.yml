@@ -2,13 +2,15 @@ name: Previews
 
 # Builds the consumer preview sites (`task previews`: ocx docs, rules_ocx, the Python SDK, the catalog docs,
 # each a full site wearing @ocx-sh/theme) and uploads them as one artifact. Manual only: it clones the consumer
-# repos, so a run reflects their current default branches. The sites are planned at
-# https://<site>.preview.ocx.sh; hosting does not exist yet, so the deploy step below is off.
+# repos, so a run reflects their current default branches. The build job holds no secrets: it runs consumer
+# markdown through Astro. The deploy job is skipped until the repository variable PREVIEWS_DEPLOY is `true` and
+# the run is on main; it holds the `previews` environment, one Bunny Storage zone key per preview zone
+# (BUNNY_PREVIEW_KEY_<SLUG>, a per-zone password). The account-wide Bunny API key never goes into CI.
 on:
   workflow_dispatch:
     inputs:
       site:
-        description: 'One site (ocx, rules_ocx, python-sdk, catalog); empty builds all'
+        description: 'One site (ocx, rules_ocx, python-sdk, catalog); empty builds and deploys all'
         required: false
         default: ''
 
@@ -16,7 +18,8 @@ permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A cancelled deploy stops between phases: a newer dispatch queues behind a running one.
+  cancel-in-progress: false
 
 jobs:
   previews:
@@ -57,16 +60,70 @@ jobs:
           name: previews
           path: .tmp/previews/*/dist/
           if-no-files-found: error
+          include-hidden-files: true # the dist sits under the hidden .tmp/
           retention-days: 14
 
-      # Deploy to Bunny: off until hosting exists. Turn it on with the repository variable
-      # PREVIEWS_DEPLOY=true once .github/actions/deploy is in the repo, then replace this step with a call to it
-      # per site (the dist of <site> goes to the storage zone of <site>.preview.ocx.sh).
-      # Secrets it will need, all on the `previews` GitHub environment and none in any file:
-      #   one Bunny Storage zone access key per preview zone (a per-zone password, not account-wide);
-      #   the account-wide BUNNY_API_KEY never goes into CI, so a cache purge is not done from here.
-      - name: Deploy to Bunny (not wired)
-        if: ${{ vars.PREVIEWS_DEPLOY == 'true' && github.ref == 'refs/heads/main' }}
-        run: |
-          echo "::error::PREVIEWS_DEPLOY is set but the Bunny deploy step is not wired yet"
-          exit 1
+  deploy:
+    name: Deploy previews
+    needs: previews
+    if: ${{ vars.PREVIEWS_DEPLOY == 'true' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: previews
+    permissions: {}
+    steps:
+      # The local action reads the claim registry and the site checker from this checkout.
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      # The artifact root is .tmp/previews/, so a site's dist is previews/<site>/dist.
+      - name: Download previews
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: previews
+          path: previews
+
+      # The input may be a name or a slug: normalise it once, and fail on a site that matches none, so a
+      # dispatch never builds and then skips every deploy while ending green.
+      - name: Resolve site
+        id: site
+        env:
+          SITE: ${{ inputs.site }}
+        run: echo "name=$(node scripts/previews/resolve-site.mjs "$SITE")" >> "$GITHUB_OUTPUT"
+
+      # One step per site, each with only its own key. A single-site dispatch builds one site, so the
+      # others skip. Each step names its secret literally, so it can never read another site's key.
+
+      - name: Deploy ocx
+        if: ${{ steps.site.outputs.name == '' || steps.site.outputs.name == 'ocx' }}
+        uses: ./.github/actions/deploy
+        with:
+          dist: previews/ocx/dist
+          preview: ocx
+          storage-key: ${{ secrets.BUNNY_PREVIEW_KEY_OCX }}
+
+      - name: Deploy rules_ocx
+        if: ${{ steps.site.outputs.name == '' || steps.site.outputs.name == 'rules_ocx' }}
+        uses: ./.github/actions/deploy
+        with:
+          dist: previews/rules_ocx/dist
+          preview: rules_ocx
+          storage-key: ${{ secrets.BUNNY_PREVIEW_KEY_RULES_OCX }}
+
+      - name: Deploy python-sdk
+        if: ${{ steps.site.outputs.name == '' || steps.site.outputs.name == 'python-sdk' }}
+        uses: ./.github/actions/deploy
+        with:
+          dist: previews/python-sdk/dist
+          preview: python-sdk
+          storage-key: ${{ secrets.BUNNY_PREVIEW_KEY_PYTHON_SDK }}
+
+      - name: Deploy catalog
+        if: ${{ steps.site.outputs.name == '' || steps.site.outputs.name == 'catalog' }}
+        uses: ./.github/actions/deploy
+        with:
+          dist: previews/catalog/dist
+          preview: catalog
+          storage-key: ${{ secrets.BUNNY_PREVIEW_KEY_CATALOG }}
