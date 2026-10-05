@@ -17,9 +17,9 @@ const STORED = {
   Custom404FilePath: '/bunnycdn_errors/404.html',
 };
 
-// ponytail: hand-written to the documented storage-zone shape (`Id`, `Name`, `Password`, `Custom404FilePath`) and
-// the documented `gh api` environment body (`deployment_branch_policy`: an object, or null without a policy), not
-// recorded responses; re-check every field name against the owner's recorded ones (infra/bunny/README.md).
+// The storage-zone fields (`Id`, `Name`, `Password`, `Custom404FilePath`) are on the M0 recording
+// (fixtures/p1-storagezone.json). ponytail: the `gh api` environment body (`deployment_branch_policy`: an object, or
+// null without a policy) is the documented shape, not recorded.
 const GH = `#!${process.execPath}
 const fs = require('fs');
 const crypto = require('crypto');

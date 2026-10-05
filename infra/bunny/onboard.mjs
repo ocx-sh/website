@@ -11,9 +11,9 @@ import { REGION, ROOT_REPO, storageZoneName } from './zones.mjs';
 
 const SECRET = 'BUNNY_STORAGE_KEY';
 const GH_TIMEOUT_MS = 30_000;
-// ponytail: `Custom404FilePath` and the leading slash are the documented storage-zone field; the deploy action
-// uploads `404.html` to `bunnycdn_errors/404.html`. Re-check both against a recorded storage-zone
-// response (infra/bunny/README.md, "Record a response"): a wrong path leaves the zone without its 404 page.
+// The field exists and reads null on a new zone (fixtures/p1-storagezone.json), and a null path still served
+// `bunnycdn_errors/404.html` with 404 (M0 P1 (3)). ponytail: the leading slash of the value is unrecorded; the
+// read-back below catches a value the API rejects, not one it keeps and ignores.
 const NOT_FOUND_PATH = '/bunnycdn_errors/404.html';
 
 /**

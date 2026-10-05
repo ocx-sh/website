@@ -19,8 +19,8 @@ const without = (id: string): Plan => ({ legacy: { entries: committed.entries.fi
 // With legacy-rules-ocx gone, /integrations/bazel/ is an OriginStorage claim: the one way today to get a storage probe.
 const STORAGE_PLAN = without('legacy-rules-ocx');
 
-// ponytail: the replies are hand-written to the documented shapes, not recorded from a b-cdn.net host;
-// re-check against the owner's recorded responses (infra/bunny/README.md, "Record a response").
+// ponytail: the replies are hand-written, not recorded from a b-cdn.net host. M0 recorded the redirect status,
+// `Location` and the storage 200/404 bodies (plan, M0 Result); the header set (`x-robots-tag`, canonical) is not.
 /** What a correct zone answers for a probe. */
 function good(p: Probe, noindex = true): Reply {
   const headers = noindex ? { 'x-robots-tag': 'noindex, nofollow' } : {};
@@ -89,7 +89,7 @@ describe('probesFor', () => {
       kind: 'redirect',
       path: '/integrations/bazel/a/b/',
       status: 302,
-      location: 'https://ocx-sh.github.io/rules_ocx/a/b/',
+      location: 'https://ocx-sh.github.io/rules_ocx/a/b',
     });
     expect(probes).toContainEqual({
       kind: 'redirect',
@@ -101,7 +101,7 @@ describe('probesFor', () => {
       kind: 'redirect',
       path: '/catalog/a/b/',
       status: 302,
-      location: 'https://index.ocx.sh/a/b/',
+      location: 'https://index.ocx.sh/a/b',
     });
     expect(probes.some((p) => p.kind === 'storage')).toBe(false);
   });
@@ -184,7 +184,7 @@ describe('each break fails exactly its probe, exit 1', () => {
     [
       'a redirect with the wrong Location',
       { '/catalog/a/b/': { headers: { ...noindex, location: 'https://index.ocx.sh/' } } },
-      'FAIL redirect /catalog/a/b/: Location is "https://index.ocx.sh/", expected "https://index.ocx.sh/a/b/"',
+      'FAIL redirect /catalog/a/b/: Location is "https://index.ocx.sh/", expected "https://index.ocx.sh/a/b"',
     ],
     [
       'a response without noindex',

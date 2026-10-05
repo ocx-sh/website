@@ -14,7 +14,13 @@ type Live = BunnyRule & { Guid: string; OrderIndex: number };
 
 /** A zone's planned rules as a previous apply left them. */
 const planned = (zone: string, legacy: Legacy = committed): Live[] =>
-  planRules(zone, { legacy }).map((r, i) => ({ ...r, OrderIndex: i, Guid: `g-${i}` }));
+  planRules(zone, { legacy }).map((r, i) => ({
+    ...r,
+    ActionParameter1: r.ActionType === 17 ? String(storageId(r.ActionParameter2)) : r.ActionParameter1,
+    OrderIndex: i,
+    Guid: `g-${i}`,
+  }));
+const storageId = (name: string) => STORAGE_ZONES.find((z) => z.Name === name)!.Id;
 
 /** A rule made by hand in the dashboard: no `ocx:` prefix. */
 const hand = (i: number): Live => ({
@@ -68,12 +74,18 @@ interface Setup {
   argv?: string[];
 }
 
+/** Every storage zone a plan can name, as Bunny holds them: the Id `apply` writes into the rule. */
+const STORAGE_ZONES = planRules('prod', { legacy: { entries: [] } })
+  .filter((r) => r.ActionType === 17)
+  .map((r, i) => ({ Id: 5000 + i, Name: r.ActionParameter2, Password: '' }));
+
 async function run(setup: Setup = {}) {
   const name = setup.name ?? 'sh-ocx-dev';
   const rules = setup.rules ?? [];
   api = await fakeApi({
     key: KEY,
     pullZones: [{ Id: 1, Name: name, Hostnames: [], EdgeRules: rules }],
+    storageZones: STORAGE_ZONES,
     ...(setup.afterRequest ? { afterRequest: setup.afterRequest } : {}),
   });
   return { ...(await go(api, setup)), api };
@@ -140,6 +152,10 @@ describe('upsert before delete, never unrouted', () => {
     expect(violations).toEqual([]);
     expect(names(live(api))).toContain('ocx:repo-rules-ocx');
     expect(names(live(api))).not.toContain('ocx:legacy-rules-ocx');
+    expect(live(api).find((r) => r.Description === 'ocx:repo-rules-ocx')).toMatchObject({
+      ActionParameter1: String(storageId('sh-ocx-rules-ocx')),
+      ActionParameter2: 'sh-ocx-rules-ocx',
+    });
     const kinds = writes(api).map((r) => r.method);
     expect(kinds.lastIndexOf('POST')).toBeLessThan(kinds.indexOf('DELETE'));
   });
@@ -264,6 +280,20 @@ describe('only ocx:* rules are ever deleted', () => {
       .filter((r) => r.method === 'DELETE')
       .map((r) => r.path);
     expect(deleted).toEqual(['/pullzone/1/edgerules/old-1']);
+  });
+});
+
+describe('an OriginStorage rule names a storage zone that exists', () => {
+  it('refuses with no write when the zone is missing', async () => {
+    api = await fakeApi({
+      key: KEY,
+      pullZones: [{ Id: 1, Name: 'sh-ocx-dev', Hostnames: [], EdgeRules: [] }],
+      storageZones: [],
+    });
+    const { code, err } = await go(api, { legacy: without('legacy-rules-ocx') });
+    expect(code).toBe(1);
+    expect(err).toContain('ocx:repo-rules-ocx: no storage zone named sh-ocx-rules-ocx');
+    expect(writes(api)).toEqual([]);
   });
 });
 

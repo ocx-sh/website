@@ -10,9 +10,8 @@ import { storageZoneName, zoneSpec } from './zones.mjs';
 
 const HOUR_MS = 3_600_000;
 const UNIT_MS = { h: HOUR_MS, d: 24 * HOUR_MS };
-// ponytail: the DE storage endpoint (REGION.primary); the list response carries `LastChanged` as UTC without a
-// zone suffix. Both are the documented shapes: re-check them against a recorded storage listing
-// (infra/bunny/README.md, "Record a response"); a wrong zone suffix shifts every file's age by the UTC offset.
+// The DE storage endpoint (REGION.primary) took the M0 uploads. ponytail: the list response carries `LastChanged` as
+// UTC without a zone suffix (documented, no listing recorded); a wrong suffix shifts every file's age by the UTC offset.
 const STORAGE_HOST = 'storage.bunnycdn.com';
 const ERROR_DIR = 'bunnycdn_errors/';
 

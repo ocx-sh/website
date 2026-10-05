@@ -3,17 +3,15 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { EXIT, RefusalError, createClient, findByName } from './api.mjs';
-import { TRIGGER, planRules } from './rules.mjs';
+import { ACTION, TRIGGER, planRules } from './rules.mjs';
 import { zoneSpec } from './zones.mjs';
 
 /** Bunny allows 50 edge rules per pull zone. */
 export const RULE_LIMIT = 50;
 const OWN_PREFIX = 'ocx:';
-// ponytail: the compared field names and the two normalisations in `covers` and `diff` (a null `ActionParameter2`
-// reads as '', an absent `OrderIndex` as the rule's position) are the documented API shape, not a recorded one.
-// Re-check against the owner's recorded edge-rule responses (infra/bunny/README.md, "Record a response") before
-// the first apply, or a real zone reads back as "differs" forever. Ceiling: the four passes order by pattern
-// only, so two rules that swap patterns with each other cannot be applied without a gap.
+// The compared fields match the recorded edge rules (fixtures/p*-pullzone.json): the live rule carries more, an
+// empty `ActionParameter2` can read back null, and the API keeps an `OrderIndex` as sent. ponytail: ceiling: the
+// four passes order by pattern only, so two rules that swap patterns with each other cannot be applied without a gap.
 /** The planned rule fields compared against the live zone; the live rule may carry more. */
 const FIELDS = [
   'ActionType',
@@ -155,6 +153,26 @@ async function findZone(client, name) {
 }
 
 /**
+ * Fills the storage zone Id into every `OriginStorage` rule: the API wants the Id in `ActionParameter1` next to the
+ * name in `ActionParameter2` and refuses a rule where they disagree (recorded in M0, fixtures/p1-pullzone.json).
+ * @param {import('./api.mjs').BunnyClient} client
+ * @param {PlannedRule[]} rules
+ * @returns {Promise<PlannedRule[]>}
+ * @throws {RefusalError} when a named storage zone does not exist
+ */
+async function withStorageIds(client, rules) {
+  if (!rules.some((r) => r.ActionType === ACTION.OriginStorage)) return rules;
+  const zones = await client.get('/storagezone');
+  return rules.map((r) => {
+    if (r.ActionType !== ACTION.OriginStorage) return r;
+    const zone = findByName(zones, r.ActionParameter2);
+    if (typeof zone?.Id !== 'number')
+      throw new RefusalError(`${r.Description}: no storage zone named ${r.ActionParameter2}: run bunny:onboard first`);
+    return { ...r, ActionParameter1: String(zone.Id) };
+  });
+}
+
+/**
  * Applies a zone's plan. Exit 0 on success, 1 on a refusal (CI, empty key, unknown zone, over the rule
  * limit, API failure, read-back difference), 2 on bad arguments. Nothing is written before the limit check.
  * @param {MainOptions} options
@@ -179,8 +197,11 @@ export async function main({ argv, env, out, err, fetch, baseUrl, legacy }) {
 
   try {
     const { pull } = zoneSpec(zone);
-    const plan = planRules(zone, legacy ? { legacy } : {}).map((r, OrderIndex) => ({ ...r, OrderIndex }));
     const client = createClient(env, { ...(fetch ? { fetch } : {}), ...(baseUrl ? { baseUrl } : {}) });
+    const plan = await withStorageIds(
+      client,
+      planRules(zone, legacy ? { legacy } : {}).map((r, OrderIndex) => ({ ...r, OrderIndex })),
+    );
     const live = await findZone(client, pull);
     if (!live) throw new RefusalError(`no pull zone named ${pull}`);
 

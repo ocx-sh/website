@@ -1,9 +1,8 @@
 // A `node:http` fake of the Bunny management API: holds pull zones (edge rules, hostnames) and
 // storage zones, records every request, and replays scripted faults.
-// ponytail: a hand-written subset of the documented API (only the routes the plan needs, no paging, an edge rule
-// kept as sent), not a recorded one. Re-check its request and response shapes against the owner's recorded
-// Bunny responses (infra/bunny/README.md, "Record a response") and feed the recorded bodies in as zone state;
-// until then a green test proves the code against this fake, not against Bunny.
+// A subset of the API (only the routes the plan needs, no paging), checked against the M0 recordings
+// (fixtures/): an edge rule comes back with the fields Bunny defaults, and an `OriginStorage` rule is refused
+// unless its Id and name name one storage zone. ponytail: everything else Bunny validates is not modelled.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -144,10 +143,26 @@ export async function fakeApi(opts: FakeApiOptions): Promise<FakeApi> {
       if (sub === 'edgerules/addOrUpdate' && method === 'POST') {
         const guid = typeof body.Guid === 'string' && body.Guid !== '' ? body.Guid : undefined;
         const at = guid === undefined ? -1 : zone.EdgeRules.findIndex((r) => r.Guid === guid);
-        const rule: EdgeRule = { ...body, Guid: guid ?? `rule-${nextGuid++}` };
+        if (body.ActionType === 17) {
+          const named = state.storageZones.find((z) => z.Name === body.ActionParameter2);
+          if (!named || String(named.Id) !== body.ActionParameter1)
+            return send(res, 400, {
+              ErrorKey: 'edgerule.invalid',
+              Field: 'EdgeRule',
+              Message: 'Storage zone not valid.',
+            });
+        }
+        const rule: EdgeRule = {
+          ActionParameter3: null,
+          ExtraActions: [],
+          OrderIndex: 0,
+          ReadOnly: false,
+          ...body,
+          Guid: guid ?? `rule-${nextGuid++}`,
+        };
         if (at >= 0) zone.EdgeRules[at] = rule;
         else zone.EdgeRules.push(rule);
-        return send(res, 204);
+        return send(res, 201, rule);
       }
       const rule = /^edgerules\/(.+)$/.exec(sub ?? '');
       if (rule && method === 'DELETE') {

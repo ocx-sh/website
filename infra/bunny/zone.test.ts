@@ -2,14 +2,14 @@
 // mismatched field), Force SSL, and the key refusals.
 import { afterEach, describe, expect, it } from 'vitest';
 import { fakeApi, type FakeApi, type PullZone, type Recorded } from './fake-api.ts';
+import recorded from './fixtures/p1-pullzone.json' with { type: 'json' };
 import { main, zoneSettings } from './zone.mjs';
 
 const KEY = 'fake-key-0123456789';
 const ENV = { BUNNY_API_KEY: KEY };
 const STORAGE = { Id: 7, Name: 'sh-ocx-website', Password: 'storage-password-xyz' };
 
-// ponytail: hand-written to the documented pull-zone shape, not a recorded response; re-check against the owner's recorded responses (infra/bunny/README.md, "Record a response")
-// field by field (the secret-named fields below stand in for the real ones).
+// A hand-built zone; `recorded` below pins that every field it sets exists on a real one (the secret-named fields stand in).
 /** A pull zone that already holds everything `zone:apply` asks for. */
 const zoneOf = (name: string, zone: string, extra: Partial<PullZone> = {}): PullZone => ({
   Id: 1,
@@ -280,5 +280,17 @@ describe('arguments and key refusals', () => {
     });
     for (const text of [ok.out, ok.err])
       for (const secret of [KEY, 'zone-secret-abc', STORAGE.Password]) expect(text).not.toContain(secret);
+  });
+});
+
+describe('against the recorded pull zone (M0, sh-ocx-dev)', () => {
+  it('carries every field zone:apply writes, and the storage origin it reads back', () => {
+    for (const zone of ['dev', 'prod', 'preview:ocx'])
+      expect(Object.keys(recorded)).toEqual(expect.arrayContaining(Object.keys(zoneSettings(zone))));
+    expect(recorded).toMatchObject({
+      OriginType: 2,
+      AddHostHeader: false,
+      StorageZoneId: expect.any(Number) as number,
+    });
   });
 });

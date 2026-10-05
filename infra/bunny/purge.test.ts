@@ -6,8 +6,7 @@ import { main } from './purge.mjs';
 
 const KEY = 'fake-account-key-0123456789';
 
-// ponytail: hand-written to the documented pull-zone list shape (`Id`, `Name`, `Hostnames[].Value`), not a
-// recorded response; re-check against the owner's recorded responses (infra/bunny/README.md, "Record a response").
+// The pull-zone shape (`Id`, `Name`, `Hostnames[].Value`) is on the M0 recording (fixtures/p1-pullzone.json).
 const zone = (Id: number, Name: string, hosts: string[]) => ({
   Id,
   Name,

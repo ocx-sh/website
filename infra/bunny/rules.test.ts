@@ -6,7 +6,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import committed from './legacy.json' with { type: 'json' };
 import { matchProbe } from './match.mjs';
-import { planRules } from './rules.mjs';
+import { ACTION, MATCH, TRIGGER, planRules } from './rules.mjs';
+import p1 from './fixtures/p1-pullzone.json' with { type: 'json' };
+import p7 from './fixtures/p7-pullzone.json' with { type: 'json' };
+import p8 from './fixtures/p8-pullzone.json' with { type: 'json' };
+import pStatus from './fixtures/p-statuscode-pullzone.json' with { type: 'json' };
 import { storageZoneName } from './zones.mjs';
 
 type Entry = (typeof committed.entries)[number];
@@ -302,7 +306,7 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
     const added = after.filter((a) => !before.some((r) => sameRule(a, r)));
     expect(removed.map((r) => r.Description)).toEqual([`ocx:${id}`]);
     expect(added.map((r) => r.Description)).toEqual([`ocx:repo-${name}`]);
-    expect(added[0]).toMatchObject({ ActionType: 17, ActionParameter1: storageZoneName(repo) });
+    expect(added[0]).toMatchObject({ ActionType: 17, ActionParameter1: '', ActionParameter2: storageZoneName(repo) });
     expect(after.length).toBe(before.length);
   });
 
@@ -350,5 +354,44 @@ describe('storageZoneName', () => {
     ['ocx-sh/ocx-sdk.python', 'sh-ocx-ocx-sdk-python'],
   ])('%s is %s', (repo, zone) => {
     expect(storageZoneName(repo)).toBe(zone);
+  });
+});
+
+// Recorded in M0 (2026-10-05): rules written through the API to `sh-ocx-dev` and read back.
+describe('against the recorded edge rules', () => {
+  // Each fixture holds the probe rules live when it was recorded: pick this probe's own.
+  const probeRule = (zone: { EdgeRules: { Description: string }[] }, probe: string) =>
+    zone.EdgeRules.find((r) => r.Description.startsWith(`m0 probe: ${probe}`))!;
+  const storage = probeRule(p1, 'p1') as (typeof p1.EdgeRules)[number];
+  const proxy = probeRule(p7, 'p7') as (typeof p7.EdgeRules)[number];
+  const redirect = probeRule(p8, 'p8') as (typeof p8.EdgeRules)[number];
+  const status = probeRule(pStatus, 'status') as (typeof pStatus.EdgeRules)[number];
+
+  it('uses the recorded action, trigger and match enums', () => {
+    expect(ACTION.OriginStorage).toBe(storage.ActionType);
+    expect(ACTION.OriginUrl).toBe(proxy.ActionType);
+    expect(ACTION.Redirect).toBe(redirect.ActionType);
+    expect(ACTION.SetResponseHeader).toBe(status.ActionType);
+    expect(TRIGGER.Url).toBe(storage.Triggers[0]!.Type);
+    expect(TRIGGER.StatusCode).toBe(status.Triggers[1]!.Type);
+    expect(MATCH.All).toBe(status.TriggerMatchingType);
+  });
+
+  it("plans an OriginStorage rule the way the recorded one reads: Id in parameter 1 is apply's, the name in parameter 2", () => {
+    const after = planRules('dev', {
+      legacy: { entries: committed.entries.filter((e) => e.id !== 'legacy-rules-ocx') },
+    });
+    const planned = after.find((r) => r.ActionType === ACTION.OriginStorage)!;
+    expect(Object.keys(planned).filter((k) => !(k in storage))).toEqual([]);
+    expect(planned.ActionParameter2).toBe(storageZoneName('ocx-sh/rules_ocx'));
+    expect(storage.ActionParameter2).toBe('sh-ocx-m0-scratch');
+    expect(storage.ActionParameter1).toMatch(/^\d+$/);
+  });
+
+  it('plans the redirect status in parameter 2, where the recorded rule keeps it', () => {
+    expect(redirect.ActionParameter2).toMatch(/^30[12]$/);
+    const planned = planRules('prod').find((r) => r.ActionType === ACTION.Redirect)!;
+    expect(planned.ActionParameter2).toBe('302');
+    expect(Object.keys(planned).filter((k) => !(k in redirect))).toEqual([]);
   });
 });

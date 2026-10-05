@@ -31,9 +31,8 @@ function prefixOf(path) {
  * Purges one zone. Exit 0 on success, 1 on a refusal (CI, empty key, unknown pull zone, API failure), 2 on bad
  * arguments. Without a path the whole zone is purged. A path is purged as a prefix on every hostname the zone
  * serves, because the cache is keyed per host.
- * ponytail: `POST /purge?url=<url>*` and `POST /pullzone/<id>/purgeCache` follow the documented purge API and
- * the "cache keyed per host" reading is unverified; re-check both against a recorded purge run
- * (infra/bunny/README.md, "M0: Bunny probes"): a purge on the wrong key leaves stale pages cached.
+ * `POST /pullzone/<id>/purgeCache` ran live in M0 (empty answer, cache cold after). ponytail: `POST /purge?url=<url>*`
+ * and the "cache keyed per host" reading are unrecorded: a purge on the wrong key leaves stale pages cached.
  * @param {MainOptions} options
  * @returns {Promise<number>}
  */

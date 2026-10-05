@@ -145,7 +145,7 @@ Pass criteria:
 - (2) `/m0/` and `/m0` answer 200 with the body of `m0/index.html`.
 - (3) `/m0/missing` answers 404 with the body of `bunnycdn_errors/404.html`.
 
-Record `p1-pullzone.json` from `/pullzone/<id>`. Its rule's `ActionParameter1` is the field that matters. Record `p1-storagezone.json` from `/storagezone/<id>` of the scratch zone. Write the three outcomes in the M0 Result row.
+Record `p1-pullzone.json` from `/pullzone/<id>`. Its rule's `ActionParameter1` (the storage zone Id) and `ActionParameter2` (its name) are the fields that matter; the API refuses a pair that disagrees. Record `p1-storagezone.json` from `/storagezone/<id>` of the scratch zone. Write the three outcomes in the M0 Result row.
 
 Side answer: upload a changed `m0/x.txt` and request it again at once. An old body with `CDN-Cache: HIT` means a storage write does not purge the cache. A new body means it does. Record which.
 

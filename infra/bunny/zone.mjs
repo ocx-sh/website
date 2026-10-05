@@ -6,8 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { EXIT, RefusalError, createClient, findByName } from './api.mjs';
 import { PUBLIC_HOST, zoneSpec } from './zones.mjs';
 
-// ponytail: documented value (`OriginType` 2 = storage zone); re-check it against a recorded pull-zone response
-// (infra/bunny/README.md, "Record a response").
+// `OriginType` 2 = storage zone, as recorded on `sh-ocx-dev` (fixtures/p1-pullzone.json, `OriginLinkValue` names the zone).
 const ORIGIN_TYPE_STORAGE = 2;
 
 /**
@@ -15,10 +14,9 @@ const ORIGIN_TYPE_STORAGE = 2;
  * `Host: ocx-website.pages.dev`; request coalescing is off so a merged in-flight response never hands one
  * user another's. Prod has no per-IP rate limit: every visitor reaches Bunny as the same nginx host.
  * The bandwidth cap is the owner's, never set here.
- * ponytail: field names follow the documented pull-zone API (`CacheControlMaxAgeOverride` edge seconds,
- * `CacheControlPublicMaxAgeOverride` browser seconds, `RequestLimit` 0 = unlimited). Unverified: whether
- * browser `0` means `no-cache` or "respect origin"; re-check both against a recorded pull-zone response
- * (infra/bunny/README.md, "Record a response").
+ * Every field name is on the recorded pull zone (`CacheControlMaxAgeOverride` edge seconds,
+ * `CacheControlPublicMaxAgeOverride` browser seconds, a fresh zone reads -1, `RequestLimit` 0 = unlimited).
+ * ponytail: whether browser `0` means `no-cache` or "respect origin" is unrecorded.
  * @param {string} zone `dev`, `prod` or `preview:<slug>`
  * @returns {Record<string, string | number | boolean>}
  */

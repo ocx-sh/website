@@ -7,8 +7,8 @@ import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import legacyData from './legacy.json' with { type: 'json' };
 import { PUBLIC_HOST, REHEARSAL_HOST, ROOT_REPO, redirectTemplate, storageZoneName, zoneSpec } from './zones.mjs';
 
-// ponytail: documented Bunny enum values, never read back from a live zone. Before the first apply, re-check each
-// against a rule the owner makes in the dashboard and records (infra/bunny/README.md, "Record a response").
+// Enum values read back from live rules (fixtures/p*-pullzone.json, M0 2026-10-05); 17 and the trigger types are
+// verified by request behaviour, the rest by the owner's hand-made `sh-ocx-setup` rules.
 /** Bunny `ActionType` values; `match.mjs` reads the routing ones from here. */
 export const ACTION = {
   Redirect: 1,
@@ -19,8 +19,6 @@ export const ACTION = {
   OverrideBrowserCacheTime: 16,
   OriginStorage: 17,
 };
-// ponytail: the trigger and match values are documented ones (StatusCode is type 8; match types Any 0, All 1, None 2);
-// re-check them the same way.
 export const TRIGGER = { Url: 0, StatusCode: 8 };
 export const MATCH = { Any: 0, All: 1, None: 2 };
 
@@ -103,8 +101,8 @@ function urlTriggers(patterns) {
  * @param {string} id
  * @param {string[]} patterns
  * @param {number} action
- * @param {string} p1
- * @param {string} [p2]
+ * @param {string} p1 for `OriginStorage` the storage zone Id, which only `apply.mjs` knows: planned as ''
+ * @param {string} [p2] for `OriginStorage` the storage zone name; the API refuses a rule whose name and Id disagree
  * @returns {BunnyRule}
  */
 function rule(id, patterns, action, p1, p2 = '') {
@@ -201,7 +199,7 @@ function repoRules(entries, claims, hosts) {
     );
     return {
       order: Math.max(...paths.map((p) => p.length)),
-      rule: rule(id, patterns, ACTION.OriginStorage, storageZoneName(repo)),
+      rule: rule(id, patterns, ACTION.OriginStorage, '', storageZoneName(repo)),
     };
   });
 }

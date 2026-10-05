@@ -52,9 +52,9 @@ function proxyPage(id, patterns) {
  */
 
 /**
- * `%{Path.N-}` resolved the way the edge does: the request path's segments from index N on.
- * ponytail: whether the edge keeps a trailing slash on the tail is the documented-shape assumption here; re-check it
- * against a recorded redirect response (infra/bunny/README.md, "Record a response").
+ * `%{Path.N-}` resolved the way the edge does: the request path's segments from index N on. Recorded in M0
+ * (fixtures/p8-pullzone.json): the edge drops the tail's trailing slash unless the request carries a query string.
+ * ponytail: probes carry no query, so the with-query form (`a/b/?q=1` keeps the slash) is not modelled.
  * @param {string} template
  * @param {string} path
  * @returns {string}
@@ -62,8 +62,7 @@ function proxyPage(id, patterns) {
 function resolveTemplate(template, path) {
   const segments = path.split('/').filter(Boolean);
   return template.replace(/%\{Path\.(\d+)-\}/g, (_, n) => {
-    const tail = segments.slice(Number(n)).join('/');
-    return tail && path.endsWith('/') ? `${tail}/` : tail;
+    return segments.slice(Number(n)).join('/');
   });
 }
 
