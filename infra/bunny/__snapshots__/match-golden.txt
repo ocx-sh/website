@@ -7,6 +7,7 @@ prod ocx.sh               200 /schemas/               -> legacy-ocx-dirs       |
 prod ocx.sh               200 /catalog/               -> legacy-index          | hsts frame
 prod ocx.sh               200 /integrations/bazel/    -> legacy-rules-ocx      | hsts frame
 prod ocx.sh               200 /integrations/python/   -> legacy-ocx-sdk-python | hsts frame
+prod ocx.sh               200 /integrations/cmake/    -> legacy-find-ocx       | hsts frame
 prod ocx.sh               200 /apps/catalog/          -> legacy-catalog        | hsts frame
 prod ocx.sh               200 /x/                     -> (default origin)      | hsts frame
 prod ocx.sh               200 /integrations/x/        -> (default origin)      | hsts frame
@@ -17,6 +18,7 @@ prod ocx.sh               200 /schemas/x/             -> legacy-ocx-dirs       |
 prod ocx.sh               200 /catalog/x/             -> legacy-index          | hsts frame
 prod ocx.sh               200 /integrations/bazel/x/  -> legacy-rules-ocx      | hsts frame
 prod ocx.sh               200 /integrations/python/x/ -> legacy-ocx-sdk-python | hsts frame
+prod ocx.sh               200 /integrations/cmake/x/  -> legacy-find-ocx       | hsts frame
 prod ocx.sh               200 /apps/catalog/x/        -> legacy-catalog        | hsts frame
 prod ocx.sh               200 /assets/                -> legacy-ocx-dirs       | hsts frame
 prod ocx.sh               200 /icons/                 -> legacy-ocx-dirs       | hsts frame

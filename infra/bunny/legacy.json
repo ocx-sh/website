@@ -37,6 +37,13 @@
       "paths": ["/integrations/bazel/"]
     },
     {
+      "id": "legacy-find-ocx",
+      "repo": "ocx-sh/find_ocx",
+      "mode": "redirect",
+      "origin": "https://ocx-sh.github.io/find_ocx/",
+      "paths": ["/integrations/cmake/"]
+    },
+    {
       "id": "legacy-ocx-sdk-python",
       "repo": "ocx-sh/ocx-sdk-python",
       "mode": "redirect",

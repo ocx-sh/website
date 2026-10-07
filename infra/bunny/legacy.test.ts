@@ -33,6 +33,7 @@ describe('legacy.json', () => {
       'legacy-ocx-files',
       'legacy-catalog',
       'legacy-rules-ocx',
+      'legacy-find-ocx',
       'legacy-ocx-sdk-python',
       'legacy-index',
     ]);

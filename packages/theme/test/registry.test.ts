@@ -232,6 +232,7 @@ describe('C-008 pure registry functions', () => {
       { path: '/', label: 'ocx' },
       { path: '/integrations/bazel/', label: 'Bazel' },
       { path: '/integrations/python/', label: 'Python' },
+      { path: '/integrations/cmake/', label: 'CMake' },
       { path: '/apps/catalog/', label: 'catalog' },
     ]);
   });
@@ -241,6 +242,7 @@ describe('C-008 pure registry functions', () => {
       { path: '/docs/', label: 'docs' },
       { path: '/integrations/bazel/', label: 'Bazel' },
       { path: '/integrations/python/', label: 'Python' },
+      { path: '/integrations/cmake/', label: 'CMake' },
       { path: '/apps/catalog/', label: 'catalog' },
     ]);
   });

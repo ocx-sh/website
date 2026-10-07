@@ -106,6 +106,7 @@ describe('rule set and limits', () => {
         'legacy-ocx-files',
         'legacy-ocx-sdk-python',
         'legacy-rules-ocx',
+        'legacy-find-ocx',
         'legacy-catalog',
         'legacy-index',
         'legacy-ocx-dirs',
@@ -115,8 +116,8 @@ describe('rule set and limits', () => {
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
-  it('commits 13 prod and 12 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([13, 12]);
+  it('commits 14 prod and 13 dev rules, prod within the plan ceiling', () => {
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([14, 13]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 
@@ -338,6 +339,7 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
     ['legacy-catalog', 'catalog', 'ocx-sh/catalog'],
     ['legacy-rules-ocx', 'rules-ocx', 'ocx-sh/rules_ocx'],
     ['legacy-ocx-sdk-python', 'ocx-sdk-python', 'ocx-sh/ocx-sdk-python'],
+    ['legacy-find-ocx', 'find-ocx', 'ocx-sh/find_ocx'],
     ['legacy-index', 'index', 'ocx-sh/index'],
   ])('removing %s removes exactly its rule and adds repo-%s', (id, name, repo) => {
     const before = planRules('prod');
@@ -368,7 +370,7 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
       'https://sh-ocx-dev.b-cdn.net/integrations/bazel/*',
     ]);
     expect(after.map((r) => r.Description).indexOf('ocx:repo-rules-ocx')).toBe(
-      ids('dev').indexOf('ocx:legacy-rules-ocx'),
+      ids('dev').indexOf('ocx:legacy-find-ocx'), // sorts just after find-ocx (same path length), which moves up one place
     );
   });
 });

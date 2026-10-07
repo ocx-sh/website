@@ -47,6 +47,7 @@
     { "path": "/catalog/", "repo": "ocx-sh/index", "search": false },
     { "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "search": true },
     { "path": "/integrations/python/", "repo": "ocx-sh/ocx-sdk-python", "search": true },
+    { "path": "/integrations/cmake/", "repo": "ocx-sh/find_ocx", "search": true },
     { "path": "/apps/catalog/", "repo": "ocx-sh/catalog", "search": true }
   ],
   "entries": [
@@ -66,7 +67,7 @@
       "label": "CMake",
       "meta": "find_ocx",
       "desc": "find_package() for ocx-managed tools.",
-      "planned": true
+      "href": "/integrations/cmake/"
     },
     {
       "id": "gradle",

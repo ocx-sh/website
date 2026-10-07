@@ -45,11 +45,11 @@ describe('C-303 HubGrid', () => {
 
   it('C-067 HubGrid: a planned entry is labelled "planned" and carries no href', async () => {
     const doc = await render('integrations');
-    const cmake = doc.querySelector<HTMLElement>('[data-ocx-entry="cmake"]');
+    const cmake = doc.querySelector<HTMLElement>('[data-ocx-entry="gradle"]');
     expect(cmake?.dataset.planned).toBe('true');
     expect(cmake?.textContent).toContain('planned');
     expect(cmake?.querySelector('a, [href]')).toBeNull();
-    expect(cmake?.textContent).toContain('CMake');
+    expect(cmake?.textContent).toContain('Gradle');
     // Every planned entry of the hub, and only those, is unlinked.
     for (const e of nav.entries.filter((x) => x.hub === 'integrations')) {
       const el = doc.querySelector(`[data-ocx-entry="${e.id}"]`);

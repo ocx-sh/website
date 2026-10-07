@@ -201,6 +201,25 @@
     },
     {
       "ActionType": 1,
+      "ActionParameter1": "https://ocx-sh.github.io/find_ocx/%{Path.2-}",
+      "ActionParameter2": "302",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:legacy-find-ocx",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/integrations/cmake",
+            "https://sh-ocx-dev.b-cdn.net/integrations/cmake/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 1,
       "ActionParameter1": "https://ocx-sh.github.io/catalog/%{Path.2-}",
       "ActionParameter2": "302",
       "TriggerMatchingType": 0,
