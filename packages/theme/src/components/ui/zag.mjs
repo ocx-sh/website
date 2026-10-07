@@ -12,6 +12,14 @@
 /** @typedef {(el: Element, attrs: Record<string, unknown>) => void} Spread */
 /** @typedef {{ update: (props: Record<string, unknown>) => void, stop: () => void }} Child */
 /**
+ * True when `root`'s OWN content part is rendered unhidden. A nested component's content (a List
+ * inside a closed Dialog) belongs to another `data-zag-root` and must not count.
+ * @param {Element} root
+ */
+export const rendersOpen = (root) =>
+  [...root.querySelectorAll('[data-part="content"]:not([hidden])')].some((c) => c.closest('[data-zag-root]') === root);
+
+/**
  * Starts a child machine a component's `render` owns (one per toast): `paint(api, spread)` runs now
  * and on every change; `stop()` undoes its spreads and stops it; the root's teardown stops the rest.
  * @typedef {(machine: AnyMachine, props: Record<string, unknown>, connect: AnyConnect, paint: (api: any, spread: Spread) => void) => Child} Spawn

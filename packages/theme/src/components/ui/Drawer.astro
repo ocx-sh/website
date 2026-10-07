@@ -72,11 +72,11 @@ const p = Object.fromEntries(
 </div>
 
 <script>
-  import { mount } from './zag.mjs';
+  import { mount, rendersOpen } from './zag.mjs';
   for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-drawer[data-zag-root]')) {
     const handle = mount(root, { load: () => import('./drawer.zag.mjs') });
     // Rendered open (`open`): trap, lock and Esc must work before any hover or focus.
-    if (root.querySelector('[data-part="content"]:not([hidden])')) void handle.start();
+    if (rendersOpen(root)) void handle.start();
   }
 </script>
 

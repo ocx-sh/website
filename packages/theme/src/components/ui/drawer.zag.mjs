@@ -50,7 +50,10 @@ export function render(api, root, spread) {
 
 /** Callbacks surface as DOM events (C-105); the only per-root hook `mount` offers. @param {HTMLElement} root */
 export const readDom = (root) => {
-  let last = root.querySelector('[data-part="content"]:not([hidden])') !== null; // rendered open
+  // Rendered open; own content only (a nested component has its own `data-zag-root`). Inline: a lazy module may not import zag.mjs.
+  let last = [...root.querySelectorAll('[data-part="content"]:not([hidden])')].some(
+    (c) => c.closest('[data-zag-root]') === root,
+  );
   return {
     // Zag's drawer reports a close twice on Escape (close, then again while closing): emit changes only.
     onOpenChange: (/** @type {{ open: boolean }} */ { open }) => {

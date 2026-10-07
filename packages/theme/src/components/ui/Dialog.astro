@@ -76,14 +76,14 @@ const p = Object.fromEntries(
 </div>
 
 <script>
-  import { mount } from './zag.mjs';
+  import { mount, rendersOpen } from './zag.mjs';
   type Api = { setOpen: (open: boolean) => void } | undefined;
   for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-dialog[data-zag-root]')) {
     // No trigger (ConfirmDialog, AlertDialog): nothing to hover/focus, so load only on demand.
     const trigger = root.dataset.zagTrigger === 'manual' ? 'manual' : 'interaction';
     const handle = mount(root, { load: () => import('./dialog.zag.mjs'), trigger });
     // Rendered open (`open`): trap, lock and Esc must work before any hover or focus.
-    if (root.querySelector('[data-part="content"]:not([hidden])')) void handle.start();
+    if (rendersOpen(root)) void handle.start();
     // Programmatic open, id-scoped, mirrors the toast pattern (`ocx:toast`): any script can pop a
     // preset dialog placed once on the page without holding a reference to it.
     document.addEventListener('ocx:dialog:open', (event) => {
