@@ -2,6 +2,14 @@
   "name": "@ocx-sh/theme",
   "version": "0.1.0",
   "description": "Shared tokens, base styles, navigation and Starlight plugin for the ocx.sh sites",
+  "keywords": [
+    "astro-component",
+    "withastro",
+    "astro",
+    "starlight",
+    "design-tokens",
+    "ocx"
+  ],
   "license": "Apache-2.0",
   "type": "module",
   "repository": {
@@ -24,6 +32,11 @@
     },
     "./starlight/*.astro": "./src/starlight/*.astro",
     "./components/*.astro": "./src/components/*.astro",
+    "./layouts/*.astro": "./src/layouts/*.astro",
+    "./chrome": {
+      "types": "./src/chrome.d.mts",
+      "default": "./src/chrome.mjs"
+    },
     "./nav.json": "./src/nav.json",
     "./nav": {
       "types": "./src/nav.d.ts",
@@ -46,6 +59,15 @@
     "./cycle-button": {
       "types": "./src/components/ui/cycle-button.d.mts",
       "default": "./src/components/ui/cycle-button.mjs"
+    },
+    "./prose-code.css": "./src/prose-code.css",
+    "./lazy": {
+      "types": "./src/components/ui/lazy.d.mts",
+      "default": "./src/components/ui/lazy.mjs"
+    },
+    "./csp": {
+      "types": "./src/csp.d.mts",
+      "default": "./src/csp.mjs"
     }
   },
   "bin": {
@@ -102,6 +124,11 @@
   "peerDependencies": {
     "@astrojs/starlight": ">=0.42.0 <0.43",
     "astro": "^7"
+  },
+  "peerDependenciesMeta": {
+    "@astrojs/starlight": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@astrojs/starlight": "^0.42.4",

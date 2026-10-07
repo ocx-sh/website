@@ -6,6 +6,7 @@
 // deps into this every-page chunk.
 // ponytail: no teardown on navigation, pages unload wholesale (Starlight 0.42 has no view
 // transitions, D-Z16); add an `astro:before-swap` listener calling destroy() when a ClientRouter is enabled.
+import { mount as lazyMount } from './lazy.mjs';
 /** @typedef {import('@zag-js/vanilla').VanillaMachine<any>} AnyVanilla */
 /** @typedef {ConstructorParameters<typeof import('@zag-js/vanilla').VanillaMachine<any>>[0]} AnyMachine */
 /** @typedef {(service: AnyVanilla['service'], normalize: typeof import('@zag-js/vanilla').normalizeProps) => unknown} AnyConnect */
@@ -57,174 +58,22 @@ export const rendersOpen = (root) =>
  * @typedef {Omit<{ [K in keyof T as NonNullable<T[K]> extends (...args: any[]) => any ? never : K]: T[K] }, 'id' | 'ids' | 'getRootNode' | 'dir'>} ZagProps
  */
 
-const INTERACTION = ['pointerenter', 'focusin', 'touchstart'];
-const ACTIVATION_KEYS = new Set([
-  'Enter',
-  ' ',
-  'ArrowUp',
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'Home',
-  'End',
-  'Escape',
-]);
-// Roving-focus parts (tree items) carry only a tabindex.
-const INTERACTIVE = 'a[href],button,input,select,textarea,label,summary,[contenteditable],[tabindex]';
-/** @type {WeakMap<HTMLElement, MountHandle>} */
-const handles = new WeakMap();
-
 /**
- * Lazily starts a component's machine on `root` (C-104). Never throws.
+ * Lazily starts a component's machine on `root` (C-104): the generic trigger layer (lazy.mjs) with
+ * `load` resolving the runtime's `run` and the component's `*.zag.mjs`. Never throws.
  * @param {HTMLElement} root element carrying `data-zag-root`, `data-zag-id`, `data-zag-props`
  * @param {MountSpec} spec
  * @returns {MountHandle}
  */
-export function mount(root, { load, trigger = 'interaction', replay = true }) {
-  const existing = handles.get(root);
-  if (existing) return existing;
-
-  /** @type {import('./zag-runtime.mjs').Session | undefined} */
-  let session;
-  let started = false;
-  let destroyed = false;
-  /** @type {{ event: MouseEvent | KeyboardEvent, target: EventTarget | null } | undefined} */
-  let early;
-  /** @type {IntersectionObserver | undefined} */
-  let observer;
-  /** @type {[Element, string][]} */
-  const fallbacks = [];
-  /** @type {() => void} */
-  let settle = () => {};
-  /** @type {Promise<void>} */
-  const ready = new Promise((resolve) => (settle = () => resolve()));
-
-  // One early activation: the click if one came, else the first activating key. An event inside a
-  // nested root belongs to that root only (else both replay it and a toggle cancels itself).
-  const inRoot = (/** @type {Event} */ event) => {
-    const target = /** @type {Partial<Element> | null} */ (event.target);
-    return !target?.closest || target.closest('[data-zag-root]') === root;
-  };
-  // A click also must not land on plain content: a link, a form's submit or reset button (a part
-  // too; a typeless <button> in a form submits), a copy button, a native checkbox or a summary
-  // already ran its native action, which a replayed click would run twice. A control of the root is
-  // a part, or a button outside every part (List's Load more, the header trigger). Keys need no
-  // such check: a synthetic key has no native action.
-  const ownClick = (/** @type {Event} */ event) => {
-    const el = /** @type {HTMLButtonElement | null} */ (
-      /** @type {Partial<Element> | null} */ (event.target)?.closest?.(INTERACTIVE)
-    );
-    const button = el?.matches('button');
-    if (!el || el.closest('[data-zag-root]') !== root || (button && el.form && el.type !== 'button')) return false;
-    if (el.hasAttribute('data-part')) return true;
-    if (!button && !el.matches('[tabindex]')) return false;
-    return el.parentElement?.closest('[data-part],[data-zag-root]') === root;
-  };
-  const onClick = (/** @type {MouseEvent} */ event) => {
-    if (ownClick(event) && early?.event.type !== 'click') early = { event, target: event.target };
-  };
-  const onKey = (/** @type {KeyboardEvent} */ event) => {
-    if (inRoot(event) && !early && ACTIVATION_KEYS.has(event.key)) early = { event, target: event.target };
-  };
-  const listen = () => {
-    root.addEventListener('click', onClick, true);
-    root.addEventListener('keydown', onKey, true);
-  };
-  const unlisten = () => {
-    root.removeEventListener('click', onClick, true);
-    root.removeEventListener('keydown', onKey, true);
-  };
-  const disarm = () => {
-    for (const type of INTERACTION) root.removeEventListener(type, arm);
-    observer?.disconnect();
-  };
-  const restore = () => {
-    for (const [el, value] of fallbacks.splice(0)) el.setAttribute('popovertarget', value);
-  };
-  const teardown = () => {
-    session?.stop();
-    session = undefined;
-  };
-
-  /** @param {[typeof import('./zag-runtime.mjs').run, ZagModule]} loaded */
-  const live = ([run, mod]) => {
-    if (destroyed) return;
-    session = run(root, mod, parseProps(root.dataset.zagProps));
-    root.dataset.zagState = 'live';
-    unlisten();
-    // Focus that started the load (a Tab onto a part) reached no Zag handler: hand it over, so
-    // focus-driven state holds before the replayed key (tabs arrows, toggle-group roving focus,
-    // a select that acts on keys only when focused). Only this root's own parts: a nested
-    // widget or a plain link saw its focus already.
-    const active = root.ownerDocument.activeElement;
-    if (active?.closest('[data-zag-root]') === root) active.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-    const { event, target } = early ?? {};
-    early = undefined;
-    // Untrusted by construction (isTrusted: false); widgets act on it like the original.
-    if (event && target)
-      target.dispatchEvent(
-        event instanceof KeyboardEvent ? new KeyboardEvent(event.type, event) : new MouseEvent(event.type, event),
-      );
-  };
-
-  /** @param {unknown} error */
-  const fail = (error) => {
-    unlisten();
-    teardown();
-    restore();
-    if (destroyed) return;
-    root.dataset.zagState = 'error';
-    console.error('[ocx] Zag failed to start', root, error);
-  };
-
-  const arm = () => void start();
-
-  function start() {
-    if (started || destroyed) return ready;
-    started = true;
-    disarm();
-    root.dataset.zagState = 'loading';
-    // The native popover and Zag must never both open (C-192, C-231).
-    for (const el of root.querySelectorAll('[popovertarget]')) {
-      fallbacks.push([el, el.getAttribute('popovertarget') ?? '']);
-      el.removeAttribute('popovertarget');
-    }
-    if (replay) listen();
+export function mount(root, { load, ...rest }) {
+  return lazyMount(root, {
+    ...rest,
     // Only `run`: a kept namespace would ship the runtime's SSR half (ssrApi, ssrAttrs) to every page.
-    Promise.all([import('./zag-runtime.mjs').then((m) => m.run), load()])
-      .then(live)
-      .catch(fail)
-      .finally(settle);
-    return ready;
-  }
-
-  if (trigger === 'interaction') for (const type of INTERACTION) root.addEventListener(type, arm, { passive: true });
-  else if (trigger === 'visible') {
-    observer = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && arm());
-    observer.observe(root);
-  }
-
-  /** @type {MountHandle} */
-  const handle = {
-    start,
-    ready,
-    get api() {
-      return session?.api;
-    },
-    destroy() {
-      if (destroyed) return;
-      destroyed = true;
-      disarm();
-      unlisten();
-      teardown();
-      restore();
-      if (started) root.dataset.zagState = 'idle';
-      handles.delete(root);
-      settle();
-    },
-  };
-  handles.set(root, handle);
-  return handle;
+    load: () =>
+      Promise.all([import('./zag-runtime.mjs').then((m) => m.run), load()]).then(([run, mod]) => ({
+        start: (el) => run(el, mod, parseProps(el.dataset.zagProps)),
+      })),
+  });
 }
 
 /** @param {string | undefined} json `data-zag-props`, written by our SSR @returns {Record<string, unknown>} */

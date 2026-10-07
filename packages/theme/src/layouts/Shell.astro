@@ -1,0 +1,100 @@
+---
+// Page shell for plain Astro sites: the full HTML document with the ocx.sh header and footer, or a
+// mirror's own brand, links and footer (neutral mode: `brand` given). Starlight-free; site and base come
+// from the consumer's Astro config, and claim validation stays in the Starlight plugin and `ocx-site check`.
+// Fonts load from fonts.css (plain @font-face, no Fonts API config needed). The four upright faces are
+// preloaded like the Starlight Head does: from the stylesheet alone they start a round trip after it
+// (doc, CSS, font), which Lighthouse's simulation counts or drops by a few milliseconds of real paint
+// time (FCP 1.35 s or 1.65 s, performance 1 or 0.99). base.css's metric-matched fallbacks keep the
+// layout from shifting when a face arrives.
+import '../shell.css';
+import sans400 from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2?url';
+import sans600 from '@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2?url';
+import mono400 from '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2?url';
+import mono600 from '@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2?url';
+import nav from '../nav.json';
+import { activeSection } from '../nav.mjs';
+import { PLATFORM_SCRIPT, THEME_SCRIPT } from '../head-scripts.mjs';
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+
+export interface Props {
+  title: string;
+  description?: string;
+  canonical?: string | URL;
+  /** ocx mode only. Defaults to the section the request path belongs to. */
+  activeSection?: string;
+  /** Neutral mode: given means a mirror's own header; absent means the ocx.sh chrome. */
+  brand?: { title: string; wordmark?: string; logoSrc?: string; logoAlt?: string };
+  nav?: { label: string; href: string }[];
+  footer?: { links: { label: string; href: string }[]; note?: string };
+}
+
+const { title, description, canonical, brand, nav: links, footer } = Astro.props;
+if (!brand && (links || footer)) throw new Error('Shell: nav/footer need brand (neutral mode)');
+const active = Astro.props.activeSection ?? activeSection(nav, Astro.url.pathname);
+const url = canonical ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline set:html={THEME_SCRIPT} />
+    <script is:inline set:html={PLATFORM_SCRIPT} />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {url && <link rel="canonical" href={url.toString()} />}
+    {!brand && <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} />}
+    {/* No icon of its own: an empty one keeps the browser from requesting /favicon.ico (a 404 console error). */}
+    {brand && !Astro.slots.has('head') && <link rel="icon" href="data:," />}
+    {[sans400, sans600, mono400, mono600].map((href) => (
+      <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />
+    ))}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="ocx-skip" href="#main">
+      Skip to content
+    </a>
+    <header class="ocx-shell__header">
+      <SiteHeader menu active={active} brand={brand} nav={links}>
+        <slot name="header-search" slot="search" />
+      </SiteHeader>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <div class="ocx-shell__footer">
+      <SiteFooter links={brand ? (footer?.links ?? []) : undefined} note={brand ? (footer?.note ?? '') : undefined} />
+    </div>
+    <script>
+      import { mountChrome } from '../chrome.mjs';
+      mountChrome(document);
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  @layer ocx {
+    body {
+      margin: 0;
+      font-family: var(--ocx-font-sans);
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-bg);
+    }
+    .ocx-shell__header {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: var(--ocx-z-header);
+    }
+    main,
+    .ocx-shell__footer {
+      box-sizing: border-box;
+      max-inline-size: calc(var(--ocx-prose-width) + var(--ocx-space-10));
+      margin-inline: auto;
+      padding-inline: var(--ocx-space-5);
+    }
+  }
+</style>

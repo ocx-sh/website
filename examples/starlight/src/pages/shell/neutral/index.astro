@@ -1,0 +1,18 @@
+---
+// The same layout in neutral mode: a mirror's own brand, links and footer.
+import Shell from '@ocx-sh/theme/layouts/Shell.astro';
+---
+
+<Shell
+  title="Shell, neutral mode"
+  description="A plain Astro page with a mirror's own header and footer."
+  brand={{ title: 'Example mirror', wordmark: 'example' }}
+  nav={[
+    { label: 'Home', href: '/docs/shell/' },
+    { label: 'Neutral', href: '/docs/shell/neutral/' },
+  ]}
+  footer={{ links: [{ label: 'Home', href: '/docs/shell/' }], note: 'Apache-2.0' }}
+>
+  <h1>Shell, neutral mode</h1>
+  <p>Brand, links and footer are the page's own; no ecosystem menu, install or GitHub link.</p>
+</Shell>

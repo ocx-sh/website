@@ -301,6 +301,7 @@ describe('Select, Combobox and overlay CSS', () => {
       // Combobox fuzzy match helper is plain logic, not Zag behaviour (owner finding).
       'fuzzy.mjs',
       'ids.mjs',
+      'lazy.mjs',
       // C-302 leave(): the WAAPI exit for a node a script removes, not a machine.
       'motion.mjs',
       'number-stepper.mjs',

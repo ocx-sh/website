@@ -19,11 +19,16 @@ const INDEX_WEIGHT = 1;
 const INLINE_CSS_MAX = 750;
 // Client chunk group of the modules every docs page imports from its entry scripts: the Zag trigger
 // layer (Search.astro's script, C-113), Vite's preload helper (every lazy import) and Starlight's
-// `starlight-toc` (both TOC scripts). ponytail: matched by path; if Starlight moves the TOC module,
-// it drops back to its own chunk (one request more, nothing breaks).
+// `starlight-toc` (both TOC scripts). The TableOfContents script itself joins it, so the group chunk
+// is that entry and no 26-byte stub entry (a request, ~0.4 KB of headers) imports it. chrome.mjs stays
+// out: the chunk is the last request of the first paint, and Lighthouse's simulation gives a response
+// past three TCP segments (~4.3 KB on the wire) a second round trip, which put every page 150 ms late
+// (performance 0.99) once chrome.mjs and its preload map were folded in (4.9 KB). ponytail: matched by
+// path and Astro's script id; if either moves, the group falls back to its own chunk behind a stub
+// (one request more, nothing breaks).
 const EVERY_PAGE = {
   name: 'zag',
-  test: /[\\/]components[\\/]ui[\\/]zag\.mjs$|vite[\\/]preload-helper|[\\/]TableOfContents[\\/]starlight-toc\.js$/,
+  test: /[\\/]components[\\/]ui[\\/](?:zag|lazy)\.mjs$|vite[\\/]preload-helper|[\\/]TableOfContents[\\/]starlight-toc\.js$|[\\/]TableOfContents\.astro\?astro&type=script/,
 };
 // Every dependency the theme lazy-loads (Zag machines, the asciinema player), pre-bundled by the dev
 // server: discovered only on first hover/focus/play, Vite re-optimized and the browser got 504
@@ -56,8 +61,8 @@ const ownSplitting = (vite) =>
 const SEARCH_WARNING =
   "components.Search is overridden: the theme's Search.astro script also mounts the header nav menu, " +
   'the mobile menu drawer, the sidebar collapsibles and the toaster (incl. copy toasts). Without it they fall ' +
-  "back to native popovers, open sidebar groups and no toasts; copy the <script> of @ocx-sh/theme's " +
-  'starlight/Search.astro into your override to keep them.';
+  'back to native popovers, open sidebar groups and no toasts; call mountChrome(document) from ' +
+  "'@ocx-sh/theme/chrome' in your override's <script> to keep them.";
 const OVERRIDES = [
   'Head',
   'Header',

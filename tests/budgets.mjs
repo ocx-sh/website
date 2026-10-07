@@ -107,8 +107,12 @@ export function budgetOf(path) {
 export const CLASS_PATTERNS = {
   showcase: '^/docs/components/',
   story: '^/docs/stories/',
-  content: '^(?:/docs/(?:probe/[^/]+/|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/404\\.html)$',
+  content:
+    '^(?:/docs/(?:probe/[^/]+/|shell/(?:neutral/)?|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/404\\.html)$',
 };
+
+/** Plain Astro pages on the Shell layout (`examples/starlight/src/pages/shell/`): built, not docs-tree files. */
+export const SHELL_PAGES = ['/docs/shell/', '/docs/shell/neutral/'];
 
 /** Default docs tree of the Starlight example. */
 export const DOCS_DIR = fileURLToPath(new URL('../examples/starlight/src/content/docs/', import.meta.url));
@@ -163,7 +167,7 @@ export function examplePages(docsDir = DOCS_DIR, storiesDir = STORIES_DIR) {
   const stories = files(storiesDir)
     .filter((f) => f.endsWith('.mdx'))
     .map((f) => storyRoute(f.slice(0, -'.mdx'.length)));
-  return [...docs, ...stories].sort();
+  return [...docs, ...stories, ...SHELL_PAGES].sort();
 }
 
 /**

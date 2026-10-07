@@ -49,7 +49,8 @@ the idea into a consumer gate (see `ocx-theme-quality`).
 In Starlight, the theme's `Search.astro` override carries one script that
 also mounts the header nav menu, the sidebar collapsibles, the mobile menu
 drawer, the toaster, and the delegated click listener of `CycleButton`.
-Overriding `Search` without copying that script loses all of them. Outside
+Overriding `Search` without calling `mountChrome(document)` (from
+`@ocx-sh/theme/chrome`, which holds that script) loses all of them. Outside
 Starlight, `CycleButton` needs `install()` from `@ocx-sh/theme/cycle-button`.
 
 ## Writing your own

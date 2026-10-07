@@ -1,0 +1,15 @@
+---
+title: Neutral header and footer
+description: A mirror's own brand, plain links and footer, with no ecosystem menu, install link or GitHub link.
+height: 200
+order: 1
+block: true
+---
+
+import MountChrome from '../../components/showcase/MountChrome.astro';
+import SiteHeader from '@ocx-sh/theme/components/SiteHeader.astro';
+import SiteFooter from '@ocx-sh/theme/components/SiteFooter.astro';
+
+<SiteHeader brand={{ title: 'Example mirror', wordmark: 'example' }} nav={[{ label: 'Home', href: '/docs/' }, { label: 'Shell', href: '/docs/components/shell/' }]} />
+<SiteFooter links={[{ label: 'Home', href: '/docs/' }]} note="Apache-2.0" />
+<MountChrome />

@@ -79,6 +79,7 @@ export default defineConfig({
               items: [
                 { label: 'Breadcrumbs', link: '/components/breadcrumbs/' },
                 { label: 'Pagination', link: '/components/pagination/' },
+                { label: 'Shell', link: '/components/shell/' },
                 { label: 'Steps', link: '/components/steps/' },
                 { label: 'Tabs', link: '/components/tabs/' },
                 { label: 'Toc', link: '/components/toc/' },

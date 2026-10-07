@@ -6,18 +6,14 @@
 // Italics are never preloaded and use font-display: optional (fonts.mjs): no block, no late swap.
 import Default from '@astrojs/starlight/components/Head.astro';
 import { Font } from 'astro:assets';
+import { PLATFORM_SCRIPT } from '../head-scripts.mjs';
 // <Kbd> platform detection (owner ask 2026-09-28): sets data-platform before first paint so no
 // OS-specific key glyph flickers or waits on a client render. Defaults to non-mac when the UA
 // string doesn't say otherwise (Kbd.astro's CSS fallback matches this default). Kept comment-free:
 // an inline script ships in every page's HTML, which must stay under HTML_GZ_MAX.
 ---
 
-<script is:inline>
-  ((d) => {
-    const p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
-    d.dataset.platform = /mac/i.test(p) ? 'mac' : /linux/i.test(p) ? 'linux' : 'windows';
-  })(document.documentElement);
-</script>
+<script is:inline set:html={PLATFORM_SCRIPT} />
 <Default />
 <Font
   cssVariable="--ocx-font-sans"

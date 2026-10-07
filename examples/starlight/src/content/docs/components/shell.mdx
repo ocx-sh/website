@@ -1,0 +1,68 @@
+---
+title: Shell
+description: Shell layout.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+`Shell` (`@ocx-sh/theme/layouts/Shell.astro`) is the whole HTML document for a plain Astro site: the
+pre-paint theme script, `tokens.css`, `base.css`, the self-hosted fonts, the header, a `main` landmark and the
+footer. Without `brand` it renders the ocx.sh chrome (sections, ecosystem menu, install, GitHub, theme toggle) and
+the `nav.json` footer; with `brand` it renders a neutral header with the page's own links. `nav` or `footer`
+without `brand` throws. On a narrow viewport the menu button opens a native popover list, with no JavaScript.
+
+The Starlight overrides render the same `SiteHeader` and `SiteFooter`; `Shell` is the way to use them directly.
+Shell does no claim, `site` or `trailingSlash` validation: that stays in the Starlight plugin and `ocx-site check`.
+Live pages: [ocx mode](/docs/shell/) and [neutral mode](/docs/shell/neutral/).
+
+## Stories
+
+<Stories of="shell" />
+
+## Props
+
+`Shell` props (`slots`: `head`, the default slot, `header-search`):
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `title` | `string` | Required. The document title. |
+| `description` | `string` | The meta description. |
+| `canonical` | `string \| URL` | Default: the request path on `Astro.site`, when a site is set. |
+| `activeSection` | `string` | ocx mode only. Default: the section the request path belongs to. |
+| `brand` | `{ title; wordmark?; logoSrc? }` | Given means neutral mode. |
+| `nav` | `{ label; href }[]` | Neutral mode header links. |
+| `footer` | `{ links; note? }` | Neutral mode footer. |
+
+<PropsTable
+  of="SiteHeader.astro"
+  rows={[
+    { name: 'active', type: 'string', description: 'ocx mode: the active section id, written to `data-ocx-active`.' },
+    { name: 'brand', type: '{ title: string; wordmark?: string; logoSrc?: string }', description: 'Neutral mode: the mirror\'s brand. Absent means the ocx.sh chrome.' },
+    { name: 'nav', type: '{ label: string; href: string }[]', description: 'Neutral mode: the header links; `aria-current` when the path starts with the href.' },
+    { name: 'menu', type: 'boolean', description: 'Render the mobile menu button and its popover list. Default `false`.' },
+  ]}
+/>
+
+<PropsTable
+  of="SiteFooter.astro"
+  rows={[
+    { name: 'links', type: '{ label: string; href: string }[]', description: 'Default: the `nav.json` footer links.' },
+    { name: 'note', type: 'string', description: 'Default: the licence line.' },
+  ]}
+/>
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:cycle-button:change` | `{ value, previous }` | The theme toggle advances; the page flips `data-theme` and stores `starlight-theme`. |
+| `ocx:toast` | `{ title, ... }` | Any script dispatches it on the document; the footer's toaster shows the toast. |
+
+## Keyboard
+
+The section nav is a Zag navigation menu in ocx mode.
+
+- <kbd>Tab</kbd> moves through the links, the ecosystem trigger, the install link and the tools.
+- <kbd>Enter</kbd> or <kbd>Space</kbd> on the ecosystem trigger opens its menu; <kbd>Esc</kbd> closes it.
+- The mobile menu is a native popover: <kbd>Enter</kbd> opens it, <kbd>Esc</kbd> closes it.

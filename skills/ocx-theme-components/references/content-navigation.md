@@ -18,7 +18,7 @@ player is created.
 
 | Prop | Notes |
 |---|---|
-| `src` | Required; root-absolute (`/casts/install.cast`), resolved against the site base |
+| `src` | Required; root-absolute (`/casts/install.cast`), always prefixed with the site base, so write it base-relative (never `/docs/casts/…` under `/docs/`) |
 | `cols`, `rows` | Set both: with `fit="width"` they reserve the player height before it loads (no layout shift) |
 | `title` | Centred in the chrome |
 | `autoPlay` | Default false. Keep it: no autoplay is the docs rule |

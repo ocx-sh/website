@@ -1,0 +1,6 @@
+/* Shell's one stylesheet: @imports are inlined at build, so a Shell page gets its own copy of these
+ * sheets and shares no CSS module with the Starlight pages of a site that hosts both (else the shared
+ * sheets split into a chunk every Starlight page would also request). */
+@import './tokens.css';
+@import './base.css';
+@import './fonts.css';

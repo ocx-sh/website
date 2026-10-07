@@ -28,8 +28,8 @@ replaces the theme's for that slot only.
 | `MobileMenuToggle` | The mobile menu button |
 | `PageFrame` | Header, sidebar pane and main layout |
 
-Overriding `Search`: the warning text names the fix. Copy the `<script>`
-block of the theme's `starlight/Search.astro` into your override. Without it
+Overriding `Search`: the warning text names the fix. Call
+`mountChrome(document)` from `@ocx-sh/theme/chrome` in your override's `<script>`. Without it
 the header nav and the mobile menu fall back to native popovers, nested
 sidebar groups render open, no toast ever shows and the outline's current
 marker never fades.

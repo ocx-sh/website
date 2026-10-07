@@ -7,6 +7,8 @@ const PAGES = [
   '/docs/',
   '/docs/probe/long/',
   '/docs/components/code/',
+  '/docs/shell/',
+  '/docs/shell/neutral/',
   // Components show their demos as story pages (C-125); the doc page only frames them.
   '/docs/stories/feature-section/default/',
   '/docs/stories/platform-icons/default/',

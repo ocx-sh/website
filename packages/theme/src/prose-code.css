@@ -1,0 +1,37 @@
+/* Opt-in: highlight.js token colours for a <pre><code> in prose outside Expressive Code (a mirror whose
+ * Markdown renderer emits `hljs-*` spans). Expressive Code frames never carry these classes, and this
+ * file is not part of base.css, so Starlight pages pay no bytes for it. Same `--ocx-color-code-*`
+ * tokens as the code frames, which switch per scheme; no italics, as everywhere in the design.
+ * Rules sit in `@layer ocx`: an unlayered highlight.js theme loaded beside it overrides them.
+ * Import after base.css: `@import '@ocx-sh/theme/prose-code.css'`. */
+@layer ocx {
+  :is(pre, code) .hljs-comment,
+  :is(pre, code) .hljs-quote {
+    color: var(--ocx-color-code-comment);
+  }
+  :is(pre, code) :is(.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag, .hljs-type, .hljs-meta .hljs-keyword) {
+    color: var(--ocx-color-code-keyword);
+  }
+  :is(pre, code) :is(.hljs-string, .hljs-regexp, .hljs-addition, .hljs-template-tag, .hljs-meta .hljs-string) {
+    color: var(--ocx-color-code-string);
+  }
+  :is(pre, code) :is(.hljs-number, .hljs-symbol, .hljs-bullet, .hljs-link) {
+    color: var(--ocx-color-code-number);
+  }
+  :is(pre, code) :is(.hljs-title, .hljs-section, .hljs-built_in, .hljs-builtin-name, .hljs-selector-id, .hljs-selector-class) {
+    color: var(--ocx-color-code-function);
+  }
+  :is(pre, code)
+    :is(.hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable, .hljs-property, .hljs-name, .hljs-params) {
+    color: var(--ocx-color-code-variable);
+  }
+  :is(pre, code) :is(.hljs-meta, .hljs-punctuation, .hljs-operator, .hljs-subst, .hljs-formula) {
+    color: var(--ocx-color-code-punctuation);
+  }
+  :is(pre, code) .hljs-deletion {
+    color: var(--ocx-color-code-deleted);
+  }
+  :is(pre, code) :is(.hljs-emphasis, .hljs-strong) {
+    font-style: normal;
+  }
+}

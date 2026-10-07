@@ -84,4 +84,17 @@ describe('WP14 showcase coverage', () => {
     const files = (await findAstroFiles(starlightDir)).map((abs) => relative(starlightDir, abs).split('\\').join('/'));
     expect(new Set(files)).toEqual(new Set(Object.keys(STARLIGHT_OVERRIDES)));
   });
+
+  it('every packages/theme/src/layouts/*.astro is imported by a page of the example site', async () => {
+    const layouts = (await findAstroFiles(join(themeRoot, 'src', 'layouts'))).map((abs) =>
+      relative(join(themeRoot, 'src', 'layouts'), abs)
+        .split('\\')
+        .join('/'),
+    );
+    const pages = (await findAstroFiles(join(repoRoot, 'examples', 'starlight', 'src', 'pages'))).map((f) =>
+      readFileSync(f, 'utf8'),
+    );
+    const uncovered = layouts.filter((l) => !pages.some((src) => src.includes(`@ocx-sh/theme/layouts/${l}`)));
+    expect(uncovered, `no example page imports: ${uncovered.join(', ')}`).toEqual([]);
+  });
 });

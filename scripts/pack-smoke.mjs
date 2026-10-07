@@ -4,7 +4,7 @@
  *
  * Contract C-031 — the tarball's `exports` keys are exactly the design §4.1
  * list, each key resolves to a file inside the installed tarball, every JS
- * export (`./starlight`, `./nav`, `./icons`, `./toast`, `./toaster`) carries a `types` condition whose
+ * export (`./starlight`, `./nav`, `./icons`, `./toast`, `./toaster`, `./lazy`, `./csp`) carries a `types` condition whose
  * `.d.mts` (prepack emits them, gitignored) or committed hand-written `.d.ts`
  * sibling (`./nav`, `./icons`) is in the tarball, and no `.ts` source ships.
  *
@@ -48,6 +48,8 @@ const EXPORT_KEYS = [
   './starlight',
   './starlight/*.astro',
   './components/*.astro',
+  './layouts/*.astro',
+  './chrome',
   './nav.json',
   './nav',
   './vitepress',
@@ -56,6 +58,9 @@ const EXPORT_KEYS = [
   './toast',
   './toaster',
   './cycle-button',
+  './prose-code.css',
+  './lazy',
+  './csp',
 ];
 
 /**
@@ -67,6 +72,8 @@ const ZAG_WHEN = {
   'ui/TagGroup.astro': /\sselectionMode=/,
   // renders its clipboard root only when `first` exists, i.e. unless choices is the literal `[]`
   'ui/CommandBar.astro': /\schoices=\{(?!\[\]\})/,
+  // the navigation-menu root is the ocx.sh chrome's; a neutral header (`brand`) has none
+  'SiteHeader.astro': /^(?![\s\S]*\sbrand=)/,
 };
 
 /** @typedef {Record<string, string | Record<string, string>>} ExportsMap */
@@ -249,6 +256,8 @@ function main() {
       './toast',
       './toaster',
       './cycle-button',
+      './lazy',
+      './csp',
       '--format',
       'table',
     ]);
@@ -281,6 +290,7 @@ function main() {
       'src/components/showcase',
       'src/stories',
       'src/pages/stories',
+      'src/pages/shell',
       'public',
     ])
       // LivePreviews.astro serves /docs/previews/ (not copied) and imports a repo script by path.

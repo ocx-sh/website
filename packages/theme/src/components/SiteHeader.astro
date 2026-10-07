@@ -1,0 +1,163 @@
+---
+// Header tree shared by the Starlight `Header` override and Shell. Starlight-free: the search trigger
+// comes in through the `search` slot. Without `brand` it renders the ocx.sh chrome from nav.json
+// (sections, ecosystem menu, install, GitHub, theme toggle); with `brand` a neutral header (brand,
+// plain links, theme toggle). Classes are styled by base.css plus the block below.
+import ocx from '../nav.json';
+import logo from '../logo.svg?raw';
+import { isCurrent, sectionLinks } from '../nav.mjs';
+import EcosystemMenu from './EcosystemMenu.astro';
+import { NAV_ID, connect, ids, lean, machine, parts } from './navigation-menu.zag.mjs';
+import Icon from './ui/Icon.astro';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import ThemeSelect from '../starlight/ThemeSelect.astro';
+
+export interface Props {
+  /** ocx mode: the active section id (`data-ocx-active`). Neutral mode ignores it. */
+  active?: string;
+  /** Neutral mode: a mirror's own brand. Absent means the ocx.sh chrome. */
+  brand?: { title: string; wordmark?: string; logoSrc?: string; logoAlt?: string } | undefined;
+  /** Neutral mode: the header links. */
+  nav?: { label: string; href: string }[] | undefined;
+  /** Render a mobile menu button (native popover, no JavaScript) listing the sections / links. */
+  menu?: boolean;
+}
+
+const { active = '', brand, nav = [], menu = false } = Astro.props;
+const path = Astro.url.pathname;
+const base = import.meta.env.BASE_URL;
+// C-190: hover opens after 200 ms (Zag's default, pinned here), click toggles; the close delay
+// leaves room to cross from the trigger into the panel below it.
+const zag = { openDelay: 200, closeDelay: 300 };
+const part = parts(ssrApi(machine, connect, { ...zag, id: NAV_ID, ids }));
+const github = ocx.actions.find((a) => a.id === 'github');
+const install = ocx.actions.find((a) => a.id === 'install');
+const drawer = brand
+  ? nav.map((l) => ({ label: l.label, href: l.href, current: isCurrent(path, l.href, base) }))
+  : sectionLinks(ocx, path);
+---
+
+{/* The nav's `mount` runs in chrome.mjs, the page's one early script: a script of its own was one more
+early request, which cost Lighthouse performance (0.99) on pages whose LCP waits on a body stylesheet. */}
+<div class="ocx-header" data-ocx-active={brand ? undefined : active}>
+  {brand ? (
+    <a class="ocx-header__brand" href={import.meta.env.BASE_URL} aria-label={`${brand.title} home`}>
+      {brand.logoSrc && (
+        <span class="ocx-header__logo">
+          <img src={brand.logoSrc} width="20" height="20" alt={brand.logoAlt ?? ''} />
+        </span>
+      )}
+      <span>{brand.wordmark ?? brand.title}</span>
+    </a>
+  ) : (
+    /* D-R3 fallback: an inline copy, not <Logo>. Logo's global CSS would inline into every page
+    and push the HTML past the first-RTT window (plan_zag-adoption.md, Refinement D-R3). */
+    <a class="ocx-header__brand" href={ocx.brand.href} aria-label="ocx home">
+      <Fragment set:html={logo.replace('<svg ', '<svg width="20" height="20" aria-hidden="true" ')} />
+      <span>{ocx.brand.wordmark}</span>
+    </a>
+  )}
+  <slot name="search" />
+  <div class="ocx-header__end">
+    {brand ? (
+      <nav class="ocx-header__nav" aria-label="Main">
+        {nav.map((l) => (
+          <a href={l.href} aria-current={isCurrent(path, l.href, base) ? 'page' : undefined}>
+            {l.label}
+          </a>
+        ))}
+      </nav>
+    ) : (
+      <>
+        {/* The Zag root holds the nav and, as its sibling, the ecosystem Content: base.css's
+        `.ocx-header__nav a` rules and the <= 640px `display: none` never reach the panel. */}
+        <div
+          class="ocx-header__sections"
+          data-zag-root="navigation-menu"
+          data-zag-state="idle"
+          data-zag-id={NAV_ID}
+          data-zag-props={JSON.stringify(zag)}
+          {...ssrAttrs(lean(part.root, { nav: true }))}
+        >
+          <nav class="ocx-header__nav" aria-label="ocx sections">
+            <ul {...ssrAttrs(lean(part.list, { nav: true }))}>
+              {ocx.sections.map((s) => (
+                <li {...ssrAttrs(lean(part.item(s.id), { nav: true }))}>
+                  {'href' in s ? (
+                    <a
+                      href={s.href}
+                      data-ocx-section={s.id}
+                      {...ssrAttrs(lean(part.link(s.id, s.id === active), { nav: true }))}
+                    >
+                      {s.label}
+                    </a>
+                  ) : (
+                    /* C-192: `popovertarget` is the JS-off fallback; `mount` removes it on start. */
+                    <button
+                      {...ssrAttrs(lean(part.trigger(s.id, { ssr: true }), { nav: true }))}
+                      popovertarget={ids.content(s.id)}
+                      data-ocx-section={s.id}
+                      aria-current={s.id === active ? 'page' : undefined}
+                    >
+                      {s.label}
+                      <Icon name="chevron-down" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <EcosystemMenu />
+        </div>
+        {install && (
+          <a
+            class="ocx-header__install"
+            href={install.href}
+            data-ocx-section="install"
+            aria-current={active === 'install' ? 'page' : undefined}
+          >
+            {install.label}
+          </a>
+        )}
+      </>
+    )}
+    <span class="ocx-header__tools">
+      {!brand && github && (
+        <a class="ocx-header__tool" href={github.href} aria-label={github.label} rel="noopener">
+          <Icon name="github" class="ocx-header__tool-icon" />
+        </a>
+      )}
+      <ThemeSelect />
+      {menu && (
+        <button
+          class="ocx-header__tool ocx-header__menu"
+          type="button"
+          popovertarget="ocx-header-menu"
+          aria-label="Menu"
+        >
+          <Icon name="menu" class="ocx-header__tool-icon" />
+        </button>
+      )}
+    </span>
+  </div>
+  {menu && (
+    <nav id="ocx-header-menu" class="ocx-header__drawer" popover aria-label={brand ? 'Main' : 'ocx sections'}>
+      <ul>
+        {drawer.map((l) => (
+          <li>
+            {l.href ? (
+              <a href={l.href} aria-current={l.current ? 'page' : undefined}>
+                {l.label}
+              </a>
+            ) : (
+              <button type="button" popovertarget="ocx-ecosystem-menu">
+                {l.label}
+                <Icon name="chevron-down" />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )}
+</div>

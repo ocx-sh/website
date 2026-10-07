@@ -29,7 +29,8 @@ Missing a sibling? Install the whole set: `grim add ghcr.io/ocx-sh/lore/ocx-them
 Current claims: `/`, `/integrations/`, `/apps/`, `/install/` (ocx-sh/website),
 `/docs/`, `/schemas/` (ocx-sh/ocx), `/catalog/` (ocx-sh/index),
 `/integrations/bazel/` (ocx-sh/rules_ocx), `/integrations/python/`
-(ocx-sh/ocx-sdk-python), `/apps/catalog/` (ocx-sh/catalog). `nav.json` in the
+(ocx-sh/ocx-sdk-python), `/integrations/cmake/` (ocx-sh/find_ocx),
+`/apps/catalog/` (ocx-sh/catalog). `nav.json` in the
 installed theme is the live list.
 
 A new section is a pull request to `ocx-sh/website` adding a claim
@@ -41,6 +42,36 @@ release. Path grammar and the registry helpers: [references/nav-registry.md](ref
 ```bash
 pnpm add @ocx-sh/theme   # or npm install @ocx-sh/theme
 ```
+
+### Before the first release: pin a commit
+
+While a fix is unreleased, pin the website commit as a pnpm git-subdir dependency
+(pnpm 11). The leading slash in `path:/packages/theme` is the form tested; the
+slashless form also resolves:
+
+```bash
+pnpm add 'github:ocx-sh/website#<full-sha>&path:/packages/theme'
+```
+
+pnpm prepares a git package by running its `prepack` (declaration build, `tsc`);
+the theme lists `typescript` and `@types/node` as devDependencies for that, so no
+compiler is needed on `PATH`. pnpm refuses to run it until you allow the package,
+keyed by the codeload tarball URL of the pin, and `esbuild` needs its own entry
+(else `ERR_PNPM_IGNORED_BUILDS`):
+
+```yaml
+# pnpm-workspace.yaml
+allowBuilds:
+  esbuild: true
+  '@ocx-sh/theme@https://codeload.github.com/ocx-sh/website/tar.gz/<full-sha>#path:/packages/theme': true
+```
+
+The exact key is printed in the `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` message
+(a `file://` remote prints `@ocx-sh/theme@git+file://…#<sha>&path:/packages/theme`).
+Setting the entry to `false` also installs, but skips the generated `.d.mts` typings.
+A repin edits three places: the dependency, this key, and the deploy action `uses:`
+SHA (`ocx-theme-deploy`); Dependabot and Renovate cannot track a git SHA. Move to the
+npm version after the release.
 
 Peers: `astro ^7` and `@astrojs/starlight >=0.42.0 <0.43`. The upper bound is
 deliberate (the chrome CSS targets Starlight internals): a Starlight minor
@@ -109,8 +140,36 @@ overriding any of these; it lists merge rules and the exact override set.
 **Overriding `Search` drops four features.** The theme's `Search.astro` script
 also mounts the header nav menu, the mobile menu drawer, the sidebar
 collapsibles and the toaster (including copy toasts). The plugin logs a warning.
-Copy the `<script>` of `@ocx-sh/theme/starlight/Search.astro` into your
-override, or do not override `Search`.
+Call `mountChrome(document)` from `@ocx-sh/theme/chrome` in your override's
+`<script>`, or do not override `Search`.
+
+## Content porting notes
+
+- **Sidebar**: a Starlight sidebar generated from the file tree is wrong for generated
+  pages; list `sidebar` explicitly in `starlight({ ... })`.
+- **Edit this page**: the link shows only when the route has an `editUrl`. For generated pages
+  set `editUrl` in each page's frontmatter to the true source file (not the gitignored output),
+  or set Starlight's `editLink.baseUrl` for hand-written ones. There is no theme option.
+- **Heading ids**: Starlight slugs with github-slugger (an em dash becomes a double hyphen:
+  `bootstrap-only--ocx_install_`), unlike MkDocs. Starlight has no `{#id}` syntax. Rewrite
+  cross-page links to the slugger id and check every fragment against the built HTML.
+  Stardoc's `<a id=X></a>` above `## X` duplicates the heading id: drop the anchor when it
+  equals the next heading's id. `ocx-site check` does not flag repeated ids; add your own check.
+- **Sphinx to Starlight** (find_ocx, the third consumer): the port script reads the committed
+  `.rst` and never edits it, so Sphinx stays the source of truth. A directive or role it does
+  not know (`.. cmake:...`, `:cmake:...`) fails the port loudly with file and line; map it or
+  add a handler, never drop it silently. Then diff the built headings against the Sphinx
+  index, as for Stardoc and Griffe.
+- **Large generated pages** (Stardoc rule references, Griffe API modules, Sphinx indexes):
+  split them in the port script, one page per rule, module or section group. One page over
+  14,200 bytes gzipped fails the Lighthouse HTML budget (see `ocx-theme-quality`), and the
+  sidebar must list the parts explicitly.
+- **Sitemap**: do not add `@astrojs/sitemap`. Starlight already writes `sitemap-index.xml`
+  and `sitemap-0.xml` under your `base` (forced `site`). The root `robots.txt` gains your
+  sitemap line when your section goes live.
+- **Build warnings**: `collection i18n does not exist or is empty` is harmless. `Could not render
+  /404 … conflicts with /404` goes away with a `404.md` in the docs content. An unknown fence
+  language (`pycon`) warns; map it with `expressiveCode: { shiki: { langAlias: { pycon: 'python' } } }`.
 
 ## 6. Check the build
 
@@ -134,6 +193,67 @@ Header data for a non-Starlight site: `@ocx-sh/theme/nav.json` and the helpers
 in `@ocx-sh/theme/nav`; the logo is `@ocx-sh/theme/logo.svg` (inline it, never
 an `<img>`). On an Astro page, render it with `@ocx-sh/theme/components/ui/Logo.astro`
 instead. No mdBook or MkDocs adapter exists.
+
+### Shell: a plain Astro site
+
+`@ocx-sh/theme/layouts/Shell.astro` is the whole HTML document for an Astro
+site without Starlight: pre-paint theme script, `tokens.css`, `base.css`,
+`fonts.css` (plain `@font-face`, no Fonts API config needed; the four upright faces are
+preloaded, and the metric-matched fallbacks in `base.css` keep layout from shifting), the header, `<main id="main">`
+and the footer. Set `site` and `base` in Astro config; Shell validates no claim,
+`site` or `trailingSlash` (the Starlight plugin and `ocx-site check` do).
+`@astrojs/starlight` is an optional peer, so a Shell-only site needs only `astro`.
+With the theme linked from a local checkout (`file:`), add `vite: { resolve: { dedupe: ['astro'] } }`
+so the theme and the site share one Astro.
+
+```astro
+---
+import Shell from '@ocx-sh/theme/layouts/Shell.astro';
+---
+<Shell title="Packages" description="..."><h1>Packages</h1></Shell>
+```
+
+Props: `title` (required), `description`, `canonical` (default: the path on
+`Astro.site`), `activeSection` (ocx mode), `brand`, `nav`, `footer`. Slots:
+`head`, the default slot, `header-search` (empty means no search).
+
+- **ocx mode** (no `brand`): sections, ecosystem menu, install, GitHub and the
+  theme toggle from `nav.json`, and the `nav.json` footer with the licence line.
+  Shell links `<base>favicon.svg`, so ship that file in `public/` (copy
+  `@ocx-sh/theme/logo.svg`). Neutral mode without a head icon gets the empty `data:,` icon.
+- **Neutral mode** (`brand={{ title, wordmark?, logoSrc?, logoAlt? }}`): a mirror's own
+  brand (`logoSrc` renders an `<img>` with `logoAlt`, default empty, in a fixed
+  square token-sized box with `object-fit: contain`: the layout is identical with
+  images blocked; the wordmark text sits beside it; consumer SVG is never inlined), plain `nav` links with
+  `aria-current` when the path starts with the href (`/` and the base match
+  exactly, external hrefs never), the theme toggle and `footer={{ links, note? }}`.
+  `logoSrc`, nav and footer hrefs are used as given and must include the base.
+  Neutral mode emits an empty `<link rel="icon" href="data:,">` unless you fill the `head` slot
+  (add your own icon there), so the browser never requests a 404 `/favicon.ico`.
+  Without `footer` the footer is empty (no ocx links); without `note` there is no
+  licence line. `nav` or `footer` without
+  `brand` throws.
+- **CSP**: `INLINE_SCRIPT_HASHES` from `@ocx-sh/theme/csp` is the frozen list of
+  `sha256-<base64>` sources of every inline script Shell, `SiteHeader` and
+  `SiteFooter` emit (theme and platform scripts); put each in `script-src` as
+  `'sha256-…'`. Shell's bundled module script is external: allow it by `'self'`
+  (a build that inlines it needs `assetsInlineLimit: 0`, or that script's own hash).
+  The module is Node-only: import it in config or build code, never client code.
+- **Highlight.js in prose**: `@import '@ocx-sh/theme/prose-code.css'` (opt-in,
+  after base.css) colours `hljs-*` spans in a `<pre><code>` outside Expressive
+  Code from the `--ocx-color-code-*` tokens, in both schemes. The rules sit in
+  `@layer ocx`: never load an unlayered highlight.js theme beside it, it would win.
+- **Lazy widgets of your own**: `mount(root, { load, trigger?, replay? })` from
+  `@ocx-sh/theme/lazy` is the trigger layer the theme's Zag components use, with
+  no Zag import. It starts on the first `pointerenter`/`focusin`/`touchstart`
+  (`trigger: 'visible'` or `'manual'` + `handle.start()` otherwise), replays
+  one early click or activation key (`replay: false` disables), and sets `data-zag-state` to `idle`/`loading`/`live`/
+  `error` on `root`. `load` resolves to `{ start(root, firstEvent?) }`; a returned
+  `{ api, stop }` is kept as `handle.api` and stopped on `handle.destroy()`.
+- On narrow viewports a menu button opens a native popover list of the
+  sections (or `nav`): no JavaScript, no sidebar drawer.
+- The theme key is shared (`starlight-theme`), so a reader's theme carries
+  between sections on ocx.sh.
 
 ## Keep the theme current
 

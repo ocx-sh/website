@@ -163,10 +163,11 @@ describe('C-023 Header sections', () => {
   });
 
   it("C-192: Search.astro, the header's one early script, mounts the navigation-menu root", () => {
-    const src = readFileSync(new URL('../src/starlight/Search.astro', import.meta.url), 'utf8');
-    const script = src.split('<script>').slice(1).join('');
-    expect(script).toMatch(/querySelector<HTMLElement>\('\.ocx-header \[data-zag-root="navigation-menu"\]'\)/);
-    expect(script).toMatch(/mount\(nav, \{ load: \(\) => import\('\.\.\/components\/navigation-menu\.zag\.mjs'\) \}\)/);
+    const search = readFileSync(new URL('../src/starlight/Search.astro', import.meta.url), 'utf8');
+    expect(search.split('<script>').slice(1).join('')).toMatch(/mountChrome\(document\)/);
+    const script = readFileSync(new URL('../src/chrome.mjs', import.meta.url), 'utf8');
+    expect(script).toMatch(/querySelector\('\.ocx-header \[data-zag-root="navigation-menu"\]'\)/);
+    expect(script).toMatch(/mount\(nav, \{ load: \(\) => import\('\.\/components\/navigation-menu\.zag\.mjs'\) \}\)/);
   });
 
   it('D-Z21: no Hint (Zag tooltip) on header buttons', async () => {
@@ -174,9 +175,12 @@ describe('C-023 Header sections', () => {
   });
 
   it('C-130f: header and panel styles live in @layer ocx and use --ocx-* tokens only', () => {
-    for (const file of ['../src/starlight/Header.astro', '../src/components/EcosystemMenu.astro']) {
-      const css = readFileSync(new URL(file, import.meta.url), 'utf8').split('<style')[1] ?? '';
-      expect(css, file).toMatch(/^[^{]*>\s*@layer ocx\s*\{/);
+    for (const file of ['../src/base.css', '../src/starlight/Header.astro']) {
+      const raw = readFileSync(new URL(file, import.meta.url), 'utf8');
+      const css = file.endsWith('.css')
+        ? `>${raw.slice(raw.indexOf('/* ── Site chrome'))}`
+        : (raw.split('<style')[1] ?? '');
+      expect(css, file).toMatch(/^[^{]*>\s*(?:\/\*[^]*?\*\/\s*)?@layer ocx\s*\{/);
       expect(css.match(/var\(--(?!ocx-|_|sl-)[\w-]+/g) ?? [], file).toEqual([]);
       expect(css.match(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(/gi) ?? [], file).toEqual([]);
     }

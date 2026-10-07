@@ -17,6 +17,7 @@ import {
   examplePages,
   PRE_JS_VISIBLE,
   routeOf,
+  SHELL_PAGES,
   sitePages,
 } from '../tests/budgets.mjs';
 import { RETRY_RUNS } from './lighthouse.mjs';
@@ -67,14 +68,17 @@ describe('C-111 Lighthouse URL list', () => {
       mkdirSync(dirname(join(stories, f)), { recursive: true });
       writeFileSync(join(stories, f), '---\ntitle: t\nheight: 1\n---\n');
     }
-    expect(examplePages(docs, stories)).toEqual([
-      '/docs/',
-      '/docs/404.html',
-      '/docs/components/',
-      '/docs/components/planted/',
-      '/docs/stories/iconography/icon/default/',
-      '/docs/stories/planted/default/',
-    ]);
+    expect(examplePages(docs, stories)).toEqual(
+      [
+        '/docs/',
+        '/docs/404.html',
+        '/docs/components/',
+        '/docs/components/planted/',
+        '/docs/stories/iconography/icon/default/',
+        '/docs/stories/planted/default/',
+        ...SHELL_PAGES,
+      ].sort(),
+    );
     expect([...examplePages(), ...sitePages()]).toEqual(urls);
   });
 

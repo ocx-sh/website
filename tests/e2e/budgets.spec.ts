@@ -5,7 +5,7 @@
 // committed page).
 import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
-import { budgetOf, classOf, examplePages, HTML_GZ_MAX, PAGEFIND_GZ_MAX, sitePages } from '../budgets.mjs';
+import { budgetOf, classOf, examplePages, HTML_GZ_MAX, PAGEFIND_GZ_MAX, SHELL_PAGES, sitePages } from '../budgets.mjs';
 import { expectNoLeak } from './helpers/leak.ts';
 import { activate, MANUAL_ROOT, startManual, tagRoots, ZAG_ROOT } from './helpers/zag.ts';
 
@@ -109,8 +109,8 @@ for (const { path, project } of gated) {
     }
     // A real search: Pagefind's scripts (UI chunk, pagefind.js, worker) count toward pagefindGz; the
     // index, fragments and wasm it fetches are not scripts and count toward no JS metric. Story pages
-    // (C-125) have no chrome, so no search.
-    const chrome = cls !== 'story';
+    // (C-125) and Shell pages have no Starlight chrome, so no search.
+    const chrome = cls !== 'story' && !SHELL_PAGES.includes(path);
     if (chrome) {
       await page.keyboard.press('ControlOrMeta+k');
       await page.locator('#starlight__search .pagefind-ui__search-input').fill('install');

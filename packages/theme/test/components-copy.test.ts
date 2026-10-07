@@ -160,7 +160,8 @@ describe('C-181 toaster SSR in the Footer override', () => {
     const statics = [...glue.matchAll(/^import\s[^(]*?from\s*['"]([^'"]+)['"]/gm)].map((m) => m[1]);
     expect(statics).toEqual(['../components/ui/zag.mjs']);
     // It rides Search.astro's every-page script; the Footer has no script of its own (one request).
-    expect(source('../src/starlight/Search.astro')).toMatch(/installToaster\(document\)/);
+    expect(source('../src/chrome.mjs')).toMatch(/installToaster\(doc\)/);
+    expect(source('../src/starlight/Search.astro')).toMatch(/mountChrome\(document\)/);
     expect(source('../src/starlight/Footer.astro')).not.toMatch(/<script/);
     // Its inline copy of the title helper matches toast.mjs.
     expect(glue).toContain('`Copied ${text.length > 40 ? `${text.slice(0, 39)}…` : text}`');

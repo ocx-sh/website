@@ -197,6 +197,7 @@ describe('ocxTheme plugin', () => {
     expect(group?.name).toBe('zag');
     for (const id of [
       '/w/packages/theme/src/components/ui/zag.mjs',
+      '/w/packages/theme/src/components/ui/lazy.mjs',
       '\0vite/preload-helper.js',
       '/w/node_modules/@astrojs/starlight/dist/components-internals/TableOfContents/starlight-toc.js',
     ])
@@ -413,6 +414,8 @@ describe('C-031: package surface (declared)', () => {
         './starlight',
         './starlight/*.astro',
         './components/*.astro',
+        './layouts/*.astro',
+        './chrome',
         './nav.json',
         './nav',
         './vitepress',
@@ -421,12 +424,24 @@ describe('C-031: package surface (declared)', () => {
         './toast',
         './toaster',
         './cycle-button',
+        './prose-code.css',
+        './lazy',
+        './csp',
       ].sort(),
     );
   });
 
   it('C-031: JS exports put types first and default last, types beside the .mjs', () => {
-    for (const key of ['./starlight', './nav', './icons', './toast', './toaster', './cycle-button']) {
+    for (const key of [
+      './starlight',
+      './nav',
+      './icons',
+      './toast',
+      './toaster',
+      './cycle-button',
+      './lazy',
+      './csp',
+    ]) {
       const cond = exportsMap[key] as Record<string, string>;
       const names = Object.keys(cond);
       expect(names[0]).toBe('types');

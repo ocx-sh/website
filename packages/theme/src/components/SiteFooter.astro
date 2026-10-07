@@ -1,0 +1,33 @@
+---
+// Page footer shared by the Starlight `Footer` override and Shell (C-026): one mono line, links left,
+// note right, plus the toaster root. Without props it renders nav.json `footer` and the licence line.
+import ocx from '../nav.json';
+
+export interface Props {
+  links?: { label: string; href: string }[] | undefined;
+  note?: string | undefined;
+}
+
+const year = new Date().getFullYear();
+const { links = ocx.footer, note = `Apache-2.0 · © ${year} The OCX Authors` } = Astro.props;
+---
+
+<footer class="ocx-footer">
+  <span class="ocx-footer__links">
+    {links.map((l, i) => (i > 0 ? ['·', <a href={l.href}>{l.label}</a>] : <a href={l.href}>{l.label}</a>))}
+  </span>
+  {note && <span class="ocx-footer__license">{note}</span>}
+</footer>
+
+{/* C-181 toaster root: empty and polite from first paint, so the first toast is announced (its glue,
+  toaster.mjs, runs from Search.astro's every-page script). Every
+  other attribute of Zag's group part (role, label, id, placement, inline position) is spread when
+  the machine starts, before that toast is added: rendered here it would cost every page ~110 B gz. */}
+<div
+  data-zag-root="toast"
+  data-zag-state="idle"
+  data-zag-trigger="manual"
+  data-zag-id="ocx-toaster"
+  data-zag-props="{}"
+  aria-live="polite"
+></div>

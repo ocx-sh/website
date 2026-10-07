@@ -12,6 +12,8 @@ const pkg = () => ({
     './starlight': { types: './src/starlight/index.d.mts', default: './src/starlight/index.mjs' },
     './starlight/*.astro': './src/starlight/*.astro',
     './components/*.astro': './src/components/*.astro',
+    './layouts/*.astro': './src/layouts/*.astro',
+    './chrome': { types: './src/chrome.d.mts', default: './src/chrome.mjs' },
     './nav.json': './src/nav.json',
     './nav': { types: './src/nav.d.mts', default: './src/nav.mjs' },
     './vitepress': './src/vitepress/vitepress.css',
@@ -23,6 +25,9 @@ const pkg = () => ({
       types: './src/components/ui/cycle-button.d.mts',
       default: './src/components/ui/cycle-button.mjs',
     },
+    './prose-code.css': './src/prose-code.css',
+    './lazy': { types: './src/components/ui/lazy.d.mts', default: './src/components/ui/lazy.mjs' },
+    './csp': { types: './src/csp.d.mts', default: './src/csp.mjs' },
   } as Record<string, string | Record<string, string>>,
   bin: { 'ocx-site': './bin/ocx-site.mjs' },
 });
@@ -37,6 +42,9 @@ const FILES = [
   'src/starlight/index.d.mts',
   'src/starlight/Header.astro',
   'src/components/EcosystemMenu.astro',
+  'src/layouts/Shell.astro',
+  'src/chrome.mjs',
+  'src/chrome.d.mts',
   'src/nav.json',
   'src/nav.mjs',
   'src/nav.d.mts',
@@ -50,6 +58,11 @@ const FILES = [
   'src/starlight/toaster.d.mts',
   'src/components/ui/cycle-button.mjs',
   'src/components/ui/cycle-button.d.mts',
+  'src/prose-code.css',
+  'src/components/ui/lazy.mjs',
+  'src/components/ui/lazy.d.mts',
+  'src/csp.mjs',
+  'src/csp.d.mts',
 ];
 
 test('C-031 exactly the §4.1 export key set passes with no problems', () => {

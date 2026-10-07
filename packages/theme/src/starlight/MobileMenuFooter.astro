@@ -4,30 +4,14 @@
 // ecosystem menu trigger, which the header hides at ≤ 640px (C-023). A trigger
 // inside the open pane nests the menu under it, so the pane stays open.
 import nav from '../nav.json';
-import { activeSection } from '../nav.mjs';
+import { sectionLinks } from '../nav.mjs';
 import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import config from 'virtual:starlight/user-config';
 import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
 import Icon from '../components/ui/Icon.astro';
 import ThemeSelect from './ThemeSelect.astro';
 
-const path = Astro.url.pathname;
-const active = activeSection(nav, path);
-const links: { label: string; href?: string; current?: boolean }[] = [
-  ...nav.sections.flatMap((s) =>
-    'href' in s
-      ? [{ label: s.label, href: s.href, current: s.id === active }]
-      : [
-          { label: s.label },
-          ...nav.hubs
-            .filter((h) => s.hubs.includes(h.id))
-            .map((h) => ({ label: h.label, href: h.href, current: s.id === active && path.startsWith(h.href) })),
-        ],
-  ),
-  ...nav.actions
-    .filter((a) => a.id === 'install')
-    .map((a) => ({ label: a.label, href: a.href, current: active === a.id })),
-];
+const links = sectionLinks(nav, Astro.url.pathname);
 ---
 
 <nav class="ocx-mobile-sections" aria-label="ocx sections">

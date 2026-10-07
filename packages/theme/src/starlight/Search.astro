@@ -69,14 +69,10 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
 
 <script>
   import { mount } from '../components/ui/zag.mjs';
-  import { installToaster } from './toaster.mjs';
-  import { wireThemeToggles } from './theme-toggle.mjs';
+  import { mountChrome } from '../chrome.mjs';
 
-  // The Footer's toaster (C-181) starts here too: a Footer script was one more early request.
-  installToaster(document);
-  // The theme toggle (ThemeSelect) is a CycleButton; its one delegated click listener installs here
-  // for every CycleButton on the page, so neither ThemeSelect nor CycleButton ships a script.
-  wireThemeToggles();
+  // Toaster, theme toggles, header nav, sidebar groups and mobile drawer (chrome.mjs): one early script.
+  mountChrome(document);
 
   // The outline's marker fades only after the reader scrolls or points at it (starlight.css,
   // D-R7 c): the TOC's init pass, which marks the first entry, stays a snap.
@@ -88,39 +84,6 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
   }
 
   type Api = { open: boolean; setOpen: (open: boolean) => void };
-
-  // The header section nav (Header.astro, C-192) mounts here, in the header's one early script: a
-  // script of its own was one more early request (a Lighthouse round trip). It loads on the first
-  // pointerenter/focusin on the nav (C-113); with this Search overridden, it stays native (C-192).
-  const nav = document.querySelector<HTMLElement>('.ocx-header [data-zag-root="navigation-menu"]');
-  if (nav) mount(nav, { load: () => import('../components/navigation-menu.zag.mjs') });
-
-  // The sidebar and the mobile menu mount here too, for the same reason (C-230, C-231). With this
-  // Search overridden, nested sidebar groups show their content (the error fallback) and the pane
-  // stays Starlight's native popover. Each nested group loads its collapsible on first touch.
-  // The mark tells the sidebar's inline script a mount runs; without it the groups open as a fallback.
-  const sidebar = document.getElementById('starlight__sidebar');
-  const persist = sidebar?.querySelector<HTMLElement>('sl-sidebar-state-persist');
-  if (persist) persist.dataset['mounted'] = '';
-  for (const group of sidebar?.querySelectorAll<HTMLElement>('[data-zag-root="collapsible"]') ?? [])
-    mount(group, { load: () => import('../components/collapsible.zag.mjs') });
-  // The mobile menu toggle's first tap loads the drawer and opens it on that tap; after a load error
-  // the pane opens through its native popover instead (S-102), and later taps are the popover's.
-  const menu = document.querySelector<HTMLElement>('.ocx-menu[data-zag-root="drawer"]');
-  if (menu) {
-    const drawer = mount(menu, { load: () => import('./mobile-menu.zag.mjs'), trigger: 'manual', replay: false });
-    menu.querySelector('button')?.addEventListener('click', () => {
-      if (menu.dataset['zagState'] !== 'idle') return;
-      // Opened natively by a tap before this script ran: this tap is the popover's (it closes it);
-      // the machine starts on the next one.
-      if (sidebar?.matches(':popover-open')) return;
-      void drawer.start().then(() => {
-        const api = drawer.api as Api | undefined;
-        if (api) api.setOpen(true);
-        else sidebar?.showPopover();
-      });
-    });
-  }
 
   const root = document.querySelector<HTMLElement>('site-search[data-zag-root="dialog"]');
   if (root) {

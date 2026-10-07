@@ -8,8 +8,7 @@ const read = (path: string) => readFileSync(new URL(`../src/${path}`, import.met
 describe('chrome misc', () => {
   it.each([
     ['components/CopyButton.astro', '--ocx-icon-ms'],
-    ['starlight/Header.astro', '--ocx-icon-ml'],
-    ['starlight/ThemeSelect.astro', '--ocx-icon-ml'],
+    ['base.css', '--ocx-icon-ml'],
   ])('%s sizes its icon by %s, no raw px', (file, token) => {
     const src = read(file);
     expect(src).toContain(`inline-size: var(${token})`);

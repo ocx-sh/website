@@ -4,9 +4,7 @@
 // `<starlight-theme-select>`, which ThemeSelect.astro replaces: ~850 B gzip of dead weight on every
 // page (htmlGz). Same storage key and fallback as Starlight's; `auto` or no entry follows the OS.
 // Hand-minified, as every page carries it.
+import { THEME_SCRIPT } from '../head-scripts.mjs';
 ---
 
-<script
-  is:inline
-  set:html={`(()=>{let t;try{t=localStorage.getItem('starlight-theme')}catch{}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.dataset.theme=t})()`}
-/>
+<script is:inline set:html={THEME_SCRIPT} />

@@ -10,3 +10,8 @@ export function activeSection(nav: Nav, pathname: string): string;
 export * from './registry.mjs';
 export { PAGEFIND_VERSION } from './check/pagefind.mjs';
 export type Nav = import('./registry.mjs').Nav;
+/**
+ * The header's section links as one flat list for the mobile menu: link sections, a label-only entry
+ * for the ecosystem menu followed by its hubs, then the install action.
+ */
+export function sectionLinks(nav: Nav, pathname: string): { label: string; href?: string; current?: boolean }[];

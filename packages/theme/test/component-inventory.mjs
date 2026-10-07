@@ -7,9 +7,9 @@
  * @type {Record<string, { parent: string; page: string }>}
  */
 export const COMPONENT_EXEMPT = {
-  // EcosystemMenu is the header's mega-menu panel: opened from Header.astro's popovertarget button,
+  // EcosystemMenu is the header's mega-menu panel: opened from SiteHeader.astro's popovertarget button,
   // present as page chrome on every page, not a standalone showcase demo.
-  'EcosystemMenu.astro': { parent: 'starlight/Header.astro', page: 'page chrome on every page' },
+  'EcosystemMenu.astro': { parent: 'SiteHeader.astro', page: 'page chrome on every page' },
   // The number stepper's script, rendered by Input only for a stepped number field, so a text or
   // search Input keeps ~400 B gz of inline script out of its page.
   'ui/NumberStepperScript.astro': { parent: 'ui/Input.astro', page: 'components/input' },
@@ -22,7 +22,7 @@ export const COMPONENT_EXEMPT = {
 export const STARLIGHT_OVERRIDES = {
   'Footer.astro': 'page chrome on every page',
   'Head.astro': 'document head, not renderable content',
-  'Header.astro': 'page chrome on every page (also renders EcosystemMenu)',
+  'Header.astro': 'page chrome on every page (renders SiteHeader)',
   'MarkdownContent.astro': 'wraps every page body; not a demoable component on its own',
   'MobileMenuFooter.astro': 'page chrome inside the mobile nav on every page',
   'MobileMenuToggle.astro': 'page chrome: the mobile menu button on every page with a sidebar',

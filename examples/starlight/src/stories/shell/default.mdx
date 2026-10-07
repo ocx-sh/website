@@ -1,0 +1,14 @@
+---
+title: ocx.sh header and footer
+description: The ocx.sh chrome as Shell renders it, with the sections, ecosystem menu, install link, GitHub link and theme toggle.
+height: 200
+block: true
+---
+
+import MountChrome from '../../components/showcase/MountChrome.astro';
+import SiteHeader from '@ocx-sh/theme/components/SiteHeader.astro';
+import SiteFooter from '@ocx-sh/theme/components/SiteFooter.astro';
+
+<SiteHeader active="docs" />
+<SiteFooter />
+<MountChrome />

@@ -1,0 +1,9 @@
+---
+// A story page has no chrome script of its own; the shell stories mount the header and footer
+// the way Shell and Search.astro do.
+---
+
+<script>
+  import { mountChrome } from '@ocx-sh/theme/chrome';
+  mountChrome(document);
+</script>

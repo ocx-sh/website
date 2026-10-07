@@ -1,98 +1,17 @@
 ---
-// Starlight `Header` override rendering the canonical OCX header tree
-// (classes styled by base.css; mock OcxHeader deltas below). Starlight already
-// wraps this in <header class="header">, which is the size container.
-// Through the virtual module, so the configured Search override (ours or a consumer's) renders.
+// Starlight `Header` override: SiteHeader with the configured Search in its slot. Starlight already
+// wraps this in <header class="header">, which is the size container. Through the virtual module, so
+// the configured Search override (ours or a consumer's) renders. The rules below style Starlight's own
+// markup (<site-search>, the sidebar menu button); the header tree's are SiteHeader's.
 import Search from 'virtual:starlight/components/Search';
 import nav from '../nav.json';
-import logo from '../logo.svg?raw';
 import { activeSection } from '../nav.mjs';
-import EcosystemMenu from '../components/EcosystemMenu.astro';
-import { NAV_ID, connect, ids, lean, machine, parts } from '../components/navigation-menu.zag.mjs';
-import Icon from '../components/ui/Icon.astro';
-import { ssrApi, ssrAttrs } from '../components/ui/zag-runtime.mjs';
-import ThemeSelect from './ThemeSelect.astro';
-
-const active = activeSection(nav, Astro.url.pathname);
-// C-190: hover opens after 200 ms (Zag's default, pinned here), click toggles; the close delay
-// leaves room to cross from the trigger into the panel below it.
-const zag = { openDelay: 200, closeDelay: 300 };
-const part = parts(ssrApi(machine, connect, { ...zag, id: NAV_ID, ids }));
-const github = nav.actions.find((a) => a.id === 'github');
-const install = nav.actions.find((a) => a.id === 'install');
+import SiteHeader from '../components/SiteHeader.astro';
 ---
 
-{/* The nav's `mount` runs in Search.astro's every-page script: a script of its own was one more
-early request, which cost Lighthouse performance (0.99) on pages whose LCP waits on a body stylesheet. */}
-<div class="ocx-header" data-ocx-active={active}>
-  {/* D-R3 fallback: an inline copy, not <Logo>. Logo's global CSS would inline into every page
-  and push the HTML past the first-RTT window (plan_zag-adoption.md, Refinement D-R3). */}
-  <a class="ocx-header__brand" href={nav.brand.href} aria-label="ocx home">
-    <Fragment set:html={logo.replace('<svg ', '<svg width="20" height="20" aria-hidden="true" ')} />
-    <span>{nav.brand.wordmark}</span>
-  </a>
-  <Search />
-  <div class="ocx-header__end">
-    {/* The Zag root holds the nav and, as its sibling, the ecosystem Content: base.css's
-    `.ocx-header__nav a` rules and the ≤ 640px `display: none` never reach the panel. */}
-    <div
-      class="ocx-header__sections"
-      data-zag-root="navigation-menu"
-      data-zag-state="idle"
-      data-zag-id={NAV_ID}
-      data-zag-props={JSON.stringify(zag)}
-      {...ssrAttrs(lean(part.root, { nav: true }))}
-    >
-      <nav class="ocx-header__nav" aria-label="ocx sections">
-        <ul {...ssrAttrs(lean(part.list, { nav: true }))}>
-          {nav.sections.map((s) => (
-            <li {...ssrAttrs(lean(part.item(s.id), { nav: true }))}>
-              {'href' in s ? (
-                <a
-                  href={s.href}
-                  data-ocx-section={s.id}
-                  {...ssrAttrs(lean(part.link(s.id, s.id === active), { nav: true }))}
-                >
-                  {s.label}
-                </a>
-              ) : (
-                /* C-192: `popovertarget` is the JS-off fallback; `mount` removes it on start. */
-                <button
-                  {...ssrAttrs(lean(part.trigger(s.id, { ssr: true }), { nav: true }))}
-                  popovertarget={ids.content(s.id)}
-                  data-ocx-section={s.id}
-                  aria-current={s.id === active ? 'page' : undefined}
-                >
-                  {s.label}
-                  <Icon name="chevron-down" />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <EcosystemMenu />
-    </div>
-    {install && (
-      <a
-        class="ocx-header__install"
-        href={install.href}
-        data-ocx-section="install"
-        aria-current={active === 'install' ? 'page' : undefined}
-      >
-        {install.label}
-      </a>
-    )}
-    <span class="ocx-header__tools">
-      {github && (
-        <a class="ocx-header__tool" href={github.href} aria-label={github.label} rel="noopener">
-          <Icon name="github" class="ocx-header__tool-icon" />
-        </a>
-      )}
-      <ThemeSelect />
-    </span>
-  </div>
-</div>
+<SiteHeader active={activeSection(nav, Astro.url.pathname)}>
+  <Search slot="search" />
+</SiteHeader>
 
 <style is:global>
   @layer ocx {
@@ -100,22 +19,6 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
        measured on Starlight's own <header>, which spans the viewport. */
     header.header {
       container: ocx-header / inline-size;
-    }
-
-    .ocx-header {
-      /* Mark height; the wordmark is 0.7× of it. */
-      --_mark: calc(var(--ocx-space-5) + var(--ocx-space-2));
-    }
-    .ocx-header__brand svg {
-      width: var(--_mark);
-      height: var(--_mark);
-    }
-    .ocx-header__brand span {
-      font-family: var(--ocx-font-mono);
-      font-size: calc(var(--_mark) * 0.7);
-      font-weight: var(--ocx-font-weight-semibold);
-      line-height: 1; /* no line-height token yet (WP3) */
-      text-transform: lowercase;
     }
 
     /* Starlight's <site-search> trigger in the mock's box: mono label, ⌘K kbd. */
@@ -141,108 +44,6 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
       padding: 0;
       background: none;
       border: 0;
-    }
-
-    /* The Zag root wraps the nav and the panel without a box of its own. */
-    .ocx-header__sections {
-      display: contents;
-    }
-    /* Section list: base.css lays the nav out; the Zag list and items carry that row. */
-    .ocx-header__nav ul {
-      display: flex;
-      align-items: center;
-      gap: inherit;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .ocx-header__nav li {
-      display: flex;
-    }
-
-    /* Sections: <a> and the ecosystem <button> share one look (base.css styles <a> only). The
-       active one's underline is plain CSS on aria-current, final at first paint (C-190). */
-    .ocx-header__nav button {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--ocx-space-2);
-      padding: var(--ocx-space-5) var(--ocx-space-1);
-      background: none;
-      border: 0;
-      border-bottom: var(--ocx-border-width-strong) solid transparent;
-      border-radius: var(--ocx-radius-md);
-      font-family: var(--ocx-font-mono);
-      font-size: var(--ocx-text-sm);
-      font-weight: var(--ocx-font-weight-medium);
-      white-space: nowrap;
-      color: var(--ocx-color-fg-muted);
-      cursor: pointer;
-      transition: color var(--ocx-duration-base);
-    }
-    .ocx-header__nav button:hover {
-      color: var(--ocx-color-fg);
-    }
-    .ocx-header__nav button svg {
-      width: var(--ocx-space-4);
-      height: var(--ocx-space-4);
-      color: var(--ocx-color-fg-subtle);
-    }
-    .ocx-header__nav :is(a, button)[aria-current] {
-      color: var(--ocx-color-accent-fg);
-      border-bottom-color: var(--ocx-color-accent);
-    }
-    /* Menu open: the trigger reads as active text, without the underline. */
-    .ocx-header:has(.ocx-mega:popover-open) .ocx-header__nav button {
-      color: var(--ocx-color-accent-fg);
-    }
-    .ocx-header:has(.ocx-mega:popover-open) .ocx-header__nav button svg {
-      rotate: 180deg;
-    }
-    /* D-R7 c: the chevron turns only once the nav is live, so first paint is final. */
-    .ocx-header__sections[data-zag-state='live'] .ocx-header__nav button svg {
-      transition: rotate var(--ocx-duration-base) var(--ocx-ease-out);
-    }
-
-    .ocx-header__install {
-      display: inline-flex;
-      align-items: center;
-      flex-shrink: 0;
-      height: calc(var(--ocx-space-7) - var(--ocx-space-1));
-      padding: 0 var(--ocx-space-4);
-      font-family: var(--ocx-font-mono);
-      font-size: var(--ocx-text-sm);
-      font-weight: var(--ocx-font-weight-medium);
-      white-space: nowrap;
-      color: var(--ocx-color-fg);
-      background: transparent;
-      border: var(--ocx-border-width) solid var(--ocx-color-border);
-      border-radius: var(--ocx-radius-md);
-      transition: border-color var(--ocx-duration-base);
-    }
-    .ocx-header__install:hover {
-      border-color: var(--ocx-color-border-strong);
-    }
-    .ocx-header__install[aria-current] {
-      color: var(--ocx-color-accent-fg);
-      background: var(--ocx-color-accent-tint);
-      border: var(--ocx-border-width-emphasis) solid var(--ocx-color-accent);
-    }
-
-    .ocx-header__tools {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--ocx-space-1);
-      flex-shrink: 0;
-    }
-    .ocx-header__tool-icon {
-      inline-size: var(--ocx-icon-ml);
-      block-size: var(--ocx-icon-ml);
-    }
-
-    .ocx-header :is(a, button):focus-visible,
-    .ocx-header site-search > button:focus-visible {
-      outline: var(--ocx-focus-ring);
-      outline-offset: calc(var(--ocx-focus-offset) * -1);
     }
 
     /* Starlight's fixed mobile menu toggle sits over the header's right edge:
@@ -275,27 +76,18 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
       background: var(--ocx-color-surface-subtle);
     }
 
+    .ocx-header site-search > button:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(var(--ocx-focus-offset) * -1);
+    }
+
     @container ocx-header (max-width: 960px) {
-      .ocx-header,
-      .ocx-header__end,
-      .ocx-header__nav {
-        gap: var(--ocx-space-4);
-      }
-      .ocx-header {
-        padding-inline-start: var(--ocx-space-5);
-      }
       .ocx-header site-search > button {
         width: var(--ocx-space-7);
         padding: 0;
         justify-content: center;
       }
       .ocx-header site-search > button > :not(svg) {
-        display: none;
-      }
-    }
-    @container ocx-header (max-width: 640px) {
-      .ocx-header__nav,
-      .ocx-header__install {
         display: none;
       }
     }
