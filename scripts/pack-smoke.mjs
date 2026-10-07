@@ -181,14 +181,15 @@ export function checkFixture({ components, pages, html, exempt, stories = {}, st
  * @param {string} cwd
  * @param {string} cmd
  * @param {string[]} args
+ * @param {RegExp} [tolerate] a non-zero exit whose output matches is not an error
  * @returns {{ stdout: string, all: string }} stdout, and stdout + stderr
  */
-function run(step, cwd, cmd, args) {
+function run(step, cwd, cmd, args, tolerate) {
   process.stderr.write(`pack-smoke: ${step}: ${cmd} ${args.join(' ')}\n`);
   const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', maxBuffer: 64 << 20 });
   const all = `${r.stdout ?? ''}${r.stderr ?? ''}`;
   if (r.error) throw new Error(`${step}: cannot spawn ${cmd}: ${r.error.message}`);
-  if (r.status !== 0) throw new Error(`${step}: exited ${String(r.status)}\n${all}`);
+  if (r.status !== 0 && !tolerate?.test(all)) throw new Error(`${step}: exited ${String(r.status)}\n${all}`);
   return { stdout: r.stdout, all };
 }
 
@@ -255,8 +256,16 @@ function main() {
     // `auto-corrected`) when publishing from a package dir. --offline: no
     // registry round-trip, so the result never depends on network or on
     // whether this version is already published. --ignore-scripts: prepack
-    // already ran for the tarball above.
-    const dryRun = run('publish --dry-run', THEME, 'npm', ['publish', '--dry-run', '--offline', '--ignore-scripts']);
+    // already ran for the tarball above. npm 11 still refuses a version the registry
+    // cache already knows (the tree sits at the last release between bumps): that one
+    // error is tolerated, every manifest warning printed before it is still checked.
+    const dryRun = run(
+      'publish --dry-run',
+      THEME,
+      'npm',
+      ['publish', '--dry-run', '--offline', '--ignore-scripts'],
+      /cannot publish over the previously published/,
+    );
     noAutoCorrect(dryRun.all, 'publish --dry-run');
 
     // C-032: the tarball installed into a fresh fixture consumer.
