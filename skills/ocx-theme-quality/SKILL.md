@@ -71,6 +71,29 @@ page.
 - **Contrast and focus** come from tokens (`ocx-theme-theming`); a raw colour
   is the usual cause of an accessibility drop.
 
+## Consumer Lighthouse recipe
+
+Three consumers (rules_ocx, ocx-sdk-python, find_ocx) run the same pipeline
+from `site/`; copy it, do not reinvent it.
+
+- Copy a trimmed `scripts/lighthouse.mjs` from `ocx-sh/website` into `site/`,
+  with a `lighthouse.budgets.mjs` (budgets, lhci assert matrix, page
+  discovery). Build, serve with `astro preview` under the claimed `base`,
+  audit every built page mobile, judge with lhci's assertion engine; a failing
+  page reruns up to 3 times and is judged on its median run. Sequential and
+  uncached is fine at about 20 pages.
+- Budgets start from the `content` class of the theme's `tests/budgets.mjs`
+  and never go above it.
+- `HTML_GZ_MAX` is 14,200 bytes per page. A long generated reference page
+  (Stardoc, Griffe, Sphinx) blows it: split it into several pages in the port
+  script, never raise the cap.
+- `404.html` is not auditable under `astro preview`: the server answers it with
+  status 404, so leave it out of page discovery.
+- After pinning the theme as a git dependency, refresh the pnpm lockfile
+  (`pnpm install`); a stale lockfile fails CI or audits the old theme.
+- Run the full audit only at finalize; before that, check the config and unit
+  test the budgets.
+
 ## When the score drops
 
 1. Rebuild and rerun Lighthouse on the one page; read the failing audit.

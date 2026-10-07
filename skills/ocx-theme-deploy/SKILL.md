@@ -30,7 +30,7 @@ These need account access; ask the owner, never try them from CI:
 1. The repo's claim exists in `nav.json` in a released theme
    (`ocx-theme-setup`, `references/nav-registry.md`).
 2. The owner runs `task bunny:onboard` in `ocx-sh/website`. It creates the
-   storage zone `sh-ocx-<repo>` (`ocx-sh/rules_ocx` → `sh-ocx-rules-ocx`) and
+   storage zone `sh-ocx-<repo>` (`ocx-sh/rules_ocx` → `sh-ocx-rules-ocx`, `ocx-sh/find_ocx` → `sh-ocx-find-ocx`) and
    stores its password as the secret `BUNNY_STORAGE_KEY` in the repo's GitHub
    environment `ocx.sh`, limited to the `main` branch.
 
@@ -81,6 +81,12 @@ jobs:
           dist: dist
           storage-key: ${{ secrets.BUNNY_STORAGE_KEY }}
 ```
+
+Before the first release, pin the full SHA of the `ocx-sh/website` commit that the
+theme pin also uses and write the branch as the comment (`# feat/phase3-pilots`). Bump
+theme and action SHA together: the action aborts on a Pagefind version mismatch. A
+branch comment and a pnpm git dependency are invisible to Dependabot and Renovate, so
+repin by hand until the npm release; after it, both pins fall under the bot.
 
 Replace the all-zero SHA and `# v0.0.0` with the full commit SHA of the
 `ocx-sh/website` release you adopt and its tag. Pin every `uses:` to a full
