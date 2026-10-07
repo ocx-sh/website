@@ -131,7 +131,10 @@ describe('crawl', () => {
     graph['/bunny'] = { status: 301, location: 'http://sh-ocx.b-cdn.net/x' };
     graph['/'] = { html: page('/off', '/bunny') };
     const asked: string[] = [];
-    const get: typeof liveGet = (url) => (asked.push(url), liveGet(url));
+    const get: typeof liveGet = (url) => (
+      asked.push(url),
+      url.startsWith(origin) ? liveGet(url) : Promise.resolve({ status: 404, location: undefined, html: '' })
+    ); // off-origin stub: never the network
     expect((await crawl({ origin, get })).urls).toEqual(['/']);
     expect(asked.some((u) => u.includes('elsewhere'))).toBe(false);
     expect(asked.some((u) => u.includes('sh-ocx.b-cdn.net'))).toBe(true);
