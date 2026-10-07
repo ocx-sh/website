@@ -1,0 +1,26 @@
+---
+title: Panels of different lengths
+description: Every panel shares one cell, so the area keeps the tallest panel's height and a switch only crossfades the text.
+height: 200
+order: 4
+prose: true
+---
+
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+
+<Tabs>
+  <TabItem label="One line">
+    ```sh
+    curl -fsSL setup.ocx.sh | sh
+    ```
+  </TabItem>
+  <TabItem label="Four lines">
+    ```sh
+    curl -fsSL setup.ocx.sh -o setup.sh
+    sh setup.sh
+    ocx --version
+    ocx init
+    ```
+  </TabItem>
+</Tabs>

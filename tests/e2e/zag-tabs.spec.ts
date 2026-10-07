@@ -78,6 +78,7 @@ test.describe('Tabs', () => {
     await page.keyboard.press('ArrowRight'); // may arrive before the machine is live
     await expect(root).toHaveAttribute('data-zag-state', 'live');
     const expectSelected = async (i: number) => {
+      await settle(page); // the leaving panel stays visible (and in the a11y tree) for its exit fade
       const t = root.getByRole('tab').nth(i);
       await expect(t).toHaveAttribute('aria-selected', 'true');
       await expect(t).toBeFocused();
@@ -122,6 +123,75 @@ test.describe('Tabs', () => {
     await live(demo(page));
     await tab(demo(page), 'Nushell').click();
     await expect(page.locator('#story [role="log"] li').first()).toHaveText('ocx:tabs:change {"value":"nushell"}');
+  });
+
+  test('a switch crossfades both panels in a box that never changes height; hidden panels stay out of reach', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __cls: number };
+      w.__cls = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[])
+          if (!e.hadRecentInput) w.__cls += e.value;
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(`${STORY}panels-of-different-lengths/`);
+    await page.evaluate(() => document.fonts.ready);
+    const root = demo(page);
+    const panels = root.locator(':scope > [data-part="content"]');
+    const height = async () => (await root.boundingBox())!.height;
+    const before = await height();
+    const cls0 = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+    // Both panels are laid out in one cell: equal boxes, whichever is shown.
+    const boxes = await panels.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+    expect(boxes[0]).toBe(boxes[1]);
+
+    await live(root);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Animation.enable');
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.1 });
+    await tab(root, 'Four lines').click();
+    const running = () =>
+      panels.evaluateAll((els) =>
+        els.map((e) =>
+          e
+            .getAnimations()
+            .some((a) => a instanceof CSSTransition && a.transitionProperty === 'opacity' && a.playState === 'running'),
+        ),
+      );
+    await expect.poll(running).toEqual([true, true]);
+    expect(await height(), 'during').toBe(before);
+    await settle(page);
+    await cdp.detach();
+    expect(await height(), 'after').toBe(before);
+    await tab(root, 'One line').click();
+    await settle(page);
+    expect(await height(), 'back').toBe(before);
+    expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBe(cls0);
+
+    // The hidden panel is laid out but unreachable: no a11y node, no tab stop, no visibility.
+    await expect(root.getByRole('tabpanel')).toHaveCount(1);
+    const hidden = panels.filter({ hasNot: page.locator(':scope:not([hidden])') });
+    await expect(hidden).toHaveCount(1);
+    expect(await hidden.evaluate((e) => getComputedStyle(e).visibility)).toBe('hidden');
+
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
+      await settle(page);
+      const { violations } = await new AxeBuilder({ page }).include('[data-zag-root="tabs"]').analyze();
+      expect(
+        violations.map((v) => v.id),
+        theme,
+      ).toEqual([]);
+    }
+
+    // Reduced motion: the switch runs no transition at all.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await tab(root, 'Four lines').click();
+    expect(await running()).toEqual([false, false]);
+    expect(await height()).toBe(before);
   });
 
   test('C-151 S-105 a choice switches every synced group, persists, and restores on load without JS', async ({
@@ -195,7 +265,7 @@ test.describe('Tabs', () => {
     expect(errors).toEqual([]);
   });
 
-  test('C-151 the clicked tab keeps its viewport position while a group above changes height', async ({ page }) => {
+  test('C-151 the clicked tab keeps its viewport position when a group above switches', async ({ page }) => {
     // A viewport shorter than the story, so the page has room to scroll and keep the tab in place.
     await page.setViewportSize({ width: 1280, height: 160 });
     await page.goto(SYNCED);
@@ -208,7 +278,7 @@ test.describe('Tabs', () => {
     await target.click();
     await expect(target).toHaveAttribute('aria-selected', 'true');
     await expect(tab(demo(page), 'PowerShell')).toHaveAttribute('aria-selected', 'true');
-    expect((await demo(page).boundingBox())!.height, 'the demo group changed height').not.toBe(heightBefore);
+    expect((await demo(page).boundingBox())!.height, 'panels share one cell: no height change').toBe(heightBefore);
     expect(Math.abs((await target.boundingBox())!.y - y)).toBeLessThanOrEqual(1);
   });
 

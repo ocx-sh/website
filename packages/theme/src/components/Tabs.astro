@@ -133,15 +133,28 @@ const restore =
     .ocx-tabs > [data-part='content'] {
       margin-top: var(--ocx-space-5);
     }
-    /* The panel shown fades in; live roots only, so the SSR panel is final at first paint. No exit
-       fade (D-R8): the leaving panel would have to stack with the new one. */
-    .ocx-tabs[data-zag-state='live'] > [data-part='content'] {
-      transition: opacity var(--ocx-duration-enter) var(--ocx-ease-out);
+    /* All panels share one grid cell, so the area is as tall as the tallest panel from the first paint
+       and a switch never moves the page. A hidden panel keeps `visibility: hidden` instead of
+       `display: none`: out of the a11y tree, tab order and find-in-page, yet still laid out. */
+    .ocx-tabs {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
     }
-    .ocx-tabs[data-zag-state='live'] > [data-part='content']:not([hidden]) {
-      @starting-style {
-        opacity: 0;
-      }
+    .ocx-tabs > [data-part='content'] {
+      grid-area: 2 / 1;
+    }
+    .ocx-tabs > [data-part='content'][hidden] {
+      display: block;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* A switch crossfades the leaving and the entering panel. Live roots only, so the SSR panel is
+       final at first paint; no @starting-style, the panels are always rendered. */
+    .ocx-tabs[data-zag-state='live'] > [data-part='content'] {
+      transition:
+        opacity var(--ocx-duration-enter) var(--ocx-ease-out),
+        visibility var(--ocx-duration-enter) var(--ocx-ease-out);
     }
     /* Around a lone code frame the strip and the frame read as one panel. */
     .ocx-tabs:has(> [data-part='content'] > .expressive-code:only-child) > [data-part='list'] {

@@ -325,4 +325,24 @@ describe('S-001 shell icons are registry icons and C-130f CSS', () => {
     expect(css).not.toContain('url(');
     expect(read('starlight/starlight.css')).not.toContain('starlight-tabs');
   });
+
+  it('panels stack in one grid cell; a hidden panel stays laid out but invisible; the crossfade is live-only', () => {
+    const css = /<style is:global>([\s\S]*)<\/style>/.exec(read('components/Tabs.astro'))?.[1] ?? '';
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    const rule = (sel: string) =>
+      bare
+        .split('}')
+        .filter((b) => b.split('{')[0]!.trim() === sel)
+        .join('}');
+    expect(rule('.ocx-tabs')).toMatch(/display: grid/);
+    expect(rule(".ocx-tabs > [data-part='content']")).toMatch(/grid-area: 2 \/ 1/);
+    const hidden = rule(".ocx-tabs > [data-part='content'][hidden]");
+    expect(hidden).toMatch(/display: block/);
+    expect(hidden).toMatch(/visibility: hidden/);
+    expect(hidden).toMatch(/opacity: 0/);
+    expect(bare).not.toContain('@starting-style');
+    const live = rule(".ocx-tabs[data-zag-state='live'] > [data-part='content']");
+    expect(live).toMatch(/transition:[\s\S]*opacity[\s\S]*visibility/);
+    expect(bare.match(/transition:/g)?.length).toBe(2); // trigger colours + the live panel crossfade
+  });
 });
