@@ -12,12 +12,14 @@ import { mount } from '../src/components/ui/zag.mjs';
 import type { ZagModule } from '../src/components/ui/zag.mjs';
 
 type Detail = { title: string; tone?: string };
-const tick = () => new Promise((r) => setTimeout(r, 0));
+// Time is driven, not waited for: once a toaster is live (liveToaster) the clock is fake and
+// `until` steps it 10 ms at a time, so a loaded host cannot race a wall-clock budget. Before that
+// (module imports, a bare document) real timers still apply.
+const tick = () => (vi.isFakeTimers() ? vi.advanceTimersByTimeAsync(0) : new Promise((r) => setTimeout(r, 0)));
 const until = async (ok: () => boolean, ms = 2000) => {
-  const end = Date.now() + ms;
-  while (!ok()) {
-    if (Date.now() > end) throw new Error('timed out');
-    await new Promise((r) => setTimeout(r, 10));
+  for (let t = 0; !ok(); t += 10) {
+    if (t > ms) throw new Error('timed out');
+    await (vi.isFakeTimers() ? vi.advanceTimersByTimeAsync(10) : new Promise((r) => setTimeout(r, 10)));
   }
 };
 const attrs = (a: Record<string, unknown>) =>
@@ -34,6 +36,7 @@ function recordEvents() {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   document.body.innerHTML = '';
@@ -134,6 +137,7 @@ async function liveToaster() {
   const mod = (await import('../src/components/toast.zag.mjs')) as unknown as ZagModule;
   const handle = mount(root, { load: () => Promise.resolve(mod), trigger: 'manual', replay: false });
   await handle.start();
+  vi.useFakeTimers(); // after the real async imports: from here the toaster's clock is ours
   const api = handle.api as { show: (d: Detail) => void };
   return { root, handle, show: (d: Detail) => api.show(d) };
 }
@@ -190,17 +194,17 @@ describe('C-181 toaster behaviour', () => {
     show({ title: 'bye' });
     await until(() => toasts(root).length === 1);
     toasts(root)[0]!.querySelector<HTMLButtonElement>('[data-part="close-trigger"]')!.click();
-    await until(() => toasts(root).length === 0, 8000); // removeDelay runs on real timers: headroom for a loaded host
-  }, 10_000);
+    await until(() => toasts(root).length === 0, 1000); // removeDelay
+  });
 
   it('dismisses itself after the 2.5 s duration', async () => {
     const { root, show } = await liveToaster();
     show({ title: 'soon gone' });
     await until(() => toasts(root).length === 1);
-    const shown = Date.now();
-    await until(() => toasts(root).length === 0, 8000); // real rAF timers: headroom for a loaded host
-    expect(Date.now() - shown).toBeGreaterThanOrEqual(2400);
-  }, 10_000);
+    await vi.advanceTimersByTimeAsync(2400);
+    expect(toasts(root)).toHaveLength(1); // still there just before the duration
+    await until(() => toasts(root).length === 0, 1000); // gone once 2.5 s and the removeDelay passed
+  });
 
   it('destroy() stops every child machine and leaves no toast listeners behind', async () => {
     const { root, handle, show } = await liveToaster();
@@ -210,7 +214,7 @@ describe('C-181 toaster behaviour', () => {
     const close = toasts(root)[0]!.querySelector<HTMLButtonElement>('[data-part="close-trigger"]')!;
     handle.destroy();
     close.click(); // listener removed by the child's spread cleanup: nothing is dismissed
-    await new Promise((r) => setTimeout(r, 400)); // past removeDelay: a live child would be gone
+    await vi.advanceTimersByTimeAsync(400); // past removeDelay: a live child would be gone
     expect(root.dataset.zagState).toBe('idle');
     expect(toasts(root)).toHaveLength(2);
     expect(close.getAttribute('aria-label')).toBe('Dismiss notification');

@@ -10,12 +10,14 @@ import { ICONS } from '../src/icons/icons.mjs';
 import { mount } from '../src/components/ui/zag.mjs';
 import type { ZagModule } from '../src/components/ui/zag.mjs';
 
-const tick = () => new Promise((r) => setTimeout(r, 0));
+// Time is driven, not waited for: once a toaster is live (liveToaster) the clock is fake and
+// `until` steps it 10 ms at a time, so a loaded host cannot race a wall-clock budget. Before that
+// (module imports, a bare document) real timers still apply.
+const tick = () => (vi.isFakeTimers() ? vi.advanceTimersByTimeAsync(0) : new Promise((r) => setTimeout(r, 0)));
 const until = async (ok: () => boolean, ms = 2000) => {
-  const end = Date.now() + ms;
-  while (!ok()) {
-    if (Date.now() > end) throw new Error('timed out');
-    await new Promise((r) => setTimeout(r, 10));
+  for (let t = 0; !ok(); t += 10) {
+    if (t > ms) throw new Error('timed out');
+    await (vi.isFakeTimers() ? vi.advanceTimersByTimeAsync(10) : new Promise((r) => setTimeout(r, 10)));
   }
 };
 
@@ -27,6 +29,7 @@ function recordEvents(types: string[]) {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
@@ -112,6 +115,7 @@ async function liveToaster() {
   const mod = (await import('../src/components/toast.zag.mjs')) as unknown as ZagModule;
   const handle = mount(root, { load: () => Promise.resolve(mod), trigger: 'manual', replay: false });
   await handle.start();
+  vi.useFakeTimers(); // after the real async imports: from here the toaster's clock is ours
   const api = handle.api as {
     show: (d: Parameters<typeof toast>[1] & { title: string; id?: string }) => void;
     dismiss: (id?: string) => void;
@@ -193,8 +197,7 @@ describe('toast.zag.mjs show()/render(): the richer ocx:toast contract', () => {
     const { root, api } = await liveToaster();
     api.show({ title: 'stays', persistent: true });
     await until(() => toasts(root).length === 1);
-    await tick();
-    await new Promise((r) => setTimeout(r, 200));
+    await vi.advanceTimersByTimeAsync(10_000); // far past the default duration
     expect(toasts(root)).toHaveLength(1);
   });
 
@@ -209,8 +212,8 @@ describe('toast.zag.mjs show()/render(): the richer ocx:toast contract', () => {
     expect(trigger.textContent).toBe('Undo');
     trigger.click();
     expect(events).toHaveLength(1);
-    await until(() => toasts(root).length === 0, 8000);
-  }, 10_000);
+    await until(() => toasts(root).length === 0, 1000);
+  });
 
   it.each(['success', 'error'] as const)(
     'id lets a later show() update the same toast in place, loading → %s, icon included',
@@ -341,11 +344,11 @@ describe('toast.zag.mjs show()/render(): the richer ocx:toast contract', () => {
     api.show({ id: 'b', title: 'b' });
     await until(() => toasts(root).length === 2);
     api.dismiss('a');
-    await until(() => toasts(root).length === 1, 8000);
+    await until(() => toasts(root).length === 1, 1000);
     expect(toasts(root)[0]?.querySelector('[data-part="title"]')?.textContent).toBe('b');
     api.dismiss();
-    await until(() => toasts(root).length === 0, 8000);
-  }, 10_000);
+    await until(() => toasts(root).length === 0, 1000);
+  });
 });
 
 describe('toaster.mjs: ocx:toast:dismiss', () => {
@@ -370,8 +373,8 @@ describe('toaster.mjs: ocx:toast:dismiss', () => {
     toast('bye', { id: 'x' });
     await until(() => toasts(root).length === 1, 4000);
     toast.dismiss('x');
-    await until(() => toasts(root).length === 0, 8000);
-  }, 10_000);
+    await until(() => toasts(root).length === 0, 1000);
+  });
 
   it('toast(title) sends no tone and renders the success default', async () => {
     document.body.innerHTML = `<div data-zag-root="toast" data-zag-state="idle" data-zag-id="ocx-toaster" data-zag-props="{}" aria-live="polite"></div>`;
