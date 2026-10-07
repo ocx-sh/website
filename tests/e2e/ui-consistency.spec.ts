@@ -2,6 +2,7 @@
 // resolved in the page from the tokens (never hardcoded px). WP14c extends CONTROLS with the
 // DependencyExplorer search and licence select.
 import { expect, test, type Page } from '@playwright/test';
+import { settle } from './helpers/settle.ts';
 import { computed, H38, resolve, resolveBlockSize } from './tokens.ts';
 
 interface Control {
@@ -78,6 +79,7 @@ test.describe('WP14a control consistency', () => {
     }) => {
       const el = await c.open(page);
       await expect(el).toBeVisible();
+      await settle(page); // a dialog's open animation scales the box the height is read from
       expect(await computed(el, 'border-top-width'), 'border-width').toBe(
         await resolve(page, 'border-top', 'var(--ocx-border-width) solid', 'border-top-width'),
       );
