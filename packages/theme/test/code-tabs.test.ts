@@ -343,13 +343,14 @@ describe('S-001 shell icons are registry icons and C-130f CSS', () => {
     expect(bare).not.toContain('@starting-style');
     const live = rule(".ocx-tabs[data-zag-state='live'] > [data-part='content']");
     expect(live).toMatch(/transition:[\s\S]*opacity[\s\S]*visibility/);
-    const lone = ':has(> .expressive-code:only-child)';
-    const code = rule(`.ocx-tabs > [data-part='content'][hidden]${lone}`);
-    expect(code).toMatch(/opacity: 1/); // the frame never fades
-    expect(rule(`.ocx-tabs > [data-part='content'][hidden]${lone} pre code`)).toMatch(/opacity: 0/);
-    expect(rule(`.ocx-tabs[data-zag-state='live'] > [data-part='content'][hidden]${lone}`)).toMatch(
-      /visibility 0s linear var\(--ocx-duration-enter\)/,
-    );
-    expect(bare.match(/transition:/g)?.length).toBe(6);
+    // A lone code frame switches instantly: opaque, no transition, in the live state too.
+    const lone =
+      bare
+        .split('}')
+        .find((b) => b.includes(':has(> .expressive-code:only-child)') && b.includes('transition: none')) ?? '';
+    expect(lone).toContain(".ocx-tabs[data-zag-state='live'] > [data-part='content']:has(");
+    expect(lone).toMatch(/opacity: 1/);
+    expect(bare).not.toContain('z-index');
+    expect(bare.match(/transition:/g)?.length).toBe(3); // trigger colours, prose crossfade, lone-frame none
   });
 });

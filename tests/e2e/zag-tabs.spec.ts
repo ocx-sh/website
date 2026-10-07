@@ -97,7 +97,8 @@ test.describe('Tabs', () => {
     await page.keyboard.press('Home');
     await expectSelected(0);
     await page.keyboard.press('Tab');
-    await expect(root.getByRole('tabpanel')).toBeFocused();
+    // The leaving panel stays visible while it crossfades out, so a role query can see two.
+    await expect(root.locator(':scope > [data-part="content"]:not([hidden])')).toBeFocused();
   });
 
   test('C-130e axe is clean with the demo live and with a second tab selected', async ({ page }) => {
@@ -127,7 +128,7 @@ test.describe('Tabs', () => {
     await expect(page.locator('#story [role="log"] li').first()).toHaveText('ocx:tabs:change {"value":"nushell"}');
   });
 
-  test('a switch crossfades both panels in a box that never changes height; hidden panels stay out of reach', async ({
+  test('a switch on code frames is instant in a box that never changes height; hidden panels stay out of reach', async ({
     page,
   }) => {
     await page.addInitScript(() => {
@@ -155,16 +156,19 @@ test.describe('Tabs', () => {
     await cdp.send('Animation.enable');
     await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.1 });
     await tab(root, 'Four lines').click();
-    const running = () =>
+    // A lone code frame switches instantly: no animation in the group, the frames stay opaque.
+    const animations = () =>
       panels.evaluateAll((els) =>
-        els.map((e) =>
-          (e.querySelector('pre code') as HTMLElement)
-            .getAnimations()
-            .some((a) => a instanceof CSSTransition && a.transitionProperty === 'opacity' && a.playState === 'running'),
+        // Expressive Code's own copy-button fade is not the tabs' (it follows frame visibility).
+        els.reduce(
+          (n, e) =>
+            n +
+            e.getAnimations({ subtree: true }).filter((a) => !(a.effect as KeyframeEffect).target?.closest('button'))
+              .length,
+          0,
         ),
       );
-    // A lone code frame: the text of both panels fades, the panels (frames) stay at opacity 1.
-    await expect.poll(running).toEqual([true, true]);
+    expect(await animations(), 'no panel animation after the switch').toBe(0);
     expect(await panels.evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))).toEqual(['1', '1']);
     expect(await height(), 'during').toBe(before);
     await settle(page);
@@ -191,10 +195,10 @@ test.describe('Tabs', () => {
       ).toEqual([]);
     }
 
-    // Reduced motion: the switch runs no transition at all.
+    // Reduced motion: still nothing runs.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await tab(root, 'Four lines').click();
-    expect(await running()).toEqual([false, false]);
+    expect(await animations()).toBe(0);
     expect(await height()).toBe(before);
   });
 

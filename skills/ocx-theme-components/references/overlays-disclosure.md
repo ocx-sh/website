@@ -108,7 +108,9 @@ and the choice persists across pages (restored before paint, no flash).
 `shell`, `powershell`, `nushell`, `fish`, `elvish`, `cmd`. Event
 `ocx:tabs:change`. All panels share one grid cell: the area is as tall as
 the tallest panel from first paint, and a switch crossfades the two panels
-(the inactive one is `visibility: hidden`, so the height never changes).
+(the inactive one is `visibility: hidden`, so the height never changes). A
+panel that is a lone code frame switches instantly instead: no transition,
+the frame stays opaque.
 
 ```mdx
 <Tabs syncKey="shell">
