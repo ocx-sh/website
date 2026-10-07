@@ -78,12 +78,14 @@ test.describe('Tabs', () => {
     await page.keyboard.press('ArrowRight'); // may arrive before the machine is live
     await expect(root).toHaveAttribute('data-zag-state', 'live');
     const expectSelected = async (i: number) => {
-      await settle(page); // the leaving panel stays visible (and in the a11y tree) for its exit fade
       const t = root.getByRole('tab').nth(i);
       await expect(t).toHaveAttribute('aria-selected', 'true');
       await expect(t).toBeFocused();
       await expect(root.getByRole('tabpanel')).toHaveCount(1);
-      await expect(root.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', (await t.getAttribute('id'))!);
+      await expect(root.locator(':scope > [data-part="content"]:not([hidden])')).toHaveAttribute(
+        'aria-labelledby',
+        (await t.getAttribute('id'))!,
+      );
     };
     await expectSelected(1);
     await page.keyboard.press('End');
@@ -156,12 +158,14 @@ test.describe('Tabs', () => {
     const running = () =>
       panels.evaluateAll((els) =>
         els.map((e) =>
-          e
+          (e.querySelector('pre code') as HTMLElement)
             .getAnimations()
             .some((a) => a instanceof CSSTransition && a.transitionProperty === 'opacity' && a.playState === 'running'),
         ),
       );
+    // A lone code frame: the text of both panels fades, the panels (frames) stay at opacity 1.
     await expect.poll(running).toEqual([true, true]);
+    expect(await panels.evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))).toEqual(['1', '1']);
     expect(await height(), 'during').toBe(before);
     await settle(page);
     await cdp.detach();
@@ -192,6 +196,28 @@ test.describe('Tabs', () => {
     await tab(root, 'Four lines').click();
     expect(await running()).toEqual([false, false]);
     expect(await height()).toBe(before);
+  });
+
+  test('a switch on prose panels crossfades both whole panels', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto(PLAIN);
+    const root = plain(page);
+    await live(root);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Animation.enable');
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.1 });
+    await root.getByRole('tab').nth(1).click();
+    const panels = root.locator(':scope > [data-part="content"]');
+    const fading = () =>
+      panels.evaluateAll(
+        (els) =>
+          els.filter((e) =>
+            e.getAnimations().some((a) => a instanceof CSSTransition && a.transitionProperty === 'opacity'),
+          ).length,
+      );
+    await expect.poll(fading).toBe(2);
+    await settle(page);
+    await cdp.detach();
   });
 
   test('C-151 S-105 a choice switches every synced group, persists, and restores on load without JS', async ({

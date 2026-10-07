@@ -156,6 +156,35 @@ const restore =
         opacity var(--ocx-duration-enter) var(--ocx-ease-out),
         visibility var(--ocx-duration-enter) var(--ocx-ease-out);
     }
+    /* A panel that is a lone code frame keeps its frame at full opacity through a switch: only the
+       text fades. The leaving panel stacks above (z-index) and fades its text out first; once it flips
+       hidden, the entering panel's text fades in, so no text ghosts through a frame. */
+    .ocx-tabs > [data-part='content']:has(> .expressive-code:only-child) {
+      z-index: 0;
+      opacity: 1;
+    }
+    .ocx-tabs > [data-part='content'][hidden]:has(> .expressive-code:only-child) {
+      z-index: 1;
+      opacity: 1;
+    }
+    .ocx-tabs > [data-part='content']:has(> .expressive-code:only-child) pre code {
+      opacity: 1;
+    }
+    .ocx-tabs > [data-part='content'][hidden]:has(> .expressive-code:only-child) pre code {
+      opacity: 0;
+    }
+    .ocx-tabs[data-zag-state='live'] > [data-part='content']:has(> .expressive-code:only-child) {
+      transition: none;
+    }
+    .ocx-tabs[data-zag-state='live'] > [data-part='content'][hidden]:has(> .expressive-code:only-child) {
+      transition: visibility 0s linear var(--ocx-duration-enter);
+    }
+    .ocx-tabs[data-zag-state='live'] > [data-part='content']:has(> .expressive-code:only-child) pre code {
+      transition: opacity var(--ocx-duration-enter) var(--ocx-ease-out) var(--ocx-duration-enter);
+    }
+    .ocx-tabs[data-zag-state='live'] > [data-part='content'][hidden]:has(> .expressive-code:only-child) pre code {
+      transition: opacity var(--ocx-duration-enter) var(--ocx-ease-out);
+    }
     /* Around a lone code frame the strip and the frame read as one panel. */
     .ocx-tabs:has(> [data-part='content'] > .expressive-code:only-child) > [data-part='list'] {
       padding: var(--ocx-space-2) var(--ocx-space-3) 0;

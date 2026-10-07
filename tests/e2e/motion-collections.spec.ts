@@ -101,7 +101,7 @@ test('Tabs: the selected trigger fades its colour and underline', async ({ page 
 
 test('Tabs: the panel shown fades in', async ({ page }) => {
   await check(page, {
-    path: story('tabs/default'),
+    path: story('tabs/plain-labels-not-synced'),
     root: (p) => p.locator('#story [data-zag-root="tabs"]').first(),
     act: async (_, root) => {
       await live(root);
