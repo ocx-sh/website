@@ -33,6 +33,8 @@ const REDIRECT_STATUS = '302';
 const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
 /** Proxied directory claims whose bare form (`/team`) is a page of its own and needs a pattern too. */
 const BARE_PROXY_DIRS = new Set(['/team/']);
+/** Catalog pages that render untrusted package content: `/catalog/p/<pkg>` and `/catalog/index/<registry>/p/<pkg>`. */
+const SANDBOX_PATHS = ['/catalog/p/*', '/catalog/index/*/p/*'];
 
 /**
  * @typedef {object} Trigger
@@ -300,7 +302,7 @@ function problemsOf(rules, origins, { hosts, prod }) {
 
 /**
  * The rules of one zone, in apply order: asset cache (not on previews), `noindex`, `hsts` (prod),
- * `X-Frame-Options`, then the origin rules longest claimed path first. A preview zone gets `noindex`
+ * `X-Frame-Options`, the catalog sandbox headers (not on previews), then the origin rules longest claimed path first. A preview zone gets `noindex`
  * and `X-Frame-Options` only. Throws a {@link PlanError} when a rule would loop, leak a zone host,
  * or make the winner of a request ambiguous.
  * @param {string} zone `dev`, `prod` or `preview:<slug>`
@@ -317,6 +319,8 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
     /** @type {string} */ name,
     /** @type {string} */ value,
   ) => rule(id, onHosts(on, ['/*']), ACTION.SetResponseHeader, name, value);
+  const sandbox = (/** @type {string} */ id, /** @type {string} */ name, /** @type {string} */ value) =>
+    rule(id, onHosts(hosts, SANDBOX_PATHS), ACTION.SetResponseHeader, name, value);
   const headers = [
     ...(preview
       ? []
@@ -341,6 +345,14 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
         ]
       : []),
     header('frame', hosts, 'X-Frame-Options', 'SAMEORIGIN'),
+    // One rule sets one header: the sandbox pair is two rules. Both sit with the header rules, ahead of
+    // every origin and redirect rule (the `/catalog/` legacy redirect), so no later rule shadows them.
+    ...(preview
+      ? []
+      : [
+          sandbox('catalog-sandbox', 'Content-Security-Policy', 'sandbox'),
+          sandbox('catalog-nosniff', 'X-Content-Type-Options', 'nosniff'),
+        ]),
   ];
   const origins = preview
     ? []

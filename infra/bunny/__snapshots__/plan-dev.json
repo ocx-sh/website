@@ -94,6 +94,44 @@
       ]
     },
     {
+      "ActionType": 5,
+      "ActionParameter1": "Content-Security-Policy",
+      "ActionParameter2": "sandbox",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:catalog-sandbox",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/catalog/p/*",
+            "https://sh-ocx-dev.b-cdn.net/catalog/index/*/p/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Content-Type-Options",
+      "ActionParameter2": "nosniff",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:catalog-nosniff",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/catalog/p/*",
+            "https://sh-ocx-dev.b-cdn.net/catalog/index/*/p/*"
+          ]
+        }
+      ]
+    },
+    {
       "ActionType": 2,
       "ActionParameter1": "https://ocx-website.pages.dev",
       "ActionParameter2": "",

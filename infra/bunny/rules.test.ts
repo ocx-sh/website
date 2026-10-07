@@ -90,11 +90,11 @@ describe('asset cache rules', () => {
 });
 
 describe('rule set and limits', () => {
-  const originIds = (zone: string) => ids(zone).slice(zone === 'prod' ? 5 : 4);
+  const originIds = (zone: string) => ids(zone).slice(zone === 'prod' ? 7 : 6);
 
   it.each([
-    ['prod', ['assets-edge', 'assets-browser', 'noindex', 'hsts', 'frame']],
-    ['dev', ['assets-edge', 'assets-browser', 'noindex', 'frame']],
+    ['prod', ['assets-edge', 'assets-browser', 'noindex', 'hsts', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
+    ['dev', ['assets-edge', 'assets-browser', 'noindex', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
     ['preview:ocx', ['noindex', 'frame']],
   ])('%s: header rules come first, in order', (zone, head) => {
     expect(ids(zone).slice(0, head.length)).toEqual(head.map((id) => `ocx:${id}`));
@@ -115,8 +115,8 @@ describe('rule set and limits', () => {
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
-  it('commits 11 prod and 10 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([11, 10]);
+  it('commits 13 prod and 12 dev rules, prod within the plan ceiling', () => {
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([13, 12]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 
@@ -171,6 +171,46 @@ describe('rule set and limits', () => {
       'https://next.ocx.sh/*',
       'https://sh-ocx.b-cdn.net/*',
     ]);
+  });
+
+  it('catalog-sandbox and catalog-nosniff cover the package pages on every prod and dev host, never previews', () => {
+    const paths = ['/catalog/p/*', '/catalog/index/*/p/*'];
+    const hosts = {
+      prod: ['ocx.sh', 'next.ocx.sh', 'sh-ocx.b-cdn.net'],
+      dev: ['sh-ocx-dev.b-cdn.net'],
+    };
+    for (const [zone, zoneHosts] of Object.entries(hosts)) {
+      const rules = planRules(zone);
+      const rule = (id: string) => rules.find((r) => r.Description === `ocx:${id}`);
+      expect(rule('catalog-sandbox')).toMatchObject({
+        ActionType: 5,
+        ActionParameter1: 'Content-Security-Policy',
+        ActionParameter2: 'sandbox',
+      });
+      expect(rule('catalog-nosniff')).toMatchObject({
+        ActionType: 5,
+        ActionParameter1: 'X-Content-Type-Options',
+        ActionParameter2: 'nosniff',
+      });
+      expect(rule('catalog-sandbox')?.Triggers.flatMap((t) => t.PatternMatches)).toEqual(
+        zoneHosts.flatMap((h) => paths.map((p) => `https://${h}${p}`)),
+      );
+      for (const host of zoneHosts) {
+        for (const path of ['/catalog/p/jq', '/catalog/index/ocx/p/jq'])
+          expect(matchProbe(rules, { host, path, status: 200 }).headers, `${host}${path}`).toEqual(
+            expect.arrayContaining(['catalog-sandbox', 'catalog-nosniff']),
+          );
+        for (const path of ['/catalog/', '/catalog/index/ocx/', '/docs/p/x'])
+          expect(matchProbe(rules, { host, path, status: 200 }).headers, `${host}${path}`).not.toContain(
+            'catalog-sandbox',
+          );
+      }
+      // Header rules precede every origin rule, so the /catalog redirect or a later origin rule never shadows them.
+      const order = rules.map((r) => r.Description);
+      const lastHeader = Math.max(...['catalog-sandbox', 'catalog-nosniff'].map((id) => order.indexOf(`ocx:${id}`)));
+      expect(lastHeader).toBeLessThan(order.indexOf('ocx:legacy-ocx-files'));
+    }
+    expect(planRules('preview:ocx').map((r) => r.Description)).not.toContain('ocx:catalog-sandbox');
   });
 
   it('the rehearsal host next.ocx.sh gets every ocx.sh rule plus noindex; ocx.sh never gets noindex', () => {
