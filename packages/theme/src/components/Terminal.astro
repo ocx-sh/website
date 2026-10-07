@@ -13,7 +13,7 @@ import Icon from './ui/Icon.astro';
 import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
 
 export interface Props {
-  /** Path to a recorded `.cast` file, root-absolute (`/casts/x.cast`); resolved against the site base. */
+  /** Path to a recorded `.cast` file, root-absolute and base-relative (`/casts/x.cast`); always prefixed with the site base. */
   src: string;
   /** Title shown centred in the chrome. */
   title?: string;

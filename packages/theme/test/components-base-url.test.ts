@@ -6,14 +6,18 @@ describe('WP13 withBase', () => {
   it.each([
     ['/casts/x.cast', '/docs/', '/docs/casts/x.cast'],
     ['/casts/x.cast', '/docs', '/docs/casts/x.cast'],
-    ['/docs/casts/x.cast', '/docs/', '/docs/casts/x.cast'],
-    ['/docs/casts/x.cast', '/docs', '/docs/casts/x.cast'],
+    // Always prefixes: a path that happens to start with the base is still base-relative.
+    ['/index/x', '/index/', '/index/index/x'],
+    ['/docs/casts/x.cast', '/docs/', '/docs/docs/casts/x.cast'],
     ['/casts/x.cast', '/', '/casts/x.cast'],
     ['https://ocx.sh/casts/x.cast', '/docs/', 'https://ocx.sh/casts/x.cast'],
     ['//cdn.example/x.cast', '/docs/', '//cdn.example/x.cast'],
-  ])('WP13.1 Terminal: withBase(%j, %j) → %j, never double-prefixing the base (WP13.1)', (path, base, out) => {
-    expect(withBase(path, base)).toBe(out);
-  });
+  ])(
+    'WP13.1 Terminal: withBase(%j, %j) → %j, always prefixing, even a path that starts with the base (WP13.1)',
+    (path, base, out) => {
+      expect(withBase(path, base)).toBe(out);
+    },
+  );
 
   it.each([
     ['/docs', '/docs/data/dependencies.json'],
