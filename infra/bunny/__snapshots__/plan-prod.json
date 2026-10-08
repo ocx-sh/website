@@ -234,12 +234,12 @@
       ]
     },
     {
-      "ActionType": 1,
-      "ActionParameter1": "https://ocx-sh.github.io/ocx-sdk-python/%{Path.2-}",
-      "ActionParameter2": "302",
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-ocx-sdk-python",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:legacy-ocx-sdk-python",
+      "Description": "ocx:repo-ocx-sdk-python",
       "Triggers": [
         {
           "Type": 0,
@@ -264,12 +264,12 @@
       ]
     },
     {
-      "ActionType": 1,
-      "ActionParameter1": "https://ocx-sh.github.io/rules_ocx/%{Path.2-}",
-      "ActionParameter2": "302",
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-rules-ocx",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:legacy-rules-ocx",
+      "Description": "ocx:repo-rules-ocx",
       "Triggers": [
         {
           "Type": 0,
@@ -294,12 +294,12 @@
       ]
     },
     {
-      "ActionType": 1,
-      "ActionParameter1": "https://ocx-sh.github.io/find_ocx/%{Path.2-}",
-      "ActionParameter2": "302",
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-find-ocx",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:legacy-find-ocx",
+      "Description": "ocx:repo-find-ocx",
       "Triggers": [
         {
           "Type": 0,

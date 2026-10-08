@@ -191,24 +191,24 @@ describe('OrderIndex stays unique on every write (Bunny rejects a duplicate)', (
 });
 
 describe('upsert before delete, never unrouted', () => {
-  const BAZEL = [probe('/integrations/bazel/x'), probe('/integrations/bazel')];
+  const CATALOG = [probe('/apps/catalog/x'), probe('/apps/catalog')];
 
-  it('S-120: deleting a legacy entry swaps redirect for repo-rules-ocx with no unrouted moment', async () => {
+  it('S-120: deleting a legacy entry swaps redirect for repo-catalog with no unrouted moment', async () => {
     const violations: string[] = [];
     const before = planned('dev');
-    const next = without('legacy-rules-ocx');
+    const next = without('legacy-catalog');
     const { code, api } = await run({
       rules: before,
       legacy: next,
-      afterRequest: neverUnrouted(before, planRules('dev', { legacy: next }), BAZEL, violations),
+      afterRequest: neverUnrouted(before, planRules('dev', { legacy: next }), CATALOG, violations),
     });
     expect(code).toBe(0);
     expect(violations).toEqual([]);
-    expect(names(live(api))).toContain('ocx:repo-rules-ocx');
-    expect(names(live(api))).not.toContain('ocx:legacy-rules-ocx');
-    expect(live(api).find((r) => r.Description === 'ocx:repo-rules-ocx')).toMatchObject({
-      ActionParameter1: String(storageId('sh-ocx-rules-ocx')),
-      ActionParameter2: 'sh-ocx-rules-ocx',
+    expect(names(live(api))).toContain('ocx:repo-catalog');
+    expect(names(live(api))).not.toContain('ocx:legacy-catalog');
+    expect(live(api).find((r) => r.Description === 'ocx:repo-catalog')).toMatchObject({
+      ActionParameter1: String(storageId('sh-ocx-catalog')),
+      ActionParameter2: 'sh-ocx-catalog',
     });
     const kinds = writes(api).map((r) => r.method);
     expect(kinds.lastIndexOf('POST')).toBeLessThan(kinds.indexOf('DELETE'));
@@ -279,12 +279,12 @@ describe('upsert before delete, never unrouted', () => {
     const fake = await fakeApi({
       key: KEY,
       pullZones: [{ Id: 1, Name: 'sh-ocx-dev', Hostnames: [], EdgeRules: before }],
-      afterRequest: neverUnrouted(before, planRules('dev', { legacy: without('legacy-rules-ocx') }), BAZEL, violations),
+      afterRequest: neverUnrouted(before, planRules('dev', { legacy: without('legacy-catalog') }), CATALOG, violations),
     });
     api = fake;
-    const gone = before.find((r) => r.Description === 'ocx:legacy-rules-ocx')!;
+    const gone = before.find((r) => r.Description === 'ocx:legacy-catalog')!;
     await fetch(`${fake.url}/pullzone/1/edgerules/${gone.Guid}`, { method: 'DELETE', headers: { AccessKey: KEY } });
-    expect(violations.some((v) => v.includes('/integrations/bazel/x'))).toBe(true);
+    expect(violations.some((v) => v.includes('/apps/catalog/x'))).toBe(true);
   });
 
   it('the invariant reads rules by OrderIndex, not array position, and ignores a disabled rule', () => {
@@ -344,9 +344,9 @@ describe('an OriginStorage rule names a storage zone that exists', () => {
       pullZones: [{ Id: 1, Name: 'sh-ocx-dev', Hostnames: [], EdgeRules: [] }],
       storageZones: [],
     });
-    const { code, err } = await go(api, { legacy: without('legacy-rules-ocx') });
+    const { code, err } = await go(api, { legacy: without('legacy-catalog') });
     expect(code).toBe(1);
-    expect(err).toContain('ocx:repo-rules-ocx: no storage zone named sh-ocx-rules-ocx');
+    expect(err).toContain('ocx:repo-ocx-sdk-python: no storage zone named sh-ocx-ocx-sdk-python');
     expect(writes(api)).toEqual([]);
   });
 });
@@ -378,7 +378,7 @@ describe('--dry-run', () => {
     const snapshot = structuredClone(seed);
     const { code, out, api } = await run({ rules: seed, argv: ['--zone', 'dev', '--dry-run'] });
     expect(code).toBe(0);
-    expect(api.requests.map((r) => r.method)).toEqual(['GET', 'GET']);
+    expect(api.requests.map((r) => r.method)).toEqual(['GET', 'GET', 'GET']);
     expect(out).toContain('create ocx:assets-edge');
     expect(out).toContain('delete ocx:old');
     expect(out).not.toContain('hand-1');
@@ -393,7 +393,7 @@ describe('--dry-run', () => {
     expect(seed.some((r) => r.ActionParameter2 === null)).toBe(true);
     const { out, api } = await run({ rules: seed as unknown as EdgeRule[], argv: ['--zone', 'dev', '--dry-run'] });
     expect(out).toContain('no changes');
-    expect(api.requests.map((r) => r.method)).toEqual(['GET', 'GET']);
+    expect(api.requests.map((r) => r.method)).toEqual(['GET', 'GET', 'GET']);
   });
 
   it('says so when there is nothing to change', async () => {
@@ -465,6 +465,7 @@ describe('refusals and failures', () => {
       pullZones: [
         { Id: 1, Name: 'sh-ocx-dev', Hostnames: [], EdgeRules: [{ ...hand(0), Description: 'ocx:old', Guid: 'o' }] },
       ],
+      storageZones: STORAGE_ZONES,
     });
     api.fail('POST', '/pullzone/1/edgerules', { status: 500, body: `boom ${KEY}` });
     const { code, err } = await go(api, {});

@@ -22,7 +22,7 @@ const paths = [
   '/docs/getting-started',
   '/assets/x.js',
   '/logo.svg',
-  '/integrations/bazel/a/',
+  '/apps/catalog/x/',
   '/_astro/x.js',
 ];
 const hostProbes = ['/', '/docs/getting-started'];
@@ -68,7 +68,7 @@ describe('first-match golden (prod and dev plans)', () => {
   });
 
   it('probes every claim root, claim child, legacy path and spec case', () => {
-    for (const path of [...claims, ...legacyPaths, '/docs/v2/', '/v2/', '/unknown/', '/integrations/bazel/a/'])
+    for (const path of [...claims, ...legacyPaths, '/docs/v2/', '/v2/', '/unknown/', '/apps/catalog/x/'])
       expect(
         probes.some((p) => p.path === path),
         path,
@@ -89,7 +89,7 @@ describe('first-match outcomes the table must keep', () => {
   });
 
   it('a deep link under a redirect claim wins that redirect', () => {
-    expect(at('/integrations/bazel/a/').origin).toBe('legacy-rules-ocx');
+    expect(at('/apps/catalog/x/').origin).toBe('legacy-catalog');
   });
 
   it('paths with no origin rule fall to the default origin', () => {

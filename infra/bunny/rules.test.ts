@@ -104,9 +104,9 @@ describe('rule set and limits', () => {
     expect(originIds('prod')).toEqual(
       [
         'legacy-ocx-files',
-        'legacy-ocx-sdk-python',
-        'legacy-rules-ocx',
-        'legacy-find-ocx',
+        'repo-ocx-sdk-python',
+        'repo-rules-ocx',
+        'repo-find-ocx',
         'legacy-catalog',
         'legacy-index',
         'legacy-ocx-dirs',
@@ -337,9 +337,6 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
 
   it.each([
     ['legacy-catalog', 'catalog', 'ocx-sh/catalog'],
-    ['legacy-rules-ocx', 'rules-ocx', 'ocx-sh/rules_ocx'],
-    ['legacy-ocx-sdk-python', 'ocx-sdk-python', 'ocx-sh/ocx-sdk-python'],
-    ['legacy-find-ocx', 'find-ocx', 'ocx-sh/find_ocx'],
     ['legacy-index', 'index', 'ocx-sh/index'],
   ])('removing %s removes exactly its rule and adds repo-%s', (id, name, repo) => {
     const before = planRules('prod');
@@ -357,30 +354,25 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
       'prod',
       withEntries((entries) => entries.filter((e) => e.id !== 'legacy-ocx-files')),
     );
-    expect(after.filter((d) => d.startsWith('ocx:repo-'))).toEqual([]);
+    expect(after.filter((d) => d === 'ocx:repo-ocx')).toEqual([]);
   });
 
-  it('the repo rule claims its path and sorts among the origin rules', () => {
+  it('the repo rule claims its path', () => {
     const after = planRules('dev', {
-      legacy: withEntries((entries) => entries.filter((e) => e.id !== 'legacy-rules-ocx')),
+      legacy: withEntries((entries) => entries.filter((e) => e.id !== 'legacy-catalog')),
     });
-    const repoRule = after.find((r) => r.Description === 'ocx:repo-rules-ocx');
+    const repoRule = after.find((r) => r.Description === 'ocx:repo-catalog');
     expect(repoRule?.Triggers.flatMap((t) => t.PatternMatches)).toEqual([
-      'https://sh-ocx-dev.b-cdn.net/integrations/bazel',
-      'https://sh-ocx-dev.b-cdn.net/integrations/bazel/*',
+      'https://sh-ocx-dev.b-cdn.net/apps/catalog',
+      'https://sh-ocx-dev.b-cdn.net/apps/catalog/*',
     ]);
-    expect(after.map((r) => r.Description).indexOf('ocx:repo-rules-ocx')).toBe(
-      ids('dev').indexOf('ocx:legacy-find-ocx'), // sorts just after find-ocx (same path length), which moves up one place
-    );
   });
 });
 
 describe('S-120: the bare directory path stays routed when a legacy entry is deleted', () => {
   it.each([
-    ['legacy-ocx-sdk-python', '/integrations/python', 'repo-ocx-sdk-python'],
     ['legacy-catalog', '/apps/catalog', 'repo-catalog'],
     ['legacy-index', '/catalog', 'repo-index'],
-    ['legacy-rules-ocx', '/integrations/bazel', 'repo-rules-ocx'],
   ])('removing %s: %s goes to %s on every host', (id, path, winner) => {
     const rules = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
     for (const host of ['ocx.sh', 'sh-ocx.b-cdn.net'])
@@ -420,12 +412,9 @@ describe('against the recorded edge rules', () => {
   });
 
   it("plans an OriginStorage rule the way the recorded one reads: Id in parameter 1 is apply's, the name in parameter 2", () => {
-    const after = planRules('dev', {
-      legacy: { entries: committed.entries.filter((e) => e.id !== 'legacy-rules-ocx') },
-    });
-    const planned = after.find((r) => r.ActionType === ACTION.OriginStorage)!;
+    const planned = planRules('dev').find((r) => r.ActionType === ACTION.OriginStorage)!;
     expect(Object.keys(planned).filter((k) => !(k in storage))).toEqual([]);
-    expect(planned.ActionParameter2).toBe(storageZoneName('ocx-sh/rules_ocx'));
+    expect(planned.ActionParameter2).toBe(storageZoneName('ocx-sh/ocx-sdk.python'));
     expect(storage.ActionParameter2).toBe('sh-ocx-m0-scratch');
     expect(storage.ActionParameter1).toMatch(/^\d+$/);
   });

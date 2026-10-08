@@ -30,27 +30,6 @@
       "paths": ["/apps/catalog/"]
     },
     {
-      "id": "legacy-rules-ocx",
-      "repo": "ocx-sh/rules_ocx",
-      "mode": "redirect",
-      "origin": "https://ocx-sh.github.io/rules_ocx/",
-      "paths": ["/integrations/bazel/"]
-    },
-    {
-      "id": "legacy-find-ocx",
-      "repo": "ocx-sh/find_ocx",
-      "mode": "redirect",
-      "origin": "https://ocx-sh.github.io/find_ocx/",
-      "paths": ["/integrations/cmake/"]
-    },
-    {
-      "id": "legacy-ocx-sdk-python",
-      "repo": "ocx-sh/ocx-sdk-python",
-      "mode": "redirect",
-      "origin": "https://ocx-sh.github.io/ocx-sdk-python/",
-      "paths": ["/integrations/python/"]
-    },
-    {
       "id": "legacy-index",
       "repo": "ocx-sh/index",
       "mode": "redirect",

@@ -15,9 +15,8 @@ interface Reply {
 
 const page = (head = '', body = '') =>
   `<!doctype html><html><head><title>t</title>${head}</head><body>${body}</body></html>`;
-const without = (id: string): Plan => ({ legacy: { entries: committed.entries.filter((e) => e.id !== id) } });
-// With legacy-rules-ocx gone, /integrations/bazel/ is an OriginStorage claim: the one way today to get a storage probe.
-const STORAGE_PLAN = without('legacy-rules-ocx');
+// /integrations/bazel/ is an OriginStorage claim since the rules_ocx flip: the committed plan carries a storage probe.
+const STORAGE_PLAN: Plan = { legacy: committed };
 
 // ponytail: the replies are hand-written, not recorded from a b-cdn.net host. M0 recorded the redirect status,
 // `Location` and the storage 200/404 bodies (plan, M0 Result); the header set (`x-robots-tag`, canonical) is not.
@@ -87,12 +86,6 @@ describe('probesFor', () => {
     expect(probes).toContainEqual({ kind: 'proxy', path: '/apple-touch-icon.png', status: 200 });
     expect(probes).toContainEqual({
       kind: 'redirect',
-      path: '/integrations/bazel/a/b/',
-      status: 302,
-      location: 'https://ocx-sh.github.io/rules_ocx/a/b',
-    });
-    expect(probes).toContainEqual({
-      kind: 'redirect',
       path: '/apps/catalog',
       status: 302,
       location: 'https://ocx-sh.github.io/catalog/',
@@ -103,7 +96,7 @@ describe('probesFor', () => {
       status: 302,
       location: 'https://index.ocx.sh/a/b',
     });
-    expect(probes.some((p) => p.kind === 'storage')).toBe(false);
+    expect(probes.some((p) => p.kind === 'storage')).toBe(true);
   });
 
   it('probes an OriginStorage claim root with its canonical on ocx.sh', () => {

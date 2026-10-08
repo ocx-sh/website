@@ -62,6 +62,10 @@ describe('S-114 Bunny dev up, offline', () => {
     const writes = () => api!.requests.filter((q) => q.method !== 'GET').length;
     const codes = [
       await onboardMain({ argv: ['ocx-sh/website'], env, baseUrl, ...io }),
+      // The consumers whose legacy entries are gone: their repo rules need a storage zone.
+      await onboardMain({ argv: ['ocx-sh/rules_ocx'], env, baseUrl, ...io }),
+      await onboardMain({ argv: ['ocx-sh/ocx-sdk-python'], env, baseUrl, ...io }),
+      await onboardMain({ argv: ['ocx-sh/find_ocx'], env, baseUrl, ...io }),
       await zoneMain({ argv: ['--zone', 'dev'], env, baseUrl, ...io }),
     ];
     const before = writes();
@@ -80,7 +84,7 @@ describe('S-114 Bunny dev up, offline', () => {
     codes.push(await verifyMain({ argv: ['--zone', 'dev'], fetch, ...io }));
 
     expect(errs.join('')).toBe('');
-    expect(codes).toEqual([0, 0, 0, 0, 0]);
+    expect(codes).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
 
     // the storage zone onboard made is the pull zone's origin, and the plan is live in full
     const storage = api.state.storageZones.find((z) => z.Name === 'sh-ocx-website')!;

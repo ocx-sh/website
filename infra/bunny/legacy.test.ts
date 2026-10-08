@@ -32,9 +32,6 @@ describe('legacy.json', () => {
       'legacy-ocx-dirs',
       'legacy-ocx-files',
       'legacy-catalog',
-      'legacy-rules-ocx',
-      'legacy-find-ocx',
-      'legacy-ocx-sdk-python',
       'legacy-index',
     ]);
   });
@@ -137,8 +134,6 @@ describe('legacy.json against nav.json and the redirect mapping (C-314)', () => 
     const template = (id: string) =>
       redirectTemplate(legacy.entries.find((e) => e.id === id) as (typeof legacy.entries)[number]);
     expect(template('legacy-catalog')).toBe('https://ocx-sh.github.io/catalog/%{Path.2-}');
-    expect(template('legacy-rules-ocx')).toBe('https://ocx-sh.github.io/rules_ocx/%{Path.2-}');
-    expect(template('legacy-ocx-sdk-python')).toBe('https://ocx-sh.github.io/ocx-sdk-python/%{Path.2-}');
     expect(template('legacy-index')).toBe('https://index.ocx.sh/%{Path.1-}');
   });
 
