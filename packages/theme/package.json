@@ -1,6 +1,6 @@
 {
   "name": "@ocx-sh/theme",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared tokens, base styles, navigation and Starlight plugin for the ocx.sh sites",
   "keywords": [
     "astro-component",
