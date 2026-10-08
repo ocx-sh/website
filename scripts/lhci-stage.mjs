@@ -17,11 +17,14 @@
  */
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { cp, rm, stat } from 'node:fs/promises';
+import { access, cp, rm, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
+import { mergeTargets } from '@ocx-sh/theme/nav';
+import { createIndex } from 'pagefind';
 
 const dist = (/** @type {string} */ rel) => fileURLToPath(new URL(rel, import.meta.url));
 
@@ -47,7 +50,34 @@ export async function stageExample({
   await rm(root, { recursive: true, force: true });
   await cp(site, root, { recursive: true });
   await cp(example, join(root, 'docs'), { recursive: true });
+  await stubSectionBundles(root);
   return root;
+}
+
+/**
+ * The stage holds the root site and `/docs/` only, but the root search merges every non-legacy
+ * section's Pagefind bundle and dies on the first one that 404s. Each merge target the stage lacks
+ * gets a one-page stub bundle, as the section repo would serve it.
+ * @param {string} root
+ */
+async function stubSectionBundles(root) {
+  for (const { path, label } of mergeTargets(nav, '/')) {
+    const out = join(root, path, 'pagefind');
+    if (
+      await access(join(out, 'pagefind-entry.json')).then(
+        () => true,
+        () => false,
+      )
+    )
+      continue;
+    const { index } = await createIndex({});
+    await index?.addHTMLFile({
+      url: path,
+      content: `<html lang="en"><body><main data-pagefind-body><h1>${label}</h1><p>Stub section page.</p></main></body></html>`,
+    });
+    await index?.writeFiles({ outputPath: out });
+    await index?.deleteIndex();
+  }
 }
 
 const TYPES = /** @type {Record<string, string>} */ ({

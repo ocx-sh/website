@@ -1,6 +1,8 @@
 // C-308 merged search over the combined stage (playwright.config.ts `site` project): the root
 // site's search merges the section bundles, and still answers when they are missing.
 import { expect, test, type Page } from '@playwright/test';
+import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
+import { mergeTargets } from '@ocx-sh/theme/nav';
 import legacy from '../../infra/bunny/legacy.json' with { type: 'json' };
 
 const QUERY = 'install';
@@ -11,6 +13,9 @@ const hrefs = (page: Page) => links(page).evaluateAll((a) => a.map((l) => l.getA
 // there is nothing to merge: (a) switches on when the docs migration deletes that entry.
 const docsMerged = !legacy.entries.some((e) => e.paths.includes('/docs/'));
 const inDocs = (href: string) => href.startsWith('/docs/');
+// Merge targets still on a legacy origin: the build drops their bundles (site/legacy-search.mjs).
+const legacyPaths = legacy.entries.flatMap((e) => e.paths.map((p) => p.replace(/\/?$/, '/')));
+const legacySections = mergeTargets(nav, '/').filter((t) => legacyPaths.some((p) => t.path.startsWith(p)));
 
 /** Opens the root page's search dialog and types the query. */
 async function query(page: Page) {
@@ -43,8 +48,9 @@ test('C-308 (a): one query returns hits from the root and from /docs/, the docs 
 });
 
 // Guards the filter (site/legacy-search.mjs), not the runtime fallback: the build already drops every
-// legacy bundle, so the 404/302 mocks below match requests the page never makes. The assertions hold
-// today because nothing is merged; the mocks bite once /docs/ is merged but unreachable.
+// legacy bundle, so the mocks below match requests the page never makes. Each section legacy.json
+// lists is mocked as unreachable (404 for /docs/, a 302 elsewhere); the stage serves a stub bundle
+// for every other merge target (scripts/lhci-stage.mjs), so search works only if the filter holds.
 test('C-308 (b) guards the filter: legacy bundles are never requested, root hits and no errors remain', async ({
   page,
 }) => {
@@ -53,14 +59,13 @@ test('C-308 (b) guards the filter: legacy bundles are never requested, root hits
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.route('**/docs/pagefind/**', (r) => r.fulfill({ status: 404, body: 'not found' }));
-  await page.route('**/integrations/bazel/pagefind/**', (r) =>
-    r.fulfill({ status: 302, headers: { location: '/gone/' } }),
-  );
+  for (const { path } of legacySections)
+    await page.route(`**${path}pagefind/**`, (r) => r.fulfill({ status: 302, headers: { location: '/gone/' } }));
   await query(page);
   const found = await hrefs(page);
   expect(found.length).toBeGreaterThan(0);
   expect(found.some(inDocs)).toBe(false);
-  // The filter's own check: a legacy section's bundle is never requested (once merged, the 404 mock above bites).
-  if (!docsMerged) expect(requested.filter((p) => p.startsWith('/docs/pagefind/'))).toEqual([]);
+  // The filter's own check: no legacy section's bundle is requested (were one merged, its mock would kill search).
+  for (const { path } of legacySections) expect(requested.filter((p) => p.startsWith(`${path}pagefind/`))).toEqual([]);
   expect(errors).toEqual([]);
 });
