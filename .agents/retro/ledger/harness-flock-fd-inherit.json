@@ -1,0 +1,21 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20261008T005839Z-e54ecefd.json"
+  ],
+  "first_seen": "2026-10-08T00:58:39Z",
+  "fixed": null,
+  "folded_at": "2026-10-08T13:49:39Z",
+  "folds": 1,
+  "id": "harness-flock-fd-inherit",
+  "kind": "pitfall",
+  "last_seen": "2026-10-08T00:58:39Z",
+  "occurrences": 1,
+  "scope": "harness",
+  "severity": "medium",
+  "status": "deferred",
+  "title": "heavy-gate flock without -o leaks the lock to daemons spawned by the gate",
+  "v": 1,
+  "versions": []
+}

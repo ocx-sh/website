@@ -1,0 +1,23 @@
+{
+  "artifact": "hex-finalize",
+  "cost_min": 0,
+  "entries": [
+    "20261005T183722Z-962c18d8.json"
+  ],
+  "first_seen": "2026-10-05T12:00:00Z",
+  "fixed": null,
+  "folded_at": "2026-10-08T13:49:39Z",
+  "folds": 1,
+  "id": "hex-finalize-rebase-button-unsigned",
+  "kind": "defect",
+  "last_seen": "2026-10-05T12:00:00Z",
+  "occurrences": 1,
+  "scope": "harness",
+  "severity": "medium",
+  "status": "deferred",
+  "title": "finalize gate omits that GitHub rebase button lands commits unsigned",
+  "v": 1,
+  "versions": [
+    "unknown"
+  ]
+}

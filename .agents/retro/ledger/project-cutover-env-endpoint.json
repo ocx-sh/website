@@ -1,0 +1,25 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20261005T222922Z-31f668e9.json"
+  ],
+  "first_seen": "2026-10-06T00:00:00Z",
+  "fixed": {
+    "at": "2026-10-08T13:49:39Z",
+    "by": "infra/bunny/onboard.mjs",
+    "stale_versions": []
+  },
+  "folded_at": "2026-10-08T13:49:39Z",
+  "folds": 1,
+  "id": "project-cutover-env-endpoint",
+  "kind": "defect",
+  "last_seen": "2026-10-06T00:00:00Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "low",
+  "status": "fixed",
+  "title": "cutover runbook and onboard hint used a non-existent GitHub environments endpoint",
+  "v": 1,
+  "versions": []
+}

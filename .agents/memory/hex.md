@@ -24,4 +24,8 @@ Short, pointer-only. Project context lives in `AGENTS.md` and `HANDOVER.md`.
 
 ## Memory
 
+- Retro candidate (checklist-item): "heavy-gate lock is `flock -o`, or spawned daemons keep it" — ledger harness-flock-fd-inherit, .agents/retro/reports/2026-10-08.md.
+- Retro candidate (project-context): "heavy gates rebuild dist themselves after a red check" — ledger project-gates-stale-dist, .agents/retro/reports/2026-10-08.md.
+- Retro candidate (project-context): "pre-bundle lazily imported @zag-js machines for astro dev" — ledger project-dev-zag-optimize-deps, .agents/retro/reports/2026-10-08.md.
+- Retro candidate (checklist-item): "Lighthouse perf fixes start from the measured render-blocking chunks" — ledger project-lh-render-blocking-chunks, .agents/retro/reports/2026-10-08.md.
 - Active plan: `.agents/plans/plan_website-buildout.md` (review; Stage A merged, Stage B phase 2 pipelines merged and gated 2026-10-04, next /hex-finalize; WP7d waits for M0). ADRs: `adr_0001_ocx-site-architecture.md`, `adr_0002_phase2-bunny-cutover.md`. Research: `.agents/research/phase2_{bunny,deploy,cutover}.md`.

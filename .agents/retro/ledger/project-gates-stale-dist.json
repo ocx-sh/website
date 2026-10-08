@@ -3,7 +3,8 @@
   "cost_min": 0,
   "entries": [
     "20260927T213724Z-682e8f75.json",
-    "20260928T160036Z-0b58f39f.json"
+    "20260928T160036Z-0b58f39f.json",
+    "20260929T011409Z-b9c7a874.json"
   ],
   "first_seen": "2026-09-27T21:37:24Z",
   "fixed": {
@@ -11,15 +12,15 @@
     "by": "779cf80",
     "stale_versions": []
   },
-  "folded_at": "2026-09-28T17:49:11Z",
-  "folds": 1,
+  "folded_at": "2026-10-08T13:49:39Z",
+  "folds": 2,
   "id": "project-gates-stale-dist",
   "kind": "pitfall",
-  "last_seen": "2026-09-28T16:00:36Z",
-  "occurrences": 2,
+  "last_seen": "2026-09-29T01:14:09Z",
+  "occurrences": 3,
   "scope": "project",
   "severity": "medium",
-  "status": "fixed",
+  "status": "deferred",
   "title": "task e2e and task lighthouse test a stale dist; they never rebuild",
   "v": 1,
   "versions": []

@@ -1,0 +1,21 @@
+{
+  "artifact": "project",
+  "cost_min": 0,
+  "entries": [
+    "20260929T182316Z-1bec07de.json"
+  ],
+  "first_seen": "2026-09-29T18:23:16Z",
+  "fixed": null,
+  "folded_at": "2026-10-08T13:49:39Z",
+  "folds": 1,
+  "id": "project-lh-render-blocking-chunks",
+  "kind": "inconvenient",
+  "last_seen": "2026-09-29T18:23:16Z",
+  "occurrences": 1,
+  "scope": "project",
+  "severity": "medium",
+  "status": "deferred",
+  "title": "Lighthouse perf 0.99 traced to extra render-blocking component sheets, not the files the task assigned",
+  "v": 1,
+  "versions": []
+}
