@@ -134,7 +134,7 @@
     "@astrojs/starlight": "^0.42.4",
     "@iconify-json/lucide": "1.2.137",
     "@iconify-json/simple-icons": "1.2.97",
-    "@types/node": "^24.10.0",
+    "@types/node": "^26.6.3",
     "ajv": "8.20.0",
     "astro": "7.3.5",
     "typescript": "^6.0.3"
