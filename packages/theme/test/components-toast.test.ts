@@ -371,7 +371,9 @@ describe('toaster.mjs: ocx:toast:dismiss', () => {
     installToaster(doc);
     const root = doc.querySelector<HTMLElement>('[data-zag-root="toast"]')!;
     toast('bye', { id: 'x' });
-    await until(() => toasts(root).length === 1, 4000);
+    await until(() => root.dataset.zagState === 'live', 4000); // real: the chunk import
+    vi.useFakeTimers(); // from here the clock is ours, as in liveToaster
+    await until(() => toasts(root).length === 1);
     toast.dismiss('x');
     await until(() => toasts(root).length === 0, 1000);
   });
@@ -398,7 +400,8 @@ describe('toaster.mjs: ocx:toast:dismiss', () => {
     toast('gone', { id: 'race' });
     toast.dismiss('race'); // same task: the chunk has not loaded yet
     await until(() => root.dataset.zagState === 'live', 4000);
-    await new Promise((r) => setTimeout(r, 300));
+    vi.useFakeTimers();
+    await vi.advanceTimersByTimeAsync(300);
     expect(root.querySelectorAll('[data-part="root"][data-state="open"]')).toHaveLength(0);
   });
 });
