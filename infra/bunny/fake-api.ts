@@ -152,6 +152,15 @@ export async function fakeApi(opts: FakeApiOptions): Promise<FakeApi> {
               Message: 'Storage zone not valid.',
             });
         }
+        if (
+          typeof body.OrderIndex === 'number' &&
+          zone.EdgeRules.some((r, i) => i !== at && r.OrderIndex === body.OrderIndex)
+        )
+          return send(res, 400, {
+            ErrorKey: 'edgerule.invalid',
+            Field: 'EdgeRule',
+            Message: 'Order index must be unique',
+          });
         const rule: EdgeRule = {
           ActionParameter3: null,
           ExtraActions: [],

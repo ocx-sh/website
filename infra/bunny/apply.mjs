@@ -212,9 +212,22 @@ export async function main({ argv, env, out, err, fetch, baseUrl, legacy }) {
         `${live.EdgeRules.length} live rules and ${d.create.length} new planned rules would coexist as ${total}, over the limit of ${RULE_LIMIT}; no write sent`,
       );
 
+    // Bunny checks `OrderIndex` uniqueness on every write. A live own rule sitting on an index some planned rule
+    // takes, and not already at its own planned index, is parked above every index first (relative order kept), so
+    // the creates and updates that follow never meet an occupied index.
+    const finalIndexes = new Set(plan.map((r) => r.OrderIndex));
+    const planned = new Map(plan.map((r) => [r.Description, r.OrderIndex]));
+    const park = live.EdgeRules.map((r, i) => ({ ...r, OrderIndex: Number(r.OrderIndex ?? i) }))
+      .filter(isOwn)
+      .filter((r) => finalIndexes.has(r.OrderIndex) && planned.get(String(r.Description)) !== r.OrderIndex)
+      .sort((a, b) => a.OrderIndex - b.OrderIndex);
+    const top = Math.max(plan.length, ...live.EdgeRules.map((r, i) => Number(r.OrderIndex ?? i) + 1));
+    const widening = d.update.filter((x) => !narrows(x.want, x.got));
+    const narrowing = d.update.filter((x) => narrows(x.want, x.got));
     const lines = [
+      ...park.map((r, k) => `park ${String(r.Description)} (OrderIndex ${r.OrderIndex} -> ${top + k})`),
       ...d.create.map((r) => `create ${r.Description}`),
-      ...d.update.map((u) => `update ${u.want.Description} (${u.field})`),
+      ...[...widening, ...narrowing].map((u) => `update ${u.want.Description} (${u.field})`),
       ...d.stale.map((r) => `delete ${r.Description}`),
     ];
     if (dryRun) {
@@ -222,14 +235,15 @@ export async function main({ argv, env, out, err, fetch, baseUrl, legacy }) {
       return EXIT.ok;
     }
 
-    // Four passes keep every routed path routed: creates, updates that keep or widen their patterns, updates that
+    // Five passes keep every routed path routed: parks, creates, updates that keep or widen their patterns, updates that
     // narrow (a path moving from one existing rule to another is already claimed by the widened one), deletes last.
     const path = `/pullzone/${live.Id}/edgerules`;
     const upsert = (/** @type {PlannedRule} */ want, /** @type {LiveRule | undefined} */ got) =>
       client.post(`${path}/addOrUpdate`, got ? { ...want, Guid: got.Guid } : want);
+    for (const [k, r] of park.entries()) await client.post(`${path}/addOrUpdate`, { ...r, OrderIndex: top + k });
     for (const want of d.create) await upsert(want, undefined);
-    for (const u of d.update.filter((x) => !narrows(x.want, x.got))) await upsert(u.want, u.got);
-    for (const u of d.update.filter((x) => narrows(x.want, x.got))) await upsert(u.want, u.got);
+    for (const u of widening) await upsert(u.want, u.got);
+    for (const u of narrowing) await upsert(u.want, u.got);
     for (const r of d.stale) await client.delete(`${path}/${r.Guid}`);
 
     const back = firstDifference(diff(plan, asZone(await client.get(`/pullzone/${live.Id}`)).EdgeRules));

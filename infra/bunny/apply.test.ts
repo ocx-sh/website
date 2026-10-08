@@ -136,6 +136,60 @@ describe('apply to an empty zone', () => {
   });
 });
 
+describe('OrderIndex stays unique on every write (Bunny rejects a duplicate)', () => {
+  const redirect = (id: string, repo: string, name: string, path: string): Legacy['entries'][number] => ({
+    id,
+    repo,
+    mode: 'redirect',
+    origin: `https://ocx-sh.github.io/${name}/`,
+    paths: [path],
+  });
+  const FLIPPED = ['legacy-rules-ocx', 'legacy-find-ocx', 'legacy-ocx-sdk-python'];
+  /** The zone before the consumers flipped: the three redirect entries sit between `legacy-catalog` and `legacy-index`. */
+  const before: Legacy = {
+    entries: committed.entries
+      .filter((e) => !FLIPPED.includes(e.id))
+      .flatMap((e) =>
+        e.id === 'legacy-index'
+          ? [
+              redirect('legacy-rules-ocx', 'ocx-sh/rules_ocx', 'rules_ocx', '/integrations/bazel/'),
+              redirect('legacy-find-ocx', 'ocx-sh/find_ocx', 'find_ocx', '/integrations/cmake/'),
+              redirect('legacy-ocx-sdk-python', 'ocx-sh/ocx-sdk-python', 'ocx-sdk-python', '/integrations/python/'),
+              e,
+            ]
+          : [e],
+      ),
+  };
+  const after: Legacy = { entries: committed.entries.filter((e) => !FLIPPED.includes(e.id)) };
+  /** The live dev zone at the flip: the pre-flip plan minus the two catalog sandbox rules it never received. */
+  const seed = () =>
+    planned('dev', before)
+      .filter((r) => !String(r.Description).startsWith('ocx:catalog-'))
+      .map((r, i) => ({ ...r, OrderIndex: i }));
+
+  it('the flip diff (deletes, reorders and creates together) applies without a duplicate index', async () => {
+    const { code, err, api } = await run({ rules: seed(), legacy: after });
+    expect(err).toBe('');
+    expect(code).toBe(0);
+    const indexes = live(api).map((r) => r.OrderIndex);
+    expect(new Set(indexes).size).toBe(indexes.length);
+    const byIndex = [...live(api)].sort((a, b) => Number(a.OrderIndex) - Number(b.OrderIndex));
+    expect(names(byIndex)).toEqual(planRules('dev', { legacy: after }).map((r) => r.Description));
+  });
+
+  it('--dry-run prints the parks first, in the order the writes run', async () => {
+    const { out } = await run({ rules: seed(), legacy: after, argv: ['--zone', 'dev', '--dry-run'] });
+    const kinds = out
+      .split('\n')
+      .filter((l) => /^(park|create|update|delete) /.test(l))
+      .map((l) => l.split(' ')[0]);
+    expect(kinds[0]).toBe('park');
+    expect(kinds.lastIndexOf('park')).toBeLessThan(kinds.indexOf('create'));
+    expect(kinds.lastIndexOf('create')).toBeLessThan(kinds.indexOf('update'));
+    expect(kinds.lastIndexOf('update')).toBeLessThan(kinds.indexOf('delete'));
+  });
+});
+
 describe('upsert before delete, never unrouted', () => {
   const BAZEL = [probe('/integrations/bazel/x'), probe('/integrations/bazel')];
 

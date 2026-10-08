@@ -49,7 +49,7 @@ task bunny:apply -- --zone dev --dry-run
 task bunny:apply -- --zone dev
 ```
 
-The dry run only reads. The real run upserts every planned `ocx:*` rule, then deletes stale `ocx:*` rules, then reads back. A routed path is never unrouted in between. It refuses with zero writes when the zone would pass 50 rules.
+The dry run only reads. The real run first parks any live `ocx:*` rule that sits on an index the plan needs (Bunny rejects a duplicate `OrderIndex` on every write), then upserts every planned `ocx:*` rule, then deletes stale `ocx:*` rules, then reads back. The dry run prints that exact sequence. A routed path is never unrouted in between. It refuses with zero writes when the zone would pass 50 rules.
 
 Header rules come first, ahead of every origin rule. Besides `noindex`, `hsts` and `frame`, the dev and prod zones carry two sandbox rules, `ocx:catalog-sandbox` (`Content-Security-Policy: sandbox`) and `ocx:catalog-nosniff` (`X-Content-Type-Options: nosniff`). A Bunny rule sets one header, so the pair is two rules. They match `/catalog/p/*` and `/catalog/index/*/p/*` on every zone host, because those pages render untrusted package content. Preview zones do not get them. Scripts are disabled on these pages (no `allow-scripts`), so the theme toggle and menus fall back to native popovers. The plan stays within the 40-rule ceiling (13 on prod, 12 on dev).
 
