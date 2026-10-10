@@ -16,7 +16,7 @@ const ORIGIN_TYPE_STORAGE = 2;
  * The bandwidth cap is the owner's, never set here.
  * Every field name is on the recorded pull zone (`CacheControlMaxAgeOverride` edge seconds,
  * `CacheControlPublicMaxAgeOverride` browser seconds, a fresh zone reads -1, `RequestLimit` 0 = unlimited).
- * ponytail: whether browser `0` means `no-cache` or "respect origin" is unrecorded.
+ * Browser `0` is recorded (2026-10-10, `sh-ocx`): every response carries `Cache-Control: public, max-age=0`.
  * @param {string} zone `dev`, `prod` or `preview:<slug>`
  * @returns {Record<string, string | number | boolean>}
  */

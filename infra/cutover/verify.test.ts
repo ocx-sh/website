@@ -83,7 +83,7 @@ const goodSite = (): Site => ({
     '/old-moved': { status: 301, location: '/docs/' },
   },
   httpStatus: 301,
-  pagefindCache: 'public, max-age=0, no-cache',
+  pagefindCache: 'public, max-age=0',
   pagefindType: 'text/javascript; charset=utf-8',
   astroCache: 'public, max-age=31536000, immutable',
   astroLinked: true,

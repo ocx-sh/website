@@ -442,14 +442,17 @@ async function checkHttpRedirect(/** @type {Context} */ ctx) {
   ];
 }
 
-/** `/pagefind/pagefind.js` revalidates (`no-cache`) and is JavaScript. */
+/**
+ * `/pagefind/pagefind.js` revalidates and is JavaScript. Bunny's browser override of 0 sends
+ * `public, max-age=0` (stale at once, so the browser revalidates); `no-cache` passes too.
+ */
 async function checkPagefind(/** @type {Context} */ ctx) {
   const reply = await ctx.get('/pagefind/pagefind.js');
   const cache = values(reply.headers, 'cache-control').join(', ');
   const type = values(reply.headers, 'content-type').join(', ');
   return [
     ...expectStatus(reply, '/pagefind/pagefind.js'),
-    ...(/no-cache/i.test(cache) ? [] : [`cache-control is "${cache}", want no-cache`]),
+    ...(/no-cache|max-age=0(?!\d)/i.test(cache) ? [] : [`cache-control is "${cache}", want no-cache or max-age=0`]),
     ...(/javascript/i.test(type) ? [] : [`content-type is "${type}", want JavaScript`]),
   ];
 }
