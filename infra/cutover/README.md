@@ -339,3 +339,12 @@ task cutover:verify -- --host ocx.sh --dns
 Verify: green, and the nginx logs on `ssh hetzner` show no `ocx.sh` requests.
 
 Rollback: as OG-C step 5, within the certificate deadline.
+
+## Run log
+
+2026-10-10, run by the agent under the owner's grant:
+
+- OG-D, OG-P, OG-V: done. The `ocx.sh` hostname and its certificate were added by API (OG-P step 2).
+- OG-N: steps 1 to 3 rehearsed, step 4 skipped by owner decision. The registry routes (`/v2/` and the JFrog token realm) were removed from the hetzner1 `ocx.sh` vhost instead, so the apex could leave hetzner1 at once. `ocx.sh` package names resolve through `index.ocx.sh`, not through that route.
+- OG-C: Cloudflare has no rules for `ocx.sh` and its SSL/TLS settings were confirmed by the owner. The zone export is in `.tmp/ocx.sh.zone`. The hetzner1 certificate was renewed, and its expiry, 2027-01-08, is the rollback deadline. The apex flipped at 16:36Z, and `cutover:verify --dns` was green.
+- OG-T: the apex TTL is 1 hour. P-C3 passed: every region gets the same Bunny anycast range for the apex and for `sh-ocx.b-cdn.net`. The hetzner1 `ocx.sh` vhost was retired after its log showed no website requests. To roll back before the deadline, restore `ocx-sh-00.conf` from the `server-hetzner1` git history, reload nginx, then restore the apex records from the zone export.
