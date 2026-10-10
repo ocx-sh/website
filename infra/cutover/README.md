@@ -119,7 +119,7 @@ Rollback: check out the previous commit and rerun `task bunny:apply -- --zone pr
 
 ### Step 2: add the hostname `ocx.sh` to `sh-ocx`
 
-In the Bunny dashboard, add `ocx.sh` as a custom hostname of pull zone `sh-ocx`. Choose the option named `Seamless Domain Migration`. Create the TXT record it shows in the Cloudflare zone of `ocx.sh`. This changes no traffic. Turn on Force SSL when the certificate is active.
+In the Bunny dashboard, add `ocx.sh` as a custom hostname of pull zone `sh-ocx`. Choose the option named `Seamless Domain Migration`. Create the TXT record it shows in the Cloudflare zone of `ocx.sh`. This changes no traffic. Turn on Force SSL when the certificate is active. The API path does the same: `POST /pullzone/<id>/addHostname`, `POST /pullzone/requestExternalDnsCertificate`, the TXT record, `POST /pullzone/completeExternalDnsCertificate`, then delete the TXT record and rerun `task bunny:zone:apply -- --zone prod` for Force SSL. Done this way on 2026-10-10.
 
 Find the address that the rehearsal pins:
 
@@ -182,17 +182,19 @@ Rollback: none, `next.ocx.sh` is not linked from anywhere.
 
 Add a throwaway vhost `edge.ocx.sh` on hetzner1. Use a DNS-only A record in Cloudflare and a certificate from `task cert:create DOMAINS=edge.ocx.sh` in `server-hetzner1`. Copy `ocx-sh-00.conf`, set `server_name` to `edge.ocx.sh`, point its certificate paths at the `edge.ocx.sh` certificate, and replace its `location /` with the snippet below. Keep both registry locations as they are. Reload with `task nginx:main:reload`.
 
-The nginx snippet is the ADR 0002 Amendment 1 reference, with the real prod pull zone host:
+The nginx snippet is the ADR 0002 Amendment 1 reference, with the real prod pull zone host. The `resolver` and `proxy_ssl_verify_depth` lines were added in the 2026-10-10 rehearsal: without them nginx answers 502. The SNI is fallback 1 of the ADR, not `ocx.sh`. Bunny renews the `ocx.sh` certificate over HTTP-01, and until OG-C that challenge lands on hetzner1's port-80 webroot and fails. An `ocx.sh` SNI would then 502 the site when the certificate lapses (issued 2026-10-10, 90 days). `Host: ocx.sh` still selects the `ocx.sh` rules.
 
 ```nginx
 location / {
-    set $bunny sh-ocx.b-cdn.net;        # variable: re-resolved via the http-level `resolver`
+    resolver 127.0.0.11 ipv6=off valid=30s;  # Docker DNS; the container has no IPv6 route, Bunny answers AAAA
+    set $bunny sh-ocx.b-cdn.net;        # variable: re-resolved via the `resolver`
     proxy_pass https://$bunny;          # no URI part: the request URI passes unchanged
     proxy_set_header Host ocx.sh;       # hostname trigger: ocx.sh rules, never noindex
     proxy_ssl_server_name on;
-    proxy_ssl_name ocx.sh;              # SNI; certificate from Seamless Domain Migration (OG-P)
+    proxy_ssl_name sh-ocx.b-cdn.net;    # SNI: Bunny's wildcard certificate, which Bunny renews (ADR fallback 1)
     proxy_ssl_verify on;
     proxy_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;  # path per image
+    proxy_ssl_verify_depth 4;           # leaf, YE1, Root YE cross-signed by ISRG Root X2; the default 1 fails
     proxy_redirect https://sh-ocx.b-cdn.net/ https://ocx.sh/;          # safety net
     proxy_hide_header Strict-Transport-Security;  # nginx's ssl-security.conf copy stays
     proxy_hide_header X-Frame-Options;            # the server block's copy stays
@@ -204,7 +206,7 @@ location / {
 task cutover:verify -- --host edge.ocx.sh --registry
 ```
 
-Verify: green. Probe P-N1 holds here: nginx sends `Host: ocx.sh`, so Bunny serves the `ocx.sh` rules with no `X-Robots-Tag`. HSTS and `X-Frame-Options` appear once each, and `/v2/` still answers the JFrog challenge. If nginx cannot verify the `ocx.sh` certificate, use fallback 1 of the ADR: SNI `sh-ocx.b-cdn.net` with `Host: ocx.sh`.
+Verify: green. Probe P-N1 holds here: nginx sends `Host: ocx.sh`, so Bunny serves the `ocx.sh` rules with no `X-Robots-Tag`. HSTS and `X-Frame-Options` appear once each, and `/v2/` still answers the JFrog challenge for the probed host.
 
 Rollback: remove the `edge.ocx.sh` server block, delete its DNS record, reload nginx. Remove the block after OG-N either way.
 

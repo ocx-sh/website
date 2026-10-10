@@ -93,7 +93,10 @@ describe('cutover README', () => {
     it.each([
       ['Host ocx.sh', /^\s*proxy_set_header Host ocx\.sh;/m],
       ['proxy_ssl_server_name on', /^\s*proxy_ssl_server_name on;/m],
-      ['proxy_ssl_name', /^\s*proxy_ssl_name ocx\.sh;/m],
+      // ADR fallback 1: an ocx.sh SNI breaks when Bunny's HTTP-01 renewal fails before OG-C.
+      ['proxy_ssl_name sh-ocx.b-cdn.net', /^\s*proxy_ssl_name sh-ocx\.b-cdn\.net;/m],
+      ['a verify depth past the ISRG cross-sign', /^\s*proxy_ssl_verify_depth [3-9];/m],
+      ['an IPv4-only resolver', /^\s*resolver \S+ ipv6=off\b/m],
       ['proxy_redirect to https://ocx.sh/', /^\s*proxy_redirect https:\/\/sh-ocx\.b-cdn\.net\/ https:\/\/ocx\.sh\/;/m],
       ['proxy_hide_header for HSTS', /^\s*proxy_hide_header Strict-Transport-Security;/m],
       ['proxy_hide_header for X-Frame-Options', /^\s*proxy_hide_header X-Frame-Options;/m],
