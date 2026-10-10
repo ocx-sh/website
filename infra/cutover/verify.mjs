@@ -29,7 +29,10 @@ const INDEX_PACKAGE = 'kitware/cmake';
 export const DOCS_PAGE = '/docs/getting-started';
 
 // The registry challenge stays what hetzner1 serves today, whichever host fronts it.
-export const REGISTRY_REALM = 'https://ocx.sh/artifactory/api/docker/sh-ocx-oci-prod/v2/token';
+/** JFrog derives realm and service from the request host (`X-JFrog-Override-Base-Url $scheme://$host`). */
+export const registryRealm = (/** @type {string} */ host) =>
+  `https://${host}/artifactory/api/docker/sh-ocx-oci-prod/v2/token`;
+export const REGISTRY_REALM = registryRealm('ocx.sh');
 export const REGISTRY_SERVICE = 'ocx.sh';
 const MIN_CERT_DAYS = 30;
 
@@ -566,17 +569,21 @@ async function checkDns(/** @type {Context} */ ctx) {
  */
 const challengeParam = (challenge, name) => challenge.match(new RegExp(`\\b${name}="([^"]*)"`, 'i'))?.[1];
 
-/** `--registry`: `/v2/` still answers the JFrog challenge, 401 with the unchanged realm and service. */
+/**
+ * `--registry`: `/v2/` still answers the JFrog challenge, 401 with the unchanged realm and service. Both name
+ * the probed host, so the `edge.ocx.sh` rehearsal expects its own name and `ocx.sh` expects `ocx.sh`.
+ */
 async function checkRegistryChallenge(/** @type {Context} */ ctx) {
   const reply = await ctx.get('/v2/');
   const challenge = values(reply.headers, 'www-authenticate').join(', ');
   const realm = challengeParam(challenge, 'realm');
   const service = challengeParam(challenge, 'service');
+  const wantRealm = registryRealm(ctx.host);
   return [
     ...expectStatus(reply, '/v2/', 401),
     ...(/^\s*bearer\b/i.test(challenge) ? [] : [`/v2/ challenge is "${challenge}", want Bearer`]),
-    ...(realm === REGISTRY_REALM ? [] : [`realm is "${realm}", want "${REGISTRY_REALM}"`]),
-    ...(service === REGISTRY_SERVICE ? [] : [`service is "${service}", want "${REGISTRY_SERVICE}"`]),
+    ...(realm === wantRealm ? [] : [`realm is "${realm}", want "${wantRealm}"`]),
+    ...(service === ctx.host ? [] : [`service is "${service}", want "${ctx.host}"`]),
   ];
 }
 

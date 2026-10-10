@@ -22,6 +22,7 @@ import {
   pinnedFetch,
   REGISTRY_REALM,
   REGISTRY_SERVICE,
+  registryRealm,
   type Fetch,
   type Resolver,
 } from './verify.mjs';
@@ -93,7 +94,8 @@ const goodSite = (): Site => ({
 
 const goodRegistry = (): Registry => ({
   v2Status: 401,
-  auth: `Bearer realm="${REGISTRY_REALM}",service="${REGISTRY_SERVICE}"`,
+  // JFrog names the request host in both; `{host}` is filled per request like X-JFrog-Override-Base-Url.
+  auth: `Bearer realm="${registryRealm('{host}')}",service="{host}"`,
   tokenStatus: 200,
   docsV2Status: 404,
 });
@@ -173,7 +175,12 @@ function handle(req: http.IncomingMessage, res: http.ServerResponse) {
     case '/pagefind/pagefind.js':
       return send(res, 200, { 'content-type': site.pagefindType, 'cache-control': site.pagefindCache }, '//');
     case '/v2/':
-      return send(res, registry.v2Status, registry.auth ? { 'www-authenticate': registry.auth } : {}, '{}');
+      return send(
+        res,
+        registry.v2Status,
+        registry.auth ? { 'www-authenticate': registry.auth.replaceAll('{host}', host) } : {},
+        '{}',
+      );
     case TOKEN_PATH:
       return send(res, registry.tokenStatus, { 'content-type': 'application/json' }, '{"token":"t"}');
     case '/docs/v2/':
@@ -655,7 +662,7 @@ describe('the rehearsal host next.ocx.sh with --registry', () => {
     'index-json',
   ];
 
-  it('is green: the realm stays ocx.sh while the fake nginx front answers on next.ocx.sh', async () => {
+  it('is green: the realm and service name next.ocx.sh, the host the fake nginx front answers on', async () => {
     const r = await run(next);
     expect(r.names).toEqual([...NEXT_CHECKS, ...REGISTRY_CHECKS]);
     expect(r.code).toBe(0);
@@ -669,6 +676,11 @@ describe('the rehearsal host next.ocx.sh with --registry', () => {
     const r = await run(next);
     expect(r.failed).toEqual([check]);
     expect(r.code).toBe(1);
+  });
+
+  it('a realm naming ocx.sh on another host is red', async () => {
+    registry.auth = `Bearer realm="${REGISTRY_REALM}",service="${REGISTRY_SERVICE}"`;
+    expect((await run(next)).failed).toEqual(['registry-challenge']);
   });
 
   it('/v2/ answered by Bunny is red', async () => {
