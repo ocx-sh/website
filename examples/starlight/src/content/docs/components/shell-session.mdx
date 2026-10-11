@@ -1,0 +1,36 @@
+---
+title: ShellSession
+description: Command and output fences fused into one frame, each highlighted in its own language.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+Fences alternate by position: the first, third and so on are commands, the second, fourth and so on are outputs.
+A command with no output goes in the same fence as the next command.
+A command keeps the code background and its copy button, which copies only the command.
+An output is recessed and muted, and has no copy button.
+The slot holds code fences and nothing else; the build fails on anything more.
+
+<ShellSession title="Lock and build">
+```sh
+ocx lock
+```
+```text
+locked 3 tools in ocx.lock
+```
+</ShellSession>
+
+## Stories
+
+<Stories of="shell-session" />
+
+## Props
+
+<PropsTable
+  of="ShellSession.astro"
+  rows={[
+    { name: 'title', type: 'string', description: 'Title bar text, also the accessible name of the session. Without it there is no title bar.' },
+  ]}
+/>

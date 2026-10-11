@@ -73,6 +73,24 @@ describe('C-150 tabPanels', () => {
   });
 });
 
+describe('topLevel', () => {
+  const isA = (tag: string) => tag.includes('class="a"');
+
+  it('finds depth-0 divs the matcher accepts; nested ones, quoted markup and comments never count', () => {
+    const html =
+      '<div class="a" data-code="<div class=\'a\'>"><div class="a"></div></div><!-- <div class="a"> --><div class="a">x</div>';
+    const { tokens, at, rest } = tabIcons.topLevel(html, isA);
+    expect(at.map((i) => tokens[i])).toEqual(['<div class="a" data-code="<div class=\'a\'>">', '<div class="a">']);
+    expect(rest).toEqual(['<!-- <div class="a"> -->']);
+    expect(tokens.join('')).toBe(html);
+  });
+
+  it('returns the depth-0 tokens outside accepted divs: text, other tags, rejected div openings, not their contents', () => {
+    const { rest } = tabIcons.topLevel('<p>x</p> <div class="b"><i>y</i></div><div class="a"><b>z</b></div>', isA);
+    expect(rest).toEqual(['<p>', 'x', '</p>', ' ', '<div class="b">']);
+  });
+});
+
 describe('C-150 TabItem', () => {
   it('C-150 renders a marked panel with its label and icon and the slot inside', async () => {
     const html = await container.renderToString(TabItem, {

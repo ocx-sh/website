@@ -1,0 +1,19 @@
+---
+title: Title and a command without output
+description: A titled session; a command with no output shares its fence with the next command.
+height: 300
+order: 3
+block: true
+---
+
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession title="Lock and build">
+```sh
+cd my-project
+ocx lock
+```
+```text
+locked 3 tools in ocx.lock
+```
+</ShellSession>
