@@ -2,7 +2,7 @@
 // Copyright 2026 The OCX Authors
 
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'vitest';
@@ -63,4 +63,25 @@ test('an include without a range takes the whole file', async () => {
 
 test('a missing file is an error that names the path', async () => {
   await assert.rejects(run(site(), '<<< @/_scripts/absent.sh{sh}\n'), /absent\.sh/);
+});
+
+test('an include that escapes srcDir is refused, by either form', async () => {
+  const srcDir = site();
+  await assert.rejects(run(srcDir, '<<< @/../outside{sh}\n'), /outside/);
+  await assert.rejects(run(srcDir, '<!--@include: ../../outside.md-->\n'), /outside/);
+});
+
+test('a symlink pointing outside srcDir is refused', async () => {
+  const srcDir = site();
+  const target = mkdtempSync(join(tmpdir(), 'includes-secret-'));
+  writeFileSync(join(target, 'secret.txt'), 'secret\n');
+  symlinkSync(join(target, 'secret.txt'), join(srcDir, 'link.txt'));
+  await assert.rejects(run(srcDir, '<<< @/link.txt{txt}\n'), /resolves outside/);
+});
+
+test('a cyclic markdown include names the chain', async () => {
+  const srcDir = site();
+  writeFileSync(join(srcDir, 'a.md'), '<!--@include: b.md-->\n');
+  writeFileSync(join(srcDir, 'b.md'), '<!--@include: a.md-->\n');
+  await assert.rejects(run(srcDir, '<!--@include: ../a.md-->\n'), /include cycle: .*a\.md -> .*b\.md -> .*a\.md/);
 });
