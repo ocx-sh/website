@@ -51,7 +51,7 @@ The `ocx-sh/ocx` pull request must be merged first. It sets `target: '_self'` on
 gh pr list --repo ocx-sh/ocx --state merged --search 'Home nav target _self logoLink'
 ```
 
-Verify: the pull request is listed as merged. Step 5 checks the result, because `cutover:verify` reads the Home and logo links of a proxied docs page.
+Verify: the pull request is listed as merged.
 
 Rollback: none here. Do not continue to step 3 until the pull request is merged.
 
