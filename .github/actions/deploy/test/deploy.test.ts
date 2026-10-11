@@ -426,7 +426,7 @@ describe('prune (C-041)', () => {
       path: '/',
       dist: { 'index.html': 'new', 'pagefind/pagefind-entry.json': '{"version":"1.5.2"}' },
       files: {
-        'install/old.html': 'own claim, stale',
+        'team/old.html': 'own claim, stale',
         'docs/index.html': 'ocx-sh/ocx claim',
         'integrations/bazel/index.html': 'ocx-sh/rules_ocx claim',
       },

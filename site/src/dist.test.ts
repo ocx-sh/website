@@ -20,12 +20,12 @@ describe('site dist', () => {
   });
 
   it('has the root claims, 404 and no other top-level directory', () => {
-    for (const f of ['index', 'integrations/index', 'apps/index', 'install/index', 'team/index', '404'])
+    for (const f of ['index', 'integrations/index', 'apps/index', 'team/index', '404'])
       expect(existsSync(`${dist}${f}.html`), f).toBe(true);
     const dirs = readdirSync(dist, { withFileTypes: true })
       .filter((e) => e.isDirectory())
       .map((e) => e.name);
-    expect(dirs.toSorted()).toEqual(['_astro', 'apps', 'install', 'integrations', 'pagefind', 'team']);
+    expect(dirs.toSorted()).toEqual(['_astro', 'apps', 'integrations', 'pagefind', 'team']);
   });
 
   it('names no legacy section bundle: the search chunk and every page leave out /apps/catalog/pagefind/ and kin', () => {
@@ -38,7 +38,7 @@ describe('site dist', () => {
       ...readdirSync(`${dist}_astro`)
         .filter((f) => f.endsWith('.js'))
         .map((f) => `_astro/${f}`),
-      ...['index', 'integrations/index', 'apps/index', 'install/index', 'team/index', '404'].map((f) => `${f}.html`),
+      ...['index', 'integrations/index', 'apps/index', 'team/index', '404'].map((f) => `${f}.html`),
     ];
     for (const f of built) for (const b of bundles) expect(read(f), `${f}: ${b}`).not.toContain(b);
   });
@@ -66,7 +66,6 @@ describe('site dist', () => {
     expect(urls.toSorted()).toEqual([
       'https://ocx.sh/',
       'https://ocx.sh/apps/',
-      'https://ocx.sh/install/',
       'https://ocx.sh/integrations/',
       'https://ocx.sh/team/',
     ]);

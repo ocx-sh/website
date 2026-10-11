@@ -1,6 +1,6 @@
 name: Site
 
-# Builds the root site (`site/`: /, /integrations/, /apps/, /install/) and deploys it to ocx.sh. The deploy job is
+# Builds the root site (`site/`: /, /integrations/, /apps/, /team/) and deploys it to ocx.sh. The deploy job is
 # skipped, never failed, until the repository variable BUNNY_DEPLOY is `true` and the run is on main; the
 # `ocx.sh` environment admits only main and holds the one zone key, BUNNY_STORAGE_KEY. The
 # account-wide Bunny API key never goes into CI, so no cache purge runs here.

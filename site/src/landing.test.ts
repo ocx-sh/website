@@ -73,14 +73,6 @@ describe('root site dist', () => {
     expect(hits).toEqual([]);
   });
 
-  it('the install page pins setup-ocx exactly as the site workflow does', () => {
-    const uses = /uses: (ocx-sh\/setup-ocx@[0-9a-f]{40} # v\d+\.\d+\.\d+)/.exec(
-      readFileSync(`${root}.github/workflows/site.yml`, 'utf8'),
-    )?.[1];
-    expect(uses).toBeDefined();
-    expect(read('install/index.html').replace(/<[^>]+>/g, '')).toContain(uses ?? '');
-  });
-
   it('every built page, the landing first, keeps its gzipped HTML within HTML_GZ_MAX', () => {
     const sizes = Object.fromEntries(
       files(dist)

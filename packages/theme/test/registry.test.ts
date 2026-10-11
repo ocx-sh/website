@@ -210,7 +210,8 @@ describe('C-008 pure registry functions', () => {
   });
 
   it.each([
-    ['ocx-sh/website', ['/', '/integrations/', '/apps/', '/install/', '/team/']],
+    ['ocx-sh/website', ['/', '/integrations/', '/apps/', '/team/']],
+    ['ocx-sh/www-setup', ['/install/']],
     ['ocx-sh/ocx', ['/docs/', '/schemas/']],
     ['ocx-sh/none', []],
   ])('C-008: claimsOf(%s)', (repo, paths) => {
@@ -220,6 +221,7 @@ describe('C-008 pure registry functions', () => {
   it('C-008: mergeTargets(nav, "/docs/") lists other searchable claims with labels', () => {
     expect(mergeTargets(nav, '/docs/')).toEqual([
       { path: '/', label: 'ocx' },
+      { path: '/install/', label: 'install' },
       { path: '/integrations/bazel/', label: 'Bazel' },
       { path: '/integrations/python/', label: 'Python' },
       { path: '/integrations/cmake/', label: 'CMake' },
@@ -229,6 +231,7 @@ describe('C-008 pure registry functions', () => {
 
   it('C-008: mergeTargets(nav, "/") excludes root', () => {
     expect(mergeTargets(nav, '/')).toEqual([
+      { path: '/install/', label: 'install' },
       { path: '/docs/', label: 'docs' },
       { path: '/integrations/bazel/', label: 'Bazel' },
       { path: '/integrations/python/', label: 'Python' },

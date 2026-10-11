@@ -35,8 +35,8 @@ describe('install commands', () => {
   });
 });
 
-// Pages that carry the five commands: the landing (C-306) and the install page (C-307).
-const PAGES = ['index.html', 'install/index.html'];
+// Pages that carry the five commands: the landing (C-306). `/install/` moved to ocx-sh/www-setup.
+const PAGES = ['index.html'];
 
 const decode = (s: string) =>
   s.replace(/&(#x([0-9a-f]+)|#(\d+)|amp|lt|gt|quot|apos);/gi, (m, name: string, hex?: string, dec?: string) =>
@@ -57,13 +57,5 @@ describe('install commands on built pages (C-307)', () => {
   it('every page carries identical command strings', () => {
     const [first, ...rest] = PAGES.map(five);
     for (const other of rest) expect(other).toEqual(first);
-  });
-
-  it('/install/ links setup.ocx.sh, /docs/installation without a trailing slash, and the setup-ocx step', () => {
-    const html = readFileSync(`${dist}install/index.html`, 'utf8');
-    expect(html).toContain('href="https://setup.ocx.sh/"');
-    expect(html).toContain('href="/docs/installation"');
-    expect(html).toContain('href="https://github.com/ocx-sh/setup-ocx"');
-    expect(codeBlocks(html).some((c) => c.startsWith('- uses: ocx-sh/setup-ocx@'))).toBe(true);
   });
 });

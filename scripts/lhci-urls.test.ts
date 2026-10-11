@@ -95,7 +95,7 @@ describe('C-111 Lighthouse URL list', () => {
 
   it('lists every HTML page of site/dist, each in exactly one budget class (C-309)', () => {
     const pages = sitePages();
-    expect(pages).toEqual(expect.arrayContaining(['/', '/404.html', '/apps/', '/install/', '/integrations/']));
+    expect(pages).toEqual(expect.arrayContaining(['/', '/404.html', '/apps/', '/integrations/']));
     for (const p of pages) {
       expect(urls, p).toContain(p);
       expect(classOf(p), p).toBe('content');

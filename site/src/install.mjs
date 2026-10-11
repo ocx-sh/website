@@ -1,4 +1,4 @@
-// The five shells' install commands: the one source for the landing page and `/install/` (C-306, C-307).
+// The five shells' install commands: the one source for the landing page (C-306; `/install/` moved to ocx-sh/www-setup).
 // Verbatim from the live ocx site: ocx/website/src/index.md (Quick Install) and docs/installation.md.
 
 /** @type {string} */

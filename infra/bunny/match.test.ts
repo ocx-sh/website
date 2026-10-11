@@ -96,8 +96,12 @@ describe('first-match outcomes the table must keep', () => {
     expect(at('/apps/catalog/x/').origin).toBe('legacy-catalog');
   });
 
+  it("/install/ is www-setup's claim: its own repo origin, deep links included", () => {
+    for (const path of ['/install/', '/install/x/']) expect(at(path).origin, path).toBe('repo-www-setup');
+  });
+
   it('paths with no origin rule fall to the default origin', () => {
-    for (const path of ['/v2/', '/unknown/', '/', '/install/']) expect(at(path).origin, path).toBeNull();
+    for (const path of ['/v2/', '/unknown/', '/']) expect(at(path).origin, path).toBeNull();
   });
 
   it('noindex follows the host: absent on ocx.sh, present on both b-cdn.net hosts', () => {

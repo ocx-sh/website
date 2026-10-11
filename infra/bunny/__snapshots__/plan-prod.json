@@ -333,6 +333,36 @@
     {
       "ActionType": 17,
       "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-www-setup",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:repo-www-setup",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/install",
+            "https://ocx.sh/install/*",
+            "https://next.ocx.sh/install",
+            "https://next.ocx.sh/install/*",
+            "https://sh-ocx.b-cdn.net/install"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/install/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 17,
+      "ActionParameter1": "",
       "ActionParameter2": "sh-ocx-ocx",
       "TriggerMatchingType": 0,
       "Enabled": true,

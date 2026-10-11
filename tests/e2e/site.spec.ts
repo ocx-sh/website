@@ -24,7 +24,7 @@ async function layout(page: Page, path: string) {
 test.use({ reducedMotion: 'reduce' });
 
 test('the site has pages to check', () => {
-  expect(pages).toEqual(expect.arrayContaining(['/', '/apps/', '/install/', '/integrations/']));
+  expect(pages).toEqual(expect.arrayContaining(['/', '/apps/', '/team/', '/integrations/']));
 });
 
 for (const path of pages) {

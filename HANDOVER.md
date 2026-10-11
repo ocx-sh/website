@@ -22,7 +22,7 @@ the owner on 2026-09-27 and amended on 2026-09-30. The reasoning trail is in
 | Path | What |
 |---|---|
 | `packages/theme/` | npm package `@ocx-sh/theme` — the shared library, see below |
-| `site/` | root site: landing `/`, ecosystem hubs `/integrations/`, `/apps/`, `/install/` (Astro + Starlight) |
+| `site/` | root site: landing `/`, ecosystem hubs `/integrations/`, `/apps/`, `/team/` (Astro + Starlight) |
 | `.github/actions/deploy/` | reusable action every consumer calls to deploy its path to Bunny |
 | `infra/bunny/` | Bunny as code: zones, edge rules, `legacy.json`, the owner-local `bunny:*` tasks |
 | `infra/cutover/` | cutover verification (`cutover:verify`) and the owner runbook for the `ocx.sh` move |
@@ -118,14 +118,14 @@ Web Awesome, fetching `nav.json` from `ocx.sh/theme/v1` at CI time.
 
 | Repo | Path on ocx.sh | Today | Target | Consumes |
 |---|---|---|---|---|
-| `ocx-sh/website` (this) | `/`, `/integrations/`, `/apps/`, `/install/` | — | Starlight | `@ocx-sh/theme/starlight` |
+| `ocx-sh/website` (this) | `/`, `/integrations/`, `/apps/`, `/team/` | — | Starlight | `@ocx-sh/theme/starlight` |
 | `ocx-sh/ocx` `website/` | `/docs/`, `/schemas/` | VitePress 2 alpha → Cloudflare Pages (`deploy-website.yml`) | Starlight (45 pages, 9 code-groups) | `@ocx-sh/theme/starlight` |
 | `ocx-sh/index` + `ocx-sh/catalog` | `/catalog/` | `@ocx-sh/catalog` (VitePress) → CF Pages, index.ocx.sh | phase 1 VitePress + tokens; later Astro | `@ocx-sh/theme/vitepress` |
 | `ocx-sh/rules_ocx` | `/integrations/bazel/` | Stardoc Markdown, plain Jekyll → GH Pages | Starlight renders the Stardoc output | `@ocx-sh/theme/starlight` |
 | `ocx-sh/ocx-sdk-python` | `/integrations/python/` | MkDocs Material + mkdocstrings → GH Pages | Starlight + `starlight-pydocs` | `@ocx-sh/theme/starlight` |
 | `ocx-sh/catalog` own docs | `/apps/catalog/` | MkDocs Material → GH Pages | Starlight | `@ocx-sh/theme/starlight` |
 | `ocx-sh/grimoire-lore` | lore.ocx.sh (open: keep or `/lore/`) | `grimoire-indexer` (Astro renderer) → GH Pages | same renderer, OCX tokens via its `customCss` | map `--grim-*` ← `--ocx-*` in one CSS file |
-| `ocx-sh/www-setup` | setup.ocx.sh — **stays**, serves raw scripts + `dist.json` | Bunny (live) | unchanged; `/install/` links to it | — |
+| `ocx-sh/www-setup` | `/install/` (own Starlight site, claim handed over from this repo) and setup.ocx.sh (raw scripts + `dist.json`) | Bunny (live) | setup.ocx.sh unchanged; `/install/` built from the repo, deployed through the deploy action | `@ocx-sh/theme/starlight` |
 | find_ocx, setup-ocx, ocx-mirror, ocx-mirror-sdk, vscode-ocx, ocx-indexbot, ocx-mcp | `/integrations/<x>/` or `/apps/<x>/` when they get docs | no site | cards in the ecosystem hubs first | `@ocx-sh/theme/starlight` |
 
 mdBook: no repo uses it today. If one ever does, it gets CSS only
