@@ -142,6 +142,10 @@ export default function ocxTheme({ breadcrumbs = {} } = {}) {
                   ],
                   // Astro deep-merges this, so a consumer's own include list is kept (arrays concat).
                   optimizeDeps: { include: ZAG_DEPS },
+                  // A consumer linking the theme from a local checkout would otherwise resolve these from
+                  // the checkout's node_modules: two Starlights define `starlight-toc` twice (a console
+                  // error, Lighthouse best-practices < 1). The consumer's copies win.
+                  resolve: { dedupe: ['astro', '@astrojs/starlight'] },
                   ...(astro.vite?.build?.assetsInlineLimit === undefined && {
                     build: {
                       /** @type {(file: string, content: Buffer) => boolean | undefined} */
