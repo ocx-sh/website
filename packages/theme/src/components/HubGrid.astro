@@ -1,6 +1,6 @@
 ---
 // HubGrid (C-067, C-303): one hub page's entries from nav.json, a group per category in nav.json
-// order. Cards are the base.css `.ocx-card`; a `planned` entry is the dashed `--planned` card with a
+// order; `category` narrows it to that one group, heading kept (the page outline stays the same). Cards are the base.css `.ocx-card`; a `planned` entry is the dashed `--planned` card with a
 // "planned" tag and no link; an external entry carries the registry `external` icon (↗) named
 // "(external)". Zero client JS.
 import Icon from './ui/Icon.astro';
@@ -10,13 +10,19 @@ import nav from '../nav.json';
 interface Props {
   /** Hub id in nav.json (`integrations`, `apps`). */
   hub: string;
+  /** Category id within the hub (`ci`): render only that group. An id the hub lacks fails the build. */
+  category?: string;
 }
 
-const { hub: hubId } = Astro.props;
+const { hub: hubId, category } = Astro.props;
 const hub = nav.hubs.find((h) => h.id === hubId);
 if (!hub) throw new Error(`HubGrid: no hub "${hubId}" in nav.json`);
 
+if (category !== undefined && !hub.categories.some((c) => c.id === category))
+  throw new Error(`HubGrid: no category "${category}" in hub "${hubId}"`);
+
 const groups = hub.categories
+  .filter((c) => category === undefined || c.id === category)
   .map((c) => ({ ...c, items: nav.entries.filter((e) => e.hub === hub.id && e.category === c.id) }))
   .filter((c) => c.items.length > 0);
 const isExternal = (href: string) => /^https?:\/\//i.test(href);

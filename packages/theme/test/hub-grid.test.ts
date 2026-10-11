@@ -17,8 +17,8 @@ beforeAll(async () => {
   container = await AstroContainer.create();
 });
 
-async function render(hub: string): Promise<Document> {
-  const html = await container.renderToString(HubGrid, { props: { hub } });
+async function render(hub: string, category?: string): Promise<Document> {
+  const html = await container.renderToString(HubGrid, { props: { hub, category } });
   return new JSDOM(html).window.document;
 }
 
@@ -71,6 +71,19 @@ describe('C-303 HubGrid', () => {
     const icon = lore?.querySelector('svg[data-icon="external"]');
     expect(icon?.getAttribute('role')).toBe('img');
     expect(icon?.getAttribute('aria-label')).toBe('(external)');
+  });
+
+  it('C-303 HubGrid: `category` renders only that group, heading included, with its entries in order', async () => {
+    const doc = await render('integrations', 'ci');
+    expect(groups(doc).map((g) => g.dataset.ocxCategory)).toEqual(['ci']);
+    const ids = nav.entries.filter((e) => e.hub === 'integrations' && e.category === 'ci').map((e) => e.id);
+    expect(items(doc).map((i) => i.dataset.ocxEntry)).toEqual(ids);
+    expect(doc.querySelector('h2')?.textContent?.trim()).toBe('ci');
+  });
+
+  it('C-303 HubGrid: a category the hub lacks fails the build, even one that exists in another hub', async () => {
+    await expect(render('integrations', 'browse')).rejects.toThrow(/browse/);
+    await expect(render('apps', 'nope')).rejects.toThrow(/nope/);
   });
 
   it('C-303 HubGrid: an unknown hub fails the build', async () => {
