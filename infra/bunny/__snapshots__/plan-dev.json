@@ -282,9 +282,7 @@
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
-            "https://sh-ocx-dev.b-cdn.net/licensed/*",
-            "https://sh-ocx-dev.b-cdn.net/team",
-            "https://sh-ocx-dev.b-cdn.net/team/*"
+            "https://sh-ocx-dev.b-cdn.net/licensed/*"
           ]
         }
       ]

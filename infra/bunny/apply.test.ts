@@ -214,29 +214,29 @@ describe('upsert before delete, never unrouted', () => {
     expect(kinds.lastIndexOf('POST')).toBeLessThan(kinds.indexOf('DELETE'));
   });
 
-  /** `/team/` proxied by `legacy-ocx-files` (ranks first) before, by `legacy-ocx-dirs` after: both rules exist. */
-  const teamMoves = () => {
-    const withTeam = (to: 'legacy-ocx-files' | 'legacy-ocx-dirs'): Legacy => ({
+  /** `/icons/` proxied by `legacy-ocx-files` (ranks first) before, by `legacy-ocx-dirs` after: both rules exist. */
+  const movedDirMoves = () => {
+    const withMoved = (to: 'legacy-ocx-files' | 'legacy-ocx-dirs'): Legacy => ({
       entries: committed.entries.map((e) => {
         if (e.id === 'legacy-ocx-files' || e.id === 'legacy-ocx-dirs') {
-          const rest = e.paths.filter((p) => p !== '/team/');
-          return { ...e, paths: e.id === to ? [...rest, '/team/'] : rest };
+          const rest = e.paths.filter((p) => p !== '/icons/');
+          return { ...e, paths: e.id === to ? [...rest, '/icons/'] : rest };
         }
         return e;
       }),
     });
-    return { from: withTeam('legacy-ocx-files'), to: withTeam('legacy-ocx-dirs') };
+    return { from: withMoved('legacy-ocx-files'), to: withMoved('legacy-ocx-dirs') };
   };
-  const TEAM = [probe('/team/x'), probe('/team')];
+  const MOVED = [probe('/icons/x')];
 
   it('a path moving from existing rule X to existing rule Y: Y widens before X narrows', async () => {
-    const { from, to } = teamMoves();
+    const { from, to } = movedDirMoves();
     const violations: string[] = [];
     const before = planned('dev', from);
     const { code, api } = await run({
       rules: before,
       legacy: to,
-      afterRequest: neverUnrouted(before, planRules('dev', { legacy: to }), TEAM, violations),
+      afterRequest: neverUnrouted(before, planRules('dev', { legacy: to }), MOVED, violations),
     });
     expect(code).toBe(0);
     expect(violations).toEqual([]);
@@ -245,19 +245,19 @@ describe('upsert before delete, never unrouted', () => {
   });
 
   it('a path moving from one rule to a new one: the new rule is created before the old one narrows', async () => {
-    const team = {
-      id: 'legacy-team',
+    const icons = {
+      id: 'legacy-icons',
       repo: 'ocx-sh/ocx',
       mode: 'proxy',
       origin: 'https://ocx-website.pages.dev',
-      paths: ['/team/'],
+      paths: ['/icons/'],
     };
     const next: Legacy = {
       entries: [
         ...committed.entries.map((e) =>
-          e.id === 'legacy-ocx-dirs' ? { ...e, paths: e.paths.filter((p) => p !== '/team/') } : e,
+          e.id === 'legacy-ocx-dirs' ? { ...e, paths: e.paths.filter((p) => p !== '/icons/') } : e,
         ),
-        team,
+        icons,
       ],
     };
     const violations: string[] = [];
@@ -265,12 +265,12 @@ describe('upsert before delete, never unrouted', () => {
     const { code, api } = await run({
       rules: before,
       legacy: next,
-      afterRequest: neverUnrouted(before, planRules('dev', { legacy: next }), TEAM, violations),
+      afterRequest: neverUnrouted(before, planRules('dev', { legacy: next }), MOVED, violations),
     });
     expect(code).toBe(0);
     expect(violations).toEqual([]);
     const order = upserted(api);
-    expect(order.indexOf('ocx:legacy-team')).toBeLessThan(order.indexOf('ocx:legacy-ocx-dirs'));
+    expect(order.indexOf('ocx:legacy-icons')).toBeLessThan(order.indexOf('ocx:legacy-ocx-dirs'));
   });
 
   it('the invariant goes red on a delete-first sequence (the detector can fail)', async () => {
@@ -295,20 +295,20 @@ describe('upsert before delete, never unrouted', () => {
       { ...a, Guid: 'z' },
     ];
     expect(evaluationOrder(shuffled).map((r) => r.Guid)).toEqual(['a', 'b', 'z']);
-    const hit = (rules: EdgeRule[]) => matchProbe(edgeRules(rules), probe('/team/x')).origin;
+    const hit = (rules: EdgeRule[]) => matchProbe(edgeRules(rules), probe('/icons/x')).origin;
     const [dirs] = planned('dev').filter((r) => r.Description === 'ocx:legacy-ocx-dirs');
     const files = planned('dev').find((r) => r.Description === 'ocx:legacy-ocx-files')!;
-    const claimsTeam = { ...files, Triggers: dirs!.Triggers, Description: 'ocx:legacy-ocx-files' };
+    const claimsMoved = { ...files, Triggers: dirs!.Triggers, Description: 'ocx:legacy-ocx-files' };
     expect(
       hit([
         { ...dirs!, OrderIndex: 5 },
-        { ...claimsTeam, OrderIndex: 2 },
+        { ...claimsMoved, OrderIndex: 2 },
       ]),
     ).toBe('legacy-ocx-files');
     expect(
       hit([
         { ...dirs!, OrderIndex: 5 },
-        { ...claimsTeam, OrderIndex: 2, Enabled: false },
+        { ...claimsMoved, OrderIndex: 2, Enabled: false },
       ]),
     ).toBe('legacy-ocx-dirs');
   });

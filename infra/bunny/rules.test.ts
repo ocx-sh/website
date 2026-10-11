@@ -134,13 +134,13 @@ describe('rule set and limits', () => {
     }
   });
 
-  it('chunks the 24 prod and 8 dev patterns of legacy-ocx-dirs 5 at a time', () => {
+  it('chunks the 18 prod and 6 dev patterns of legacy-ocx-dirs 5 at a time', () => {
     const sizes = (zone: string) =>
       planRules(zone)
         .find((r) => r.Description === 'ocx:legacy-ocx-dirs')
         ?.Triggers.map((t) => t.PatternMatches.length);
-    expect(sizes('prod')).toEqual([5, 5, 5, 5, 4]);
-    expect(sizes('dev')).toEqual([5, 3]);
+    expect(sizes('prod')).toEqual([5, 5, 5, 3]);
+    expect(sizes('dev')).toEqual([5, 1]);
   });
 
   it.each([

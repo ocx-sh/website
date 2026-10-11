@@ -6,7 +6,7 @@
       "repo": "ocx-sh/ocx",
       "mode": "proxy",
       "origin": "https://ocx-website.pages.dev",
-      "paths": ["/docs/", "/schemas/", "/assets/", "/icons/", "/casts/", "/licensed/", "/team/"]
+      "paths": ["/docs/", "/schemas/", "/assets/", "/icons/", "/casts/", "/licensed/"]
     },
     {
       "id": "legacy-ocx-files",

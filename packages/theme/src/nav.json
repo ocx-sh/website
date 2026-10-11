@@ -42,6 +42,7 @@
     { "path": "/integrations/", "repo": "ocx-sh/website", "search": false },
     { "path": "/apps/", "repo": "ocx-sh/website", "search": false },
     { "path": "/install/", "repo": "ocx-sh/website", "search": false },
+    { "path": "/team/", "repo": "ocx-sh/website", "search": false },
     { "path": "/docs/", "repo": "ocx-sh/ocx", "search": true },
     { "path": "/schemas/", "repo": "ocx-sh/ocx", "search": false },
     { "path": "/catalog/", "repo": "ocx-sh/index", "search": false },
