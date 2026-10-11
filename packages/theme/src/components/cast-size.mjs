@@ -50,3 +50,21 @@ export function publicCastSize(src, publicDir) {
     closeSync(fd);
   }
 }
+
+/** Tallest terminal: a recording taller than this plays in a scrolling 24-row terminal, as a real one does. */
+export const MAX_ROWS = 24;
+
+/**
+ * The size a Terminal (and the Skeleton standing in for it) uses: explicit props win, else the cast's
+ * header (`publicCastSize`); rows are capped at `MAX_ROWS`.
+ * @param {string | undefined} src
+ * @param {string | URL} publicDir
+ * @param {number | undefined} cols
+ * @param {number | undefined} rows
+ * @returns {{ cols: number | undefined, rows: number | undefined }}
+ */
+export function terminalSize(src, publicDir, cols, rows) {
+  const size = (cols && rows) || src === undefined ? undefined : publicCastSize(src, publicDir);
+  const r = rows ?? size?.rows;
+  return { cols: cols ?? size?.cols, rows: r === undefined ? r : Math.min(r, MAX_ROWS) };
+}

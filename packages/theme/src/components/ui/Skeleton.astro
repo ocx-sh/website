@@ -9,6 +9,9 @@
 // Styles: the text primitive and the sweep in skeleton.css (loaded by base.css), the variants below
 // (global: the BEM names are the scope, and Astro's per-selector scope hashes would push the sheet
 // past the inline-CSS cap).
+import { publicDir } from 'astro:config/server';
+import { terminalSize } from '../cast-size.mjs';
+
 export interface Props {
   variant?: 'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal';
   /** Bars to reserve for `text`, `code` and `terminal` (each one line-height tall). */
@@ -17,10 +20,12 @@ export interface Props {
   code?: string;
   /** A `code` block with a title bar: reserves Expressive Code's 36px header. The text itself is not drawn. */
   title?: string | boolean;
-  /** Rows of a `list` or `table` (a table's head row comes on top); a `terminal`'s rows, with `cols`. */
+  /** Rows of a `list` or `table` (a table's head row comes on top); a `terminal`'s rows, with `cols`, capped at 24 like Terminal. */
   rows?: number;
   /** A `terminal`'s columns: with `rows`, the size of the Terminal it stands in for, so it reserves that Terminal's player box. */
   cols?: number;
+  /** A `terminal`'s cast, the one its Terminal plays: `cols` and `rows` default to the cast header's, as Terminal's do. */
+  src?: string;
   /** Columns of a `table`. */
   columns?: number;
   /** Diameter of a `circle`, on Avatar's scale. */
@@ -37,8 +42,9 @@ const {
   lines = 3,
   code,
   title,
-  rows = 3,
-  cols,
+  rows: rowsProp,
+  cols: colsProp,
+  src,
   columns = 3,
   size = 'sm',
   ratio = '16 / 9',
@@ -47,6 +53,10 @@ const {
 } = Astro.props;
 // Written into `style`, so it is checked: a number over a number.
 if (!/^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/.test(ratio)) throw new Error(`Skeleton: invalid ratio "${ratio}"`);
+
+const rows = rowsProp ?? 3;
+// A terminal sizes exactly as the Terminal it stands in for does (props, else the cast header; rows capped).
+const term = variant === 'terminal' ? terminalSize(src, publicDir, colsProp, rowsProp) : undefined;
 
 const count = (n: number) => Array.from({ length: n });
 // A code block's source sets its bars, as a fence's does its lines: EC trims trailing newlines.
@@ -58,9 +68,10 @@ const style = {
   code: `--_lines: ${bars}; --_min: 0px; --_pad: var(--ocx-space-5)${title ? '; --_head: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2) - 2 * var(--ocx-border-width))' : ''}`,
   // A sized Terminal's player height: Terminal.astro's reserve calc, change both together. Inline, not in the
   // <style>: it keeps this sheet under the plugin's inline-CSS cap (an external sheet costs Lighthouse 0.01).
-  terminal: cols
-    ? `--_lines: ${lines}; --_min: calc(100cqi * ${rows * 20 + 22} / ${cols * 9 + 22} + 32px)`
-    : `--_lines: ${lines}`,
+  terminal:
+    term?.cols && term.rows
+      ? `--_lines: ${lines}; --_min: calc(100cqi * ${term.rows * 20 + 22} / ${term.cols * 9 + 22} + 32px)`
+      : `--_lines: ${lines}`,
   list: `--_rows: ${rows}`,
   table: `--_rows: ${rows}; --_cols: ${columns}`,
   rect: `--_ratio: ${ratio}`,

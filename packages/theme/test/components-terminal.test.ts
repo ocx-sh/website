@@ -140,6 +140,10 @@ describe('WP13.1 Terminal markup', () => {
     // Explicit props win; a cast that is not under public/ reserves nothing (today's fallback min-height).
     const explicit = await render({ src: '/casts/fixture/getting-started-install.cast', cols: 80, rows: 24 });
     expect(explicit.root.querySelector('.ocx-terminal__player')?.getAttribute('style')).toMatch(/--_rows:\s*24\b/);
+    // Rows cap at 24, in the reserved box and in what the player is given.
+    const tall = await render({ src: '/casts/fixture/getting-started-install.cast', rows: 30 });
+    expect(tall.root.querySelector('.ocx-terminal__player')?.getAttribute('style')).toMatch(/--_rows:\s*24\b/);
+    expect(options(tall.root)).toMatchObject({ rows: 24 });
     const missing = await render({ src: '/casts/x.cast' });
     expect(missing.root.querySelector('.ocx-terminal__player')?.getAttribute('style') ?? '').not.toMatch(/--_rows/);
   });
