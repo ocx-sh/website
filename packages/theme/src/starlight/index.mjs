@@ -1,4 +1,5 @@
 // Public `@ocx-sh/theme/starlight` entry: the Starlight plugin (design §4.3).
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -116,10 +117,20 @@ export default function ocxTheme({ breadcrumbs = {} } = {}) {
         if (astroConfig.trailingSlash !== 'always')
           throw new Error(`@ocx-sh/theme: trailingSlash must be 'always', got '${astroConfig.trailingSlash}'`);
 
+        const ec = config.expressiveCode;
+        const expressiveCode = ec === false ? false : mergeEc(ec === true || ec === undefined ? {} : ec);
+        const ecKey = createHash('sha256').update(JSON.stringify(expressiveCode)).digest('hex').slice(0, 16);
+
         addIntegration({
           name: '@ocx-sh/theme/site',
           hooks: {
             'astro:config:setup'({ config: astro, updateConfig, injectRoute }) {
+              // Astro keys its content cache on this config minus integrations: without the Expressive Code
+              // hash in it, a changed EC config keeps serving cached .md pages that link a stale ec.<hash>.css
+              // (404, unstyled code) until the cache is cleared. A visitor-less Sätteri plugin carries it, pushed
+              // the way Starlight adds its own. ponytail: a unified() processor gets no key; clear .astro there.
+              const md = /** @type {{ hastPlugins?: object[] } | undefined} */ (astro.markdown?.processor?.options);
+              md?.hastPlugins?.push({ name: '@ocx-sh/theme/ec-cache-key', ecKey });
               // Starlight's default favicon is `/favicon.svg`; the logo fills it unless the consumer has one.
               if (config.favicon === undefined && !existsSync(new URL('favicon.svg', astro.publicDir)))
                 injectRoute({ pattern: '/favicon.svg', entrypoint: FAVICON, prerender: true });
@@ -199,7 +210,6 @@ export default function ocxTheme({ breadcrumbs = {} } = {}) {
         addRouteMiddleware({ entrypoint: MIDDLEWARE });
         if (config.components?.Search) logger.warn(SEARCH_WARNING);
 
-        const ec = config.expressiveCode;
         const pagefind = config.pagefind;
         /** @type {{ bundlePath: string }[]} */
         const merged = mergeTargets(nav, own).map((t) => ({
@@ -222,7 +232,7 @@ export default function ocxTheme({ breadcrumbs = {} } = {}) {
             ...Object.fromEntries(OVERRIDES.map((n) => [n, `@ocx-sh/theme/starlight/${n}.astro`])),
             ...config.components,
           },
-          expressiveCode: ec === false ? false : mergeEc(ec === true || ec === undefined ? {} : ec),
+          expressiveCode,
           pagefind: pagefind === false ? false : { ...(pagefind === true ? {} : pagefind), mergeIndex: merged },
         });
       },
