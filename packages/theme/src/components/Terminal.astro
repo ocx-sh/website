@@ -1,8 +1,8 @@
 ---
 // Terminal (WP13.1): a recorded cast played with asciinema-player in terminal-window chrome.
-// The cast is fetched on page load; the player JS + CSS only when a player is created: an open
-// terminal on first hover/focus/touch/click (near the viewport when autoPlay), a collapsed one on
-// first expand.
+// The cast is fetched when the terminal nears the viewport (open) or first expands (collapsed); the
+// player JS + CSS only when a player is created: an open terminal on first hover/focus/touch/click
+// (near the viewport when autoPlay), a collapsed one on first expand.
 // A collapsed terminal is a Zag collapsible (C-142): chrome = trigger, player area = content.
 import { base } from 'astro:config/client';
 import { withBase } from './base-url.mjs';

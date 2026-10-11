@@ -39,19 +39,23 @@ function recordRequests(page: Page): Request[] {
   return seen;
 }
 
-test('WP13.1 Terminal: prefetches its cast on load, before any click (2210983da)', async ({ page }) => {
-  for (const [path, cast] of [
-    [PAGE, COLLAPSED_CAST],
-    [OPEN_PAGE, OPEN_CAST],
-  ] as const) {
-    const seen = recordRequests(page);
-    await page.goto(path);
-    await page.waitForLoadState('networkidle');
-    expect(
-      seen.map((r) => new URL(r.url()).pathname).filter((p) => p.endsWith('.cast')),
-      path,
-    ).toContain(cast);
-  }
+test('Terminal: a collapsed cast is fetched on expand, an open one when scrolled near, none on load', async ({
+  page,
+}) => {
+  const castPaths = (seen: Request[]) => seen.map((r) => new URL(r.url()).pathname).filter((p) => p.endsWith('.cast'));
+
+  let seen = recordRequests(page);
+  await page.goto(PAGE);
+  await page.waitForLoadState('networkidle');
+  expect(castPaths(seen)).not.toContain(COLLAPSED_CAST);
+  await toggle(page).first().click();
+  await expect.poll(() => castPaths(seen)).toContain(COLLAPSED_CAST);
+
+  seen = recordRequests(page);
+  await page.goto(OPEN_PAGE);
+  await page.waitForLoadState('networkidle');
+  await open(page).first().scrollIntoViewIfNeeded();
+  await expect.poll(() => castPaths(seen)).toContain(OPEN_CAST);
 });
 
 test('WP13.1 Terminal: base-URL resolution — casts are requested under /docs/ and answer 200 (WP13.1)', async ({
@@ -61,10 +65,12 @@ test('WP13.1 Terminal: base-URL resolution — casts are requested under /docs/ 
   page.on('response', (r) => {
     if (r.url().endsWith('.cast')) responses.push([new URL(r.url()).pathname, r.status()]);
   });
-  for (const path of [PAGE, OPEN_PAGE]) {
-    await page.goto(path);
-    await page.waitForLoadState('networkidle');
-  }
+  await page.goto(PAGE);
+  await toggle(page).first().click();
+  await page.waitForLoadState('networkidle');
+  await page.goto(OPEN_PAGE);
+  await open(page).first().scrollIntoViewIfNeeded();
+  await page.waitForLoadState('networkidle');
   expect(responses.length).toBeGreaterThanOrEqual(2);
   for (const [path, status] of responses) {
     expect(path).toMatch(/^\/docs\/casts\//);
@@ -204,6 +210,7 @@ test('WP13.1 Terminal: not-content — no Starlight prose margin between chrome 
   await page.goto(PAGE);
   await toggle(page).click();
   const c = collapsed(page);
+  await expect(toggle(page)).toHaveAttribute('aria-expanded', 'true'); // the controls are SSR'd: they prove nothing
   await expect(c.locator('.ocx-terminal__controls')).toHaveCount(1);
   // One evaluate: expand smooth-scrolls, so two separate reads can straddle a scroll frame.
   const gap = await c.evaluate(

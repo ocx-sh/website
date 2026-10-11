@@ -362,10 +362,24 @@ describe('WP13.1 Terminal client', () => {
     expect(r.root.querySelector<HTMLElement>('.ocx-terminal__start')?.hidden).toBe(false);
   });
 
-  it('WP13.1 Terminal: prefetches the cast on mount, not on first click, even when collapsed (2210983da)', async () => {
+  it('a collapsed terminal fetches its cast on the first expand, not on mount or in view', async () => {
     const h = await mount({ src: '/casts/x.cast', collapsed: true });
-    expect(h.fetchMock).toHaveBeenCalledTimes(1);
+    h.intersect(true);
+    await flush();
+    expect(h.fetchMock).not.toHaveBeenCalled();
+    await h.toggle();
+    await vi.waitFor(() => expect(h.fetchMock).toHaveBeenCalledTimes(1));
     expect(String(h.fetchMock.mock.calls[0]?.[0])).toBe(h.root.dataset['src']);
+  });
+
+  it('an open terminal fetches its cast once it nears the viewport, not on mount', async () => {
+    const h = await mount({ src: '/casts/x.cast', rows: 8 });
+    await flush();
+    expect(h.fetchMock).not.toHaveBeenCalled();
+    h.intersect(true);
+    h.intersect(true);
+    await vi.waitFor(() => expect(h.fetchMock).toHaveBeenCalledTimes(1));
+    expect(h.load).not.toHaveBeenCalled();
   });
 
   it('WP13.1 Terminal: collapsed terminal does not import the player before the first expand (Lighthouse)', async () => {
@@ -401,7 +415,7 @@ describe('WP13.1 Terminal client', () => {
     expect(createOpts(h)['autoPlay']).toBe(true);
   });
 
-  it('WP13.1 Terminal: the player is created from the prefetched data, with no second fetch (2210983da)', async () => {
+  it('WP13.1 Terminal: the player is created from the fetched data, with no second fetch (2210983da)', async () => {
     const h = await mount({ src: '/casts/x.cast', collapsed: true });
     await h.toggle();
     await vi.waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
@@ -519,6 +533,8 @@ describe('WP13.1 Terminal client', () => {
 
   it('WP13.1 Terminal: the cast prefetch is low priority so it does not compete with main content (WP13.1)', async () => {
     const h = await mount({ src: '/casts/x.cast' });
+    h.intersect(true);
+    await vi.waitFor(() => expect(h.fetchMock).toHaveBeenCalledTimes(1));
     expect(h.fetchMock.mock.calls[0]?.[1]).toMatchObject({ priority: 'low' });
   });
 
