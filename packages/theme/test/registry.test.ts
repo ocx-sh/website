@@ -221,7 +221,6 @@ describe('C-008 pure registry functions', () => {
   it('C-008: mergeTargets(nav, "/docs/") lists other searchable claims with labels', () => {
     expect(mergeTargets(nav, '/docs/')).toEqual([
       { path: '/', label: 'ocx' },
-      { path: '/install/', label: 'install' },
       { path: '/integrations/bazel/', label: 'Bazel' },
       { path: '/integrations/python/', label: 'Python' },
       { path: '/integrations/cmake/', label: 'CMake' },
@@ -231,7 +230,6 @@ describe('C-008 pure registry functions', () => {
 
   it('C-008: mergeTargets(nav, "/") excludes root', () => {
     expect(mergeTargets(nav, '/')).toEqual([
-      { path: '/install/', label: 'install' },
       { path: '/docs/', label: 'docs' },
       { path: '/integrations/bazel/', label: 'Bazel' },
       { path: '/integrations/python/', label: 'Python' },

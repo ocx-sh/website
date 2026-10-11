@@ -26,8 +26,8 @@ Missing a sibling? Install the whole set: `grim add ghcr.io/ocx-sh/lore/ocx-them
 ## 1. Claim a path first
 
 `base` must be a **claim path** in the theme's `nav.json`, or the build stops.
-Current claims: `/`, `/integrations/`, `/apps/`, `/install/` (ocx-sh/website),
-`/docs/`, `/schemas/` (ocx-sh/ocx), `/catalog/` (ocx-sh/index),
+Current claims: `/`, `/integrations/`, `/apps/`, `/team/` (ocx-sh/website),
+`/install/` (ocx-sh/www-setup), `/docs/`, `/schemas/` (ocx-sh/ocx), `/catalog/` (ocx-sh/index),
 `/integrations/bazel/` (ocx-sh/rules_ocx), `/integrations/python/`
 (ocx-sh/ocx-sdk-python), `/integrations/cmake/` (ocx-sh/find_ocx),
 `/apps/catalog/` (ocx-sh/catalog). `nav.json` in the
