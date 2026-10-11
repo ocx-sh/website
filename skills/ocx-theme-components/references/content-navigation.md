@@ -66,7 +66,9 @@ one-shot reveal plays once when the block scrolls in.
 ## HubGrid
 
 **`HubGrid.astro`**: one hub page's body, read from `nav.json`. `hub`
-(required, a hub id: `integrations` or `apps`; an unknown id throws). One
+(required, a hub id: `integrations` or `apps`; an unknown id throws) and optional `category`
+(a category id of that hub, e.g. `<HubGrid hub="integrations" category="ci" />`:
+only that group renders, heading kept; an id the hub lacks throws). One
 group per category in `nav.json` order, one card per entry. A `planned`
 entry is a dashed card with a "planned" stamp and no link; an external
 `href` adds the `external` icon (↗) named "(external)". Add entries in
