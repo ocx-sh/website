@@ -105,7 +105,18 @@ Compose multiple packages in a single invocation. Each one contributes its varia
   <FeatureIcon name="blocks" />
 </FeatureSection>
 
-<FeatureSection title="Built for Automation" flip>
+<FeatureSection title="Content-Addressed and Deduplicated" flip>
+  <Fragment slot="text">
+
+Every object in the store is identified by its SHA-256 digest, a cryptographic fingerprint of its contents. If `astral-sh/uv:0.10` and `astral-sh/uv:latest` resolve to the same build, they share one directory on disk. Storage scales with distinct builds, not with the number of tags pointing at them.
+
+This also means verification is built in. A path under `sha256:…/` never changes its contents. Pin any package to a digest and you have a lockfile-free guarantee: no registry queries, no index lookups, just the hash.
+
+  </Fragment>
+  <FeatureIcon name="lock" />
+</FeatureSection>
+
+<FeatureSection title="Built for Automation">
   <Fragment slot="text">
 
 Every command returns structured JSON with `--format json`. Exit codes are meaningful. Environment variables compose cleanly. There is no interactive prompt, no "press Y to continue", no color code that breaks your parser.
@@ -116,7 +127,7 @@ Every command returns structured JSON with `--format json`. Exit codes are meani
   <FeatureIcon name="workflow" />
 </FeatureSection>
 
-<FeatureSection title="Relocatable and Air-Gap Ready">
+<FeatureSection title="Relocatable and Air-Gap Ready" flip>
   <Fragment slot="text">
 
 Every install is a self-contained directory: no global state, no registry database, no fragile symlinks into system paths. Copy the store to a USB drive, zip it into a CI cache artifact, or `scp` it to a machine behind a firewall.
@@ -131,6 +142,7 @@ The local index snapshot plus the content-addressed object store is everything `
 
 Join the community and help shape what comes next.
 
+- [Team](/team/): meet the people behind ocx.
 - [Roadmap](/docs/roadmap): see what we are building and what is coming next.
 - [Package catalog](https://index.ocx.sh): browse available packages on the public registry.
 - [Discord](https://discord.gg/mT2UCF8CVe): ask questions, share feedback, and follow development.
