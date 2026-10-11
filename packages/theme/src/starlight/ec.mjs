@@ -89,16 +89,20 @@ export const EXPRESSIVE_CODE = {
     },
   ],
   styleOverrides: {
-    borderRadius: '2px',
+    // Sizes are absolute tokens so nothing compounds below 12px (Lighthouse legible-font). Here, not in
+    // starlight.css, so EC's own sheet carries them to every page that renders a fence, story pages too.
+    borderRadius: 'calc(var(--ocx-radius-lg) - var(--ocx-border-width))',
     borderWidth: '1px',
     borderColor: 'var(--ocx-color-border)',
     codeBackground: 'var(--ocx-color-code-bg)',
     codeForeground: 'var(--ocx-color-code-fg)',
     codeFontFamily: 'var(--ocx-font-mono)',
-    codeFontSize: '0.85em',
+    codeFontSize: 'var(--ocx-text-base)',
     codeLineHeight: '1.75',
+    codePaddingBlock: 'var(--ocx-space-5)',
+    codePaddingInline: 'var(--ocx-space-5)',
     uiFontFamily: 'var(--ocx-font-mono)',
-    uiFontSize: 'var(--ocx-text-xs)',
+    uiFontSize: 'var(--ocx-text-sm)',
     focusBorder: 'var(--ocx-color-focus)',
     frames: {
       shadowColor: 'transparent',

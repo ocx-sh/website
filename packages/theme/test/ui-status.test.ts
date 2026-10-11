@@ -290,8 +290,8 @@ describe('WP14a Skeleton', () => {
     const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
     const starlight = read('../src/starlight/starlight.css');
     const ec = read('../src/starlight/ec.mjs');
-    expect(starlight).toMatch(/--ec-codeFontSize:\s*var\(--ocx-text-base\)/);
-    expect(starlight).toMatch(/--ec-codePadBlk:\s*var\(--ocx-space-5\)/);
+    expect(ec).toMatch(/codeFontSize:\s*'var\(--ocx-text-base\)'/);
+    expect(ec).toMatch(/codePaddingBlock:\s*'var\(--ocx-space-5\)'/);
     expect(ec).toMatch(/codeLineHeight:\s*'1\.75'/);
     // Padding, floor and title bar are inline custom properties (the sheet stays under the inline-CSS cap).
     const sheet = style('Skeleton');
