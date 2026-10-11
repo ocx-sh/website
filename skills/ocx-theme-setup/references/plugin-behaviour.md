@@ -44,7 +44,7 @@ stylesheet would inline into every page. Style Starlight markup from your own
 |---|---|
 | `customCss` | Theme files first, then yours in your order. Yours is outside the `ocx` cascade layer, so a plain rule of yours beats any theme rule without `!important` |
 | `components` | Theme map, then your keys on top |
-| `expressiveCode` | `false` keeps code blocks unthemed. An object merges over the theme's; `styleOverrides` and `styleOverrides.frames` merge one level deep; `shiki.langs` concatenates (the theme adds Elvish and PowerShell parameter grammars) |
+| `expressiveCode` | `false` keeps code blocks unthemed. An object merges over the theme's; `styleOverrides` and `styleOverrides.frames` merge one level deep; `shiki.langs` concatenates (the theme adds Elvish and PowerShell parameter grammars) and `shiki.langAlias` merges (the theme maps `starlark`, `bzl` and `bazel` to Python) |
 | `pagefind` | `false` stays `false`. Otherwise the theme's `mergeIndex` list comes first; your entries are appended unless their `bundlePath` is already there |
 | `vite.build.assetsInlineLimit` | Theme inlines CSS files under 1024 bytes only when you have not set this |
 | client code splitting | Theme groups the every-page modules into one chunk only when you set no `codeSplitting` or `manualChunks` of your own |

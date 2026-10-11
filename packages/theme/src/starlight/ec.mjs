@@ -40,7 +40,11 @@ const pwshCommands = {
 /** @type {import('@astrojs/starlight/expressive-code').StarlightExpressiveCodeOptions} */
 export const EXPRESSIVE_CODE = {
   // Adds grammars on top of Shiki's full bundle (never a subset): Elvish has none upstream.
-  shiki: { langs: [{ ...elvish, name: 'elvish', aliases: ['elv'] }, pwshCommands] },
+  // Starlark (Bazel BUILD and .bzl files) is a Python dialect with no grammar in Shiki: Python's highlights it.
+  shiki: {
+    langs: [{ ...elvish, name: 'elvish', aliases: ['elv'] }, pwshCommands],
+    langAlias: { starlark: 'python', bzl: 'python', bazel: 'python' },
+  },
   themes: [
     {
       name: 'ocx',
@@ -69,7 +73,10 @@ export const EXPRESSIVE_CODE = {
         ),
         rule(['string', 'markup.inline.raw', 'punctuation.definition.string'], 'string'),
         rule(['constant.numeric', 'constant.character'], 'number'),
-        rule(['entity.name.function', 'entity.name.command', 'support.function'], 'function'),
+        rule(
+          ['entity.name.function', 'entity.name.command', 'support.function', 'meta.function-call.generic'],
+          'function',
+        ),
         rule(
           [
             'variable',

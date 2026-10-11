@@ -50,6 +50,17 @@ retries = 3
 strict = true
 ```
 
+```starlark title="BUILD.bazel"
+load("@rules_ocx//ocx:defs.bzl", "ocx_tool")
+
+# Starlark highlights through the Python grammar.
+ocx_tool(
+    name = "node",
+    package = "ocx.sh/nodejs/node:24",
+    retries = 3,
+)
+```
+
 ```elvish title="rc.elv"
 use str
 var home = $E:HOME # install root
