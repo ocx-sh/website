@@ -61,6 +61,7 @@ const EXPORT_KEYS = [
   './prose-code.css',
   './lazy',
   './csp',
+  './remark',
 ];
 
 /**

@@ -28,6 +28,7 @@ const pkg = () => ({
     './prose-code.css': './src/prose-code.css',
     './lazy': { types: './src/components/ui/lazy.d.mts', default: './src/components/ui/lazy.mjs' },
     './csp': { types: './src/csp.d.mts', default: './src/csp.mjs' },
+    './remark': { types: './src/remark/index.d.mts', default: './src/remark/index.mjs' },
   } as Record<string, string | Record<string, string>>,
   bin: { 'ocx-site': './bin/ocx-site.mjs' },
 });
@@ -62,6 +63,8 @@ const FILES = [
   'src/components/ui/lazy.mjs',
   'src/components/ui/lazy.d.mts',
   'src/csp.mjs',
+  'src/remark/index.d.mts',
+  'src/remark/index.mjs',
   'src/csp.d.mts',
 ];
 
