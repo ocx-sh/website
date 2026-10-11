@@ -20,7 +20,7 @@
     "chrome-launcher": "1.2.1",
     "eslint": "^10.9.0",
     "eslint-plugin-astro": "^3.2.1",
-    "eslint-plugin-oxlint": "^1.85.0",
+    "eslint-plugin-oxlint": "^1.86.0",
     "jsdom": "^30.1.1",
     "lighthouse": "12.6.1",
     "markdownlint-cli2": "^0.23.3",
