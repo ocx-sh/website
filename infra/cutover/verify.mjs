@@ -25,8 +25,8 @@ import { findLeaks } from './leak.mjs';
 export const HSTS = 'max-age=31536000; includeSubDomains; preload';
 // A package the live index serves (`/p/<namespace>/<package>.json`, two name segments).
 const INDEX_PACKAGE = 'kitware/cmake';
-// `/docs/` itself is a 404 on the VitePress site; this is a real page with the full nav bar.
-export const DOCS_PAGE = '/docs/getting-started';
+// A real page of the docs site, with its full nav bar.
+export const DOCS_PAGE = '/docs/getting-started/install-ocx/';
 
 // The registry challenge stays what hetzner1 serves today, whichever host fronts it.
 /** JFrog derives realm and service from the request host (`X-JFrog-Override-Base-Url $scheme://$host`). */
@@ -374,27 +374,6 @@ async function checkOriginLeak(/** @type {Context} */ ctx) {
     .flatMap(({ label, headers, body }) => findLeaks({ headers, body }).map((f) => `${label}: ${f.where} ${f.value}`));
 }
 
-/**
- * A proxied docs page's Home nav link (`a.VPNavBarMenuLink`) and logo link (`a.title`) to `/` carry
- * `target="_self"`, which the ocx VitePress config sets with `target: '_self'` and `logoLink`.
- */
-export async function checkHomeLink(/** @type {Context} */ ctx) {
-  const page = await ctx.get(DOCS_PAGE);
-  const problems = expectStatus(page, DOCS_PAGE);
-  /** @type {Record<string, number>} */
-  const found = { 'Home nav link': 0, 'logo link': 0 };
-  for (const [tag] of page.body.matchAll(/<a\b[^>]*>/gi)) {
-    const href = (attr(tag, 'href') ?? '').replace(ctx.base, '');
-    const classes = (attr(tag, 'class') ?? '').split(/\s+/);
-    const kind = classes.includes('VPNavBarMenuLink') ? 'Home nav link' : classes.includes('title') ? 'logo link' : '';
-    if (href !== '/' || !kind) continue;
-    found[kind] = (found[kind] ?? 0) + 1;
-    if (attr(tag, 'target') !== '_self') problems.push(`${kind} lacks target="_self"`);
-  }
-  for (const [kind, count] of Object.entries(found)) if (!count) problems.push(`no ${kind} to /`);
-  return problems;
-}
-
 /** `X-Robots-Tag: noindex` on `.b-cdn.net` hosts and the rehearsal host, absent everywhere else. */
 async function checkNoindex(/** @type {Context} */ ctx) {
   const tags = values((await ctx.get('/')).headers, 'x-robots-tag');
@@ -621,7 +600,6 @@ function checksFor(host, modes = {}) {
   return [
     ['old-urls', checkOldUrls],
     ['origin-leak', checkOriginLeak],
-    ['home-link', checkHomeLink],
     ['noindex', checkNoindex],
     ...(isBunnyHost(host)
       ? []

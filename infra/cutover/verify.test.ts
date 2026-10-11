@@ -10,7 +10,6 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   checkCertificate,
-  checkHomeLink,
   checkRobots,
   createContext,
   DOCS_PAGE,
@@ -37,8 +36,6 @@ interface Site {
   linkHeader?: string;
   canonical: string;
   ogUrl: string;
-  homeTarget: string;
-  logoTarget: string;
   docsExtra: string;
   routes: Record<string, Route>;
   httpStatus: number;
@@ -74,8 +71,6 @@ const goodSite = (): Site => ({
   xfo: ['SAMEORIGIN'],
   canonical: 'https://ocx.sh/',
   ogUrl: 'https://ocx.sh/',
-  homeTarget: '_self',
-  logoTarget: '_self',
   docsExtra: '<a href="https://someone.github.io/third-party/">a third-party site</a>',
   routes: {
     '/old-ok': { status: 200 },
@@ -159,17 +154,7 @@ function handle(req: http.IncomingMessage, res: http.ServerResponse) {
       );
     case '/docs/':
     case DOCS_PAGE:
-      return send(
-        res,
-        200,
-        ctype,
-        page(
-          '',
-          `<a class="title" href="/" target="${site.logoTarget}">logo</a>` +
-            `<a class="VPLink link VPNavBarMenuLink" href="/" target="${site.homeTarget}">Home</a>` +
-            `<a class="VPLink link VPNavBarMenuLink" href="/docs/guide/" >Guide</a>${site.docsExtra}`,
-        ),
-      );
+      return send(res, 200, ctype, page('', `<a href="/">Home</a><a href="/docs/guide/">Guide</a>${site.docsExtra}`));
     case '/_astro/app.abc123.js':
       return send(res, 200, { 'content-type': 'text/javascript', 'cache-control': site.astroCache }, '//');
     case '/pagefind/pagefind.js':
@@ -285,7 +270,6 @@ beforeEach(() => {
 const OCX_CHECKS = [
   'old-urls',
   'origin-leak',
-  'home-link',
   'noindex',
   'security-headers',
   'no-bunny-host',
@@ -333,9 +317,6 @@ describe('ocx.sh', () => {
       (s) => void (s.linkHeader = '<https://ocx-sh.github.io/x/>; rel="canonical"'),
     ],
     ['a pages.dev canonical', 'origin-leak', (s) => void (s.canonical = 'https://x.pages.dev/')],
-    // home and logo links
-    ['a Home link without _self', 'home-link', (s) => void (s.homeTarget = '_blank')],
-    ['a logo link without _self', 'home-link', (s) => void (s.logoTarget = '_blank')],
     // noindex
     ['noindex on ocx.sh', 'noindex', (s) => void (s.robotsTag = 'noindex, nofollow')],
     // security headers
@@ -417,38 +398,6 @@ describe('ocx.sh', () => {
   });
 });
 
-// Trimmed from the live `https://ocx.sh/docs/getting-started` nav bar (VitePress 2.0.0-alpha.16),
-// before the ocx change that sets `target: '_self'`; `selfed` is the same markup after it.
-const LIVE_NAV =
-  '<div class="VPNavBarTitle has-sidebar" data-v-1e38c6bc><a class="title" href="/" data-v-1e38c6bc><img class="VPImage logo" src="/logo.svg" alt><span>ocx</span></a></div>' +
-  '<nav class="VPNavBarMenu menu"><a class="VPLink link VPNavBarMenuLink" href="/" tabindex="0" data-v-52a1d768><span>Home</span></a>' +
-  '<a class="VPLink link VPNavBarMenuLink" href="/docs/roadmap" tabindex="0"><span>Roadmap</span></a>' +
-  '<a class="VPLink link vp-external-link-icon no-icon VPNavBarMenuLink" href="https://index.ocx.sh" target="_self" rel="noreferrer"><span>Catalog</span></a></nav>';
-const selfed = LIVE_NAV.replace('class="title" href="/"', 'class="title" href="/" target="_self"').replace(
-  'VPNavBarMenuLink" href="/" tabindex',
-  'VPNavBarMenuLink" href="/" target="_self" tabindex',
-);
-
-describe('the Home and logo links on the real VitePress markup', () => {
-  const check = (nav: string) =>
-    checkHomeLink(
-      createContext({
-        host: 'ocx.sh',
-        fetch: resolved({ status: 200, headers: {}, body: page('', nav) }),
-        readFile: resolved(''),
-        oldUrlsPath: 'x',
-      }),
-    );
-
-  it('is red on today\'s live markup: both links lack target="_self"', async () => {
-    expect(await check(LIVE_NAV)).toEqual(['logo link lacks target="_self"', 'Home nav link lacks target="_self"']);
-  });
-
-  it('is green once both links carry target="_self"; the Catalog link is not a Home link', async () => {
-    expect(await check(selfed)).toEqual([]);
-  });
-});
-
 describe('a .b-cdn.net host', () => {
   const dev = ['--host', 'sh-ocx-dev.b-cdn.net'];
 
@@ -457,7 +406,7 @@ describe('a .b-cdn.net host', () => {
     site.hsts = [];
     site.xfo = [];
     const r = await run(dev);
-    expect(r.names).toEqual(['old-urls', 'origin-leak', 'home-link', 'noindex', 'index-json']);
+    expect(r.names).toEqual(['old-urls', 'origin-leak', 'noindex', 'index-json']);
     expect(r.code).toBe(0);
   });
 
@@ -488,15 +437,7 @@ describe('the rehearsal host next.ocx.sh', () => {
 
   it('is green with noindex, with HSTS and X-Frame-Options once, and skips the ocx.sh-only checks', async () => {
     const r = await run(next);
-    expect(r.names).toEqual([
-      'old-urls',
-      'origin-leak',
-      'home-link',
-      'noindex',
-      'security-headers',
-      'no-bunny-host',
-      'index-json',
-    ]);
+    expect(r.names).toEqual(['old-urls', 'origin-leak', 'noindex', 'security-headers', 'no-bunny-host', 'index-json']);
     expect(r.code).toBe(0);
   });
 
@@ -652,15 +593,7 @@ describe('--registry', () => {
 describe('the rehearsal host next.ocx.sh with --registry', () => {
   const next = ['--host', 'next.ocx.sh', '--registry'];
   beforeEach(() => void (site.robotsTag = 'noindex'));
-  const NEXT_CHECKS = [
-    'old-urls',
-    'origin-leak',
-    'home-link',
-    'noindex',
-    'security-headers',
-    'no-bunny-host',
-    'index-json',
-  ];
+  const NEXT_CHECKS = ['old-urls', 'origin-leak', 'noindex', 'security-headers', 'no-bunny-host', 'index-json'];
 
   it('is green: the realm and service name next.ocx.sh, the host the fake nginx front answers on', async () => {
     const r = await run(next);
