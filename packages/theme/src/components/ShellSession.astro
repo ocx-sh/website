@@ -73,11 +73,25 @@ for (const [n, i] of at.entries()) {
     .ocx-shell-session > .expressive-code:last-child pre {
       padding-block-end: var(--ocx-space-5);
     }
-    /* The copy button sits flush top-right and is 2rem at most, so a one-line command is as tall as it; the
-       doubled class outranks starlight.css's button spacing on an untitled terminal. */
+    /* A command's copy button is control-sm, centred on the command's first line (the doubled class outranks
+       starlight.css's spacing on an untitled terminal), so it never reaches the next entry. */
     .ocx-shell-session > [data-ocx-session='command'] .frame.frame {
-      --button-spacing: 0px;
-      min-block-size: 2rem;
+      --button-spacing: calc((var(--ec-codeFontSize) * var(--ec-codeLineHt) - var(--ocx-control-sm)) / 2);
+    }
+    .ocx-shell-session-header + .expressive-code .copy,
+    .ocx-shell-session > .expressive-code:first-child .copy {
+      margin-block-start: var(--ocx-space-5);
+    }
+    .ocx-shell-session > [data-ocx-session='command'] .copy button {
+      inline-size: var(--ocx-control-sm);
+      block-size: var(--ocx-control-sm);
+      opacity: 1;
+    }
+    .ocx-shell-session > [data-ocx-session='command'] .copy button::after {
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+      margin: auto;
+      mask-size: contain;
     }
     .ocx-shell-session > [data-ocx-session='output'] .copy {
       display: none;

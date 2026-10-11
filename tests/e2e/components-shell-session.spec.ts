@@ -42,6 +42,9 @@ test('ShellSession: entries are one terminal surface: contiguous, one background
         top,
         bottom,
         bg: getComputedStyle(el.querySelector('pre') as Element).backgroundColor,
+        seam:
+          (el.querySelector('figure') as Element).getBoundingClientRect().height -
+          (el.querySelector('pre') as Element).getBoundingClientRect().height,
         rail: css.borderInlineStartWidth,
         rule: css.borderBlockStartWidth,
       };
@@ -52,6 +55,7 @@ test('ShellSession: entries are one terminal surface: contiguous, one background
     if (i) expect(Math.abs(box.top - (boxes[i - 1]?.bottom ?? NaN))).toBeLessThanOrEqual(1);
     expect(box.bg).toBe(boxes[0]?.bg);
     expect([box.rail, box.rule]).toEqual(['0px', '0px']);
+    expect(box.seam, 'no frame area outside its code background').toBeLessThanOrEqual(0.5);
   }
   // One outer border: the entries' own frames carry none.
   await expect(page.locator(`${ENTRY} pre`).first()).toHaveCSS('border-top-width', '0px');
@@ -105,16 +109,35 @@ for (const [name, path] of [
   });
 }
 
-test('ShellSession: a command copies only itself; an output has no visible copy button', async ({ page }) => {
+test('ShellSession: every command has a visible copy button inside its own entry, copying only that command', async ({
+  page,
+}) => {
+  for (const path of [story('default'), PAGE]) {
+    await page.goto(path);
+    const entries = page.locator(ENTRY);
+    const commands = entries.filter({ has: page.getByRole('button', { name: 'Copy to clipboard' }) });
+    const n = await commands.count();
+    expect(n).toBeGreaterThan(0);
+    for (let i = 0; i < n; i++) {
+      const command = commands.nth(i);
+      const button = command.getByRole('button', { name: 'Copy to clipboard' });
+      await expect(button).toHaveCSS('opacity', '1');
+      const [entry, box] = await Promise.all([command.boundingBox(), button.boundingBox()]);
+      expect(box?.y).toBeGreaterThanOrEqual((entry?.y ?? NaN) - 0.5);
+      expect((box?.y ?? NaN) + (box?.height ?? NaN)).toBeLessThanOrEqual(
+        (entry?.y ?? NaN) + (entry?.height ?? NaN) + 0.5,
+      );
+      const code = await button.getAttribute('data-code');
+      await button.click();
+      await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(code?.replace(/\u007f/g, '\n'));
+      expect(code).not.toMatch(/^[$>]/);
+    }
+  }
   await page.goto(story('default'));
-  const entries = page.locator(ENTRY);
-  const command = entries.nth(2);
-  await command.hover();
-  await command.getByRole('button', { name: 'Copy to clipboard' }).click();
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('ocx exec -- node --version');
-  await expect(entries.nth(1).getByRole('button')).toHaveCount(0);
-  await expect(entries.nth(1).locator('.copy button')).toBeHidden();
-  await expect(entries.nth(3).locator('.copy button')).toBeHidden();
+  const outputs = page.locator(`${SESSION} > [data-ocx-session="output"]`);
+  await expect(outputs.nth(0).getByRole('button')).toHaveCount(0);
+  await expect(outputs.nth(0).locator('.copy button')).toBeHidden();
+  await expect(outputs.nth(1).locator('.copy button')).toBeHidden();
 });
 
 /** Heights of every session on a story, and how many web fonts the page loaded. */
