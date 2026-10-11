@@ -80,7 +80,7 @@ file listing.
 | `ui/Meter.astro` | A value in a known range, `role="meter"` | `label` (required), `value` (required), `min`, `max`, `format`, `valueText`, `tone` `neutral`/`success`/`warning`/`danger`, `size`, `hideLabel` |
 | `ui/ProgressCircle.astro` | Task progress, `role="progressbar"` | `label` (required), `value` 0 to 100 (absent = indeterminate), `size` `s`/`m`/`l`, `tone`, `showValue` |
 | `ui/Loader.astro` | The announced loading state of a region | `label`, `size` `s`/`m` |
-| `ui/Skeleton.astro` | Placeholder bars that reserve the final box | `variant` (`text` default, `circle`, `rect`, `card`, `list`, `table`, `code`, `terminal`), `lines`, `rows`, `cols` (terminal), `columns`, `size` `sm`/`md`/`lg`, `ratio`, `animated` |
+| `ui/Skeleton.astro` | Placeholder bars that reserve the final box | `variant` (`text` default, `circle`, `rect`, `card`, `list`, `table`, `code`, `terminal`), `lines`, `code` (source of a code block), `title` (code with a title bar), `rows`, `cols` (terminal), `columns`, `size` `sm`/`md`/`lg`, `ratio`, `animated` |
 
 None of these take the accent colour. Move a determinate ring by setting
 `aria-valuenow` and `style="--_value:N"` on its root. `Loader` is rendered
@@ -91,9 +91,17 @@ you fill. Pair a `Skeleton` with a `Loader` for the announcement. One
 table), `columns` (table), `cols` with `rows` (a terminal standing in for a sized
 `Terminal`), `size` (circle, on Avatar's scale), `ratio` (rect,
 `'16 / 9'`, anything but `w / h` throws). A composite reserves the real
-component's block size, so nothing moves when the content lands. A faint
-sweep crosses the bars and stands still under reduced motion; `animated={false}`
-stops it.
+component's block size, so nothing moves when the content lands. A `code`
+skeleton built from the same string as its fence (`code={src}`, plus `title`
+for a titled fence; an untitled `sh` fence takes neither) is the same height to
+the pixel. A faint sweep crosses the bars and stands still under reduced motion;
+`animated={false}` stops it.
+
+To swap a skeleton for content, wrap both in `<div class="ocx-swap">`: one grid
+cell, so the box is the larger of the two. Script sets `data-loaded` on the
+wrapper (no helper); the content fades in and the skeleton out over
+`--ocx-duration-base`, then the skeleton is `visibility: hidden`. Reduced motion:
+instant. `DependencyExplorer`'s summary stats use it.
 
 ## Toast
 

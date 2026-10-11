@@ -17,6 +17,9 @@ const COUNTERPART = {
   list: ['swap', '[data-part="content"]'],
   table: ['swap', '.ocx-data-table__scroll'],
   code: ['swap-code', '.expressive-code .frame'],
+  // A titled fence adds EC's 36px header; a `sh` fence (terminal frame) has none in this theme.
+  title: ['swap-code', '.expressive-code .frame'],
+  shell: ['swap-code', '.expressive-code .frame'],
   terminal: ['swap-code', '.ocx-terminal'],
 } as const;
 
@@ -53,6 +56,12 @@ test.describe('C-301 Skeleton swap: a composite reserves its counterpart’s blo
     });
   }
 
+  test('C-301 Skeleton: the shell skeleton is untitled: a code block with no header bar', async ({ page }) => {
+    await page.goto(story('swap-code'));
+    expect(await page.locator('[data-swap="shell"] .ocx-ui-skeleton__chrome').count()).toBe(0);
+    expect(await page.locator('[data-swap="title"] .ocx-ui-skeleton__chrome').count()).toBe(1);
+  });
+
   test('C-301 Skeleton: a circle is the Avatar size and a rect takes its ratio', async ({ page }) => {
     await page.goto(story('variants'));
     const circles = page.locator(`${SKELETON}[data-variant="circle"] ${LINE}`);
@@ -63,6 +72,85 @@ test.describe('C-301 Skeleton swap: a composite reserves its counterpart’s blo
     }
     const rect = await page.locator(`${SKELETON}[data-variant="rect"] ${LINE}`).nth(1).boundingBox();
     expect((rect?.width ?? 0) / (rect?.height ?? 1)).toBeCloseTo(3, 1);
+  });
+});
+
+// A code block's height comes from its source (lines × code line height + padding, + the 36px title
+// bar): no font can change it, so blocking the web fonts moves nothing.
+test.describe('C-301 Skeleton size lock', () => {
+  const PAIRS = ['code', 'title', 'shell'] as const;
+  const heights = (page: Page) =>
+    page.evaluate((pairs) => {
+      const h = (sel: string) => document.querySelector(sel)?.getBoundingClientRect().height ?? NaN;
+      return pairs.flatMap((p) => [
+        h(`[data-swap="${p}"] [data-role="skeleton"] > .ocx-ui-skeleton`),
+        h(`[data-swap="${p}"] [data-role="real"] .expressive-code .frame`),
+      ]);
+    }, PAIRS);
+
+  test('C-301 Skeleton: code, titled and shell blocks and their skeletons keep their height with web fonts blocked or loaded', async ({
+    page,
+  }) => {
+    const blocked = (r: { abort: () => Promise<void> }) => r.abort();
+    await page.route('**/*.woff2', blocked);
+    await page.goto(story('swap-code'));
+    await expect(page.locator('[data-swap="shell"] .expressive-code .frame')).toBeVisible();
+    const without = await heights(page);
+    await page.unroute('**/*.woff2', blocked);
+
+    await page.goto(story('swap-code'));
+    await expect(page.locator('[data-swap="shell"] .expressive-code .frame')).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const withFonts = await heights(page);
+
+    expect(without.every(Number.isFinite)).toBe(true);
+    for (const [i, h] of withFonts.entries())
+      expect(Math.abs(h - (without[i] ?? NaN)), `box ${i}`).toBeLessThanOrEqual(0.5);
+  });
+
+  test('C-301 Skeleton: a swap fades the content in over the skeleton with no layout shift', async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __cls: number };
+      w.__cls = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as (PerformanceEntry & { value: number; hadRecentInput: boolean })[])
+          if (!e.hadRecentInput) w.__cls += e.value;
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    let release = () => {};
+    const held = new Promise<void>((r) => (release = r));
+    await page.route('**/data/dependencies.json', async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.goto('/docs/stories/dependency-explorer/default/');
+    const stats = page.locator('.ocx-deps__stat-value.ocx-swap');
+    await expect(stats).toHaveCount(3);
+    await settle(page);
+    const before = await stats.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+    await page.evaluate(() => ((window as unknown as { __cls: number }).__cls = 0));
+    release();
+    await expect(page.locator('.ocx-deps__stat-value[data-loaded]')).toHaveCount(3);
+    const skeleton = stats.first().locator('.ocx-ui-skeleton');
+    await expect(skeleton).toHaveCSS('visibility', 'hidden'); // after the fade
+    await expect(skeleton).toHaveCSS('opacity', '0');
+    await expect(stats.first().locator('.ocx-deps__stat-text')).toHaveCSS('opacity', '1');
+    expect(await stats.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))).toEqual(before);
+    expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBe(0);
+  });
+
+  test.describe('reduced motion', () => {
+    test.use({ reducedMotion: 'reduce' });
+
+    test('C-301 Skeleton: with reduced motion the swap is instant', async ({ page }) => {
+      await page.goto('/docs/stories/dependency-explorer/default/');
+      const stat = page.locator('.ocx-deps__stat-value[data-loaded]').first();
+      await expect(stat).toBeVisible();
+      const durations = await stat
+        .locator('.ocx-ui-skeleton')
+        .evaluate((el) => getComputedStyle(el).transitionDuration);
+      expect(durations.split(', ').every((d) => d === '0s')).toBe(true);
+    });
   });
 });
 

@@ -12,6 +12,30 @@ component covers the primitives (`text`, `circle`, `rect`) and the composites (`
 for. A faint sweep crosses every bar; it stays still under `prefers-reduced-motion: reduce`,
 and `animated={false}` turns it off.
 
+A `code` skeleton takes the block's source as `code`: it draws one bar per line, so a skeleton built
+from the same string as its fence is the same height, to the pixel. Add `title` when the fence has
+one (Expressive Code's 36px title bar). An untitled `sh` fence has no header in this theme, so it is a
+plain `code` skeleton.
+
+## Swapping in the content
+
+Put the skeleton and the content in one `ocx-swap` wrapper. Both share one grid cell, so the box is
+the larger of the two and, sized from the same build, nothing moves. When the content is ready, set
+`data-loaded` on the wrapper (one attribute, no helper): the content fades in and the skeleton out
+over `--ocx-duration-base` (opacity only), and the skeleton ends `visibility: hidden`. With reduced
+motion the swap is instant. The [DependencyExplorer](../dependency-explorer/)'s summary stats use it.
+
+```astro
+<span class="ocx-swap">
+  <Skeleton lines={1} />
+  <span id="total"></span>
+</span>
+<script>
+  document.querySelector('#total').textContent = '42';
+  document.querySelector('.ocx-swap').dataset.loaded = '';
+</script>
+```
+
 ## Stories
 
 <Stories of="skeleton" />
@@ -23,6 +47,8 @@ and `animated={false}` turns it off.
   rows={[
     { name: 'variant', type: "'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal'", default: "'text'", description: 'Which placeholder: a primitive, or a composite that reserves the real component’s box.' },
     { name: 'lines', type: 'number', default: '3', description: 'Bars of a text, code or terminal skeleton, each one line-height tall.' },
+    { name: 'code', type: 'string', description: 'The source a code skeleton stands in for: its line count (a trailing newline adds none) sets the bars, over lines.' },
+    { name: 'title', type: 'string | boolean', description: 'A code skeleton with a title bar: reserves Expressive Code’s 36px header. The text is not drawn.' },
     { name: 'rows', type: 'number', default: '3', description: 'Rows of a list or table (a table’s head row comes on top); a terminal’s rows, with cols.' },
     { name: 'cols', type: 'number', description: 'Columns of a terminal: with rows, the size of the Terminal it stands in for, so it reserves that player box.' },
     { name: 'columns', type: 'number', default: '3', description: 'Columns of a table.' },

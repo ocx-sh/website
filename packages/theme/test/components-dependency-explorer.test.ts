@@ -238,6 +238,17 @@ describe('WP13.4 DependencyExplorer markup', () => {
     expect(src).not.toMatch(/100vh|ocx-deps__spinner|ocx-deps-spin/);
   });
 
+  it('WP14c DependencyExplorer: each stat is an .ocx-swap holding a Skeleton and an empty text slot, not yet loaded', async () => {
+    const values = (await render()).querySelectorAll('.ocx-deps__stat-value');
+    expect(values).toHaveLength(3);
+    for (const v of values) {
+      expect(v.classList.contains('ocx-swap')).toBe(true);
+      expect(v.hasAttribute('data-loaded')).toBe(false);
+      expect(v.querySelectorAll(':scope > .ocx-ui-skeleton')).toHaveLength(1);
+      expect(v.querySelector(':scope > .ocx-deps__stat-text')?.textContent).toBe('');
+    }
+  });
+
   it('WP14c DependencyExplorer: error and noscript notices are Starlight danger asides', async () => {
     const doc = await render();
     const error = doc.querySelector('.ocx-deps__error');

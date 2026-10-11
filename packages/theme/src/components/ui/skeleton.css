@@ -40,6 +40,28 @@
       translate: 100% 0;
     }
   }
+  /* Swap: `<div class="ocx-swap">` holds a skeleton and its content in one grid cell, so the box is the
+     larger of the two (both sized from the build). Script sets `data-loaded` on the wrapper: the content
+     fades in, the skeleton out (opacity only), and the skeleton ends `visibility: hidden`. The durations
+     read tokens, so reduced motion makes it instant. */
+  .ocx-swap {
+    display: grid;
+  }
+  .ocx-swap > * {
+    grid-area: 1 / 1;
+    transition:
+      opacity var(--ocx-duration-base),
+      visibility var(--ocx-duration-base);
+  }
+  .ocx-swap > :not(.ocx-ui-skeleton),
+  .ocx-swap[data-loaded] > .ocx-ui-skeleton {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .ocx-swap[data-loaded] > :not(.ocx-ui-skeleton) {
+    opacity: 1;
+    visibility: visible;
+  }
   /* Forced colours drop backgrounds: bars in GrayText, no sweep. */
   @media (forced-colors: active) {
     .ocx-ui-skeleton__line {
