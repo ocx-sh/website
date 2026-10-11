@@ -115,7 +115,7 @@ tasks:
       - pnpm exec playwright test {{.CLI_ARGS}}
 
   lighthouse:
-    desc: Lighthouse over the built dists (parallel lanes, retry-on-fail, cache; LH_NO_CACHE=1 for all)
+    desc: Lighthouse over the built dists (parallel lanes, retry-on-fail, cache; LH_NO_CACHE=1 for all; -- --only <substr> narrows)
     deps: [install]
     cmds:
       - node scripts/require-dist.mjs {{.DISTS}}
@@ -123,10 +123,10 @@ tasks:
       - node scripts/lighthouse.mjs {{.CLI_ARGS}}
 
   lighthouse:changed:
-    desc: Dev Lighthouse, cached pages skipped (LH_PRESET=desktop allowed; the gate stays mobile)
+    desc: Dev Lighthouse over the pages this branch touches plus / and /docs/ (LH_PRESET=desktop allowed; -- --only <substr>)
     cmds:
       - task: lighthouse
-        vars: { CLI_ARGS: --dev }
+        vars: { CLI_ARGS: '--dev --changed {{.CLI_ARGS}}' }
 
   visual:
     desc: Mock-vs-site screenshot pairs report (--watch to rerun)

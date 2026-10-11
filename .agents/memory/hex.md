@@ -5,10 +5,10 @@ Short, pointer-only. Project context lives in `AGENTS.md` and `HANDOVER.md`.
 ## Pointers
 
 - Verification: `AGENTS.md` › Commands — `ocx exec -- task check`, then
-  `task e2e`, `task lighthouse`, `task pack` one at a time (the host OOMs).
-  Live review: `ocx exec -- task dev`.
+  `task e2e`, `task lighthouse:changed`, `task pack` one at a time (the host OOMs).
+  The full `task lighthouse` runs in CI. Live review: `ocx exec -- task dev`.
 - Hub files: `pnpm-lock.yaml` — regenerate at integration only.
-- Fresh gate: `LH_NO_CACHE=1 ocx exec -- task lighthouse` (plus `task check`).
+- Pre-release gate: `LH_NO_CACHE=1 ocx exec -- task lighthouse` (plus `task check`).
 - Retro: `.agents/retro/`.
 - Product context and settled decisions: `HANDOVER.md`.
 - Plans: `.agents/plans/plan_<topic>.md`. ADRs: `.agents/adr/adr_<NNNN>_<topic>.md`.
