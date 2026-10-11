@@ -150,6 +150,11 @@ Call `mountChrome(document)` from `@ocx-sh/theme/chrome` in your override's
 - **Edit this page**: the link shows only when the route has an `editUrl`. For generated pages
   set `editUrl` in each page's frontmatter to the true source file (not the gitignored output),
   or set Starlight's `editLink.baseUrl` for hand-written ones. There is no theme option.
+- **VitePress-style sources** (`{#id}` headings, `./x.md#a` links, `<<< @/path{lang}` and
+  `<!--@include: path-->` includes): `@ocx-sh/theme/remark` exports `remarkHeadingIds`,
+  `remarkMdLinks` (`{ root, base }`) and `remarkIncludes` (`{ srcDir }`). Astro 7 runs remark only
+  on the `unified` processor, so install `@astrojs/markdown-remark` and set
+  `markdown: { processor: unified({ remarkPlugins: [...] }) }`; the Starlight plugin adds none.
 - **Heading ids**: Starlight slugs with github-slugger (an em dash becomes a double hyphen:
   `bootstrap-only--ocx_install_`), unlike MkDocs. Starlight has no `{#id}` syntax. Rewrite
   cross-page links to the slugger id and check every fragment against the built HTML.
