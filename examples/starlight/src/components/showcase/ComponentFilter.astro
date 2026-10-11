@@ -20,8 +20,10 @@ const total = componentPages(await getCollection('docs')).length;
 </div>
 
 <script>
-  import { installFilter, installThumbs } from './component-filter.mjs';
-
-  installFilter();
-  installThumbs();
+  // A dynamic import keeps the filter's code out of the HTML (~800 B gz of a page near HTML_GZ_MAX):
+  // Astro inlines a static import of a module this small.
+  import('./component-filter.mjs').then((m) => {
+    m.installFilter();
+    m.installThumbs();
+  });
 </script>
