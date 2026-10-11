@@ -44,7 +44,11 @@ const count = (n: number) => Array.from({ length: n });
 const style = {
   text: `--_lines: ${lines}`,
   code: `--_lines: ${lines}`,
-  terminal: cols ? `--_lines: ${lines}; --_cols: ${cols}; --_rows: ${rows}` : `--_lines: ${lines}`,
+  // A sized Terminal's player height: Terminal.astro's reserve calc, change both together. Inline, not in the
+  // <style>: it keeps this sheet under the plugin's inline-CSS cap (an external sheet costs Lighthouse 0.01).
+  terminal: cols
+    ? `--_lines: ${lines}; --_min: calc(100cqi * ${rows * 20 + 22} / ${cols * 9 + 22} + 32px)`
+    : `--_lines: ${lines}`,
   list: `--_rows: ${rows}`,
   table: `--_rows: ${rows}; --_cols: ${columns}`,
   rect: `--_ratio: ${ratio}`,
@@ -207,20 +211,10 @@ const style = {
       display: flex;
       flex-direction: column;
       overflow: clip;
+      container-type: inline-size; /* 100cqi in a sized terminal's --_min */
       background: var(--ocx-color-code-bg);
       border: var(--ocx-border-width) solid var(--ocx-color-border);
       border-radius: var(--ocx-radius-lg);
-    }
-    /* A sized Terminal (cols and rows) reserves its player from the container width: the same calc as
-       Terminal.astro's player reserve, so change both together. Border-box: the body's padding sits inside. */
-    .ocx-ui-skeleton[data-variant='terminal'][style*='--_cols'] {
-      container-type: inline-size;
-    }
-    .ocx-ui-skeleton[data-variant='terminal'][style*='--_cols'] > .ocx-ui-skeleton__body {
-      box-sizing: border-box;
-      min-block-size: calc(
-        100cqi * (var(--_rows) * 20 + 22) / (var(--_cols) * 9 + 22) + 32px + var(--ocx-border-width)
-      );
     }
     .ocx-ui-skeleton__chrome {
       display: flex;
@@ -236,7 +230,7 @@ const style = {
     .ocx-ui-skeleton__body {
       display: flex;
       flex-direction: column;
-      min-block-size: calc(var(--ocx-control-xl) + (var(--_lines) - 1) * var(--ocx-control-3xl));
+      min-block-size: var(--_min, calc(var(--ocx-control-xl) + (var(--_lines) - 1) * var(--ocx-control-3xl)));
       padding: var(--ocx-space-4);
       font-size: var(--ocx-text-base);
       line-height: var(--ocx-lh-code);

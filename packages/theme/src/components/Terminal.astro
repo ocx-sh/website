@@ -278,7 +278,7 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
      * 15px — char 9px wide (0.6em mono advance), rows 20px high, 2 × 0.75em borders ≈ 22px — scales
      * that box to the container width, then adds its 32px control bar. Numbers are asciinema-player 3.15.1's,
      * not ours; re-measure on upgrade. Guarded by e2e "CLS is 0 on load and while the open player loads".
-     * Skeleton's sized `terminal` variant repeats this calc; change both together. */
+     * Skeleton's sized `terminal` variant repeats this calc (its --_min); change both together. */
     .ocx-terminal__player[style*='--_rows'] {
       min-height: calc(100cqi * (var(--_rows) * 20 + 22) / (var(--_cols) * 9 + 22) + 32px);
     }
