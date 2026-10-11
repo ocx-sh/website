@@ -23,7 +23,7 @@ import TabItem from '@ocx-sh/theme/components/TabItem.astro';
   </TabItem>
   <TabItem label="Nushell" icon="nushell">
     ```nushell
-    curl -fsSL setup.ocx.sh/nu | nu
+    nu -c "$(curl -fsSL https://setup.ocx.sh/nu || echo 'exit 3')"
     ```
   </TabItem>
   <TabItem label="cmd" icon="cmd">
@@ -33,7 +33,7 @@ import TabItem from '@ocx-sh/theme/components/TabItem.astro';
   </TabItem>
   <TabItem label="Elvish" icon="elvish">
     ```sh
-    curl -fsSL setup.ocx.sh/elv | elvish
+    elvish -c "$(curl -fsSL https://setup.ocx.sh/elvish || echo 'exit 3')"
     ```
   </TabItem>
 </Tabs>
