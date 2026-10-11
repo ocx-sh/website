@@ -37,6 +37,10 @@
       "types": "./src/chrome.d.mts",
       "default": "./src/chrome.mjs"
     },
+    "./remark": {
+      "types": "./src/remark/index.d.mts",
+      "default": "./src/remark/index.mjs"
+    },
     "./nav.json": "./src/nav.json",
     "./nav": {
       "types": "./src/nav.d.ts",
@@ -119,7 +123,8 @@
     "@zag-js/tooltip": "1.44.0",
     "@zag-js/tree-view": "1.44.0",
     "@zag-js/vanilla": "1.44.0",
-    "asciinema-player": "3.15.1"
+    "asciinema-player": "3.15.1",
+    "unist-util-visit": "^5.0.0"
   },
   "peerDependencies": {
     "@astrojs/starlight": ">=0.42.0 <0.43",
@@ -134,9 +139,14 @@
     "@astrojs/starlight": "^0.42.4",
     "@iconify-json/lucide": "1.2.137",
     "@iconify-json/simple-icons": "1.2.97",
+    "@types/mdast": "^4.0.4",
     "@types/node": "^24.10.0",
     "ajv": "8.20.0",
     "astro": "7.3.5",
-    "typescript": "^6.0.3"
+    "remark-mdx": "^3.1.0",
+    "remark-parse": "^11.0.0",
+    "typescript": "^6.0.3",
+    "unified": "^11.0.5",
+    "vfile": "^6.0.3"
   }
 }
