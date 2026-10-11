@@ -147,6 +147,21 @@ describe('ocxTheme plugin', () => {
     expect(plugin?.load(id ?? '')).toBe(`export default ${JSON.stringify(runtime)};`);
   });
 
+  it("Astro's content cache key carries the Expressive Code config: it changes with it, and only with it", async () => {
+    const key = async (config: Partial<StarlightUserConfig>) => {
+      const { addIntegration, astroConfig } = await setup(config);
+      const hastPlugins: { name: string; ecKey?: string }[] = [];
+      const astro = { ...astroConfig, markdown: { processor: { name: 'satteri', options: { hastPlugins } } } };
+      await injected(addIntegration, astro as unknown as AstroConfig);
+      expect(hastPlugins.map((p) => p.name)).toEqual(['@ocx-sh/theme/ec-cache-key']);
+      return hastPlugins[0]?.ecKey;
+    };
+    const base = await key({});
+    expect(base).toMatch(/^[0-9a-f]{16}$/);
+    expect(await key({})).toBe(base);
+    expect(await key({ expressiveCode: { styleOverrides: { codeFontSize: '1rem' } } })).not.toBe(base);
+  });
+
   it('C-016: a base that is not a claim path throws, naming the base and every claim', async () => {
     const err = await setup({}, { base: '/nope/' }).then(
       () => undefined,
