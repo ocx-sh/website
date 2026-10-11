@@ -41,7 +41,14 @@ on ghcr.io for the grim skills, never as Git tags.
 1. Open a pull request that sets `version` in `packages/theme/package.json`
    (and each `version` in `publish.toml` that is pinned instead of inherited).
    Squash-merge it.
-2. Tag the squash commit on `main` with a signed tag and push it:
+2. Run the full Lighthouse gate on that commit; it must be green
+   (local runs audit only changed pages):
+
+   ```sh
+   LH_NO_CACHE=1 ocx exec -- task lighthouse
+   ```
+
+3. Tag the squash commit on `main` with a signed tag and push it:
 
    ```sh
    git switch main && git pull --ff-only
@@ -49,7 +56,7 @@ on ghcr.io for the grim skills, never as Git tags.
    git push origin v0.2.0
    ```
 
-3. Watch the Release run. It verifies the tag, runs `task check` and
+4. Watch the Release run. It verifies the tag, runs `task check` and
    `task pack`, then publishes npm and the skills in parallel, then creates
    the GitHub release.
 

@@ -88,16 +88,22 @@ Tools come from `ocx.toml`; run everything through it: `ocx exec -- task <name>`
   the cache in `.tmp/samples/`).
 - `task check` — the gate: lint, fmt, typecheck, test, build, css. CI
   (`.github/workflows/ci.yml`) runs check/e2e/lighthouse/pack per job; releases
-  per [`RELEASING.md`](RELEASING.md). `task e2e`, `task lighthouse`,
-  `task visual` and `task pack` (budgets, leak checks, Lighthouse 100×4) are
-  the full gate and run before every merge alongside `task check`.
+  per [`RELEASING.md`](RELEASING.md). `task e2e`, `task visual` and `task pack`
+  (budgets, leak checks) run before every merge alongside `task check`. Locally,
+  Lighthouse runs as `task lighthouse:changed` only; the full `task lighthouse` is
+  CI's gate and the pre-release run.
 - `task lighthouse` — every example page, mobile, 100×4 plus budgets, ~2 min
   cold: 3 lanes (`LH_SHARDS`), each one long-lived Chrome; one run per URL, a
   failing URL gets 3 and is judged on its median run. A URL is skipped only
   when a previously green result has an identical key (its HTML, every local
   asset it references, tool versions, config, budgets, runner, preset);
   `LH_NO_CACHE=1` audits all, `LH_HTML=1` adds HTML reports.
-  `task lighthouse:changed` is the dev alias (`LH_PRESET=desktop` allowed).
+  `task lighthouse:changed` is the dev loop: only the pages the branch touches
+  (a changed component's showcase page and stories, a changed doc page, every
+  root-site page on a `site/` change) plus `/` and `/docs/`; a shared theme file
+  (tokens, base CSS, Zag runtime) runs only those two and CI covers the rest.
+  `-- --only <substr>` audits matching URLs, e.g. to reproduce one red CI URL.
+  `LH_PRESET=desktop` allowed.
 - `task site:dev` / `task site:test` — the root site (`site/`) live at
   http://localhost:4321/ and its Vitest suite. `task deploy:dev` dry-runs the deploy
   action against an in-memory fake Bunny; `task deploy:test` runs only its tests.

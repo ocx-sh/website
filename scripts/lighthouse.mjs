@@ -14,6 +14,7 @@
  * - Output: one `<page>-<run>.report.json` per run in `.lighthouseci/`; `LH_HTML=1` adds HTML.
  *
  * `--dev` (`task lighthouse:changed`) honours `LH_PRESET=desktop`; the gate is always mobile.
+ * `--changed` and `--only <substr>` narrow the URL list for local runs (see `narrow`).
  * `--lane` is the internal child mode.
  */
 import { fork } from 'node:child_process';
@@ -23,6 +24,7 @@ import Module, { createRequire } from 'node:module';
 import { freemem } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { changedFiles, loadContext, selectUrls } from './lhci-select.mjs';
 import { STAGE_ROOT, stageExample } from './lhci-stage.mjs';
 
 /**
@@ -152,11 +154,31 @@ function salt(preset, chromePath) {
 
 const slug = (/** @type {string} */ path) => path.replace(/^\/|\/$/g, '').replace(/[^\w.-]+/g, '_') || 'index';
 
+/**
+ * `--only <substr>`: the URLs containing it. `--changed`: the URLs the branch's changes touch (`lhci-select.mjs`).
+ * Narrows `collect.url` in place and prints why each URL runs.
+ * @param {Rc['collect']} collect
+ */
+function narrow(collect) {
+  const argv = process.argv;
+  const at = argv.indexOf('--only');
+  const only = at >= 0 ? argv[at + 1] : argv.find((a) => a.startsWith('--only='))?.slice('--only='.length);
+  if (only === undefined && !argv.includes('--changed')) return;
+  const picked =
+    only === undefined
+      ? selectUrls(changedFiles(ROOT), collect.url, loadContext(ROOT))
+      : { urls: collect.url.filter((u) => u.includes(only)), reasons: undefined, global: [] };
+  for (const u of picked.urls) console.log(`  select ${u} (${picked.reasons?.get(u) ?? `--only ${only}`})`);
+  if (picked.global.length) console.log(`  global change, full set runs in CI: ${picked.global.join(', ')}`);
+  collect.url = picked.urls;
+}
+
 async function main() {
   const t0 = Date.now();
   const { collect } = rc();
   const preset = process.argv.includes('--dev') && process.env.LH_PRESET === 'desktop' ? 'desktop' : 'mobile';
   await stageExample();
+  narrow(collect);
 
   const key = salt(preset, collect.chromePath);
   const cacheDir = join(ROOT, '.tmp/lhci-cache', preset);
