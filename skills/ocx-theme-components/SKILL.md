@@ -145,6 +145,6 @@ component.
 - Initial state set by props, nothing corrected by a script after load.
 - Each field, group and icon-only control has its accessible name.
 - One `variant="primary"` per view at most.
-- A reserved box for anything that loads late (`Skeleton`, `Terminal` with
-  `cols` and `rows`, images with width and height).
+- A reserved box for anything that loads late (`Skeleton`, `Terminal` with a
+  cast under `public/` or explicit `cols` and `rows`, images with width and height).
 - No `@zag-js/*` import and no inline `style` colour in page code.
