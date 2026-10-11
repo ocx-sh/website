@@ -257,7 +257,9 @@ export function mountExplorer(root) {
   const table = q('table');
   const tbody = q('tbody');
   const empty = q('.ocx-deps__empty');
-  const values = [...root.querySelectorAll('.ocx-deps__stat-value')];
+  // Each stat is an `.ocx-swap` (skeleton over its text); `data-loaded` fades the text in.
+  const stats = /** @type {HTMLElement[]} */ ([...root.querySelectorAll('.ocx-deps__stat-value')]);
+  const values = stats.map((s) => /** @type {HTMLElement} */ (s.querySelector('.ocx-deps__stat-text')));
   const doc = root.ownerDocument;
   if (!doc.getElementById('ocx-deps-css')) {
     const style = doc.createElement('style');
@@ -307,6 +309,7 @@ export function mountExplorer(root) {
     const run = ++latest;
     for (const handle of handles.splice(0)) handle.destroy();
     for (const [node, kids] of pristine) node.replaceChildren(...kids.map((n) => n.cloneNode(true)));
+    for (const stat of stats) delete stat.dataset['loaded'];
     table.setAttribute('aria-busy', 'true');
     empty.hidden = !emptyReserved;
     error.hidden = true;
@@ -329,6 +332,7 @@ export function mountExplorer(root) {
       if (totalEl) totalEl.textContent = String(binary.summary.total);
       if (licensesEl) licensesEl.textContent = String(binary.summary.uniqueLicenses);
       if (generatedEl) generatedEl.textContent = data.generated;
+      for (const stat of stats) stat.dataset['loaded'] = '';
       // Licences go into the Select's native <select>; its listbox follows (C-161, `data-meta` =
       // count). A reload adds only licences the select lacks: the list never drops a row.
       const known = new Set([...select.options].map((o) => o.value));
