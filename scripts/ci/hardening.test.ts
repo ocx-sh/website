@@ -17,7 +17,7 @@ interface Step {
 interface Job {
   uses?: string;
   environment?: unknown;
-  strategy?: { matrix?: { gate?: string[] } };
+  strategy?: { matrix?: { gate?: string } };
   steps?: Step[];
 }
 interface Workflow {
@@ -64,7 +64,10 @@ describe('.github/workflows (C-328)', () => {
 
   it('ci.yml keeps the gate matrix and adds zizmor and secrets jobs', () => {
     const { jobs } = parse(read(`${dir}/ci.yml`)) as Workflow;
-    expect(jobs.gate?.strategy?.matrix?.gate).toEqual(['check', 'e2e', 'lighthouse', 'pack']);
+    // Draft PRs skip lighthouse; main pushes and ready PRs run all four gates.
+    expect(jobs.gate?.strategy?.matrix?.gate).toBe(
+      `\${{ fromJSON(github.event.pull_request.draft && '["check","e2e","pack"]' || '["check","e2e","lighthouse","pack"]') }}`,
+    );
     expect(jobs.zizmor?.steps?.some((s) => s.uses?.startsWith('zizmorcore/zizmor-action@'))).toBe(true);
     expect(jobs.secrets?.steps?.some((s) => s.run === 'ocx exec -- task secrets')).toBe(true);
   });
