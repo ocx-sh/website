@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { dist } from './build-site.ts';
 
 const SHELLS = ['sh', 'pwsh', 'nu', 'fish', 'elvish'];
-// Verbatim from the live ocx site: ocx/website/src/index.md (Quick Install) and docs/installation.md.
+// The documented forms in the ocx-sh/www-setup README (nu and elvish take the script through `-c`).
 const COMMANDS: Record<string, string> = {
   sh: 'curl -fsSL https://setup.ocx.sh/sh | sh',
   pwsh: "Invoke-RestMethod 'https://setup.ocx.sh/pwsh' | Invoke-Expression",
-  nu: 'curl -fsSL https://setup.ocx.sh/nu | nu',
+  nu: `nu -c "$(curl -fsSL https://setup.ocx.sh/nu || echo 'exit 3')"`,
   fish: 'curl -fsSL https://setup.ocx.sh/fish | fish',
-  elvish: 'curl -fsSL https://setup.ocx.sh/elvish | elvish',
+  elvish: `elvish -c "$(curl -fsSL https://setup.ocx.sh/elvish || echo 'exit 3')"`,
 };
 const load = () => import('./install.mjs') as Promise<Record<string, unknown>>;
 
@@ -29,7 +29,7 @@ describe('install commands', () => {
     }
   });
 
-  it('each command is the verbatim text of the live ocx site', async () => {
+  it('each command is the documented form from the www-setup README', async () => {
     const mod = await load();
     for (const shell of SHELLS) expect(mod[shell], shell).toBe(COMMANDS[shell]);
   });
