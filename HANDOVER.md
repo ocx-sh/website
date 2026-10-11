@@ -15,7 +15,7 @@ the owner on 2026-09-27 and amended on 2026-09-30. The reasoning trail is in
    rules come from `grimoire.toml`; install them with `grim install`.
 2. Phase 1 (the library) shipped as `v0.1.0`. Phase 2 (root site, Bunny as code,
    deploy action, cutover runbooks) is in progress.
-3. Touch no consumer repo before its phase-3 plan exists.
+3. Consumer repos migrate in phase 3; the sibling-checkout workflow is in `AGENTS.md`.
 
 ## What this repo holds
 

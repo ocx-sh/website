@@ -19,7 +19,14 @@ and open questions. Read it before any design or code change.** Research trail:
 
 - Current phase: 2, the root site (`site/`) and Bunny as code (`infra/`), the deploy
   action and the cutover suite. Phase 1, the library (`packages/theme/`), shipped as
-  `v0.1.0`. Do not touch consumer repos before their phase-3 plan exists.
+  `v0.1.0`. Consumer repos are migrating onto the theme now (phase 3).
+- Owner feedback on a consumer site (`find_ocx`, `ocx`, `rules_ocx`, ...; `repo` in
+  `nav.json` maps a path to its repo) goes to its local checkout, a sibling of this repo
+  (`../<repo>`). Fix the cause where it lives: theme code here, site code in the sibling,
+  on a branch there; never commit to its main. Batch several fixes before asking the owner
+  to review in the sibling. Try theme changes in a consumer through a local link; a consumer
+  PR that needs an unreleased fix pins a main commit, not a release. Check consumers' open
+  PRs now and then for components they need.
 - Tokens only, never raw values; colour is the only per-scheme token family.
   Rules: `css-theming`, `typescript-quality`, `typescript-packaging`,
   `docs-quality`.
