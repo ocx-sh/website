@@ -25,11 +25,11 @@ describe('landing page (C-306)', () => {
       expect(h, href).toContain(`href="${href}"`);
   });
 
-  it('has the install tab set, four feature cards, five sections and the early-development banner', () => {
+  it('has the install tab set, four feature cards, six sections and the early-development banner', () => {
     const h = html();
     expect(h.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(5);
     expect(h.match(/class="[^"]*landing-cards__card/g)).toHaveLength(4);
-    expect(h.match(/class="ocx-feature"/g) ?? h.match(/<section class="ocx-feature/g)).toHaveLength(5);
+    expect(h.match(/class="ocx-feature"/g) ?? h.match(/<section class="ocx-feature/g)).toHaveLength(6);
     expect(h).toContain('Early Development');
   });
 

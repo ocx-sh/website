@@ -101,14 +101,14 @@ export function budgetOf(path) {
 
 /**
  * One pathname pattern per class (regex source, anchored at the path start). The root site's pages
- * (landing, hubs, install, 404) are `content`: a new site page matches no class until it is listed here.
+ * (landing, hubs, install, team, 404) are `content`: a new site page matches no class until it is listed here.
  * @type {Record<PageClass, string>}
  */
 export const CLASS_PATTERNS = {
   showcase: '^/docs/components/',
   story: '^/docs/stories/',
   content:
-    '^(?:/docs/(?:probe/[^/]+/|shell/(?:neutral/)?|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/404\\.html)$',
+    '^(?:/docs/(?:probe/[^/]+/|shell/(?:neutral/)?|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/team/|/404\\.html)$',
 };
 
 /** Plain Astro pages on the Shell layout (`examples/starlight/src/pages/shell/`): built, not docs-tree files. */
