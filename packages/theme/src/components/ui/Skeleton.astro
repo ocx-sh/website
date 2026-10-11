@@ -6,11 +6,17 @@
 // (D-R5): `.ocx-card`, the List row, the DataTable cells, the Expressive Code frame, the Terminal
 // chrome and player; the swap story and e2e hold them to ±1px. A faint sweep crosses every bar
 // (shimmer, still under reduced motion: it stands still there, D-R6); `animated={false}` turns it off.
-// Styles: the text primitive and the sweep in skeleton.css (loaded by base.css), the variants below.
+// Styles: the text primitive and the sweep in skeleton.css (loaded by base.css), the variants below
+// (global: the BEM names are the scope, and Astro's per-selector scope hashes would push the sheet
+// past the inline-CSS cap).
 export interface Props {
   variant?: 'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal';
   /** Bars to reserve for `text`, `code` and `terminal` (each one line-height tall). */
   lines?: number;
+  /** A `code` block's source: its line count (a trailing newline does not add one) sets the bars, over `lines`. */
+  code?: string;
+  /** A `code` block with a title bar: reserves Expressive Code's 36px header. The text itself is not drawn. */
+  title?: string | boolean;
   /** Rows of a `list` or `table` (a table's head row comes on top); a `terminal`'s rows, with `cols`. */
   rows?: number;
   /** A `terminal`'s columns: with `rows`, the size of the Terminal it stands in for, so it reserves that Terminal's player box. */
@@ -29,6 +35,8 @@ export interface Props {
 const {
   variant = 'text',
   lines = 3,
+  code,
+  title,
   rows = 3,
   cols,
   columns = 3,
@@ -41,9 +49,13 @@ const {
 if (!/^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/.test(ratio)) throw new Error(`Skeleton: invalid ratio "${ratio}"`);
 
 const count = (n: number) => Array.from({ length: n });
+// A code block's source sets its bars, as a fence's does its lines: EC trims trailing newlines.
+const bars = variant !== 'code' || code === undefined ? lines : code.replace(/\n+$/, '').split('\n').length;
 const style = {
   text: `--_lines: ${lines}`,
-  code: `--_lines: ${lines}`,
+  // No player floor (`--_min`), code padding (`--_pad`); a title bar is EC's 36px header (control-md + 2 × space-2, starlight.css),
+  // its first pixel the root's border-top and its last the body's border-top. Inline, not in the <style>, to keep this sheet under the inline-CSS cap (see `terminal`).
+  code: `--_lines: ${bars}; --_min: 0px; --_pad: var(--ocx-space-5)${title ? '; --_head: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2) - 2 * var(--ocx-border-width))' : ''}`,
   // A sized Terminal's player height: Terminal.astro's reserve calc, change both together. Inline, not in the
   // <style>: it keeps this sheet under the plugin's inline-CSS cap (an external sheet costs Lighthouse 0.01).
   terminal: cols
@@ -86,13 +98,15 @@ const style = {
         ))}
       </span>
     ))
-  ) : variant === 'terminal' ? (
+  ) : variant === 'terminal' || variant === 'code' ? (
     <>
-      <span class="ocx-ui-skeleton__chrome">
-        <span class="ocx-ui-skeleton__line" />
-      </span>
+      {(variant === 'terminal' || title) && (
+        <span class="ocx-ui-skeleton__chrome">
+          <span class="ocx-ui-skeleton__line" />
+        </span>
+      )}
       <span class="ocx-ui-skeleton__body">
-        {count(lines).map(() => (
+        {count(bars).map(() => (
           <span class="ocx-ui-skeleton__line" />
         ))}
       </span>
@@ -104,7 +118,7 @@ const style = {
   )}
 </span>
 
-<style>
+<style is:global>
   @layer ocx {
     /* Primitives. */
     .ocx-ui-skeleton[data-variant='circle'] {
@@ -192,31 +206,26 @@ const style = {
     .ocx-ui-skeleton__tr[data-head] > .ocx-ui-skeleton__cell {
       padding: var(--ocx-space-3) var(--ocx-space-5);
     }
-    /* Code: the Expressive Code frame: code padding, code size and code line height. */
-    .ocx-ui-skeleton[data-variant='code'] {
-      --_bar: var(--ocx-color-border);
-      display: flex;
-      flex-direction: column;
-      padding: var(--ocx-space-5);
-      font-size: var(--ocx-text-base);
-      line-height: var(--ocx-lh-code);
-      background: var(--ocx-color-code-bg);
-      border: var(--ocx-border-width) solid var(--ocx-color-border);
-      border-radius: var(--ocx-radius-lg);
-    }
-    /* Terminal: the Terminal frame: title bar, then the player area at the Terminal's own min-height
-       (control-xl + 2 × control-3xl at the default 3 lines, one control-3xl more per line). */
-    .ocx-ui-skeleton[data-variant='terminal'] {
+    /* Code and Terminal: one framed box, a title bar over a body. Code is the Expressive Code frame: the body
+       is the code area (--_pad, no --_min floor) and the title is EC's 36px bar (--_head), both set inline.
+       Terminal is the Terminal frame: the player area at the Terminal's own min-height (control-xl +
+       2 × control-3xl at the default 3 lines, one control-3xl more per line). */
+    .ocx-ui-skeleton:is([data-variant='code'], [data-variant='terminal']) {
       --_bar: var(--ocx-color-border);
       display: flex;
       flex-direction: column;
       overflow: clip;
-      container-type: inline-size; /* 100cqi in a sized terminal's --_min */
       background: var(--ocx-color-code-bg);
       border: var(--ocx-border-width) solid var(--ocx-color-border);
       border-radius: var(--ocx-radius-lg);
     }
+    .ocx-ui-skeleton[data-variant='terminal'] {
+      container-type: inline-size; /* 100cqi in a sized terminal's --_min */
+    }
     .ocx-ui-skeleton__chrome {
+      box-sizing: border-box;
+      block-size: var(--_head, auto);
+      align-items: center;
       display: flex;
       justify-content: center;
       padding: var(--ocx-space-3) var(--ocx-space-4);
@@ -231,9 +240,11 @@ const style = {
       display: flex;
       flex-direction: column;
       min-block-size: var(--_min, calc(var(--ocx-control-xl) + (var(--_lines) - 1) * var(--ocx-control-3xl)));
-      padding: var(--ocx-space-4);
+      padding: var(--_pad, var(--ocx-space-4));
       font-size: var(--ocx-text-base);
       line-height: var(--ocx-lh-code);
+    }
+    .ocx-ui-skeleton__chrome + .ocx-ui-skeleton__body {
       border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
     }
   }

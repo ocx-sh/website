@@ -1,7 +1,7 @@
 ---
 title: Swap, code and terminal
-description: The code and terminal composites beside the component each stands in for; both boxes have the same block size, so nothing moves when the content lands.
-height: 330
+description: The code, titled code, shell and terminal composites beside the component each stands in for; both boxes have the same block size, so nothing moves when the content lands.
+height: 760
 order: 4
 block: true
 ---
@@ -9,18 +9,51 @@ block: true
 import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
 import Terminal from '@ocx-sh/theme/components/Terminal.astro';
 
-{/* A story page loads no Starlight CSS, so the theme's Expressive Code sizes (starlight.css) are restated for the fence, in the ocx layer the css gate requires. */}
-<style>{`@layer ocx { [data-swap='code'] .expressive-code { --ec-codeFontSize: var(--ocx-text-base); --ec-codePadBlk: var(--ocx-space-5); --ec-codePadInl: var(--ocx-space-5); } }`}</style>
+{/* A story page loads no Starlight CSS, so the theme's Expressive Code look (starlight.css) is restated for the fences, in the ocx layer the css gate requires: code sizes, the 36px title bar, colours, and an untitled terminal frame without a header. */}
+<style>{`@layer ocx {
+  [data-swap] .expressive-code { --ec-codeFontSize: var(--ocx-text-base); --ec-uiFontSize: var(--ocx-text-sm); --ec-codePadBlk: var(--ocx-space-5); --ec-codePadInl: var(--ocx-space-5); --ec-brdRad: calc(var(--ocx-radius-lg) - var(--ocx-border-width)); --ec-frm-edTabBarBg: var(--ocx-color-surface-subtle); --ec-frm-edTabBarBrdBtmCol: var(--ocx-color-border); --ec-frm-edActTabBg: var(--ocx-color-surface-subtle); --ec-frm-edActTabFg: var(--ocx-color-fg); --ec-frm-edActTabIndTopCol: var(--ocx-color-surface-subtle); --ec-frm-edActTabIndBtmCol: var(--ocx-color-surface-subtle); --ec-frm-trmTtbBg: var(--ocx-color-surface-subtle); --ec-frm-trmTtbFg: var(--ocx-color-fg); }
+  [data-swap] .expressive-code .frame.has-title .header { box-sizing: border-box; block-size: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2)); align-items: center; background: var(--ocx-color-surface-subtle); border-bottom: var(--ocx-border-width) solid var(--ocx-color-border); }
+  [data-swap] .expressive-code .frame .title { background: none; }
+  [data-swap] .expressive-code .frame.is-terminal:not(.has-title) .header { display: none; }
+  [data-swap] .expressive-code .frame.is-terminal:not(.has-title) pre { border-top: var(--ec-brdWd) solid var(--ec-brdCol); border-radius: calc(var(--ec-brdRad) + var(--ec-brdWd)); }
+}`}</style>
+
+{/* Each skeleton's `code` is the string its fence holds: a block of the same source is the same height. */}
+export const toml = '[tools]\nnode = "24"\nuv = "0.10"\n';
+export const sh = 'ocx install node\nocx exec -- node --version\n';
 
 <div style="display: grid; gap: 24px">
   <div data-swap="code" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
-    <div data-role="skeleton"><Skeleton variant="code" /></div>
+    <div data-role="skeleton"><Skeleton variant="code" code={toml} /></div>
     <div data-role="real">
 
 ```toml
 [tools]
 node = "24"
 uv = "0.10"
+```
+
+    </div>
+  </div>
+  <div data-swap="title" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="code" code={toml} title="ocx.toml" /></div>
+    <div data-role="real">
+
+```toml title="ocx.toml"
+[tools]
+node = "24"
+uv = "0.10"
+```
+
+    </div>
+  </div>
+  <div data-swap="shell" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 16px; align-items: start">
+    <div data-role="skeleton"><Skeleton variant="code" code={sh} /></div>
+    <div data-role="real">
+
+```sh
+ocx install node
+ocx exec -- node --version
 ```
 
     </div>

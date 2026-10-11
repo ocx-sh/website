@@ -293,10 +293,51 @@ describe('WP14a Skeleton', () => {
     expect(starlight).toMatch(/--ec-codeFontSize:\s*var\(--ocx-text-base\)/);
     expect(starlight).toMatch(/--ec-codePadBlk:\s*var\(--ocx-space-5\)/);
     expect(ec).toMatch(/codeLineHeight:\s*'1\.75'/);
-    const code = /\[data-variant='code'\]\s*\{([^}]*)\}/.exec(style('Skeleton'))?.[1] ?? '';
-    expect(code).toContain('padding: var(--ocx-space-5)');
-    expect(code).toContain('font-size: var(--ocx-text-base)');
-    expect(code).toContain('line-height: var(--ocx-lh-code)');
+    // Padding, floor and title bar are inline custom properties (the sheet stays under the inline-CSS cap).
+    const sheet = style('Skeleton');
+    expect(sheet).toMatch(/__body\s*\{[^}]*min-block-size:\s*var\(--_min,[^}]*padding:\s*var\(--_pad,/);
+    expect(sheet).toMatch(/__chrome\s*\{[^}]*block-size:\s*var\(--_head,/);
+    const src = read('../src/components/ui/Skeleton.astro');
+    expect(src).toContain('--_pad: var(--ocx-space-5)');
+    // EC's titled header is control-md + 2 × space-2 (starlight.css), its two border rows shared with the frame.
+    expect(starlight).toMatch(/block-size:\s*calc\(var\(--ocx-control-md\) \+ 2 \* var\(--ocx-space-2\)\)/);
+    expect(src).toContain(
+      '--_head: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2) - 2 * var(--ocx-border-width))',
+    );
+    // Size and line height come from the body rule.
+    expect(sheet).toMatch(/__body\s*\{[^}]*font-size: var\(--ocx-text-base\);[^}]*line-height: var\(--ocx-lh-code\)/);
+  });
+
+  it.each([
+    ['one line', 1],
+    ['a\nb\nc', 3],
+    ['a\nb\nc\n', 3],
+    ['a\n\nc\n\n', 3],
+    ['', 1],
+  ])('WP14a Skeleton: code %j reserves %i bars, over lines; a trailing newline adds none', async (code, n) => {
+    const s = await skel({ variant: 'code', code, lines: 9 });
+    expect(bars(s)).toBe(n);
+    expect(s?.getAttribute('style')).toMatch(new RegExp(`--_lines:\\s*${n}\\b`));
+  });
+
+  it('WP14a Skeleton: title adds the header bar over the body, no title none; terminal is unaffected by code', async () => {
+    const titled = await skel({ variant: 'code', code: 'a\nb', title: 'ocx.toml' });
+    expect(titled?.firstElementChild?.className).toContain('ocx-ui-skeleton__chrome');
+    expect(bars(titled)).toBe(3);
+    expect(
+      (await skel({ variant: 'code', code: 'a\nb', title: true }))?.querySelectorAll('.ocx-ui-skeleton__chrome'),
+    ).toHaveLength(1);
+    expect((await skel({ variant: 'code', code: 'a\nb' }))?.querySelector('.ocx-ui-skeleton__chrome')).toBeNull();
+    expect(bars(await skel({ variant: 'terminal', code: 'a\nb\nc\nd', lines: 2 }))).toBe(3);
+  });
+
+  it('WP14a Skeleton: the swap wrapper fades opacity and visibility on the base duration token', () => {
+    const swap = style('Skeleton');
+    expect(swap).toMatch(/\.ocx-swap\s*\{\s*display:\s*grid/);
+    expect(swap).toMatch(
+      /\.ocx-swap > \*\s*\{[^}]*grid-area:\s*1 \/ 1[^}]*opacity var\(--ocx-duration-base\)[^}]*visibility var\(--ocx-duration-base\)/,
+    );
+    expect(swap).toMatch(/\.ocx-swap\[data-loaded\] > \.ocx-ui-skeleton[^{]*\{[^}]*visibility:\s*hidden/);
   });
 
   it('WP14a Skeleton: forced colours draw bars in GrayText and hide the sweep', () => {
