@@ -309,14 +309,8 @@ starlight-file-tree :is(summary, a, .tree-entry) { border-radius: var(--ocx-radi
 .sl-link-card:hover .icon, .pagination-links a:hover svg { color: var(--ocx-color-fg); }
 
 /* Expressive Code: plain panel (mock c-code). EC's CSS sits in
- * starlight.components, so these win by layer; sizes are absolute tokens so
- * nothing compounds below 12px (Lighthouse legible-font). */
+ * starlight.components, so these win by layer; its sizes are in ec.mjs. */
 .expressive-code {
-  --ec-codeFontSize: var(--ocx-text-base);
-  --ec-uiFontSize: var(--ocx-text-sm);
-  --ec-codePadBlk: var(--ocx-space-5);
-  --ec-codePadInl: var(--ocx-space-5);
-  --ec-brdRad: calc(var(--ocx-radius-lg) - var(--ocx-border-width));
   --ec-tm-inlMarkerBrdRad: var(--ocx-radius-sm);
   --ec-frm-edTabBrdRad: var(--ocx-radius-sm);
   --ec-frm-edTabBarBg: var(--ocx-color-surface-subtle);

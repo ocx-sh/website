@@ -9,9 +9,9 @@ block: true
 import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
 import Terminal from '@ocx-sh/theme/components/Terminal.astro';
 
-{/* A story page loads no Starlight CSS, so the theme's Expressive Code look (starlight.css) is restated for the fences, in the ocx layer the css gate requires: code sizes, the 36px title bar, colours, and an untitled terminal frame without a header. */}
+{/* A story page loads no Starlight CSS, so the theme's Expressive Code look (starlight.css) is restated for the fences, in the ocx layer the css gate requires (its sizes come with EC, ec.mjs): the 36px title bar, colours, and an untitled terminal frame without a header. */}
 <style>{`@layer ocx {
-  [data-swap] .expressive-code { --ec-codeFontSize: var(--ocx-text-base); --ec-uiFontSize: var(--ocx-text-sm); --ec-codePadBlk: var(--ocx-space-5); --ec-codePadInl: var(--ocx-space-5); --ec-brdRad: calc(var(--ocx-radius-lg) - var(--ocx-border-width)); --ec-frm-edTabBarBg: var(--ocx-color-surface-subtle); --ec-frm-edTabBarBrdBtmCol: var(--ocx-color-border); --ec-frm-edActTabBg: var(--ocx-color-surface-subtle); --ec-frm-edActTabFg: var(--ocx-color-fg); --ec-frm-edActTabIndTopCol: var(--ocx-color-surface-subtle); --ec-frm-edActTabIndBtmCol: var(--ocx-color-surface-subtle); --ec-frm-trmTtbBg: var(--ocx-color-surface-subtle); --ec-frm-trmTtbFg: var(--ocx-color-fg); }
+  [data-swap] .expressive-code { --ec-frm-edTabBarBg: var(--ocx-color-surface-subtle); --ec-frm-edTabBarBrdBtmCol: var(--ocx-color-border); --ec-frm-edActTabBg: var(--ocx-color-surface-subtle); --ec-frm-edActTabFg: var(--ocx-color-fg); --ec-frm-edActTabIndTopCol: var(--ocx-color-surface-subtle); --ec-frm-edActTabIndBtmCol: var(--ocx-color-surface-subtle); --ec-frm-trmTtbBg: var(--ocx-color-surface-subtle); --ec-frm-trmTtbFg: var(--ocx-color-fg); }
   [data-swap] .expressive-code .frame.has-title .header { box-sizing: border-box; block-size: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2)); align-items: center; background: var(--ocx-color-surface-subtle); border-bottom: var(--ocx-border-width) solid var(--ocx-color-border); }
   [data-swap] .expressive-code .frame .title { background: none; }
   [data-swap] .expressive-code .frame.is-terminal:not(.has-title) .header { display: none; }
