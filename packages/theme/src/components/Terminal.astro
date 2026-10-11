@@ -7,7 +7,7 @@
 import { base } from 'astro:config/client';
 import { publicDir } from 'astro:config/server';
 import { withBase } from './base-url.mjs';
-import { publicCastSize } from './cast-size.mjs';
+import { terminalSize } from './cast-size.mjs';
 import { connect, machine } from './collapsible.zag.mjs';
 import { nextTerminalId } from './terminal.mjs';
 import Button from './ui/Button.astro';
@@ -21,7 +21,7 @@ export interface Props {
   title?: string;
   /** Terminal width in columns. Default: the cast header's, when `src` is a file under `public/`. */
   cols?: number;
-  /** Terminal height in rows, defaulted like `cols`; with `cols` (and fit 'width') reserves the player height before it loads. */
+  /** Terminal height in rows, defaulted like `cols` and capped at 24 (a taller recording scrolls); with `cols` (and fit 'width') reserves the player height before it loads. */
   rows?: number;
   /** Start playback on load. Default false (DOC-EX-15). */
   autoPlay?: boolean;
@@ -50,9 +50,7 @@ const {
   collapsed = false,
 } = Astro.props;
 // Explicit props win; otherwise the cast's own size, so the box has its final height before the player loads.
-const size = colsProp && rowsProp ? undefined : publicCastSize(src, publicDir);
-const cols = colsProp ?? size?.cols;
-const rows = rowsProp ?? size?.rows;
+const { cols, rows } = terminalSize(src, publicDir, colsProp, rowsProp);
 const id = nextTerminalId();
 const options = { cols, rows, autoPlay, speed, idleTimeLimit, loop, fit: fit === 'none' ? false : fit };
 // ponytail: reserve only when both sizes are known (props or the cast header).

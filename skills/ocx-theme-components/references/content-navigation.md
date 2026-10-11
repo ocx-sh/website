@@ -19,7 +19,7 @@ player is created.
 | Prop | Notes |
 |---|---|
 | `src` | Required; root-absolute (`/casts/install.cast`), always prefixed with the site base, so write it base-relative (never `/docs/casts/…` under `/docs/`) |
-| `cols`, `rows` | Default to the cast header's size when `src` is a file under `public/`; with `fit="width"` they reserve the player height before it loads (no layout shift). Set both for a cast fetched from elsewhere |
+| `cols`, `rows` | Default to the cast header's size when `src` is a file under `public/`; with `fit="width"` they reserve the player height before it loads (no layout shift). `rows` caps at 24: a taller recording plays in a scrolling 24-row terminal. Set both for a cast fetched from elsewhere |
 | `title` | Centred in the chrome |
 | `autoPlay` | Default false. Keep it: no autoplay is the docs rule |
 | `speed`, `idleTimeLimit` (default 2 s), `loop` | Playback |

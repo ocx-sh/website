@@ -27,7 +27,7 @@ pauses and rewinds.
     { name: 'src', type: 'string', required: true, description: 'Root-absolute path to a .cast file; the site base is prepended.' },
     { name: 'title', type: 'string', description: 'Text centred in the title bar.' },
     { name: 'cols', type: 'number', default: 'from the cast', description: 'Terminal width in columns.' },
-    { name: 'rows', type: 'number', default: 'from the cast', description: 'Terminal height in rows; with cols, reserves the space before loading.' },
+    { name: 'rows', type: 'number', default: 'from the cast', description: 'Terminal height in rows, capped at 24: a taller recording plays in a 24-row terminal that scrolls. With cols, reserves the space before loading.' },
     { name: 'autoPlay', type: 'boolean', default: 'false', description: 'Start playback without a click. Recordings never autoplay by default.' },
     { name: 'speed', type: 'number', default: '1', description: 'Playback speed multiplier.' },
     { name: 'idleTimeLimit', type: 'number', default: '2', description: 'Compress pauses longer than this many seconds.' },

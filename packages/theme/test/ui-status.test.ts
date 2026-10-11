@@ -331,6 +331,20 @@ describe('WP14a Skeleton', () => {
     expect(bars(await skel({ variant: 'terminal', code: 'a\nb\nc\nd', lines: 2 }))).toBe(3);
   });
 
+  it('WP14a Skeleton: a terminal src sizes it from the cast header, explicit cols/rows win, rows cap at 24', async () => {
+    const min = async (props: Record<string, unknown>) =>
+      (await skel({ variant: 'terminal', ...props }))?.getAttribute('style') ?? '';
+    // getting-started-install.cast is 100 x 8: (8 * 20 + 22) / (100 * 9 + 22).
+    const fromCast = await min({ src: '/casts/fixture/getting-started-install.cast' });
+    expect(fromCast).toContain('calc(100cqi * 182 / 922 + 32px)');
+    expect(await min({ cols: 100, rows: 8 })).toBe(fromCast);
+    expect(await min({ src: '/casts/fixture/getting-started-install.cast', cols: 80, rows: 10 })).toContain(
+      '222 / 742',
+    );
+    expect(await min({ cols: 100, rows: 30 })).toContain('502 / 922');
+    expect(await min({})).not.toContain('--_min');
+  });
+
   it('WP14a Skeleton: the swap wrapper fades opacity and visibility on the base duration token', () => {
     const swap = style('Skeleton');
     expect(swap).toMatch(/\.ocx-swap\s*\{\s*display:\s*grid/);
