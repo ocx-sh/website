@@ -38,6 +38,15 @@ const withEntries = (...edit: ((entries: Entry[]) => Entry[])[]): Legacy => ({
 });
 const patch = (id: string, change: Partial<Entry>) => (entries: Entry[]) =>
   entries.map((e) => (e.id === id ? { ...e, ...change } : e));
+// legacy.json holds no proxy entry any more: the proxy mode keeps its coverage through this sample.
+const PROXY: Entry = {
+  id: 'legacy-proxy',
+  repo: 'ocx-sh/proxied',
+  mode: 'proxy',
+  origin: 'https://ocx-website.pages.dev',
+  paths: ['/old/', '/older/'],
+};
+const addProxy = (entries: Entry[]) => [PROXY, ...entries];
 
 describe('bunny:plan output (offline, byte-stable)', () => {
   it.each(ZONES)('%s: two runs are byte-identical and match the committed snapshot', async (zone) => {
@@ -102,22 +111,16 @@ describe('rule set and limits', () => {
 
   it('origin rules follow, longest claimed path first, legacy.json order breaking ties', () => {
     expect(originIds('prod')).toEqual(
-      [
-        'legacy-ocx-files',
-        'repo-ocx-sdk-python',
-        'repo-rules-ocx',
-        'repo-find-ocx',
-        'legacy-catalog',
-        'legacy-index',
-        'legacy-ocx-dirs',
-      ].map((id) => `ocx:${id}`),
+      ['repo-ocx-sdk-python', 'repo-rules-ocx', 'repo-find-ocx', 'legacy-catalog', 'legacy-index', 'repo-ocx'].map(
+        (id) => `ocx:${id}`,
+      ),
     );
     expect(originIds('dev')).toEqual(originIds('prod'));
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
   it('commits 14 prod and 13 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([14, 13]);
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([13, 12]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 
@@ -134,13 +137,13 @@ describe('rule set and limits', () => {
     }
   });
 
-  it('chunks the 18 prod and 6 dev patterns of legacy-ocx-dirs 5 at a time', () => {
+  it('chunks the 12 prod and 4 dev patterns of repo-ocx 5 at a time', () => {
     const sizes = (zone: string) =>
       planRules(zone)
-        .find((r) => r.Description === 'ocx:legacy-ocx-dirs')
+        .find((r) => r.Description === 'ocx:repo-ocx')
         ?.Triggers.map((t) => t.PatternMatches.length);
-    expect(sizes('prod')).toEqual([5, 5, 5, 3]);
-    expect(sizes('dev')).toEqual([5, 1]);
+    expect(sizes('prod')).toEqual([5, 5, 2]);
+    expect(sizes('dev')).toEqual([4]);
   });
 
   it.each([
@@ -209,7 +212,7 @@ describe('rule set and limits', () => {
       // Header rules precede every origin rule, so the /catalog redirect or a later origin rule never shadows them.
       const order = rules.map((r) => r.Description);
       const lastHeader = Math.max(...['catalog-sandbox', 'catalog-nosniff'].map((id) => order.indexOf(`ocx:${id}`)));
-      expect(lastHeader).toBeLessThan(order.indexOf('ocx:legacy-ocx-files'));
+      expect(lastHeader).toBeLessThan(order.indexOf('ocx:repo-ocx-sdk-python'));
     }
     expect(planRules('preview:ocx').map((r) => r.Description)).not.toContain('ocx:catalog-sandbox');
   });
@@ -218,7 +221,8 @@ describe('rule set and limits', () => {
     const rules = planRules('prod');
     const hit = (host: string, path: string) => matchProbe(rules, { host, path, status: 200 });
     for (const [path, origin] of [
-      ['/docs/getting-started', 'legacy-ocx-dirs'],
+      ['/docs/getting-started', 'repo-ocx'],
+      ['/schemas/config/v1.json', 'repo-ocx'],
       ['/apps/catalog/x', 'legacy-catalog'],
       ['/catalog', 'legacy-index'],
     ] as const) {
@@ -231,8 +235,9 @@ describe('rule set and limits', () => {
   });
 
   it('proxy entries become OriginUrl rules, redirect entries 302 rules with the %{Path.N-} tail', () => {
-    const rule = (id: string) => planRules('prod').find((r) => r.Description === `ocx:${id}`);
-    expect(rule('legacy-ocx-dirs')).toMatchObject({ ActionType: 2, ActionParameter1: 'https://ocx-website.pages.dev' });
+    const rule = (id: string) =>
+      planRules('prod', { legacy: withEntries(addProxy) }).find((r) => r.Description === `ocx:${id}`);
+    expect(rule('legacy-proxy')).toMatchObject({ ActionType: 2, ActionParameter1: 'https://ocx-website.pages.dev' });
     expect(rule('legacy-catalog')).toMatchObject({
       ActionType: 1,
       ActionParameter1: 'https://ocx-sh.github.io/catalog/%{Path.2-}',
@@ -266,7 +271,7 @@ describe('refusals (exit 1, naming the rule)', () => {
     ['prod', 'https://next.ocx.sh'],
     ['dev', 'https://sh-ocx-dev.b-cdn.net'],
   ])('%s: an OriginUrl target on a zone host loops (%s)', (zone, origin) => {
-    refuses(zone, withEntries(patch('legacy-ocx-dirs', { origin })), 'legacy-ocx-dirs');
+    refuses(zone, withEntries(addProxy, patch('legacy-proxy', { origin })), 'legacy-proxy');
   });
 
   it.each([
@@ -276,7 +281,7 @@ describe('refusals (exit 1, naming the rule)', () => {
     'https://user@ocx.sh',
     'https://Sh-OCX.b-cdn.net:443',
   ])('an OriginUrl target on a zone host loops however it is spelled (%s)', (origin) => {
-    refuses('prod', withEntries(patch('legacy-ocx-dirs', { origin })), 'legacy-ocx-dirs');
+    refuses('prod', withEntries(addProxy, patch('legacy-proxy', { origin })), 'legacy-proxy');
   });
 
   it.each(['https://SH-OCX.B-CDN.NET/catalog/', 'https://sh-ocx.b-cdn.net:443/catalog/'])(
@@ -287,12 +292,12 @@ describe('refusals (exit 1, naming the rule)', () => {
   );
 
   it('a pattern with * before its path is refused', () => {
-    refuses('prod', withEntries(patch('legacy-ocx-dirs', { paths: ['*/docs/'] })), 'legacy-ocx-dirs');
+    refuses('prod', withEntries(addProxy, patch('legacy-proxy', { paths: ['*/old/'] })), 'legacy-proxy');
   });
 
   it('two overlapping origin rules at equal order are refused', () => {
     const dup = (entries: Entry[]) => [...entries, { ...entries[0]!, id: 'legacy-dup' }];
-    refuses('prod', withEntries(dup), 'legacy-ocx-dirs', 'legacy-dup');
+    refuses('prod', withEntries(addProxy, dup), 'legacy-proxy', 'legacy-dup');
   });
 
   describe('an entry that outranks a more specific claim of another entry', () => {
@@ -352,8 +357,9 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
   it('a repo with legacy entries left gets no repo rule', () => {
     const after = ids(
       'prod',
-      withEntries((entries) => entries.filter((e) => e.id !== 'legacy-ocx-files')),
+      withEntries((entries) => [{ ...PROXY, repo: 'ocx-sh/ocx' }, ...entries]),
     );
+    expect(after).toContain('ocx:legacy-proxy');
     expect(after.filter((d) => d === 'ocx:repo-ocx')).toEqual([]);
   });
 

@@ -28,12 +28,7 @@ function shapeErrors(doc: Record<string, unknown>): string[] {
 describe('legacy.json', () => {
   it('holds the ADR 0002 D6.4 rules 6-11, each { id, repo, mode, origin, paths[] }', () => {
     expect(shapeErrors(legacy)).toEqual([]);
-    expect(legacy.entries.map((e) => e.id)).toEqual([
-      'legacy-ocx-dirs',
-      'legacy-ocx-files',
-      'legacy-catalog',
-      'legacy-index',
-    ]);
+    expect(legacy.entries.map((e) => e.id)).toEqual(['legacy-catalog', 'legacy-index']);
   });
 
   it('a planted registry key fails the shape check and the schema forbids it', () => {
@@ -138,7 +133,14 @@ describe('legacy.json against nav.json and the redirect mapping (C-314)', () => 
   });
 
   it('refuses a proxy entry, which has no redirect target', () => {
-    expect(() => redirectTemplate(legacy.entries[0] as (typeof legacy.entries)[number])).toThrow(/redirect/);
+    const proxy = {
+      id: 'legacy-proxy',
+      repo: 'ocx-sh/ocx',
+      mode: 'proxy',
+      origin: 'https://o.example/',
+      paths: ['/x/'],
+    };
+    expect(() => redirectTemplate(proxy)).toThrow(/redirect/);
   });
 });
 

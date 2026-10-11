@@ -17,6 +17,15 @@ const page = (head = '', body = '') =>
   `<!doctype html><html><head><title>t</title>${head}</head><body>${body}</body></html>`;
 // /integrations/bazel/ is an OriginStorage claim since the rules_ocx flip: the committed plan carries a storage probe.
 const STORAGE_PLAN: Plan = { legacy: committed };
+// legacy.json holds no proxy entry any more: the proxy probes keep their coverage through this sample.
+const PROXY_ENTRY = {
+  id: 'legacy-proxy',
+  repo: 'ocx-sh/proxied',
+  mode: 'proxy',
+  origin: 'https://ocx-website.pages.dev',
+  paths: ['/docs/authoring/'],
+};
+const PROXY_PLAN: Plan = { legacy: { entries: [...committed.entries, PROXY_ENTRY] } };
 
 // ponytail: the replies are hand-written, not recorded from a b-cdn.net host. M0 recorded the redirect status,
 // `Location` and the storage 200/404 bodies (plan, M0 Result); the header set (`x-robots-tag`, canonical) is not.
@@ -75,15 +84,14 @@ async function run(
   return { code, requests, out: out.join(''), err: err.join('') };
 }
 
-/** The probe path of the proxy rule claiming `/docs/`. */
-const DOCS = probesFor('dev').find((p) => p.kind === 'proxy' && p.path.startsWith('/docs/'))!.path;
+/** The probe path of the sample proxy rule. */
+const DOCS = probesFor('dev', PROXY_PLAN).find((p) => p.kind === 'proxy')!.path;
 
 describe('probesFor', () => {
   it('derives the dev probes from the plan: default origin, proxies, redirects with golden Locations', () => {
-    const probes = probesFor('dev');
+    const probes = probesFor('dev', PROXY_PLAN);
     expect(probes).toContainEqual({ kind: 'default', path: '/', status: 200 });
     expect(probes).toContainEqual({ kind: 'proxy', path: '/docs/authoring/announcing', status: 200 });
-    expect(probes).toContainEqual({ kind: 'proxy', path: '/apple-touch-icon.png', status: 200 });
     expect(probes).toContainEqual({
       kind: 'redirect',
       path: '/apps/catalog',
@@ -108,19 +116,25 @@ describe('probesFor', () => {
     });
   });
 
-  it('probes a real page per proxy rule, never a directory pattern: /docs/ is a 404 on the origin', () => {
-    const paths = probesFor('prod')
+  it('probes only the first root of a repo with several claims: /docs/ is a page, /schemas/ has no index', () => {
+    const roots = probesFor('prod')
+      .filter((p) => p.kind === 'storage' && p.canonical?.endsWith(p.path))
+      .map((p) => p.path);
+    expect(roots).toContain('/docs/');
+    expect(roots).not.toContain('/schemas/');
+  });
+
+  it('probes a real page per proxy rule, never a directory pattern: /docs/authoring/ is a 404 on the origin', () => {
+    const paths = probesFor('prod', PROXY_PLAN)
       .filter((p) => p.kind === 'proxy')
       .map((p) => p.path);
-    expect(paths).toEqual(['/apple-touch-icon.png', '/docs/authoring/announcing']);
-    expect(paths).not.toContain('/docs/');
+    expect(paths).toEqual(['/docs/authoring/announcing']);
+    expect(paths).not.toContain('/docs/authoring/');
   });
 
   it('refuses a proxy rule with no known-good path in old-urls.txt', () => {
-    const legacy = {
-      entries: committed.entries.map((e) => (e.id === 'legacy-ocx-files' ? { ...e, paths: ['/nope/'] } : e)),
-    };
-    expect(() => probesFor('dev', { legacy })).toThrow(/legacy-ocx-files: no known-good path/);
+    const legacy = { entries: [...committed.entries, { ...PROXY_ENTRY, paths: ['/nope/'] }] };
+    expect(() => probesFor('dev', { legacy })).toThrow(/legacy-proxy: no known-good path/);
   });
 
   it('a preview zone has no origin rules: the default origin only', () => {
@@ -151,6 +165,7 @@ describe('a correct zone', () => {
       '<a href="https://jqlang.github.io/jq/">jq</a>',
     );
     const { code } = await run('dev', {
+      plan: PROXY_PLAN,
       patch: { [DOCS]: { ...good({ kind: 'proxy', path: DOCS, status: 200 }), body } },
     });
     expect(code).toBe(0);
@@ -181,8 +196,8 @@ describe('each break fails exactly its probe, exit 1', () => {
     ],
     [
       'a response without noindex',
-      { '/apple-touch-icon.png': { headers: {} } },
-      'FAIL proxy /apple-touch-icon.png: X-Robots-Tag has no noindex',
+      { '/docs/': { headers: { 'content-type': 'text/html' } } },
+      'FAIL storage /docs/: X-Robots-Tag has no noindex',
     ],
     [
       'a proxy whose Location names pages.dev',
@@ -201,7 +216,7 @@ describe('each break fails exactly its probe, exit 1', () => {
     ],
     ['a default origin without noindex', { '/': { headers: {} } }, 'FAIL default /: X-Robots-Tag has no noindex'],
   ] as [string, Record<string, Reply>, string][])('%s', async (_, patch, line) => {
-    const { code, err } = await run('dev', { patch });
+    const { code, err } = await run('dev', { plan: PROXY_PLAN, patch });
     expect(code).toBe(1);
     expect(err.trim().split('\n')).toEqual([line]);
   });
@@ -223,7 +238,8 @@ describe('each break fails exactly its probe, exit 1', () => {
 
   it('lists every failed probe, not just the first', async () => {
     const { code, err, out } = await run('dev', {
-      patch: { [DOCS]: { status: 500 }, '/apple-touch-icon.png': { status: 404 } },
+      plan: PROXY_PLAN,
+      patch: { [DOCS]: { status: 500 }, '/catalog/a/b/': { status: 404 } },
     });
     expect(code).toBe(1);
     expect(err.trim().split('\n')).toHaveLength(2);

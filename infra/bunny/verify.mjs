@@ -67,7 +67,7 @@ function resolveTemplate(template, path) {
 }
 
 /**
- * The probes of a zone: the default origin, one per `OriginStorage` claim root, one per proxy rule, and every
+ * The probes of a zone: the default origin, one per `OriginStorage` rule (its first claim root), one per proxy rule, and every
  * pattern of a redirect rule.
  * ponytail: one probe per proxy rule (one known-good page); probe every old-urls.txt path of the rule if one hides
  * a dead path.
@@ -86,7 +86,11 @@ export function probesFor(zone, input = {}) {
       .filter((p) => p.startsWith(`${prefix}/`))
       .map((p) => p.slice(prefix.length));
     if (rule.ActionType === ACTION.OriginStorage) {
-      for (const path of patterns.filter((p) => p.endsWith('/*')).map((p) => p.slice(0, -1)))
+      // The first root only: a repo's later claims may be a file tree with no index page (`/schemas/` of ocx-sh/ocx).
+      for (const path of patterns
+        .filter((p) => p.endsWith('/*'))
+        .map((p) => p.slice(0, -1))
+        .slice(0, 1))
         probes.push({ kind: 'storage', path, status: 200, canonical: `https://${PUBLIC_HOST}${path}` });
     } else if (rule.ActionType === ACTION.OriginUrl && patterns.length > 0) {
       probes.push({ kind: 'proxy', path: proxyPage(rule.Description, patterns), status: 200 });
