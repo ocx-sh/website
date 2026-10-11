@@ -1,7 +1,7 @@
 prod ocx.sh               200 /                       -> (default origin)    | hsts frame
 prod ocx.sh               200 /integrations/          -> (default origin)    | hsts frame
 prod ocx.sh               200 /apps/                  -> (default origin)    | hsts frame
-prod ocx.sh               200 /install/               -> (default origin)    | hsts frame
+prod ocx.sh               200 /install/               -> repo-www-setup      | hsts frame
 prod ocx.sh               200 /team/                  -> (default origin)    | hsts frame
 prod ocx.sh               200 /docs/                  -> repo-ocx            | hsts frame
 prod ocx.sh               200 /schemas/               -> repo-ocx            | hsts frame
@@ -13,7 +13,7 @@ prod ocx.sh               200 /apps/catalog/          -> legacy-catalog      | h
 prod ocx.sh               200 /x/                     -> (default origin)    | hsts frame
 prod ocx.sh               200 /integrations/x/        -> (default origin)    | hsts frame
 prod ocx.sh               200 /apps/x/                -> (default origin)    | hsts frame
-prod ocx.sh               200 /install/x/             -> (default origin)    | hsts frame
+prod ocx.sh               200 /install/x/             -> repo-www-setup      | hsts frame
 prod ocx.sh               200 /team/x/                -> (default origin)    | hsts frame
 prod ocx.sh               200 /docs/x/                -> repo-ocx            | hsts frame
 prod ocx.sh               200 /schemas/x/             -> repo-ocx            | hsts frame

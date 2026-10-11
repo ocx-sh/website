@@ -87,24 +87,17 @@ describe('C-110 budgets module', () => {
 describe('C-309 site page classes', () => {
   const dist = mkdtempSync(join(tmpdir(), 'budgets-site-'));
   afterAll(() => rmSync(dist, { recursive: true, force: true }));
-  for (const f of [
-    'index.html',
-    '404.html',
-    'apps/index.html',
-    'install/index.html',
-    'pagefind/x.js',
-    '_astro/a.css',
-  ]) {
+  for (const f of ['index.html', '404.html', 'apps/index.html', 'team/index.html', 'pagefind/x.js', '_astro/a.css']) {
     mkdirSync(dirname(join(dist, f)), { recursive: true });
     writeFileSync(join(dist, f), '');
   }
 
   it('lists the HTML pages of a dist as routes', () => {
-    expect(sitePages(dist)).toEqual(['/', '/404.html', '/apps/', '/install/']);
+    expect(sitePages(dist)).toEqual(['/', '/404.html', '/apps/', '/team/']);
   });
 
-  it('classifies landing, hubs, install and 404 as content, with the content budget', () => {
-    for (const p of ['/', '/integrations/', '/apps/', '/install/', '/404.html']) {
+  it('classifies landing, hubs, team and 404 as content, with the content budget', () => {
+    for (const p of ['/', '/integrations/', '/apps/', '/team/', '/404.html']) {
       expect(classOf(p), p).toBe('content');
       expect(budgetOf(p), p).toBe(BUDGETS.content);
     }

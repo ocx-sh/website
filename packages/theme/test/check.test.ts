@@ -197,12 +197,12 @@ describe('C-014 layoutProblem', () => {
     'pagefind/pagefind.js',
     'pagefind/fragment/a.pf_fragment',
     'integrations/index.html',
-    'install/index.html',
+    'team/index.html',
   ])('C-014: website at / may ship %s', (rel) => {
     expect(layoutProblem(nav, WEBSITE, '/', rel)).toBeUndefined();
   });
 
-  it.each(['integrations/bazel/index.html', 'foo/index.html', 'docs/index.html'])(
+  it.each(['integrations/bazel/index.html', 'foo/index.html', 'docs/index.html', 'install/index.html'])(
     'C-014: website at / may not ship %s',
     (rel) => {
       expect(layoutProblem(nav, WEBSITE, '/', rel)).toBeTypeOf('string');
@@ -339,7 +339,7 @@ describe('C-011 check()', () => {
     const problems = check({ dist: WEBSITE_OK, nav, repo: WEBSITE, path: '/docs/' });
     expect(problems).toHaveLength(1);
     expect(problems[0]?.file).toBe('nav.json');
-    for (const p of ['/', '/integrations/', '/apps/', '/install/']) expect(problems[0]?.problem).toContain(p);
+    for (const p of ['/', '/integrations/', '/apps/', '/team/']) expect(problems[0]?.problem).toContain(p);
   });
 });
 
@@ -360,7 +360,7 @@ describe('C-013/C-014/C-070 check() on a failing website dist', () => {
   });
 
   it('C-013: every bad link in index.html is reported once, naming its URL, and no good link is', () => {
-    const bad = ['/foo/', '/install/missing/', '/_astro/gone-src.css', '/_astro/gone-srcset.css'];
+    const bad = ['/foo/', '/team/missing/', '/_astro/gone-src.css', '/_astro/gone-srcset.css'];
     const own = of('index.html');
     expect(own).toHaveLength(bad.length);
     for (const url of bad) expect(own.filter((p) => p.problem.includes(url))).toHaveLength(1);

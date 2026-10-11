@@ -111,16 +111,22 @@ describe('rule set and limits', () => {
 
   it('origin rules follow, longest claimed path first, legacy.json order breaking ties', () => {
     expect(originIds('prod')).toEqual(
-      ['repo-ocx-sdk-python', 'repo-rules-ocx', 'repo-find-ocx', 'legacy-catalog', 'legacy-index', 'repo-ocx'].map(
-        (id) => `ocx:${id}`,
-      ),
+      [
+        'repo-ocx-sdk-python',
+        'repo-rules-ocx',
+        'repo-find-ocx',
+        'legacy-catalog',
+        'legacy-index',
+        'repo-www-setup',
+        'repo-ocx',
+      ].map((id) => `ocx:${id}`),
     );
     expect(originIds('dev')).toEqual(originIds('prod'));
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
   it('commits 14 prod and 13 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([13, 12]);
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([14, 13]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 

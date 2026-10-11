@@ -6,7 +6,7 @@ file; edit here.
 ## What this repo is
 
 `ocx-sh/website`: the shared theme library `@ocx-sh/theme`, the root site for
-`ocx.sh` (`/`, `/integrations/`, `/apps/`, `/install/`), and the reusable Bunny
+`ocx.sh` (`/`, `/integrations/`, `/apps/`, `/team/`), and the reusable Bunny
 deploy action every section repo calls. Stack: Astro + Starlight, TypeScript,
 pnpm workspace (package published to npm).
 
