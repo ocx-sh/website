@@ -237,8 +237,8 @@ function wireControls(root, player) {
 }
 
 /**
- * Wire one rendered `.ocx-terminal` root: prefetch its cast immediately, and create the player
- * lazily: an open terminal on its first hover, focus, touch or start click (as it nears the
+ * Wire one rendered `.ocx-terminal` root: fetch its cast when it is seen or opened, and create the
+ * player lazily: an open terminal on its first hover, focus, touch or start click (as it nears the
  * viewport only with `autoPlay`); a collapsed one (a Zag collapsible, C-142) on its first expand,
  * reported by `ocx:collapsible:change`.
  * @param {HTMLElement} root
@@ -250,13 +250,21 @@ export function mountTerminal(root, loadPlayer = loadDefault) {
   /** @type {unknown} */
   const parsed = JSON.parse(root.dataset['options'] ?? '{}');
   const opts = /** @type {PlayerOptions} */ (parsed);
-  // Prefetch on mount, collapsed or not, so expanding is instant (ocx 2210983da).
-  // Low priority: many casts on one page must not compete with the main content.
-  const data = fetch(root.dataset['src'] ?? '', { priority: 'low' }).then((r) => {
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.text();
-  });
-  data.catch(() => {}); // surfaced in the player area once a player is wanted
+  // The cast is fetched when the terminal is seen (an open one near the viewport) or opened (a collapsed
+  // one), never on page load: a docs page with many casts must not pay for the ones nobody scrolls to.
+  // Low priority: casts must not compete with the main content.
+  /** @type {Promise<string> | undefined} */
+  let cast;
+  const fetchCast = () => {
+    if (!cast) {
+      cast = fetch(root.dataset['src'] ?? '', { priority: 'low' }).then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.text();
+      });
+      cast.catch(() => {}); // surfaced in the player area once a player is wanted
+    }
+    return cast;
+  };
 
   // Our start overlay (SSR'd; asciinema's own is hidden in CSS): hidden once playback starts, and
   // a click starts it through the same create path as everything else.
@@ -266,12 +274,12 @@ export function mountTerminal(root, loadPlayer = loadDefault) {
   /** @param {boolean} autoPlay */
   const create = (autoPlay) =>
     // Wait for the web fonts too: the player measures its cell size from the mono font once, at create.
-    (player ??= Promise.all([loadPlayer(), data, document.fonts?.ready])
+    (player ??= Promise.all([loadPlayer(), fetchCast(), document.fonts?.ready])
       .then(([m, d]) => {
         const p = m.create({ data: d }, area, {
           ...opts,
           autoPlay,
-          preload: true, // the data is already here: show 00:00, not --:--, before play
+          preload: true, // the data is already here (create waits for it): show 00:00, not --:--, before play
           theme: 'ocx',
           terminalFontFamily: 'var(--ocx-font-mono)',
           controls: false, // our own bar (below) drives play/pause/seek/fullscreen through the player API
@@ -296,9 +304,20 @@ export function mountTerminal(root, loadPlayer = loadDefault) {
   });
 
   if (root.dataset['zagRoot'] !== 'collapsible' && !opts.autoPlay) {
-    // Nothing loads before interaction: the SSR box and start overlay already hold the layout.
+    // The player loads on interaction (the SSR box and start overlay already hold the layout); only the
+    // cast text is fetched ahead, once the terminal nears the viewport.
+    const seen = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        seen.disconnect();
+        void fetchCast();
+      },
+      { rootMargin: '200px' },
+    );
+    seen.observe(root);
     const arm = () => {
       for (const type of INTERACTION) root.removeEventListener(type, arm);
+      seen.disconnect();
       void create(false);
     };
     for (const type of INTERACTION) root.addEventListener(type, arm, { passive: true });
