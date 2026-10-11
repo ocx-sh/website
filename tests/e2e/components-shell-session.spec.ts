@@ -1,5 +1,6 @@
-// ShellSession: command and output fences as one frame. Axe in both schemes, one fused box, a
-// command copies only itself, an output has no copy button, and web fonts never resize the session.
+// ShellSession: command and output fences as one terminal surface. Axe in both schemes, one fused box,
+// a `$` prompt on commands and a comment-coloured `>` on outputs (neither copied), a command copies
+// only itself, an output has no copy button, and web fonts never resize the session.
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { settle } from './helpers/settle.ts';
@@ -28,22 +29,81 @@ for (const theme of ['light', 'dark']) {
   });
 }
 
-test('ShellSession: entries are one fused frame, an output starting where its command ends', async ({ page }) => {
+test('ShellSession: entries are one terminal surface: contiguous, one background, no rail or separator', async ({
+  page,
+}) => {
   await page.goto(story('default'));
   const boxes = await page.locator(ENTRY).evaluateAll((els) =>
     els.map((el) => {
       const { top, bottom } = el.getBoundingClientRect();
-      return { kind: el.getAttribute('data-ocx-session'), top, bottom };
+      const css = getComputedStyle(el);
+      return {
+        kind: el.getAttribute('data-ocx-session'),
+        top,
+        bottom,
+        bg: getComputedStyle(el.querySelector('pre') as Element).backgroundColor,
+        rail: css.borderInlineStartWidth,
+        rule: css.borderBlockStartWidth,
+      };
     }),
   );
   expect(boxes.map((b) => b.kind)).toEqual(['command', 'output', 'command', 'output']);
   for (const [i, box] of boxes.entries()) {
     if (i) expect(Math.abs(box.top - (boxes[i - 1]?.bottom ?? NaN))).toBeLessThanOrEqual(1);
+    expect(box.bg).toBe(boxes[0]?.bg);
+    expect([box.rail, box.rule]).toEqual(['0px', '0px']);
   }
   // One outer border: the entries' own frames carry none.
   await expect(page.locator(`${ENTRY} pre`).first()).toHaveCSS('border-top-width', '0px');
   await expect(page.locator(SESSION)).toHaveCSS('border-top-width', '1px');
 });
+
+for (const [name, path] of [
+  ['story', story('languages')],
+  ['component page', PAGE],
+] as const) {
+  test(`ShellSession: commands show a $ prompt, outputs a > in the comment colour, and neither is text (${name})`, async ({
+    page,
+  }) => {
+    await page.goto(path);
+    const lines = await page.locator(`${ENTRY} .code`).evaluateAll((els) => {
+      const colour = (token: string) => {
+        const probe = document.body.appendChild(document.createElement('i'));
+        probe.style.color = `var(${token})`;
+        const value = getComputedStyle(probe).color;
+        probe.remove();
+        return value;
+      };
+      return {
+        accent: colour('--ocx-color-accent-fg'),
+        comment: colour('--ocx-color-code-comment'),
+        lines: els.map((el) => {
+          const before = getComputedStyle(el, '::before');
+          return {
+            kind: el.closest('[data-ocx-session]')?.getAttribute('data-ocx-session'),
+            marker: before.content,
+            markerColour: before.color,
+            userSelect: before.userSelect,
+            text: (el as HTMLElement).innerText,
+            colours: [el, ...el.querySelectorAll('span')].map((n) => getComputedStyle(n).color),
+          };
+        }),
+      };
+    });
+    expect(lines.lines.length).toBeGreaterThan(1);
+    for (const line of lines.lines) {
+      expect(line.userSelect).toBe('none');
+      if (line.kind === 'command') {
+        expect([line.marker, line.markerColour]).toEqual(['"$ "', lines.accent]);
+      } else {
+        // json and log token colours do not show: the whole line, marker included, is the comment colour.
+        expect([line.marker, line.markerColour]).toEqual(['"> "', lines.comment]);
+        expect(new Set(line.colours)).toEqual(new Set([lines.comment]));
+      }
+      expect(line.text).not.toMatch(/^[$>]/);
+    }
+  });
+}
 
 test('ShellSession: a command copies only itself; an output has no visible copy button', async ({ page }) => {
   await page.goto(story('default'));

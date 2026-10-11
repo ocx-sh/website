@@ -32,11 +32,13 @@ for (const [n, i] of at.entries()) {
 
 <style is:global>
   @layer ocx {
-    /* Its Expressive Code blocks fused into one frame. EC's own border and radius go (zeroed through its
-       variables, so no rule needs to out-specify EC's); the session draws one border, a hairline between
-       entries and a title bar that replaces the frames' headers. A command wears the code background and an
-       accent rail with EC's copy button; an output is recessed, its plain text muted, and has no copy
-       button. Component CSS rather than starlight.css: story pages and other hosts load no Starlight sheet. */
+    /* Its Expressive Code blocks fused into one terminal surface. EC's own border and radius go (zeroed through
+       its variables, so no rule needs to out-specify EC's); the session draws one border and a title bar that
+       replaces the frames' headers. Entries are consecutive terminal lines: no padding between them, the code
+       padding only above the first and below the last. A command line wears an accent `$` and EC's copy
+       button; an output line a `>`, both in the comment colour, and no copy button. The markers are generated
+       content: neither selected nor copied (EC copies `data-code`). Component CSS rather than starlight.css:
+       story pages and other hosts load no Starlight sheet. */
     .ocx-shell-session {
       overflow: hidden;
       border: var(--ocx-border-width) solid var(--ocx-color-border);
@@ -58,38 +60,46 @@ for (const [n, i] of at.entries()) {
     .ocx-shell-session > .expressive-code {
       --ec-brdWd: 0px;
       --ec-brdRad: 0px;
+      --ec-codePadBlk: 0px;
       margin: 0;
-      border-inline-start: var(--ocx-border-width-strong) solid transparent;
-    }
-    .ocx-shell-session > .expressive-code + .expressive-code {
-      border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
     }
     .ocx-shell-session .frame .header {
       display: none;
     }
-    .ocx-shell-session > [data-ocx-session='command'] {
-      border-inline-start-color: var(--ocx-color-accent);
+    .ocx-shell-session-header + .expressive-code pre,
+    .ocx-shell-session > .expressive-code:first-child pre {
+      padding-block-start: var(--ocx-space-5);
     }
-    .ocx-shell-session > [data-ocx-session='output'] .frame {
-      --code-background: color-mix(in srgb, var(--ocx-color-code-bg) 50%, var(--ocx-color-surface-subtle));
+    .ocx-shell-session > .expressive-code:last-child pre {
+      padding-block-end: var(--ocx-space-5);
     }
-    /* Highlighted tokens keep their colour; only plain text mutes: the code-fg token, and the grey EC falls back
-       to for a language it does not highlight (`text`, `log`), which is unreadable on a light surface. */
-    .ocx-shell-session
-      > [data-ocx-session='output']
-      .code
-      span:is(:not([style*='--ocx-color-code-']), [style*='--ocx-color-code-fg)']) {
-      color: var(--ocx-color-fg-muted);
+    /* The copy button sits flush top-right and is 2rem at most, so a one-line command is as tall as it; the
+       doubled class outranks starlight.css's button spacing on an untitled terminal. */
+    .ocx-shell-session > [data-ocx-session='command'] .frame.frame {
+      --button-spacing: 0px;
+      min-block-size: 2rem;
     }
     .ocx-shell-session > [data-ocx-session='output'] .copy {
       display: none;
     }
+    /* ponytail: every line of a command gets `$`, so a `\` continuation line does too; no SSR line parsing. */
+    .ocx-shell-session .code::before {
+      content: '$ ';
+      color: var(--ocx-color-accent-fg);
+      user-select: none;
+    }
+    /* EC colours each token through an inline custom property, so `color` has to be set on the spans too. */
+    .ocx-shell-session > [data-ocx-session='output'] .code,
+    .ocx-shell-session > [data-ocx-session='output'] .code span {
+      color: var(--ocx-color-code-comment);
+    }
+    .ocx-shell-session > [data-ocx-session='output'] .code::before {
+      content: '> ';
+      color: inherit;
+    }
     @media (forced-colors: active) {
       .ocx-shell-session-header {
         border-block-end-color: CanvasText;
-      }
-      .ocx-shell-session > .expressive-code + .expressive-code {
-        border-block-start-color: CanvasText;
       }
     }
   }

@@ -51,8 +51,10 @@ locked 3 tools in ocx.lock
 | `title` | Optional title bar, also the group's accessible name |
 
 The slot holds code fences only; the build fails on an empty slot or on any
-other content. A command copies only its own text; an output has no copy
-button. Do not give the fences titles: the session's title replaces theirs.
+other content. The look is a shell: each command line gets an accent `$`, each
+output line a `>`, and output text is the comment colour whatever its language.
+The markers are drawn, never copied; a `\` continuation line also gets a `$`. A
+command copies only its own text; an output has no copy button. Do not give the fences titles: the session's title replaces theirs.
 
 ## FeatureSection
 
