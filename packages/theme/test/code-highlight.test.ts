@@ -67,6 +67,8 @@ const REQUIRED_LANGS = [
   'js',
   'rust',
   'python',
+  'starlark', // langAlias to python (ec.mjs): Shiki ships none
+  'bzl',
   'go',
   'diff',
   'dockerfile',
@@ -80,7 +82,7 @@ const KNOWN_GAPS = new Set<string>();
 
 describe('S-001 highlighter language coverage', () => {
   it('EXPRESSIVE_CODE only adds grammars, never restricts Shiki to a subset (one shared set for every box)', () => {
-    expect(Object.keys((EXPRESSIVE_CODE as { shiki?: object }).shiki ?? {})).toEqual(['langs']);
+    expect(Object.keys((EXPRESSIVE_CODE as { shiki?: object }).shiki ?? {})).toEqual(['langs', 'langAlias']);
   });
 
   it.each(REQUIRED_LANGS.filter((l) => !KNOWN_GAPS.has(l)))(
@@ -157,6 +159,11 @@ describe('S-001 distinct colours per role', () => {
       'sh',
       'if [ -f "$f" ]; then ocx --version; fi # c',
       { if: 'keyword', ocx: 'function', '--version': 'keyword', $f: 'variable', '# c': 'comment', '];': 'punctuation' },
+    ],
+    [
+      'starlark',
+      'load("@rules_ocx//ocx:defs.bzl", "ocx_tool")\nocx_tool(name = "node", retries = 3)  # c',
+      { load: 'function', ocx_tool: 'function', '"node"': 'string', '3': 'number', '# c': 'comment' },
     ],
     [
       'elvish',

@@ -258,7 +258,12 @@ function mergeEc(ec) {
     ...EXPRESSIVE_CODE,
     ...ec,
     styleOverrides: { ...base, ...own, frames: { ...base.frames, ...own.frames } },
-    // Consumer grammars add to the theme's (Elvish, pwsh parameters), never drop them.
-    shiki: { ...baseShiki, ...ownShiki, langs: [...(baseShiki.langs ?? []), ...(ownShiki.langs ?? [])] },
+    // Consumer grammars and aliases add to the theme's (Elvish, pwsh parameters, Starlark), never drop them.
+    shiki: {
+      ...baseShiki,
+      ...ownShiki,
+      langs: [...(baseShiki.langs ?? []), ...(ownShiki.langs ?? [])],
+      langAlias: { ...baseShiki.langAlias, ...ownShiki.langAlias },
+    },
   };
 }
