@@ -2,6 +2,7 @@ prod ocx.sh               200 /                       -> (default origin)    | h
 prod ocx.sh               200 /integrations/          -> (default origin)    | hsts frame
 prod ocx.sh               200 /apps/                  -> (default origin)    | hsts frame
 prod ocx.sh               200 /install/               -> (default origin)    | hsts frame
+prod ocx.sh               200 /team/                  -> (default origin)    | hsts frame
 prod ocx.sh               200 /docs/                  -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /schemas/               -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /catalog/               -> legacy-index        | hsts frame
@@ -13,6 +14,7 @@ prod ocx.sh               200 /x/                     -> (default origin)    | h
 prod ocx.sh               200 /integrations/x/        -> (default origin)    | hsts frame
 prod ocx.sh               200 /apps/x/                -> (default origin)    | hsts frame
 prod ocx.sh               200 /install/x/             -> (default origin)    | hsts frame
+prod ocx.sh               200 /team/x/                -> (default origin)    | hsts frame
 prod ocx.sh               200 /docs/x/                -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /schemas/x/             -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /catalog/x/             -> legacy-index        | hsts frame
@@ -24,7 +26,6 @@ prod ocx.sh               200 /assets/                -> legacy-ocx-dirs     | h
 prod ocx.sh               200 /icons/                 -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /casts/                 -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /licensed/              -> legacy-ocx-dirs     | hsts frame
-prod ocx.sh               200 /team/                  -> legacy-ocx-dirs     | hsts frame
 prod ocx.sh               200 /logo.svg               -> legacy-ocx-files    | hsts frame
 prod ocx.sh               200 /favicon.ico            -> legacy-ocx-files    | hsts frame
 prod ocx.sh               200 /apple-touch-icon.png   -> legacy-ocx-files    | hsts frame

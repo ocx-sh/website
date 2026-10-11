@@ -62,7 +62,7 @@
 /** Directories the root claim `/` owns besides `/` itself and top-level files (R5). */
 export const ROOT_DIRS = Object.freeze(/** @type {const} */ (['/_astro/', '/pagefind/']));
 
-const TOPS = new Set(['docs', 'catalog', 'install', 'schemas', 'integrations', 'apps']);
+const TOPS = new Set(['docs', 'catalog', 'install', 'schemas', 'integrations', 'apps', 'team']);
 const HUBS = new Set(['integrations', 'apps']);
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const REPO = /^ocx-sh\/[A-Za-z0-9._-]+$/;
@@ -74,7 +74,6 @@ const RESERVED = new Set([
   '.well-known',
   'api',
   'lore',
-  'team',
   'preview',
 ]);
 const reserved = (/** @type {string} */ seg) => RESERVED.has(seg) || /^v\d+(\.\d+)?$/.test(seg);

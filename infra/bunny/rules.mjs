@@ -31,8 +31,6 @@ const ASSET_PATTERN = 'https://*/_astro/*';
 const REDIRECT_STATUS = '302';
 /** A host of one of our zones; an OriginUrl or prod Redirect pointing at one loops or leaks it. */
 const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
-/** Proxied directory claims whose bare form (`/team`) is a page of its own and needs a pattern too. */
-const BARE_PROXY_DIRS = new Set(['/team/']);
 /** Catalog pages that render untrusted package content: `/catalog/p/<pkg>` and `/catalog/index/<registry>/p/<pkg>`. */
 const SANDBOX_PATHS = ['/catalog/p/*', '/catalog/index/*/p/*'];
 
@@ -173,7 +171,7 @@ function expandPath(path, bare) {
 function legacyRule(entry, hosts) {
   const patterns = onHosts(
     hosts,
-    entry.paths.flatMap((p) => expandPath(p, entry.mode === 'redirect' || BARE_PROXY_DIRS.has(p))),
+    entry.paths.flatMap((p) => expandPath(p, entry.mode === 'redirect')),
   );
   const order = Math.max(...entry.paths.map((p) => p.length));
   if (entry.mode === 'proxy') return { order, rule: rule(entry.id, patterns, ACTION.OriginUrl, entry.origin) };

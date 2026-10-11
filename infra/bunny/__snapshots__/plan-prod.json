@@ -412,10 +412,10 @@
           "Parameter1": "",
           "PatternMatches": [
             "https://ocx.sh/licensed/*",
-            "https://ocx.sh/team",
-            "https://ocx.sh/team/*",
             "https://next.ocx.sh/docs/*",
-            "https://next.ocx.sh/schemas/*"
+            "https://next.ocx.sh/schemas/*",
+            "https://next.ocx.sh/assets/*",
+            "https://next.ocx.sh/icons/*"
           ]
         },
         {
@@ -423,23 +423,11 @@
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
-            "https://next.ocx.sh/assets/*",
-            "https://next.ocx.sh/icons/*",
             "https://next.ocx.sh/casts/*",
             "https://next.ocx.sh/licensed/*",
-            "https://next.ocx.sh/team"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://next.ocx.sh/team/*",
             "https://sh-ocx.b-cdn.net/docs/*",
             "https://sh-ocx.b-cdn.net/schemas/*",
-            "https://sh-ocx.b-cdn.net/assets/*",
-            "https://sh-ocx.b-cdn.net/icons/*"
+            "https://sh-ocx.b-cdn.net/assets/*"
           ]
         },
         {
@@ -447,10 +435,9 @@
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/icons/*",
             "https://sh-ocx.b-cdn.net/casts/*",
-            "https://sh-ocx.b-cdn.net/licensed/*",
-            "https://sh-ocx.b-cdn.net/team",
-            "https://sh-ocx.b-cdn.net/team/*"
+            "https://sh-ocx.b-cdn.net/licensed/*"
           ]
         }
       ]

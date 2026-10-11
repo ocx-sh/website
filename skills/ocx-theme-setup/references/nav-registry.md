@@ -23,7 +23,7 @@ A claim is `{ "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "searc
 `validate(nav)` enforces it:
 
 - top-level sections are one of `docs`, `catalog`, `install`, `schemas`,
-  `integrations`, `apps`, plus the root `/`;
+  `integrations`, `apps`, `team`, plus the root `/`;
 - hub children are one slug deep: `/integrations/<slug>/`, `/apps/<slug>/`,
   slugs matching `[a-z0-9]+(-[a-z0-9]+)*`, at most 32 characters;
 - `repo` matches `ocx-sh/<name>`;

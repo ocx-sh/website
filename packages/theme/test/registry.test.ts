@@ -101,17 +101,7 @@ describe('C-002 path grammar', () => {
 });
 
 describe('C-003 reserved segments', () => {
-  const RESERVED = [
-    '_astro',
-    'pagefind',
-    'artifactory',
-    'bunnycdn_errors',
-    '.well-known',
-    'api',
-    'lore',
-    'team',
-    'preview',
-  ];
+  const RESERVED = ['_astro', 'pagefind', 'artifactory', 'bunnycdn_errors', '.well-known', 'api', 'lore', 'preview'];
   const VERSIONS = ['v2', 'v1.3', 'v10'];
   it.each([...RESERVED, ...VERSIONS])('C-003: rejects %s as top', (seg) => {
     const [n, i] = withClaim(`/${seg}/`);
@@ -220,7 +210,7 @@ describe('C-008 pure registry functions', () => {
   });
 
   it.each([
-    ['ocx-sh/website', ['/', '/integrations/', '/apps/', '/install/']],
+    ['ocx-sh/website', ['/', '/integrations/', '/apps/', '/install/', '/team/']],
     ['ocx-sh/ocx', ['/docs/', '/schemas/']],
     ['ocx-sh/none', []],
   ])('C-008: claimsOf(%s)', (repo, paths) => {
