@@ -251,7 +251,7 @@
     display: flex;
     margin: 0;
   }
-  .showcase-index a {
+  .showcase-index__card {
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -262,22 +262,22 @@
     background: var(--ocx-color-bg);
     box-shadow: 0 0 0 var(--ocx-border-width) var(--ocx-color-border);
   }
-  .showcase-index a:hover {
+  .showcase-index__card:hover {
     background: var(--ocx-color-surface-subtle);
   }
-  .showcase-index a:focus-visible {
+  .showcase-index__card:focus-visible {
     position: relative;
     outline: var(--ocx-focus-ring);
     outline-offset: calc(var(--ocx-focus-offset) * -1);
   }
-  .showcase-index a > :nth-child(2) {
+  .showcase-index__card > :nth-child(2) {
     font-size: var(--ocx-text-md);
     font-weight: var(--ocx-font-weight-semibold);
   }
-  .showcase-index a:hover > :nth-child(2) {
+  .showcase-index__card:hover > :nth-child(2) {
     color: var(--ocx-color-accent);
   }
-  .showcase-index a > :nth-child(3) {
+  .showcase-index__card > :nth-child(3) {
     font-size: var(--ocx-text-base);
     color: var(--ocx-color-fg-muted);
   }
