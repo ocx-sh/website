@@ -100,6 +100,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `PlatformIcons.astro` | OS glyphs for `os/arch` platform strings | [data-feedback](references/data-feedback.md) |
 | `DependencyExplorer.astro` | SBOM viewer over a `dependencies.json` | [data-feedback](references/data-feedback.md) |
 | `Terminal.astro` | A recorded asciinema cast in terminal chrome | [content](references/content-navigation.md) |
+| `ShellSession.astro` | Command and output fences fused into one frame | [content](references/content-navigation.md) |
 | `FeatureSection.astro` | Alternating text-and-visual block on landing pages | [content](references/content-navigation.md) |
 | `HubGrid.astro` | One hub's entries from `nav.json` as category groups of cards | [content](references/content-navigation.md) |
 | `ui/Kbd.astro` | Keyboard keys, OS-adaptive (`Mod+K`) | [content](references/content-navigation.md) |

@@ -1,0 +1,25 @@
+---
+title: Languages
+description: Each fence keeps its own language; a PowerShell command with JSON output, a shell command with a log.
+height: 400
+order: 2
+block: true
+---
+
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession>
+```pwsh
+ocx index list node --format json
+```
+```json
+{ "package": "ocx.sh/nodejs/node", "tags": ["24", "22"] }
+```
+```sh
+ocx install node:24
+```
+```log
+INFO  resolved ocx.sh/nodejs/node:24
+INFO  installed 1 package
+```
+</ShellSession>

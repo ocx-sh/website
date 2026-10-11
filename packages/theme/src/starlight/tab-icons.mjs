@@ -1,4 +1,5 @@
-// SSR rewrites of rendered HTML: the <Tabs> panels (Tabs.astro), and for the
+// SSR rewrites of rendered HTML: the <Tabs> panels (Tabs.astro), the <ShellSession>
+// entries (ShellSession.astro) via topLevel, and for the
 // MarkdownContent override a scroll region around each markdown table and
 // stylesheet links hoisted to the top.
 
@@ -18,31 +19,48 @@ const TOKEN =
 const tokenize = (html) => html.match(TOKEN) ?? [];
 
 /**
+ * The depth-0 `<div>` openings `match` accepts in `html` (nested divs belong to their own
+ * component), as indices into its tokens, plus the depth-0 tokens outside every accepted div.
+ * @param {string} html
+ * @param {(tag: string) => boolean} match tested on each depth-0 `<div …>` opening tag
+ * @returns {{ tokens: string[], at: number[], rest: string[] }}
+ */
+export function topLevel(html, match) {
+  const tokens = tokenize(html);
+  /** @type {number[]} */
+  const at = [];
+  /** @type {string[]} */
+  const rest = [];
+  let depth = 0;
+  for (const [i, tag] of tokens.entries()) {
+    if (/^<div[\s>]/i.test(tag)) {
+      if (depth++ === 0) {
+        if (match(tag)) at.push(i);
+        else rest.push(tag);
+      }
+    } else if (/^<\/div\s*>$/i.test(tag)) depth--;
+    else if (depth === 0) rest.push(tag);
+  }
+  return { tokens, at, rest };
+}
+
+/**
  * The top-level `<TabItem>` panels (`<div data-ocx-tab>`) in the rendered `<Tabs>` slot (C-150):
  * their labels and icons, and the slot HTML with each panel's opening tag replaced by `attrs(i)`.
  * @param {string} html
  * @returns {{ items: { label: string, icon?: string }[], html: (attrs: (i: number) => Record<string, string | true>) => string }}
  */
 export function tabPanels(html) {
-  const t = tokenize(html);
-  /** @type {number[]} */
-  const at = [];
-  /** @type {{ label: string, icon?: string }[]} */
-  const items = [];
-  let depth = 0;
-  for (const [i, tag] of t.entries()) {
-    if (/^<div[\s>]/i.test(tag)) {
-      if (depth++ === 0 && /\sdata-ocx-tab[\s=>]/.test(tag)) {
-        at.push(i);
-        const icon = attr(tag, 'data-icon');
-        items.push({ label: attr(tag, 'data-label') ?? '', ...(icon && { icon }) });
-      }
-    } else if (/^<\/div\s*>$/i.test(tag)) depth--;
-  }
+  const { tokens, at } = topLevel(html, (tag) => /\sdata-ocx-tab[\s=>]/.test(tag));
+  const items = at.map((i) => {
+    const tag = /** @type {string} */ (tokens[i]);
+    const icon = attr(tag, 'data-icon');
+    return { label: attr(tag, 'data-label') ?? '', ...(icon && { icon }) };
+  });
   return {
     items,
     html: (attrs) => {
-      const out = [...t];
+      const out = [...tokens];
       at.forEach((i, n) => {
         out[i] = `<div${Object.entries(attrs(n))
           .map(([k, v]) =>

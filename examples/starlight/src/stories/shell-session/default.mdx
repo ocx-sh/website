@@ -1,0 +1,23 @@
+---
+title: Commands and outputs
+description: Two commands, each followed by its output, fused into one frame.
+height: 330
+block: true
+---
+
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession>
+```sh
+ocx lock
+```
+```text
+locked 3 tools in ocx.lock
+```
+```sh
+ocx exec -- node --version
+```
+```text
+v24.9.0
+```
+</ShellSession>

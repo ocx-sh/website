@@ -1,11 +1,11 @@
 # Content and navigation
 
-You loaded this file because a page shows a terminal recording, a landing
+You loaded this file because a page shows a terminal recording or a shell session, a landing
 block, keys, a breadcrumb trail, an in-page table of contents, an icon or the
 logo.
 Import path prefix: `@ocx-sh/theme/components/`.
 
-Contents: [Terminal](#terminal) · [FeatureSection](#featuresection) ·
+Contents: [Terminal](#terminal) · [ShellSession](#shellsession) · [FeatureSection](#featuresection) ·
 [HubGrid](#hubgrid) ·
 [Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Toc](#toc) · [Icon](#icon) ·
 [Logo](#logo) · [Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
@@ -27,6 +27,32 @@ player is created.
 | `collapsed` | Chrome only; its button expands the player (a Zag collapsible) |
 
 Record casts from a real command run; do not hand-write them.
+
+## ShellSession
+
+**`ShellSession.astro`** fuses command and output fences into one frame. Fences
+alternate by position: odd ones are commands, even ones outputs. Each keeps its
+own language (`sh`, `pwsh`, `nu` for commands; `text`, `log`, `json`, `toml` for
+outputs). A command with no output goes in the same fence as the next command.
+
+````mdx
+<ShellSession title="Lock and build">
+```sh
+ocx lock
+```
+```text
+locked 3 tools in ocx.lock
+```
+</ShellSession>
+````
+
+| Prop | Notes |
+|---|---|
+| `title` | Optional title bar, also the group's accessible name |
+
+The slot holds code fences only; the build fails on an empty slot or on any
+other content. A command copies only its own text; an output has no copy
+button. Do not give the fences titles: the session's title replaces theirs.
 
 ## FeatureSection
 

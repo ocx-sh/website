@@ -126,6 +126,7 @@ export default defineConfig({
                 { label: 'Feature sections', link: '/components/feature-section/' },
                 { label: 'Hub grid', link: '/components/hub-grid/' },
                 { label: 'Prose', link: '/components/prose/' },
+                { label: 'ShellSession', link: '/components/shell-session/' },
                 { label: 'Terminal', link: '/components/terminal/' },
               ],
             },

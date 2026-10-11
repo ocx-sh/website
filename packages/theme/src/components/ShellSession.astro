@@ -1,0 +1,96 @@
+---
+// ShellSession: the command and output fences of a shell session as one frame. Fences alternate by
+// position (odd = command, even = output); each keeps its own language. The entries are the
+// rendered Expressive Code blocks of the slot, marked in place; starlight.css fuses and styles them.
+import { topLevel } from '../starlight/tab-icons.mjs';
+
+export interface Props {
+  /** Title bar text; also the name of the group. */
+  title?: string;
+}
+
+const { title } = Astro.props;
+const html = await Astro.slots.render('default');
+const { tokens, at, rest } = topLevel(html, (tag) => /\sclass="(?:[^"]*\s)?expressive-code(?:\s[^"]*)?"/.test(tag));
+// Expressive Code's hoisted stylesheet link and module script may sit beside the blocks.
+const stray = rest.find((tag) => tag.trim() && !/^<(?:link\s|script[\s>])/i.test(tag));
+if (at.length === 0) throw new Error('<ShellSession> needs at least one code fence in its slot.');
+if (stray !== undefined) throw new Error(`<ShellSession> holds only code fences, found ${stray.trim()}.`);
+for (const [n, i] of at.entries()) {
+  const kind = n % 2 ? 'output' : 'command';
+  tokens[i] = (tokens[i] ?? '').replace(
+    '<div',
+    `<div data-ocx-session="${kind}" role="group" aria-label="${kind === 'output' ? 'Output' : 'Command'}"`,
+  );
+}
+---
+
+<div class="ocx-shell-session not-content" role="group" aria-label={title ?? 'Shell session'}>
+  {title && <div class="ocx-shell-session-header">{title}</div>}
+  <Fragment set:html={tokens.join('')} />
+</div>
+
+<style is:global>
+  @layer ocx {
+    /* Its Expressive Code blocks fused into one frame. EC's own border and radius go (zeroed through its
+       variables, so no rule needs to out-specify EC's); the session draws one border, a hairline between
+       entries and a title bar that replaces the frames' headers. A command wears the code background and an
+       accent rail with EC's copy button; an output is recessed, its plain text muted, and has no copy
+       button. Component CSS rather than starlight.css: story pages and other hosts load no Starlight sheet. */
+    .ocx-shell-session {
+      overflow: hidden;
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+    }
+    .ocx-shell-session-header {
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      block-size: calc(var(--ocx-control-md) + 2 * var(--ocx-space-2));
+      padding-inline: var(--ocx-space-4);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      color: var(--ocx-color-fg);
+      background: var(--ocx-color-surface-subtle);
+      border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .ocx-shell-session > .expressive-code {
+      --ec-brdWd: 0px;
+      --ec-brdRad: 0px;
+      margin: 0;
+      border-inline-start: var(--ocx-border-width-strong) solid transparent;
+    }
+    .ocx-shell-session > .expressive-code + .expressive-code {
+      border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+    }
+    .ocx-shell-session .frame .header {
+      display: none;
+    }
+    .ocx-shell-session > [data-ocx-session='command'] {
+      border-inline-start-color: var(--ocx-color-accent);
+    }
+    .ocx-shell-session > [data-ocx-session='output'] .frame {
+      --code-background: color-mix(in srgb, var(--ocx-color-code-bg) 50%, var(--ocx-color-surface-subtle));
+    }
+    /* Highlighted tokens keep their colour; only plain text mutes: the code-fg token, and the grey EC falls back
+       to for a language it does not highlight (`text`, `log`), which is unreadable on a light surface. */
+    .ocx-shell-session
+      > [data-ocx-session='output']
+      .code
+      span:is(:not([style*='--ocx-color-code-']), [style*='--ocx-color-code-fg)']) {
+      color: var(--ocx-color-fg-muted);
+    }
+    .ocx-shell-session > [data-ocx-session='output'] .copy {
+      display: none;
+    }
+    @media (forced-colors: active) {
+      .ocx-shell-session-header {
+        border-block-end-color: CanvasText;
+      }
+      .ocx-shell-session > .expressive-code + .expressive-code {
+        border-block-start-color: CanvasText;
+      }
+    }
+  }
+</style>
