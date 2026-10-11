@@ -1,6 +1,6 @@
 ---
 title: ShellSession
-description: Command and output fences fused into one frame, each highlighted in its own language.
+description: Command and output fences fused into one terminal surface; commands get a $ prompt, outputs a > in the comment colour.
 ---
 
 import PropsTable from '../../../components/showcase/PropsTable.astro';
@@ -9,8 +9,9 @@ import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
 
 Fences alternate by position: the first, third and so on are commands, the second, fourth and so on are outputs.
 A command with no output goes in the same fence as the next command.
-A command keeps the code background and its copy button, which copies only the command.
-An output is recessed and muted, and has no copy button.
+The session reads like a shell: every command line starts with an accent `$`, every output line with a `>` and the whole line is in the comment colour, whatever the output's language.
+The markers are drawn, not text: they are neither selected nor copied, and a `\` continuation line gets a `$` too.
+A command has a copy button, which copies only the command; an output has none.
 The slot holds code fences and nothing else; the build fails on anything more.
 
 <ShellSession title="Lock and build">
