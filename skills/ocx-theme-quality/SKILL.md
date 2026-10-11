@@ -57,7 +57,8 @@ page.
   `import()` on first hover, focus or touch. Never add a top-level import of
   a large library to a page script.
 - **Reserved boxes.** Every image has `width` and `height` or an
-  `aspect-ratio`; a `Terminal` has `cols` and `rows`; late content sits in a
+  `aspect-ratio`; a `Terminal` plays a cast under `public/` (its header sizes
+  the box) or has `cols` and `rows`; late content sits in a
   `Skeleton`. The page must look identical with images blocked.
 - **Inline icons, never late ones.** UI icons and the logo are inline SVG
   (see `ocx-theme-icons`), never `<img>` or CSS `url()`.

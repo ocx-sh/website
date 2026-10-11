@@ -11,8 +11,10 @@ export interface Props {
   variant?: 'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal';
   /** Bars to reserve for `text`, `code` and `terminal` (each one line-height tall). */
   lines?: number;
-  /** Rows of a `list` or `table` (a table's head row comes on top). */
+  /** Rows of a `list` or `table` (a table's head row comes on top); a `terminal`'s rows, with `cols`. */
   rows?: number;
+  /** A `terminal`'s columns: with `rows`, the size of the Terminal it stands in for, so it reserves that Terminal's player box. */
+  cols?: number;
   /** Columns of a `table`. */
   columns?: number;
   /** Diameter of a `circle`, on Avatar's scale. */
@@ -28,6 +30,7 @@ const {
   variant = 'text',
   lines = 3,
   rows = 3,
+  cols,
   columns = 3,
   size = 'sm',
   ratio = '16 / 9',
@@ -41,7 +44,7 @@ const count = (n: number) => Array.from({ length: n });
 const style = {
   text: `--_lines: ${lines}`,
   code: `--_lines: ${lines}`,
-  terminal: `--_lines: ${lines}`,
+  terminal: cols ? `--_lines: ${lines}; --_cols: ${cols}; --_rows: ${rows}` : `--_lines: ${lines}`,
   list: `--_rows: ${rows}`,
   table: `--_rows: ${rows}; --_cols: ${columns}`,
   rect: `--_ratio: ${ratio}`,
@@ -207,6 +210,17 @@ const style = {
       background: var(--ocx-color-code-bg);
       border: var(--ocx-border-width) solid var(--ocx-color-border);
       border-radius: var(--ocx-radius-lg);
+    }
+    /* A sized Terminal (cols and rows) reserves its player from the container width: the same calc as
+       Terminal.astro's player reserve, so change both together. Border-box: the body's padding sits inside. */
+    .ocx-ui-skeleton[data-variant='terminal'][style*='--_cols'] {
+      container-type: inline-size;
+    }
+    .ocx-ui-skeleton[data-variant='terminal'][style*='--_cols'] > .ocx-ui-skeleton__body {
+      box-sizing: border-box;
+      min-block-size: calc(
+        100cqi * (var(--_rows) * 20 + 22) / (var(--_cols) * 9 + 22) + 32px + var(--ocx-border-width)
+      );
     }
     .ocx-ui-skeleton__chrome {
       display: flex;

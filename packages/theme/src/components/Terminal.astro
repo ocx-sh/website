@@ -5,7 +5,9 @@
 // (near the viewport when autoPlay), a collapsed one on first expand.
 // A collapsed terminal is a Zag collapsible (C-142): chrome = trigger, player area = content.
 import { base } from 'astro:config/client';
+import { publicDir } from 'astro:config/server';
 import { withBase } from './base-url.mjs';
+import { publicCastSize } from './cast-size.mjs';
 import { connect, machine } from './collapsible.zag.mjs';
 import { nextTerminalId } from './terminal.mjs';
 import Button from './ui/Button.astro';
@@ -17,9 +19,9 @@ export interface Props {
   src: string;
   /** Title shown centred in the chrome. */
   title?: string;
-  /** Terminal width in columns. */
+  /** Terminal width in columns. Default: the cast header's, when `src` is a file under `public/`. */
   cols?: number;
-  /** Terminal height in rows; with `cols` (and fit 'width') reserves the player height before it loads. */
+  /** Terminal height in rows, defaulted like `cols`; with `cols` (and fit 'width') reserves the player height before it loads. */
   rows?: number;
   /** Start playback on load. Default false (DOC-EX-15). */
   autoPlay?: boolean;
@@ -38,8 +40,8 @@ export interface Props {
 const {
   src,
   title,
-  cols,
-  rows,
+  cols: colsProp,
+  rows: rowsProp,
   autoPlay = false,
   speed = 1,
   idleTimeLimit = 2,
@@ -47,9 +49,13 @@ const {
   fit = 'width',
   collapsed = false,
 } = Astro.props;
+// Explicit props win; otherwise the cast's own size, so the box has its final height before the player loads.
+const size = colsProp && rowsProp ? undefined : publicCastSize(src, publicDir);
+const cols = colsProp ?? size?.cols;
+const rows = rowsProp ?? size?.rows;
 const id = nextTerminalId();
 const options = { cols, rows, autoPlay, speed, idleTimeLimit, loop, fit: fit === 'none' ? false : fit };
-// ponytail: reserve only when both sizes are given; every live ocx usage is collapsed (no load-time shift).
+// ponytail: reserve only when both sizes are known (props or the cast header).
 const reserve = fit === 'width' && cols && rows ? `--_cols: ${cols}; --_rows: ${rows}` : undefined;
 const startLabel = `Play ${title ?? 'terminal recording'}`;
 const Chrome = collapsed ? 'button' : 'div';
@@ -271,7 +277,8 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
     /* Reserve the fit-width player height (no layout shift): asciinema-player lays the terminal out at
      * 15px — char 9px wide (0.6em mono advance), rows 20px high, 2 × 0.75em borders ≈ 22px — scales
      * that box to the container width, then adds its 32px control bar. Numbers are asciinema-player 3.15.1's,
-     * not ours; re-measure on upgrade. Guarded by e2e "CLS is 0 on load and while the open player loads". */
+     * not ours; re-measure on upgrade. Guarded by e2e "CLS is 0 on load and while the open player loads".
+     * Skeleton's sized `terminal` variant repeats this calc; change both together. */
     .ocx-terminal__player[style*='--_rows'] {
       min-height: calc(100cqi * (var(--_rows) * 20 + 22) / (var(--_cols) * 9 + 22) + 32px);
     }

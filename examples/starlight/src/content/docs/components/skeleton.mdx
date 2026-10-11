@@ -23,7 +23,8 @@ and `animated={false}` turns it off.
   rows={[
     { name: 'variant', type: "'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal'", default: "'text'", description: 'Which placeholder: a primitive, or a composite that reserves the real component’s box.' },
     { name: 'lines', type: 'number', default: '3', description: 'Bars of a text, code or terminal skeleton, each one line-height tall.' },
-    { name: 'rows', type: 'number', default: '3', description: 'Rows of a list or table (a table’s head row comes on top).' },
+    { name: 'rows', type: 'number', default: '3', description: 'Rows of a list or table (a table’s head row comes on top); a terminal’s rows, with cols.' },
+    { name: 'cols', type: 'number', description: 'Columns of a terminal: with rows, the size of the Terminal it stands in for, so it reserves that player box.' },
     { name: 'columns', type: 'number', default: '3', description: 'Columns of a table.' },
     { name: 'size', type: "'sm' | 'md' | 'lg'", default: "'sm'", description: 'Diameter of a circle, on the Avatar scale.' },
     { name: 'ratio', type: 'string', default: "'16 / 9'", description: 'Aspect ratio of a rect, as `width / height`; anything else throws.' },

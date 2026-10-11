@@ -130,6 +130,20 @@ describe('WP13.1 Terminal markup', () => {
     expect(player?.getAttribute('style') ?? '').toMatch(/--_cols:\s*100\b/);
   });
 
+  it('reserves its height from the cast header when cols and rows are not given', async () => {
+    // examples/starlight/public holds this fixture (asciicast v2, 100x8); vitest runs on the example's config.
+    const { root } = await render({ src: '/casts/fixture/getting-started-install.cast' });
+    const style = root.querySelector('.ocx-terminal__player')?.getAttribute('style') ?? '';
+    expect(style).toMatch(/--_cols:\s*100\b/);
+    expect(style).toMatch(/--_rows:\s*8\b/);
+    expect(options(root)).toMatchObject({ cols: 100, rows: 8 });
+    // Explicit props win; a cast that is not under public/ reserves nothing (today's fallback min-height).
+    const explicit = await render({ src: '/casts/fixture/getting-started-install.cast', cols: 80, rows: 24 });
+    expect(explicit.root.querySelector('.ocx-terminal__player')?.getAttribute('style')).toMatch(/--_rows:\s*24\b/);
+    const missing = await render({ src: '/casts/x.cast' });
+    expect(missing.root.querySelector('.ocx-terminal__player')?.getAttribute('style') ?? '').not.toMatch(/--_rows/);
+  });
+
   it('renders our start overlay in SSR: a bare button named "Play <title>" with the play icon', async () => {
     const { root } = await render({ src: '/casts/x.cast', title: 'Installing a package', collapsed: true });
     const btn = root.querySelector('.ocx-terminal__start button.ocx-terminal__start-button');
