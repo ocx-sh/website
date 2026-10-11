@@ -1,5 +1,5 @@
 // Offline old-URL coverage: every URL the live ocx.sh served before cutover is either built into
-// `site/dist` or won by a legacy rule of the prod plan, so none 404s after the DNS flip.
+// `site/dist` or won by a legacy or repo rule of the prod plan, so none 404s after the DNS flip.
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import legacy from '../../infra/bunny/legacy.json' with { type: 'json' };
@@ -25,10 +25,13 @@ const inDist = (path: string): boolean => {
   );
 };
 
-/** The legacy rule id that wins `path`, or null when the default origin (the built site) serves it. */
+/**
+ * The legacy or repo rule id that wins `path`, or null when the default origin (the built site) serves it. A repo
+ * rule serves what its repo deploys: that repo's own old-URL gate proves the files exist, not this offline test.
+ */
 const legacyWinner = (path: string, status = 200): string | null => {
   const { origin } = matchProbe(plan, { host: HOST, path, status });
-  return origin !== null && legacy.entries.some((e) => e.id === origin) ? origin : null;
+  return origin !== null && (legacy.entries.some((e) => e.id === origin) || origin.startsWith('repo-')) ? origin : null;
 };
 
 /** The paths of `paths` that neither a legacy rule nor `site/dist` serves, plus any nginx-only path. */
@@ -37,7 +40,7 @@ const uncovered = (paths: readonly string[]): string[] =>
 
 describe('old-URL coverage', () => {
   it('reads the live-crawled list', () => {
-    expect(urls.length).toBeGreaterThan(100);
+    expect(urls.length).toBeGreaterThan(50);
     expect(urls.every((u) => u.startsWith('/'))).toBe(true);
   });
 

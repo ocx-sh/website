@@ -82,10 +82,14 @@ describe('first-match outcomes the table must keep', () => {
     expect(at('/catalog/x/').origin).toBe('legacy-index');
   });
 
-  it('legacy directories and files proxy to the old site', () => {
-    expect(at('/docs/v2/').origin).toBe('legacy-ocx-dirs');
-    for (const path of ['/docs/getting-started', '/assets/x.js']) expect(at(path).origin, path).toBe('legacy-ocx-dirs');
-    expect(at('/logo.svg').origin).toBe('legacy-ocx-files');
+  it('/docs/ and /schemas/ are the ocx repo storage zone, bare and nested, on every host', () => {
+    for (const host of ['ocx.sh', 'next.ocx.sh', 'sh-ocx.b-cdn.net'])
+      for (const path of ['/docs', '/docs/v2/', '/docs/getting-started', '/schemas', '/schemas/config/v1.json'])
+        expect(at(path, 200, 'prod', host).origin, `${host}${path}`).toBe('repo-ocx');
+  });
+
+  it('the retired VitePress paths fall to the default origin, no longer proxied to pages.dev', () => {
+    for (const path of ['/assets/x.js', '/logo.svg']) expect(at(path).origin, path).toBeNull();
   });
 
   it('a deep link under a redirect claim wins that redirect', () => {

@@ -214,18 +214,23 @@ describe('upsert before delete, never unrouted', () => {
     expect(kinds.lastIndexOf('POST')).toBeLessThan(kinds.indexOf('DELETE'));
   });
 
-  /** `/icons/` proxied by `legacy-ocx-files` (ranks first) before, by `legacy-ocx-dirs` after: both rules exist. */
+  /** `/icons/` proxied by `legacy-wide` (ranks first, longer path) before, by `legacy-narrow` after: both rules exist. */
+  const proxy = (id: string, paths: string[]): Legacy['entries'][number] => ({
+    id,
+    repo: `ocx-sh/${id}`,
+    mode: 'proxy',
+    origin: 'https://ocx-website.pages.dev',
+    paths,
+  });
   const movedDirMoves = () => {
-    const withMoved = (to: 'legacy-ocx-files' | 'legacy-ocx-dirs'): Legacy => ({
-      entries: committed.entries.map((e) => {
-        if (e.id === 'legacy-ocx-files' || e.id === 'legacy-ocx-dirs') {
-          const rest = e.paths.filter((p) => p !== '/icons/');
-          return { ...e, paths: e.id === to ? [...rest, '/icons/'] : rest };
-        }
-        return e;
-      }),
+    const withMoved = (to: 'legacy-wide' | 'legacy-narrow'): Legacy => ({
+      entries: [
+        ...committed.entries,
+        proxy('legacy-wide', to === 'legacy-wide' ? ['/apple-touch-icon.png', '/icons/'] : ['/apple-touch-icon.png']),
+        proxy('legacy-narrow', to === 'legacy-narrow' ? ['/hashmap/', '/icons/'] : ['/hashmap/']),
+      ],
     });
-    return { from: withMoved('legacy-ocx-files'), to: withMoved('legacy-ocx-dirs') };
+    return { from: withMoved('legacy-wide'), to: withMoved('legacy-narrow') };
   };
   const MOVED = [probe('/icons/x')];
 
@@ -241,27 +246,21 @@ describe('upsert before delete, never unrouted', () => {
     expect(code).toBe(0);
     expect(violations).toEqual([]);
     const order = upserted(api);
-    expect(order.indexOf('ocx:legacy-ocx-dirs')).toBeLessThan(order.indexOf('ocx:legacy-ocx-files'));
+    expect(order.indexOf('ocx:legacy-narrow')).toBeLessThan(order.indexOf('ocx:legacy-wide'));
   });
 
   it('a path moving from one rule to a new one: the new rule is created before the old one narrows', async () => {
-    const icons = {
-      id: 'legacy-icons',
-      repo: 'ocx-sh/ocx',
-      mode: 'proxy',
-      origin: 'https://ocx-website.pages.dev',
-      paths: ['/icons/'],
-    };
+    const { from } = movedDirMoves();
     const next: Legacy = {
       entries: [
-        ...committed.entries.map((e) =>
-          e.id === 'legacy-ocx-dirs' ? { ...e, paths: e.paths.filter((p) => p !== '/icons/') } : e,
+        ...from.entries.map((e) =>
+          e.id === 'legacy-wide' ? { ...e, paths: e.paths.filter((p) => p !== '/icons/') } : e,
         ),
-        icons,
+        proxy('legacy-icons', ['/icons/']),
       ],
     };
     const violations: string[] = [];
-    const before = planned('dev');
+    const before = planned('dev', from);
     const { code, api } = await run({
       rules: before,
       legacy: next,
@@ -270,7 +269,7 @@ describe('upsert before delete, never unrouted', () => {
     expect(code).toBe(0);
     expect(violations).toEqual([]);
     const order = upserted(api);
-    expect(order.indexOf('ocx:legacy-icons')).toBeLessThan(order.indexOf('ocx:legacy-ocx-dirs'));
+    expect(order.indexOf('ocx:legacy-icons')).toBeLessThan(order.indexOf('ocx:legacy-wide'));
   });
 
   it('the invariant goes red on a delete-first sequence (the detector can fail)', async () => {
@@ -296,21 +295,22 @@ describe('upsert before delete, never unrouted', () => {
     ];
     expect(evaluationOrder(shuffled).map((r) => r.Guid)).toEqual(['a', 'b', 'z']);
     const hit = (rules: EdgeRule[]) => matchProbe(edgeRules(rules), probe('/icons/x')).origin;
-    const [dirs] = planned('dev').filter((r) => r.Description === 'ocx:legacy-ocx-dirs');
-    const files = planned('dev').find((r) => r.Description === 'ocx:legacy-ocx-files')!;
-    const claimsMoved = { ...files, Triggers: dirs!.Triggers, Description: 'ocx:legacy-ocx-files' };
+    const live = planned('dev', movedDirMoves().to);
+    const wide = live.find((r) => r.Description === 'ocx:legacy-wide')!;
+    const narrow = live.find((r) => r.Description === 'ocx:legacy-narrow')!;
+    const claimsMoved = { ...wide, Triggers: narrow.Triggers, Description: 'ocx:legacy-wide' };
     expect(
       hit([
-        { ...dirs!, OrderIndex: 5 },
+        { ...narrow, OrderIndex: 5 },
         { ...claimsMoved, OrderIndex: 2 },
       ]),
-    ).toBe('legacy-ocx-files');
+    ).toBe('legacy-wide');
     expect(
       hit([
-        { ...dirs!, OrderIndex: 5 },
+        { ...narrow, OrderIndex: 5 },
         { ...claimsMoved, OrderIndex: 2, Enabled: false },
       ]),
-    ).toBe('legacy-ocx-dirs');
+    ).toBe('legacy-narrow');
   });
 
   it('deletes a stale ocx:* rule the plan no longer names', async () => {

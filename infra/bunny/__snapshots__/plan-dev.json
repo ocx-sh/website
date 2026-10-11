@@ -132,36 +132,6 @@
       ]
     },
     {
-      "ActionType": 2,
-      "ActionParameter1": "https://ocx-website.pages.dev",
-      "ActionParameter2": "",
-      "TriggerMatchingType": 0,
-      "Enabled": true,
-      "Description": "ocx:legacy-ocx-files",
-      "Triggers": [
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://sh-ocx-dev.b-cdn.net/logo.svg",
-            "https://sh-ocx-dev.b-cdn.net/favicon.ico",
-            "https://sh-ocx-dev.b-cdn.net/apple-touch-icon.png",
-            "https://sh-ocx-dev.b-cdn.net/site.webmanifest",
-            "https://sh-ocx-dev.b-cdn.net/vp-icons.css"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://sh-ocx-dev.b-cdn.net/hashmap.json"
-          ]
-        }
-      ]
-    },
-    {
       "ActionType": 17,
       "ActionParameter1": "",
       "ActionParameter2": "sh-ocx-ocx-sdk-python",
@@ -258,31 +228,22 @@
       ]
     },
     {
-      "ActionType": 2,
-      "ActionParameter1": "https://ocx-website.pages.dev",
-      "ActionParameter2": "",
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-ocx",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:legacy-ocx-dirs",
+      "Description": "ocx:repo-ocx",
       "Triggers": [
         {
           "Type": 0,
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/docs",
             "https://sh-ocx-dev.b-cdn.net/docs/*",
-            "https://sh-ocx-dev.b-cdn.net/schemas/*",
-            "https://sh-ocx-dev.b-cdn.net/assets/*",
-            "https://sh-ocx-dev.b-cdn.net/icons/*",
-            "https://sh-ocx-dev.b-cdn.net/casts/*"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://sh-ocx-dev.b-cdn.net/licensed/*"
+            "https://sh-ocx-dev.b-cdn.net/schemas",
+            "https://sh-ocx-dev.b-cdn.net/schemas/*"
           ]
         }
       ]

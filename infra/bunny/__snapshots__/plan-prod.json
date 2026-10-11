@@ -178,62 +178,6 @@
       ]
     },
     {
-      "ActionType": 2,
-      "ActionParameter1": "https://ocx-website.pages.dev",
-      "ActionParameter2": "",
-      "TriggerMatchingType": 0,
-      "Enabled": true,
-      "Description": "ocx:legacy-ocx-files",
-      "Triggers": [
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://ocx.sh/logo.svg",
-            "https://ocx.sh/favicon.ico",
-            "https://ocx.sh/apple-touch-icon.png",
-            "https://ocx.sh/site.webmanifest",
-            "https://ocx.sh/vp-icons.css"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://ocx.sh/hashmap.json",
-            "https://next.ocx.sh/logo.svg",
-            "https://next.ocx.sh/favicon.ico",
-            "https://next.ocx.sh/apple-touch-icon.png",
-            "https://next.ocx.sh/site.webmanifest"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://next.ocx.sh/vp-icons.css",
-            "https://next.ocx.sh/hashmap.json",
-            "https://sh-ocx.b-cdn.net/logo.svg",
-            "https://sh-ocx.b-cdn.net/favicon.ico",
-            "https://sh-ocx.b-cdn.net/apple-touch-icon.png"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://sh-ocx.b-cdn.net/site.webmanifest",
-            "https://sh-ocx.b-cdn.net/vp-icons.css",
-            "https://sh-ocx.b-cdn.net/hashmap.json"
-          ]
-        }
-      ]
-    },
-    {
       "ActionType": 17,
       "ActionParameter1": "",
       "ActionParameter2": "sh-ocx-ocx-sdk-python",
@@ -387,23 +331,23 @@
       ]
     },
     {
-      "ActionType": 2,
-      "ActionParameter1": "https://ocx-website.pages.dev",
-      "ActionParameter2": "",
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-ocx",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:legacy-ocx-dirs",
+      "Description": "ocx:repo-ocx",
       "Triggers": [
         {
           "Type": 0,
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
+            "https://ocx.sh/docs",
             "https://ocx.sh/docs/*",
+            "https://ocx.sh/schemas",
             "https://ocx.sh/schemas/*",
-            "https://ocx.sh/assets/*",
-            "https://ocx.sh/icons/*",
-            "https://ocx.sh/casts/*"
+            "https://next.ocx.sh/docs"
           ]
         },
         {
@@ -411,11 +355,11 @@
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
-            "https://ocx.sh/licensed/*",
             "https://next.ocx.sh/docs/*",
+            "https://next.ocx.sh/schemas",
             "https://next.ocx.sh/schemas/*",
-            "https://next.ocx.sh/assets/*",
-            "https://next.ocx.sh/icons/*"
+            "https://sh-ocx.b-cdn.net/docs",
+            "https://sh-ocx.b-cdn.net/docs/*"
           ]
         },
         {
@@ -423,21 +367,8 @@
           "PatternMatchingType": 0,
           "Parameter1": "",
           "PatternMatches": [
-            "https://next.ocx.sh/casts/*",
-            "https://next.ocx.sh/licensed/*",
-            "https://sh-ocx.b-cdn.net/docs/*",
-            "https://sh-ocx.b-cdn.net/schemas/*",
-            "https://sh-ocx.b-cdn.net/assets/*"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://sh-ocx.b-cdn.net/icons/*",
-            "https://sh-ocx.b-cdn.net/casts/*",
-            "https://sh-ocx.b-cdn.net/licensed/*"
+            "https://sh-ocx.b-cdn.net/schemas",
+            "https://sh-ocx.b-cdn.net/schemas/*"
           ]
         }
       ]
