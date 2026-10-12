@@ -41,7 +41,7 @@
     { "path": "/", "repo": "ocx-sh/website", "search": true },
     { "path": "/integrations/", "repo": "ocx-sh/website", "search": false },
     { "path": "/apps/", "repo": "ocx-sh/website", "search": false },
-    { "path": "/install/", "repo": "ocx-sh/www-setup", "search": false },
+    { "path": "/install/", "repo": "ocx-sh/www-setup", "search": true },
     { "path": "/team/", "repo": "ocx-sh/website", "search": false },
     { "path": "/docs/", "repo": "ocx-sh/ocx", "search": true },
     { "path": "/schemas/", "repo": "ocx-sh/ocx", "search": false },
