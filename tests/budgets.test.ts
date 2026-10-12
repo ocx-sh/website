@@ -20,7 +20,7 @@ describe('C-110 budgets module', () => {
         preJsGz: up(9_466, KB),
         postJsGz: up(56_806, KB), // Pagefind excluded: PAGEFIND_GZ_MAX (Spec Delta MODIFIED C-110)
         totalBytes: up(130_620, KB),
-        domElements: up(609, 100),
+        domElements: 900, // up(609, 100) = 800 plus one 100 step: merged sections add 3 nodes each (budgets.mjs)
         heapMB: up(3.45, 1),
       },
       showcase: {

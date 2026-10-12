@@ -49,7 +49,9 @@ export const BUDGETS = {
     // MODIFIED C-110, amended): Pagefind has its own cap, PAGEFIND_GZ_MAX.
     postJsGz: 64 * KB,
     totalBytes: 147 * KB,
-    domElements: 800,
+    // 800 until /install/ joined the merged search: each merged section adds one Pagefind filter value
+    // (3 nodes), and /docs/probe/long/ measured 799 with 6 sections, 802 with 7. 900 leaves ~3 sections.
+    domElements: 900,
     heapMB: 4,
   },
   showcase: {
