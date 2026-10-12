@@ -131,6 +131,14 @@ test('ShellSession: every command has a visible copy button inside its own entry
       await button.click();
       await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(code?.replace(/\u007f/g, '\n'));
       expect(code).not.toMatch(/^[$>]/);
+      // The theme's copied pill, on stories too, sits on the button and stays inside the entry.
+      const pill = command.locator('.copy .feedback.show');
+      expect(await pill.evaluate((el) => getComputedStyle(el, '::before').content)).toContain('copied');
+      expect(await pill.boundingBox()).toMatchObject({ y: box?.y, height: box?.height });
+      const first = code?.split('\u007f').find((l) => l.trim()) ?? '';
+      await expect(
+        page.locator('[data-zag-root="toast"] [data-part="title"]', { hasText: `Copied ${first}` }),
+      ).toBeVisible();
     }
   }
   await page.goto(story('default'));
