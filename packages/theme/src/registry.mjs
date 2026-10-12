@@ -219,7 +219,7 @@ export function zoneName(repo) {
 
 /**
  * Every `search: true` claim except `ownPath`, in `claims` order, labelled by the
- * entry, section or hub linking to it, else the brand wordmark.
+ * entry, section, hub or action linking to it, else the brand wordmark.
  * @param {Nav} nav
  * @param {string} ownPath claim path of the calling site
  * @returns {MergeTarget[]}
@@ -230,6 +230,7 @@ export function mergeTargets(nav, ownPath) {
     nav.entries.find((e) => e.href === path)?.label ??
     nav.sections.find((s) => 'href' in s && s.href === path)?.label ??
     nav.hubs.find((h) => h.href === path)?.label ??
+    nav.actions.find((a) => a.href === path)?.label ??
     nav.brand.wordmark;
   return nav.claims.filter((c) => c.search && c.path !== ownPath).map((c) => ({ path: c.path, label: label(c.path) }));
 }
