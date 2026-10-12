@@ -73,9 +73,10 @@ for (const [n, i] of at.entries()) {
     .ocx-shell-session > .expressive-code:last-child pre {
       padding-block-end: var(--ocx-space-5);
     }
-    /* A command's copy button is one code line tall and flush with the first line (the doubled class outranks
-       starlight.css's spacing on an untitled terminal), so it never reaches the next entry. */
-    .ocx-shell-session > [data-ocx-session='command'] .frame.frame {
+    /* A command's copy button is one code line tall and flush with the first line, so it never reaches the next
+       entry. The tripled class outranks starlight.css's (0,4,0) untitled-terminal spacing: a tie loses wherever
+       starlight.css loads later, as on story pages. */
+    .ocx-shell-session > [data-ocx-session='command'] .frame.frame.frame {
       --button-spacing: 0px;
       --ocx-shell-line: calc(var(--ec-codeFontSize) * var(--ec-codeLineHt));
     }
@@ -87,6 +88,10 @@ for (const [n, i] of at.entries()) {
       inline-size: var(--ocx-shell-line);
       block-size: var(--ocx-shell-line);
       opacity: 1;
+    }
+    /* The copied pill matches: at its default control height it overlaps the next entry. */
+    .ocx-shell-session > [data-ocx-session='command'] .copy .feedback {
+      block-size: var(--ocx-shell-line);
     }
     .ocx-shell-session > [data-ocx-session='command'] .copy button::after {
       inline-size: var(--ocx-icon-md);
