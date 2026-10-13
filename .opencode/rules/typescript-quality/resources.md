@@ -25,7 +25,7 @@ Enumerate once, then read each options object. All four rules below bind every
 hit:
 
 ```bash
-rg -n --glob '*.ts' --glob '*.tsx' -e 'execFile' -e 'execSync' -e '\bexec\(' -e '\bspawn' src
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | xargs -0 -r grep -H -n -E -e execFile -e execSync -e '(^|[^[:alnum:]_])exec\(' -e '(^|[^[:alnum:]_])spawn' --
 ```
 
 Node's defaults are permissive, not safe: `timeout` is `0` (disabled) and
@@ -36,9 +36,25 @@ safe default; it is opting into "runs until the OS kills it."
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
 | TS-RES-01 | Set an explicit `timeout` **and** `maxBuffer` on every call that runs a real external command; size `maxBuffer` to the payload, or state in a comment why the output is provably small. | A missing `timeout` hangs the caller with no recovery; a breached 1 MiB `maxBuffer` silently truncates and kills. The bound reaches the direct child PID only — TS-RES-15 covers the rest. | For each hit of the enumeration above, the options object contains both keys. A call passing no options object at all is the finding. | MUST |
-| TS-RES-02 | Branch on `(error as NodeJS.ErrnoException).code === 'ENOENT'` before reporting a generic failure from a child-process call. | A spawn failure and a non-zero exit are structurally different events — one never ran. Collapsing them turns "the tool is not installed" into "the tool errored," and the user is told to debug the wrong thing. | For each file from the enumeration, `rg --files-without-match --glob '*.ts' -e 'ENOENT' -e 'isNotFound' <file>` — a printed path is the finding, silence is the pass. | MUST |
-| TS-RES-03 | Attach `child.stdin.on('error', () => {})` **before** the first write to a child's stdin. | A child that exits before draining stdin turns the write into an uncaught `EPIPE`. [nodejs/node#40085](https://github.com/nodejs/node/issues/40085) is closed as *not planned*, so the race is permanent, not a bug awaiting a patch. | `rg -n --glob '*.ts' -e '\.stdin' src` — every file with a `.stdin.end(` or `.stdin.write(` needs the listener attached on the same object above it. A call site that never writes to stdin is out of scope. | MUST |
-| TS-RES-17 | Never pass `killDescendants`, `forceKillAfterDelay`, `cancelSignal`, or `gracefulCancel` to a bare `child_process` `exec`/`execFile`/`spawn`. | These are `execa`-only option names. TypeScript strips the excess property and Node ignores the unknown key — no error, no warning, and the bound the author believes they added does not exist. The code reads as hardened and is not. | `rg -n --glob '*.ts' -e 'killDescendants' -e 'forceKillAfterDelay' -e 'cancelSignal' -e 'gracefulCancel' src` — a hit in a file that does not import from `execa` is the finding. Empty output is the pass. | MUST |
+| TS-RES-02 | Branch on `(error as NodeJS.ErrnoException).code === 'ENOENT'` before reporting a generic failure from a child-process call. | A spawn failure and a non-zero exit are structurally different events — one never ran. Collapsing them turns "the tool is not installed" into "the tool errored," and the user is told to debug the wrong thing. | For each file from the enumeration, see block TS-RES-02 — a printed path is the finding, silence is the pass. | MUST |
+| TS-RES-03 | Attach `child.stdin.on('error', () => {})` **before** the first write to a child's stdin. | A child that exits before draining stdin turns the write into an uncaught `EPIPE`. [nodejs/node#40085](https://github.com/nodejs/node/issues/40085) is closed as *not planned*, so the race is permanent, not a bug awaiting a patch. | see block TS-RES-03 — every file with a `.stdin.end(` or `.stdin.write(` needs the listener attached on the same object above it. A call site that never writes to stdin is out of scope. | MUST |
+| TS-RES-17 | Never pass `killDescendants`, `forceKillAfterDelay`, `cancelSignal`, or `gracefulCancel` to a bare `child_process` `exec`/`execFile`/`spawn`. | These are `execa`-only option names. TypeScript strips the excess property and Node ignores the unknown key — no error, no warning, and the bound the author believes they added does not exist. The code reads as hardened and is not. | see block TS-RES-17 — a hit in a file that does not import from `execa` is the finding. Empty output is the pass. | MUST |
+
+```sh
+# TS-RES-02
+FILE=src/x.ts    # the file to search
+grep -L -E -e ENOENT -e isNotFound -- "$FILE"
+```
+
+```sh
+# TS-RES-03
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '\.stdin' --
+```
+
+```sh
+# TS-RES-17
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e killDescendants -e forceKillAfterDelay -e cancelSignal -e gracefulCancel --
+```
 
 ## Terminating a Child That Can Fork
 
@@ -67,10 +83,29 @@ already owns tree cleanup; hardening those is scope creep.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-RES-15 | On an unattended call that spawns `git`, a package manager (`npm`/`pnpm`/`yarn`/`bun`), or anything under `shell: true`, pair the `timeout` with a group kill — `detached` at spawn plus your own timer calling `process.kill(-pid, …)` or `taskkill` — never the built-in `timeout` option alone. | The built-in kill reaches one PID. `git` over `ssh://` spawns `ssh`, which spawns `GIT_ASKPASS`; `npm` spawns lifecycle scripts. The hang stops and the descendant keeps the port, the lock and the credential prompt. `Bun.spawn` has the identical single-PID limit — not an escape hatch. | From the enumeration above, classify each site by the table. For each qualifying site: the options object sets `detached`, and the timeout handler calls a platform-branching kill helper, not `child.kill()`. `rg -n --glob '*.ts' -e 'shell:\s*true' src` — every hit is in scope unconditionally. | MUST |
-| TS-RES-16 | Write `detached: process.platform !== "win32"`, never a bare `detached: true`; make the Windows branch `taskkill /pid <pid> /t /f`; and never add `.unref()` to a child the caller still awaits. | On Windows `detached` means "own console window, outlives the parent" — an unrelated behaviour that pops a visible window on every run, with no process group Node can address by PID sign. `.unref()` is orthogonal to `detached` and silently changes whether the parent waits at all. | `rg -n --glob '*.ts' -e 'detached' src` — every hit is a platform expression, not `true`. `rg -n --glob '*.ts' -e 'process\.kill\(-' src` — every hit sits inside a non-`win32` branch. `rg -n --glob '*.ts' -e 'taskkill' src` — every hit carries both `/t` and `/f`. | MUST |
-| TS-RES-10 | Never wrap a call in `Promise.race`/`Promise.any` to fake a timeout when the API never hands back the child process; move that one call to `execFile` and leave the rest. | `@actions/exec`'s `exec`/`getExecOutput` return `Promise<number>` and never expose a `ChildProcess` — its `ToolRunner` calls `.kill()` on no path, and its internal `delay` is a post-exit stdio drain. Racing stops the caller waiting while the process runs on orphaned. | `rg -n --glob '*.ts' -e 'Promise\.race' -e 'Promise\.any' src` — a hit racing a call that returns no process handle is the finding, unconditionally, not a judgment call. Empty output is the pass. | MUST |
+| TS-RES-15 | On an unattended call that spawns `git`, a package manager (`npm`/`pnpm`/`yarn`/`bun`), or anything under `shell: true`, pair the `timeout` with a group kill — `detached` at spawn plus your own timer calling `process.kill(-pid, …)` or `taskkill` — never the built-in `timeout` option alone. | The built-in kill reaches one PID. `git` over `ssh://` spawns `ssh`, which spawns `GIT_ASKPASS`; `npm` spawns lifecycle scripts. The hang stops and the descendant keeps the port, the lock and the credential prompt. `Bun.spawn` has the identical single-PID limit — not an escape hatch. | From the enumeration above, classify each site by the table. For each qualifying site: the options object sets `detached`, and the timeout handler calls a platform-branching kill helper, not `child.kill()`. see block TS-RES-15 — every hit is in scope unconditionally. | MUST |
+| TS-RES-16 | Write `detached: process.platform !== "win32"`, never a bare `detached: true`; make the Windows branch `taskkill /pid <pid> /t /f`; and never add `.unref()` to a child the caller still awaits. | On Windows `detached` means "own console window, outlives the parent" — an unrelated behaviour that pops a visible window on every run, with no process group Node can address by PID sign. `.unref()` is orthogonal to `detached` and silently changes whether the parent waits at all. | see block TS-RES-16 (1) — every hit is a platform expression, not `true`. see block TS-RES-16 (2) — every hit sits inside a non-`win32` branch. see block TS-RES-16 (3) — every hit carries both `/t` and `/f`. | MUST |
+| TS-RES-10 | Never wrap a call in `Promise.race`/`Promise.any` to fake a timeout when the API never hands back the child process; move that one call to `execFile` and leave the rest. | `@actions/exec`'s `exec`/`getExecOutput` return `Promise<number>` and never expose a `ChildProcess` — its `ToolRunner` calls `.kill()` on no path, and its internal `delay` is a post-exit stdio drain. Racing stops the caller waiting while the process runs on orphaned. | see block TS-RES-10 — a hit racing a call that returns no process handle is the finding, unconditionally, not a judgment call. Empty output is the pass. | MUST |
 | TS-RES-18 | Do not add `execa` or `tree-kill` for fewer than three call sites that actually meet TS-RES-15's bar; before adding either, diff its floor against your declared `engines.node` **and** against the runtime that is not `npm install`-selectable. | `execa@10.0.1` is ESM-only, `engines.node: ">=22"`, ~11 transitive deps. `tree-kill` is the only tool that walks the real process tree — and its last publish is 2019-12-11. A PR that bumps `engines.node` to satisfy a dependency added for one call site has moved the package's published contract for one function. | Count qualifying sites before any `package.json` edit. `npm view execa engines.node` against your own `engines` field — and against an editor extension host's bundled Node or a CI action's declared runtime, neither of which `engines` can move. **Adopter default:** three is a pinned project threshold, not a derived fact; set your own and write it down. | MUST |
+
+```sh
+# TS-RES-15
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'shell:[[:space:]]*true' --
+```
+
+```sh
+# TS-RES-16 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e detached --
+# TS-RES-16 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'process\.kill\(-' --
+# TS-RES-16 (3)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e taskkill --
+```
+
+```sh
+# TS-RES-10
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'Promise\.race' -e 'Promise\.any' --
+```
 
 ```ts
 // Wrong. `timeout` calls child.kill() — reaches `git`, never the `ssh` it spawned.
@@ -84,7 +119,7 @@ setTimeout(() => { if (child.pid) killTree(child.pid, "SIGTERM"); }, 30_000).unr
 ## Timers
 
 ```bash
-rg -n --glob '*.ts' --glob '*.tsx' --glob '*.astro' -e 'setTimeout' -e 'setInterval' src
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(glob)src/**/*.astro' | xargs -0 -r grep -H -n -E -e setTimeout -e setInterval --
 ```
 
 Three shapes, one leak. **Awaited-as-sleep** (`await new Promise(r => setTimeout(r, ms))`)
@@ -111,8 +146,15 @@ whole LTS, so "modern Node" is not the same claim as "native `using`."
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-RES-04 | Never emit `using`/`await using` at `target: "esnext"` (tsc) or an `esnext` bundler target for code that reaches a runtime below the floor above. | At `esnext` both tsc and esbuild emit the syntax completely unlowered. A pre-native engine cannot *parse* it — a load-time `SyntaxError`, not a missing-API error, and invisible to a type check. `esnext` means "no lowering," not "modern and safe." | `rg -n --glob '*.ts' -e '\busing ' src` — if it returns anything, `rg -in -e 'target' tsconfig.json` and the bundler config; `esnext` in either is the finding. On a Vite 8 / Rolldown / Oxc toolchain, additionally run the repro in [oxc#25155](https://github.com/oxc-project/oxc/issues/25155) (open as of 2026-08-29) against the project's real browserslist — Oxc treats an engine absent from a feature's compat table as *supporting* it, so `using` ships unlowered to Safari with no build warning. | MUST |
+| TS-RES-04 | Never emit `using`/`await using` at `target: "esnext"` (tsc) or an `esnext` bundler target for code that reaches a runtime below the floor above. | At `esnext` both tsc and esbuild emit the syntax completely unlowered. A pre-native engine cannot *parse* it — a load-time `SyntaxError`, not a missing-API error, and invisible to a type check. `esnext` means "no lowering," not "modern and safe." | see block TS-RES-04 (1) — if it returns anything, see block TS-RES-04 (2) and the bundler config; `esnext` in either is the finding. On a Vite 8 / Rolldown / Oxc toolchain, additionally run the repro in [oxc#25155](https://github.com/oxc-project/oxc/issues/25155) (open as of 2026-08-29) against the project's real browserslist — Oxc treats an engine absent from a feature's compat table as *supporting* it, so `using` ships unlowered to Safari with no build warning. | MUST |
 | TS-RES-05 | Assign `Symbol.dispose ??= Symbol('Symbol.dispose'); Symbol.asyncDispose ??= Symbol('Symbol.asyncDispose');` before any module defining a `[Symbol.dispose]` member evaluates — under ESM that means a dedicated polyfill module listed as the entry point's **first** import, not a statement in the entry file's body. | Computed class keys resolve at class-definition time, and ESM hoists imports above your body statements — so a transitively imported class lands its method under the literal string key `"undefined"`. tsc then throws `TypeError: Symbol.dispose is not defined.` and esbuild throws `Object not disposable` at the first `using`. Both are runtime failures a `--noEmit` gate cannot see. | Read each entry point: the polyfill import is first, above every other import. Then one smoke test that actually **executes** a `using` block, run on the version named in `engines.node` — not the newer one the developer has locally. | MUST |
+
+```sh
+# TS-RES-04 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '(^|[^[:alnum:]_])using ' --
+# TS-RES-04 (2)
+git ls-files -z --cached --others --exclude-standard -- 'tsconfig.json' | xargs -0 -r grep -H -n -E -i -e target --
+```
 
 ## Using `using`
 
@@ -123,10 +165,35 @@ component-lifetime and session-lifetime resource that TS-RES-06 excludes.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-RES-06 | Bind with `using`/`await using` only where the resource's lifetime **is** the enclosing block — never a value that is returned, stored on `this` or a ref, or pushed onto a subscription list. | Disposal fires before a `return` completes, so a returned binding hands the caller an already-disposed object. Session- and component-lifetime resources are the wrong shape entirely, and a mechanical `try/finally` conversion produces this every time. | `rg -n --glob '*.ts' -e '\busing ' src`; for each binding, does that identifier later appear in a `return`, an assignment outside the block, or a `.push(`? Any yes is the finding. | MUST |
-| TS-RES-07 | Bridge a foreign disposal protocol through exactly one `toDisposable` adapter per package, and never cast a value into a `using` binding. | An editor's `Disposable` protocol carries zero `Symbol.dispose` members, so the direct bind fails the type checker — and the habitual fix, `as unknown as T`, papers over the check and produces a resource that silently never disposes. One adapter keeps the block-scoped/session-scoped boundary auditable in one file. | `rg -n --glob '*.ts' -e 'using .*as unknown as' -e 'using .*as any' src` — any hit is the finding. `rg -n --glob '*.ts' -e '\[Symbol\.dispose\]:' src` — a hit outside the adapter's own file is the finding. | MUST |
-| TS-RES-11 | Replace a `try/finally` whose `finally` only calls `.close()`/`.dispose()` with `await using` when the resource already implements the protocol — `fs/promises` `FileHandle` first. | `FileHandle` implements `Symbol.asyncDispose` natively and Node's own docs call GC-based auto-close unreliable. This is the one mechanical conversion; everything else is a rewrite wearing a refactor's clothes. | `rg -n -A2 --glob '*.ts' -e 'finally \{' src` — a body that only closes or disposes is a candidate. `rg -n --glob '*.ts' -e 'fs.*\.open\(' src` — a handle not bound with `await using` is a candidate. TS-RES-04 and TS-RES-05 must already hold. | SHOULD |
-| TS-RES-12 | Register a `DisposableStack`/`AsyncDisposableStack` member in the same statement as its acquisition — `disposer.use(acquire())`, never on a following line. | Anything inserted between acquisition and `.use()` leaks the resource if it throws. | `rg -n --glob '*.ts' -e 'DisposableStack' src` names the files; in each, every `.use(` argument is itself a call or `new` expression on the same line. | SHOULD |
+| TS-RES-06 | Bind with `using`/`await using` only where the resource's lifetime **is** the enclosing block — never a value that is returned, stored on `this` or a ref, or pushed onto a subscription list. | Disposal fires before a `return` completes, so a returned binding hands the caller an already-disposed object. Session- and component-lifetime resources are the wrong shape entirely, and a mechanical `try/finally` conversion produces this every time. | see block TS-RES-06; for each binding, does that identifier later appear in a `return`, an assignment outside the block, or a `.push(`? Any yes is the finding. | MUST |
+| TS-RES-07 | Bridge a foreign disposal protocol through exactly one `toDisposable` adapter per package, and never cast a value into a `using` binding. | An editor's `Disposable` protocol carries zero `Symbol.dispose` members, so the direct bind fails the type checker — and the habitual fix, `as unknown as T`, papers over the check and produces a resource that silently never disposes. One adapter keeps the block-scoped/session-scoped boundary auditable in one file. | see block TS-RES-07 (1) — any hit is the finding. see block TS-RES-07 (2) — a hit outside the adapter's own file is the finding. | MUST |
+| TS-RES-11 | Replace a `try/finally` whose `finally` only calls `.close()`/`.dispose()` with `await using` when the resource already implements the protocol — `fs/promises` `FileHandle` first. | `FileHandle` implements `Symbol.asyncDispose` natively and Node's own docs call GC-based auto-close unreliable. This is the one mechanical conversion; everything else is a rewrite wearing a refactor's clothes. | see block TS-RES-11 (1) — a body that only closes or disposes is a candidate. see block TS-RES-11 (2) — a handle not bound with `await using` is a candidate. TS-RES-04 and TS-RES-05 must already hold. | SHOULD |
+| TS-RES-12 | Register a `DisposableStack`/`AsyncDisposableStack` member in the same statement as its acquisition — `disposer.use(acquire())`, never on a following line. | Anything inserted between acquisition and `.use()` leaks the resource if it throws. | see block TS-RES-12 names the files; in each, every `.use(` argument is itself a call or `new` expression on the same line. | SHOULD |
+
+```sh
+# TS-RES-06
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '(^|[^[:alnum:]_])using ' --
+```
+
+```sh
+# TS-RES-07 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'using .*as unknown as' -e 'using .*as any' --
+# TS-RES-07 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '\[Symbol\.dispose\]:' --
+```
+
+```sh
+# TS-RES-11 (1)
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | PAT='finally \{' AFTER=2 BEFORE=0 xargs -0 -r awk -f "$CHECKS/context.awk" --
+# TS-RES-11 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'fs.*\.open\(' --
+```
+
+```sh
+# TS-RES-12
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e DisposableStack --
+```
 
 ```ts
 // Wrong. Disposal fires before the return completes; the caller gets a dead handle.

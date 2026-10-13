@@ -61,7 +61,12 @@ fn render(&self) -> Result<()> {
 python3 checks/guard_recogniser.py --root . | awk '$4 ~ /^x([4-9]|[1-9][0-9]+)$/'
 python3 checks/comment_census.py --root . --list-blocks --min-block 4
 # GRD-05: guards phrased as orders. A hit is a finding only when its sentence names no consequence.
-grep -rnE --include='*.rs' --include='*.py' --include='*.ts' --include='*.tsx' --include='*.js' --include='*.go' --include='*.java' --include='*.kt' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=vendor -e '^\s*[/#*]+ *Never ' -e '^\s*[/#*]+ *Do not ' -e "^\s*[/#*]+ *Don't " -e '^\s*[/#*]+ *Keep ' -e '^\s*[/#*]+ *Make sure ' -e '[/#*] .*NEVER ' .
+git ls-files -z --cached --others --exclude-standard -- \
+    ':(glob)**/*.rs' ':(glob)**/*.py' ':(glob)**/*.ts' ':(glob)**/*.tsx' \
+    ':(glob)**/*.js' ':(glob)**/*.go' ':(glob)**/*.java' ':(glob)**/*.kt' \
+    ':(exclude,glob)**/target/**' ':(exclude,glob)**/node_modules/**' \
+    ':(exclude,glob)**/.venv/**' ':(exclude,glob)**/vendor/**' \
+  | xargs -0 -r grep -H -n -E -e '^[[:space:]]*[/#*]+ *Never ' -e '^[[:space:]]*[/#*]+ *Do not ' -e "^[[:space:]]*[/#*]+ *Don't " -e '^[[:space:]]*[/#*]+ *Keep ' -e '^[[:space:]]*[/#*]+ *Make sure ' -e '[/#*] .*NEVER ' --
 ```
 
 | ID | Rule | Rationale | Verification | Severity |
@@ -74,9 +79,14 @@ grep -rnE --include='*.rs' --include='*.py' --include='*.ts' --include='*.tsx' -
 
 ```sh
 # GRD-03: verbatim comment lines repeated across the tree, most frequent first
-grep -rh --include='*.rs' --include='*.py' --include='*.ts' --include='*.tsx' --include='*.go' --include='*.java' --include='*.kt' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=.venv --exclude-dir=vendor -e '^\s*// [A-Z]' -e '^\s*/// [A-Z]' -e '^\s*# [A-Z]' . | sed -e 's/^\s*//' | awk 'length($0) > 50' | sort | uniq -cd | sort -rn
+git ls-files -z --cached --others --exclude-standard -- \
+    ':(glob)**/*.rs' ':(glob)**/*.py' ':(glob)**/*.ts' ':(glob)**/*.tsx' \
+    ':(glob)**/*.go' ':(glob)**/*.java' ':(glob)**/*.kt' \
+    ':(exclude,glob)**/target/**' ':(exclude,glob)**/node_modules/**' \
+    ':(exclude,glob)**/.venv/**' ':(exclude,glob)**/vendor/**' \
+  | xargs -0 -r grep -H -E -e '^[[:space:]]*// [A-Z]' -e '^[[:space:]]*/// [A-Z]' -e '^[[:space:]]*# [A-Z]' -- | sed -e 's/^[^:]*:[[:space:]]*//' | awk 'length($0) > 50' | sort | uniq -cd | sort -rn
 # GRD-04: hazard wording added to a doc register on this branch (Python docstrings need the reading question)
-git diff -U0 "$(git merge-base origin/main HEAD)" -- '*.rs' '*.ts' '*.tsx' '*.js' '*.java' '*.kt' | grep -e '^+\s*///' -e '^+\s*//!' -e '^+\s*\*' | grep -i -e 'must not' -e 'load-bearing' -e 'rather than' -e 'instead of' -e 'otherwise'
+git diff -U0 --merge-base origin/main -- '*.rs' '*.ts' '*.tsx' '*.js' '*.java' '*.kt' | grep -e '^+[[:space:]]*///' -e '^+[[:space:]]*//!' -e '^+[[:space:]]*\*' | grep -i -e 'must not' -e 'load-bearing' -e 'rather than' -e 'instead of' -e 'otherwise'
 ```
 
 | ID | Rule | Rationale | Verification | Severity |
@@ -91,7 +101,7 @@ python3 checks/guard_recogniser.py --self-test          # pins this code's own c
 python3 checks/guard_recogniser.py --root .             # the carve-out: every flagged prod block
 python3 checks/cleanup_check.py --base origin/main      # exit 1: a cleanup removed a flagged or labelled block with no replacement
 # GRD-11: file-qualified pointers the branch removed and never re-added; any output is a finding
-MB=$(git merge-base origin/main HEAD); comm -23 <(git diff -U0 "$MB" -- . ':(exclude)*.md' | grep -e '^-' | grep -v -e '^---' | grep -oE -e '[A-Za-z0-9_./-]+\.md' | sort -u) <(git diff -U0 "$MB" -- . ':(exclude)*.md' | grep -e '^+' | grep -v -e '^+++' | grep -oE -e '[A-Za-z0-9_./-]+\.md' | sort -u)
+comm -23 <(git diff -U0 --merge-base origin/main -- . ':(exclude)*.md' | grep -e '^-' | grep -v -e '^---' | grep -oE -e '[A-Za-z0-9_./-]+\.md' | sort -u) <(git diff -U0 --merge-base origin/main -- . ':(exclude)*.md' | grep -e '^+' | grep -v -e '^+++' | grep -oE -e '[A-Za-z0-9_./-]+\.md' | sort -u)
 ```
 
 | ID | Rule | Rationale | Verification | Severity |
@@ -133,10 +143,18 @@ const verify = flag ?? envDefault();
 
 ```sh
 # GRD-08: owned constructs with prose above them; a comment over one line there is a finding
-grep -rn -B5 --include='*.ts' --include='*.tsx' --include='*.py' --include='*.rs' --exclude-dir=node_modules --exclude-dir=target --exclude-dir=.venv -e ': never = ' -e 'assert_never(' -e 'deny(clippy::wildcard_enum_match_arm' .
-NAME=example_test; grep -rn -e "$NAME" .      # a test pointer: the definition plus every line citing it
+# the five lines above each hit are the comment under test: read them in the file
+git ls-files -z --cached --others --exclude-standard -- \
+    ':(glob)**/*.ts' ':(glob)**/*.tsx' ':(glob)**/*.py' ':(glob)**/*.rs' \
+    ':(exclude,glob)**/node_modules/**' ':(exclude,glob)**/target/**' ':(exclude,glob)**/.venv/**' \
+  | xargs -0 -r grep -H -n -e ': never = ' -e 'assert_never(' -e 'deny(clippy::wildcard_enum_match_arm' --
+NAME=example_test; git ls-files -z --cached --others --exclude-standard \
+  | xargs -0 -r grep -H -n -e "$NAME" --      # a test pointer: the definition plus every line citing it
 # GRD-12: tri-state candidates collapsed into a boolean
-grep -rn --include='*.rs' --include='*.py' --include='*.ts' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=.venv -e 'Option.bool.' -e 'unwrap_or(false)' -e 'Optional\[bool\]' -e 'bool | None' -e 'boolean | undefined' .
+git ls-files -z --cached --others --exclude-standard -- \
+    ':(glob)**/*.rs' ':(glob)**/*.py' ':(glob)**/*.ts' \
+    ':(exclude,glob)**/target/**' ':(exclude,glob)**/node_modules/**' ':(exclude,glob)**/.venv/**' \
+  | xargs -0 -r grep -H -n -e 'Option.bool.' -e 'unwrap_or(false)' -e 'Optional\[bool\]' -e 'bool | None' -e 'boolean | undefined' --
 ```
 
 | ID | Rule | Rationale | Verification | Severity |
@@ -167,12 +185,17 @@ case _:
 
 ```sh
 # GRD-09: Rust files claiming an exhaustive match without the deny; each output file is a finding
-comm -23 <(grep -rli --include='*.rs' --exclude-dir=target -e 'no wildcard' -e 'rather than wildcard' -e 'not wildcarded' -e 'exhaustive match' -e 'must stay exhaustive' . | sort) <(grep -rl --include='*.rs' --exclude-dir=target -e 'wildcard_enum_match_arm' . | sort)
-grep -rn -A2 --include='*.py' --exclude-dir=.venv -e 'case _:' .       # read each claimed-exhaustive match for assert_never(
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.rs' ':(exclude,glob)**/target/**' \
+  | FOLD=1 HAS='no wildcard|rather than wildcard|not wildcarded|exhaustive match|must stay exhaustive' LACKS='wildcard_enum_match_arm' xargs -0 -r awk -f checks/file_gate.awk -- | sort
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.py' ':(exclude,glob)**/.venv/**' \
+  | xargs -0 -r grep -H -n -e 'case _:' -e 'assert_never(' --       # read each claimed-exhaustive match for assert_never(
 # GRD-10: whether the lint is on, then every Drop type; read each guard type's declaration for #[must_use]
-grep -rn --include='Cargo.toml' --exclude-dir=target -e 'let_underscore_drop' .
-grep -rhoE --include='*.rs' --exclude-dir=target -e 'impl(<[^>]*>)? Drop for [A-Za-z0-9_]+' . | awk '{print $NF}' | sort -u
-NAME=ExampleGuard; grep -rn -B3 --include='*.rs' --exclude-dir=target -e "struct $NAME" .
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/Cargo.toml' ':(exclude,glob)**/target/**' \
+  | xargs -0 -r grep -H -n -e 'let_underscore_drop' --
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.rs' ':(exclude,glob)**/target/**' \
+  | xargs -0 -r grep -H -o -E -e 'impl(<[^>]*>)? Drop for [A-Za-z0-9_]+' -- | awk '{print $NF}' | sort -u
+NAME=ExampleGuard; git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.rs' ':(exclude,glob)**/target/**' \
+  | xargs -0 -r grep -H -n -e "struct $NAME" --      # read the three lines above the hit for the guard's own comment
 ```
 
 | ID | Rule | Rationale | Verification | Severity |

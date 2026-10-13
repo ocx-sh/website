@@ -157,7 +157,7 @@ default scope only; repeating a spacing step per scheme is the opposite defect.
 Not "with caution". Not "fine for simple cases". Reproduced at pinned versions:
 
 - **happy-dom 20.12.0** has zero `@layer` support anywhere in its CSS parser
-  source (`grep -ri layer` over `src/css/` returns nothing). An `@layer` block
+  source (a case-insensitive search for `layer` over `src/css/` returns nothing). An `@layer` block
   parses to `cssRules.length === 0`. Worse, a bare `@layer a, b;` statement
   corrupts the parse of every rule *after* it in the same sheet — so a false
   pass can arrive from an entirely unrelated rule.

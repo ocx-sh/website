@@ -1,5 +1,5 @@
 // CI hardening (C-328, C-331, C-010): every workflow parsed, plus the files that police .github/.
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
@@ -17,7 +17,7 @@ interface Step {
 interface Job {
   uses?: string;
   environment?: unknown;
-  strategy?: { matrix?: { gate?: string } };
+  strategy?: { matrix?: { gate?: string[] } };
   steps?: Step[];
 }
 interface Workflow {
@@ -31,7 +31,16 @@ const secretsRead = (job: Job) =>
 
 describe('.github/workflows (C-328)', () => {
   it('finds the workflows it is meant to police', () => {
-    expect(names).toEqual(expect.arrayContaining(['ci.yml', 'previews.yml', 'release.yml', 'site.yml']));
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'claude.yml',
+        'previews.yml',
+        'release.yml',
+        'site.yml',
+        'verify-basic.yml',
+        'verify-deep.yml',
+      ]),
+    );
   });
 
   describe.each(names)('%s', (name) => {
@@ -56,26 +65,41 @@ describe('.github/workflows (C-328)', () => {
       expect(checkouts.filter((s) => s.with?.['persist-credentials'] !== false)).toEqual([]);
     });
 
-    it('gives every job that reads a secret an environment', () => {
-      const bare = Object.entries(wf.jobs).filter(([, j]) => secretsRead(j).length > 0 && !j.environment);
-      expect(bare.map(([id]) => id)).toEqual([]);
-    });
-  });
-
-  it('ci.yml keeps the gate matrix and adds zizmor and secrets jobs', () => {
-    const { jobs } = parse(read(`${dir}/ci.yml`)) as Workflow;
-    // Draft PRs skip lighthouse; main pushes and ready PRs run all four gates.
-    expect(jobs.gate?.strategy?.matrix?.gate).toBe(
-      `\${{ fromJSON(github.event.pull_request.draft && '["check","e2e","pack"]' || '["check","e2e","lighthouse","pack"]') }}`,
+    // The template-owned workflows read org secrets (BAZEL_CACHE_*, OTEL_OTLP_AUTH, CLAUDE_CODE_OAUTH_TOKEN)
+    // and use no environment; every other workflow's secrets stay behind one.
+    const orgSecretWorkflows = ['claude.yml', 'verify-basic.yml', 'verify-deep.yml'];
+    it(
+      orgSecretWorkflows.includes(name)
+        ? 'reads org secrets and uses no environment'
+        : 'gives every job that reads a secret an environment',
+      () => {
+        const bare = Object.entries(wf.jobs).filter(([, j]) =>
+          orgSecretWorkflows.includes(name) ? !!j.environment : secretsRead(j).length > 0 && !j.environment,
+        );
+        expect(bare.map(([id]) => id)).toEqual([]);
+      },
     );
-    expect(jobs.zizmor?.steps?.some((s) => s.uses?.startsWith('zizmorcore/zizmor-action@'))).toBe(true);
-    expect(jobs.secrets?.steps?.some((s) => s.run === 'ocx exec -- task secrets')).toBe(true);
   });
 
-  it('runs zizmor with the repo config', () => {
-    const { jobs } = parse(read(`${dir}/ci.yml`)) as Workflow;
-    const step = jobs.zizmor?.steps?.find((s) => s.uses?.startsWith('zizmorcore/'));
-    expect(step?.with?.config).toBe('.github/zizmor.yml');
+  it('verify-basic maps every CI tier onto its task', () => {
+    const { jobs } = parse(read(`${dir}/verify-basic.yml`)) as Workflow;
+    const runs = (job: string) => (jobs[job]?.steps ?? []).map((s) => s.run?.trim());
+    expect(runs('lint')).toEqual(
+      expect.arrayContaining(['task ci:lint', 'task lock:check', 'task baseline:check', 'task secrets']),
+    );
+    expect(runs('lint').some((r) => r?.includes('task workflows:lint'))).toBe(true);
+    expect(runs('test')).toContain('task ci:test');
+    expect(runs('docs')).toContain('task ci:docs');
+    expect(jobs['basic-gate']).toBeDefined();
+  });
+
+  it('verify-deep runs the e2e and pack tier', () => {
+    const { jobs } = parse(read(`${dir}/verify-deep.yml`)) as Workflow;
+    expect(jobs.deep?.steps?.some((s) => s.run === 'task ci:deep')).toBe(true);
+  });
+
+  it('runs zizmor with the repo config through workflows:lint', () => {
+    expect(read('taskfiles/baseline.taskfile.yml')).toMatch(/zizmor .*--config \.github\/zizmor\.yml/);
   });
 });
 
@@ -93,16 +117,20 @@ describe('.github/zizmor.yml', () => {
   });
 });
 
-describe('.github/dependabot.yml (C-331)', () => {
-  const { updates } = parse(read('.github/dependabot.yml')) as {
-    updates: { 'package-ecosystem': string; directory: string; cooldown: { 'default-days': number } }[];
-  };
+describe('renovate.json (C-331)', () => {
+  const cfg = parse(read('renovate.json')) as { extends?: string[] };
 
-  it('covers npm at the root and github-actions, each with a 7-day cooldown', () => {
-    expect(updates.map((u) => [u['package-ecosystem'], u.directory, u.cooldown['default-days']])).toEqual([
-      ['npm', '/', 7],
-      ['github-actions', '/', 7],
+  // The 7-day dependency cooldown (minimumReleaseAge) lives in the conventions preset, not here:
+  // extending it is what carries the cooldown, so this file needs no assertion of its own.
+  // copier pins the preset to the baseline release tag, or to a commit between releases.
+  it('extends the shared conventions preset, pinned to a release tag or commit', () => {
+    expect(cfg.extends).toEqual([
+      expect.stringMatching(/^github>ocx-sh\/conventions\/\/renovate\/default#(v\d+\.\d+\.\d+|[0-9a-f]{40})$/),
     ]);
+  });
+
+  it('replaces Dependabot', () => {
+    expect(existsSync(join(root, '.github/dependabot.yml'))).toBe(false);
   });
 });
 

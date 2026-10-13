@@ -15,9 +15,9 @@ Contents: [Pinned Decisions](#pinned-decisions) · [Cause and Construction](#cau
 [The Untrusted-to-Typed Crossing](#the-untrusted-to-typed-crossing) ·
 [Version-Pinned Facts](#version-pinned-facts) · [What Agents Get Wrong](#what-agents-get-wrong-here)
 
-Every command below takes an explicit path operand and assumes ripgrep, which
-respects `.gitignore`, so build output is excluded without a flag. Replace
-`src` with your source root. Severity maps onto the house tiers: MUST = Block,
+Every command below lists its files with `git ls-files`, which respects
+`.gitignore`, so build output is excluded without a flag. Replace `src` with
+your source root. Severity maps onto the house tiers: MUST = Block,
 SHOULD = Warn, CONSIDER = Suggest.
 
 ## Pinned Decisions
@@ -50,9 +50,28 @@ The whole group is one pass over two greps.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-ERR-01 | When a `catch` block throws a new error, pass the caught binding as the `cause` option: `new XError(msg, { cause: err })`. Options object, never a positional second argument. | The caught value is the only place the original diagnostic exists; once the block returns it is gone, and no amount of downstream logging recovers it. | `rg -n -A8 --glob '*.ts' --glob '*.tsx' 'catch\s*\(' src` — read each block containing a `throw new` and confirm `cause:` on the constructing call. Then, for the silently-dropped positional form, `rg -n --glob '*.ts' 'new [A-Za-z]*Error\([^)]*,\s*[^\s{]' src`: a hit on bare `Error`/`TypeError` is the violation; a hit on a class whose signature genuinely takes that positional parameter is not. | MUST |
-| TS-ERR-02 | Every custom `Error` subclass accepts `options?: ErrorOptions` and forwards it: `super(message, options)`. | A constructor that swallows the second argument permanently blocks every caller from attaching a cause — TS-ERR-01 becomes unimplementable downstream, and the block is invisible at the call site. | `rg -nU --pcre2 --glob '*.ts' 'extends Error[\s\S]{0,300}?super\([^,)]*\)' src` — every hit is a `super()` taking fewer than two arguments within a class-sized window of `extends Error`. Empty output is the pass. | MUST |
-| TS-ERR-03 | Do not write `Object.setPrototypeOf(this, X.prototype)` in an `Error` subclass constructor. | A TypeScript 2.1-era workaround for `--target es5`'s broken `new.target`. At ES2015 and later it is dead code an agent adds from training habit. | `rg -n --glob '*.ts' 'setPrototypeOf\(this' src` — must be empty. The one exception is a `tsconfig.json` whose `target` is below `ES2015`; confirm that before deleting a hit. | MUST |
+| TS-ERR-01 | When a `catch` block throws a new error, pass the caught binding as the `cause` option: `new XError(msg, { cause: err })`. Options object, never a positional second argument. | The caught value is the only place the original diagnostic exists; once the block returns it is gone, and no amount of downstream logging recovers it. | see block TS-ERR-01 (1) — read each block containing a `throw new` and confirm `cause:` on the constructing call. Then, for the silently-dropped positional form, see block TS-ERR-01 (2): a hit on bare `Error`/`TypeError` is the violation; a hit on a class whose signature genuinely takes that positional parameter is not. | MUST |
+| TS-ERR-02 | Every custom `Error` subclass accepts `options?: ErrorOptions` and forwards it: `super(message, options)`. | A constructor that swallows the second argument permanently blocks every caller from attaching a cause — TS-ERR-01 becomes unimplementable downstream, and the block is invisible at the call site. | see block TS-ERR-02 — every hit is a `super()` taking fewer than two arguments within a class-sized window of `extends Error`. Empty output is the pass. | MUST |
+| TS-ERR-03 | Do not write `Object.setPrototypeOf(this, X.prototype)` in an `Error` subclass constructor. | A TypeScript 2.1-era workaround for `--target es5`'s broken `new.target`. At ES2015 and later it is dead code an agent adds from training habit. | see block TS-ERR-03 — must be empty. The one exception is a `tsconfig.json` whose `target` is below `ES2015`; confirm that before deleting a hit. | MUST |
+
+```sh
+# TS-ERR-01 (1)
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | PAT='catch[[:space:]]*\(' AFTER=8 BEFORE=0 xargs -0 -r awk -f "$CHECKS/context.awk" --
+# TS-ERR-01 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'new [A-Za-z]*Error\([^)]*,[[:space:]]*[^[:space:]{]' --
+```
+
+```sh
+# TS-ERR-02
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r awk -f "$CHECKS/error-super-cause.awk" --
+```
+
+```sh
+# TS-ERR-03
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'setPrototypeOf\(this' --
+```
 
 ```ts
 // wrong — the second argument is treated as nothing; the cause is dropped silently
@@ -76,8 +95,19 @@ two spellings an agent reaches for.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-ERR-04 | Never `JSON.stringify(err)`, or stringify an object containing one, for a log line. Pass `Object.getOwnPropertyNames(err)` as the replacer, or flatten by hand. | `message`, `stack`, `name` and `cause` are all non-enumerable own properties, so a bare stringify yields `{}` — no error, no warning, no log. The property-name replacer is re-applied at every nesting level, so it recurses the whole cause chain. | Union of two patterns, both intended: `rg -n --glob '*.ts' -e 'JSON\.stringify\([^)]*\berr' -e 'JSON\.stringify\([^)]*\berror' src`. Each hit must pass a replacer or provably not be an `Error`. | MUST |
-| TS-ERR-05 | A terminal catch logs `.stack` or the serialised cause chain, never `.message` or `String(err)` alone. Where the destination is end-user text, log the full chain to a separate diagnostic channel as well. | `.message` alone discards the only trace a bug report could carry, at zero cost to fix — and the line reads as handled, so nothing else flags it. | `rg -n -A6 --glob '*.ts' --glob '*.tsx' -e 'instanceof Error \? ' -e 'String\(err' src` — union intended. For each hit, confirm `.stack` appears somewhere in the same block. `console.error(err)` and `util.inspect(err)` already print the entire cause chain, nested, with no depth cap, so passing the error itself satisfies this. | MUST |
+| TS-ERR-04 | Never `JSON.stringify(err)`, or stringify an object containing one, for a log line. Pass `Object.getOwnPropertyNames(err)` as the replacer, or flatten by hand. | `message`, `stack`, `name` and `cause` are all non-enumerable own properties, so a bare stringify yields `{}` — no error, no warning, no log. The property-name replacer is re-applied at every nesting level, so it recurses the whole cause chain. | Union of two patterns, both intended: see block TS-ERR-04. Each hit must pass a replacer or provably not be an `Error`. | MUST |
+| TS-ERR-05 | A terminal catch logs `.stack` or the serialised cause chain, never `.message` or `String(err)` alone. Where the destination is end-user text, log the full chain to a separate diagnostic channel as well. | `.message` alone discards the only trace a bug report could carry, at zero cost to fix — and the line reads as handled, so nothing else flags it. | see block TS-ERR-05 — union intended. For each hit, confirm `.stack` appears somewhere in the same block. `console.error(err)` and `util.inspect(err)` already print the entire cause chain, nested, with no depth cap, so passing the error itself satisfies this. | MUST |
+
+```sh
+# TS-ERR-04
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'JSON\.stringify\(([^)]*[^[:alnum:]_])?err' -e 'JSON\.stringify\(([^)]*[^[:alnum:]_])?error' --
+```
+
+```sh
+# TS-ERR-05
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | PAT='(instanceof Error \? )|(String\(err)' AFTER=6 BEFORE=0 xargs -0 -r awk -f "$CHECKS/context.awk" --
+```
 
 ## Identity and Classification
 
@@ -86,10 +116,33 @@ plus a grep for the two forbidden identity spellings.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-ERR-06 | Map errors to an outward value through **one shared function**, called from every site that needs it. Never re-inline the same `instanceof` ladder in a second file. One call site and N call sites are both compliant; N copies of the ladder is not. | Independent copies drift the moment one gains a fourth branch and the others do not, and nothing reports the divergence. | `rg -n --glob '*.ts' 'instanceof [A-Z][A-Za-z]*Error' src` — group the hits by class name. The same class mapped to the same kind of outward value in more than one non-test file is the violation. | MUST |
-| TS-ERR-07 | Match error identity with `instanceof` when the class is statically imported in the same module graph. Drop to `err.name === "Literal"` only at a deliberate dynamic-`import()` boundary, with a comment saying so. Never match `err.constructor.name`. | A minifier renames `class ConfigError` to `class r`, so `constructor.name` becomes `"r"` in production while a `this.name = "ConfigError"` string literal survives untouched. The two are indistinguishable in an unminified dev run. | `rg -n --glob '*.ts' '\.constructor\.name' src` — must be empty in any error-matching context. Then `rg -n -B2 --glob '*.ts' '\.name === "' src`: every name-match site needs an adjacent comment naming the lazy-load reason. | MUST |
-| TS-ERR-08 | An `Error` crossing a worker `postMessage`, a webview `postMessage`, or any structured-clone or JSON channel is flattened on the sending side to `{ name, message, stack, cause? }`, with the cause recursed by hand. Never `instanceof`-check or read a custom field on the receiving side. | The structured-clone algorithm recognises exactly seven error names (`Error`, `EvalError`, `RangeError`, `ReferenceError`, `SyntaxError`, `TypeError`, `URIError`) and coerces every other name — `AggregateError` included — to plain `"Error"`; custom fields and `.errors` are dropped. The received value still *prints* correctly, because the original class name is baked into the cloned `.stack` string, so the bug never appears in a log. A JSON-only channel degrades it further, to `{}` (TS-ERR-04). | `rg -n --glob '*.ts' 'postMessage\(' src` — for each payload that can carry an `Error`, confirm a flatten call precedes it. On the receiving side, any hit from TS-ERR-06's grep whose operand arrived over such a channel is the violation. | MUST |
-| TS-ERR-09 | Do not introduce a new `*Error` subclass unless at least two call sites branch on its identity, or it carries a field a caller reads. Otherwise throw `Error` with a `cause`. | Copying a taxonomy into a shape with no outward value to map to is unrequested vocabulary that every future branch has to keep consistent. | `rg -n --glob '*.ts' 'class [A-Z][A-Za-z]*Error extends' src` for the inventory, then TS-ERR-06's `instanceof` grep for the consumers. A class with fewer than two non-test consumers and no field read anywhere is not earned. | SHOULD |
+| TS-ERR-06 | Map errors to an outward value through **one shared function**, called from every site that needs it. Never re-inline the same `instanceof` ladder in a second file. One call site and N call sites are both compliant; N copies of the ladder is not. | Independent copies drift the moment one gains a fourth branch and the others do not, and nothing reports the divergence. | see block TS-ERR-06 — group the hits by class name. The same class mapped to the same kind of outward value in more than one non-test file is the violation. | MUST |
+| TS-ERR-07 | Match error identity with `instanceof` when the class is statically imported in the same module graph. Drop to `err.name === "Literal"` only at a deliberate dynamic-`import()` boundary, with a comment saying so. Never match `err.constructor.name`. | A minifier renames `class ConfigError` to `class r`, so `constructor.name` becomes `"r"` in production while a `this.name = "ConfigError"` string literal survives untouched. The two are indistinguishable in an unminified dev run. | see block TS-ERR-07 (1) — must be empty in any error-matching context. Then see block TS-ERR-07 (2): every name-match site needs an adjacent comment naming the lazy-load reason. | MUST |
+| TS-ERR-08 | An `Error` crossing a worker `postMessage`, a webview `postMessage`, or any structured-clone or JSON channel is flattened on the sending side to `{ name, message, stack, cause? }`, with the cause recursed by hand. Never `instanceof`-check or read a custom field on the receiving side. | The structured-clone algorithm recognises exactly seven error names (`Error`, `EvalError`, `RangeError`, `ReferenceError`, `SyntaxError`, `TypeError`, `URIError`) and coerces every other name — `AggregateError` included — to plain `"Error"`; custom fields and `.errors` are dropped. The received value still *prints* correctly, because the original class name is baked into the cloned `.stack` string, so the bug never appears in a log. A JSON-only channel degrades it further, to `{}` (TS-ERR-04). | see block TS-ERR-08 — for each payload that can carry an `Error`, confirm a flatten call precedes it. On the receiving side, any hit from TS-ERR-06's grep whose operand arrived over such a channel is the violation. | MUST |
+| TS-ERR-09 | Do not introduce a new `*Error` subclass unless at least two call sites branch on its identity, or it carries a field a caller reads. Otherwise throw `Error` with a `cause`. | Copying a taxonomy into a shape with no outward value to map to is unrequested vocabulary that every future branch has to keep consistent. | see block TS-ERR-09 for the inventory, then TS-ERR-06's `instanceof` grep for the consumers. A class with fewer than two non-test consumers and no field read anywhere is not earned. | SHOULD |
+
+```sh
+# TS-ERR-06
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'instanceof [A-Z][A-Za-z]*Error' --
+```
+
+```sh
+# TS-ERR-07 (1)
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '\.constructor\.name' --
+# TS-ERR-07 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | PAT='\.name === "' AFTER=0 BEFORE=2 xargs -0 -r awk -f "$CHECKS/context.awk" --
+```
+
+```sh
+# TS-ERR-08
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'postMessage\(' --
+```
+
+```sh
+# TS-ERR-09
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'class [A-Z][A-Za-z]*Error extends' --
+```
 
 ## The Untrusted-to-Typed Crossing
 
@@ -101,11 +154,46 @@ anything runs. Caught by grepping every parse and every `.json()`.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-ERR-10 | A value crossing from `unknown` or `any` into a typed binding passes through `.safeParse()`, a compiled `validate()`, or a hand-written `x is T` predicate. Never an `as T` cast, never a typed `const` on an untyped right-hand side, never a typed callback parameter. | The compiler emits no code for any of the three forbidden forms, so a parseable-but-wrong payload arrives fully typed and flows into state unchallenged. | Explicit flavour: `rg -n --glob '*.ts' --glob '*.tsx' --glob '*.vue' 'JSON\.parse\([^;]*\) as [A-Z]' src` and `rg -n --glob '*.ts' --glob '*.tsx' --glob '*.vue' '\.json\(\) as ' src`. Invisible flavour: `rg -n --glob '*.ts' --glob '*.tsx' --glob '*.vue' ': [A-Z][A-Za-z]* = JSON\.parse' src` and `rg -n --glob '*.ts' --glob '*.tsx' --glob '*.vue' ': [A-Z][A-Za-z]* = await .*\.json\(\)' src`. Any hit with no guard call within three lines is the violation. | MUST |
-| TS-ERR-11 | Bind `Response.json()` to `unknown` and hand it to a guard on the next line. Never annotate the binding with an interface, never cast it. | `.json()` returns `Promise<any>` by TypeScript's own lib types, so `const data: T = await resp.json()` has exactly the runtime strength of `as T` while reading as already-validated. This is the single highest-frequency form of the defect. | `rg -n -A3 --glob '*.ts' --glob '*.tsx' --glob '*.vue' '\.json\(\)' src` — a candidate list, not a finding list. The assigning line must be `unknown` or unannotated, with a guard call in the printed context. | MUST |
-| TS-ERR-12 | A hand-written `x is T` predicate checks every field of `T` it claims to guarantee, including the element types inside a `Record` or array — not only the container. | A predicate that checks a discriminant and trusts the rest is only as strong as its checked subset, while reading as exhaustive validation to every later caller. | `rg -n --glob '*.ts' '\): [A-Za-z_]+ is [A-Z]' src` lists every predicate. For each, diff the fields checked against the type's member list; any member with no `typeof`, `instanceof`, or nested-guard check fails. | MUST |
-| TS-ERR-13 | A parse function returns the schema-derived type (`z.infer` / `z.output<typeof schema>`), never a re-cast of `result.data` to a separately hand-maintained interface. | Two independently authored shapes for the same data diverge silently; structural typing will not catch a renamed field across an `as`. | `rg -n --glob '*.ts' '\.data as ' src` — every hit is the violation. Then `rg -n --glob '*.ts' 'safeParse\(' src` and confirm each enclosing function's return type names the schema's own derived type. | SHOULD |
-| TS-ERR-14 | A message handler (`onDidReceiveMessage`, `addEventListener('message')`) narrows its payload with a runtime discriminant check before switching on it. A parameter type annotation is not validation. | Both ends of a message channel accept whatever the other side sends; the annotation compiles clean and is textually indistinguishable from a real guard, so both ends can be wrong at once. | `rg -n -A6 --glob '*.ts' -e 'onDidReceiveMessage\(' -e 'addEventListener\(.message.' src` — union intended. The handler's first statements must contain a `typeof` or predicate check on the discriminant field. | MUST |
+| TS-ERR-10 | A value crossing from `unknown` or `any` into a typed binding passes through `.safeParse()`, a compiled `validate()`, or a hand-written `x is T` predicate. Never an `as T` cast, never a typed `const` on an untyped right-hand side, never a typed callback parameter. | The compiler emits no code for any of the three forbidden forms, so a parseable-but-wrong payload arrives fully typed and flows into state unchallenged. | Explicit flavour: see block TS-ERR-10 (1) and see block TS-ERR-10 (2). Invisible flavour: see block TS-ERR-10 (3) and see block TS-ERR-10 (4). Any hit with no guard call within three lines is the violation. | MUST |
+| TS-ERR-11 | Bind `Response.json()` to `unknown` and hand it to a guard on the next line. Never annotate the binding with an interface, never cast it. | `.json()` returns `Promise<any>` by TypeScript's own lib types, so `const data: T = await resp.json()` has exactly the runtime strength of `as T` while reading as already-validated. This is the single highest-frequency form of the defect. | see block TS-ERR-11 — a candidate list, not a finding list. The assigning line must be `unknown` or unannotated, with a guard call in the printed context. | MUST |
+| TS-ERR-12 | A hand-written `x is T` predicate checks every field of `T` it claims to guarantee, including the element types inside a `Record` or array — not only the container. | A predicate that checks a discriminant and trusts the rest is only as strong as its checked subset, while reading as exhaustive validation to every later caller. | see block TS-ERR-12 lists every predicate. For each, diff the fields checked against the type's member list; any member with no `typeof`, `instanceof`, or nested-guard check fails. | MUST |
+| TS-ERR-13 | A parse function returns the schema-derived type (`z.infer` / `z.output<typeof schema>`), never a re-cast of `result.data` to a separately hand-maintained interface. | Two independently authored shapes for the same data diverge silently; structural typing will not catch a renamed field across an `as`. | see block TS-ERR-13 (1) — every hit is the violation. Then see block TS-ERR-13 (2) and confirm each enclosing function's return type names the schema's own derived type. | SHOULD |
+| TS-ERR-14 | A message handler (`onDidReceiveMessage`, `addEventListener('message')`) narrows its payload with a runtime discriminant check before switching on it. A parameter type annotation is not validation. | Both ends of a message channel accept whatever the other side sends; the annotation compiles clean and is textually indistinguishable from a real guard, so both ends can be wrong at once. | see block TS-ERR-14 — union intended. The handler's first statements must contain a `typeof` or predicate check on the discriminant field. | MUST |
+
+```sh
+# TS-ERR-10 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(glob)src/**/*.vue' | xargs -0 -r grep -H -n -E -e 'JSON\.parse\([^;]*\) as [A-Z]' --
+# TS-ERR-10 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(glob)src/**/*.vue' | xargs -0 -r grep -H -n -E -e '\.json\(\) as ' --
+# TS-ERR-10 (3)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(glob)src/**/*.vue' | xargs -0 -r grep -H -n -E -e ': [A-Z][A-Za-z]* = JSON\.parse' --
+# TS-ERR-10 (4)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(glob)src/**/*.vue' | xargs -0 -r grep -H -n -E -e ': [A-Z][A-Za-z]* = await .*\.json\(\)' --
+```
+
+```sh
+# TS-ERR-11
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(glob)src/**/*.vue' | PAT='\.json\(\)' AFTER=3 BEFORE=0 xargs -0 -r awk -f "$CHECKS/context.awk" --
+```
+
+```sh
+# TS-ERR-12
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '\): [A-Za-z_]+ is [A-Z]' --
+```
+
+```sh
+# TS-ERR-13 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '\.data as ' --
+# TS-ERR-13 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e 'safeParse\(' --
+```
+
+```sh
+# TS-ERR-14
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | PAT='(onDidReceiveMessage\()|(addEventListener\(.message.)' AFTER=6 BEFORE=0 xargs -0 -r awk -f "$CHECKS/context.awk" --
+```
 
 ```ts
 // wrong — no `as` keyword appears anywhere, and zero code runs
@@ -125,8 +213,19 @@ an agent guesses it. Caught by one grep each.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-ERR-16 | Do not write a branch expecting an `AggregateError` from `Promise.all`. To report every failure, use `Promise.allSettled` and construct the `AggregateError` explicitly. | `Promise.all` rejects with only the first reason and drops the siblings. `AggregateError` comes from `Promise.any`, and only when *every* input rejects — the opposite condition. The naming association is plausible and the resulting branch is unreachable, so no test catches it. | `rg -n -B10 --glob '*.ts' 'instanceof AggregateError' src` — any hit preceded by a `Promise.all` is dead code. | SHOULD |
-| TS-ERR-17 | Before bumping a `zod` major, grep for `.errors` on a `ZodError` or `safeParse` result. Zod 4 removed it in favour of `.issues` with no compatibility alias (checked 2026-08-29, binds Zod 4.x). | A Zod-3-trained model writes `.errors` into a Zod-4 repo and a Zod-4-trained one writes `.issues` into a Zod-3 repo; one line blocks an otherwise clean bump in either direction. | `rg -n --glob '*.ts' '\.error\.errors' src`, cross-checked against the `zod` major in `package.json`. | CONSIDER |
+| TS-ERR-16 | Do not write a branch expecting an `AggregateError` from `Promise.all`. To report every failure, use `Promise.allSettled` and construct the `AggregateError` explicitly. | `Promise.all` rejects with only the first reason and drops the siblings. `AggregateError` comes from `Promise.any`, and only when *every* input rejects — the opposite condition. The naming association is plausible and the resulting branch is unreachable, so no test catches it. | see block TS-ERR-16 — any hit preceded by a `Promise.all` is dead code. | SHOULD |
+| TS-ERR-17 | Before bumping a `zod` major, grep for `.errors` on a `ZodError` or `safeParse` result. Zod 4 removed it in favour of `.issues` with no compatibility alias (checked 2026-08-29, binds Zod 4.x). | A Zod-3-trained model writes `.errors` into a Zod-4 repo and a Zod-4-trained one writes `.issues` into a Zod-3 repo; one line blocks an otherwise clean bump in either direction. | see block TS-ERR-17, cross-checked against the `zod` major in `package.json`. | CONSIDER |
+
+```sh
+# TS-ERR-16
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | PAT='instanceof AggregateError' AFTER=0 BEFORE=10 xargs -0 -r awk -f "$CHECKS/context.awk" --
+```
+
+```sh
+# TS-ERR-17
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' | xargs -0 -r grep -H -n -E -e '\.error\.errors' --
+```
 
 `TS-ERR-15` is retired and is not reused: its content — "confirm a validator has
 a non-test import before trusting the data" — produces the same diff as

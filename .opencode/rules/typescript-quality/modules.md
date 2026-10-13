@@ -65,9 +65,14 @@ value and an unexpected implied pairing in a single command.
 |---|---|---|---|---|
 | TS-MOD-03 | Run `tsc --showConfig` after every edit to `module` or `moduleResolution`, and read the resolved pair before considering the change done. | A JSON-schema check validates shape, not semantics: `module: node18` silently implies `moduleResolution: node16`, and an invalid value is inert until something runs the compiler. | `tsc --showConfig -p <tsconfig>`; a non-zero exit is an invalid value, and the printed pair is the answer to every other rule here. | MUST |
 | TS-MOD-01 | Set `moduleResolution` from the host question, never from the product category: `nodenext` when Node loads the emitted files or when code outside this repository imports the package; `bundler` only when one bundler always intervenes and no external importer exists. | `bundler` accepts specifiers that resolve under a bundler and crash under Node, with no compiler error — the error surfaces in someone else's install. | `tsc --showConfig -p <tsconfig>` for the effective value, then `jq '.exports' package.json` — a non-null `exports` with a consumer outside this repository forbids `bundler`. | MUST |
-| TS-MOD-02 | Never write `"moduleResolution": "node"`, `"node10"`, `"node18"` or `"node20"`. The only legal values are `node16`, `nodenext`, `bundler`. `node18`/`node20` are legal `module` values, and they imply `moduleResolution: node16` — the frozen algorithm, never `nodenext`. | `node10`/`node` is deprecated in TS 6.0 (`TS5107`) and hard-removed in 7.0 with no `ignoreDeprecations` escape (`TS5108`); `node18`/`node20` in this position are `TS6046`. Verified against tsc 6.0.3 and 7.0.2, 2026-08-29. | `rg -n '"moduleResolution"' --glob 'tsconfig*.json' .` — every hit must read `node16`, `nodenext` or `bundler`. Empty output is **not** a pass: it means no file sets it literally, so read the resolved value with TS-MOD-03 instead. | MUST |
+| TS-MOD-02 | Never write `"moduleResolution": "node"`, `"node10"`, `"node18"` or `"node20"`. The only legal values are `node16`, `nodenext`, `bundler`. `node18`/`node20` are legal `module` values, and they imply `moduleResolution: node16` — the frozen algorithm, never `nodenext`. | `node10`/`node` is deprecated in TS 6.0 (`TS5107`) and hard-removed in 7.0 with no `ignoreDeprecations` escape (`TS5108`); `node18`/`node20` in this position are `TS6046`. Verified against tsc 6.0.3 and 7.0.2, 2026-08-29. | see block TS-MOD-02 — every hit must read `node16`, `nodenext` or `bundler`. Empty output is **not** a pass: it means no file sets it literally, so read the resolved value with TS-MOD-03 instead. | MUST |
 | TS-MOD-06 | Before editing import extensions in bulk, resolve the *effective* tsconfig for the specific file — respecting `include`/`exclude` and any sibling `tsconfig.*.json` — not the repository's top-level one. | A subtree with its own `bundler` config holds deliberately extensionless specifiers, some of which take no `.js` under any mode. A uniform "always suffix `.js`" edit corrupts every one of them and the top-level config never mentions them. | `tsc -p <the config whose include covers the file> --listFilesOnly > program.txt`, then confirm the file appears in `program.txt` before editing it. A file in no program is edited against a config that does not govern it. | MUST |
 | TS-MOD-22 | In an `extends`-chain monorepo, verify each base-level flag survives **every** package's own `extends` line by reading the resolved config — not the base config, and not the package file's text. | A package extending a third-party framework preset instead of the repository base silently drops the base's flags. The gap is invisible from either file alone. | `tsc -p <each package tsconfig> --showConfig > resolved.json` and read the flag out of `resolved.json`, per package. | MUST |
+
+```sh
+# TS-MOD-02
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/tsconfig*.json' | xargs -0 -r grep -H -n -E -e '"moduleResolution"' --
+```
 
 ## Module Format and Extensions
 
@@ -99,12 +104,34 @@ line purely from a `moduleResolution` choice.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-MOD-16 | Set `verbatimModuleSyntax: true` wherever the resolved `moduleResolution` is `bundler`, or is `node16`/`nodenext` **and** the nearest `package.json` declares `"type": "module"`. Prove it with the CLI override before editing any file. | It closes the import-side gap `isolatedModules` leaves open. On qualifying shapes the measured cost is zero errors — this is a one-line config change, not a migration. | `tsc -p <tsconfig> --noEmit --verbatimModuleSyntax > tc.log 2>&1`, then `rg -n -e TS1484 -e TS1205 -e TS1287 -e TS1295 -e TS1202 tc.log` — a deliberate union of the five codes this flag owns. Empty output means commit the flag; every other line in `tc.log` is pre-existing and unrelated. | MUST |
+| TS-MOD-16 | Set `verbatimModuleSyntax: true` wherever the resolved `moduleResolution` is `bundler`, or is `node16`/`nodenext` **and** the nearest `package.json` declares `"type": "module"`. Prove it with the CLI override before editing any file. | It closes the import-side gap `isolatedModules` leaves open. On qualifying shapes the measured cost is zero errors — this is a one-line config change, not a migration. | `tsc -p <tsconfig> --noEmit --verbatimModuleSyntax > tc.log 2>&1`, then see block TS-MOD-16 — a deliberate union of the five codes this flag owns. Empty output means commit the flag; every other line in `tc.log` is pre-existing and unrelated. | MUST |
 | TS-MOD-17 | Never set `verbatimModuleSyntax` on a package whose resolved `moduleResolution` is `node16`/`nodenext` while its nearest `package.json` has no `"type": "module"`. Fix the module format first — add `"type"`, or move to `bundler`. | ES `import`/`export` syntax in a file the compiler classifies as CommonJS-format is a hard `TS1295`/`TS1287`: structural, not lint-fixable, and no number of `type` keywords touches it. Every import and export in the package errors at once. | `jq -r '.type' package.json` before flipping the flag. `null` plus a `node16`/`nodenext` resolved value means blocked — not "try it and see". | MUST |
-| TS-MOD-21 | Never write `importsNotUsedAsValues` or `preserveValueImports` in any tsconfig. | Deprecated in TS 5.0, no-op from 5.5, and a hard `TS5102` build failure from 6.0 — reproduced on 6.0.3, exit 2. On a 6.x floor this is a broken build, not a warning. | `rg -n --glob 'tsconfig*.json' -e importsNotUsedAsValues -e preserveValueImports .` — a deliberate union; any hit is the violation, empty output is the pass. | MUST |
-| TS-MOD-18 | Never leave an import whose specifiers are **all** inline-`type`. Enable `@typescript-eslint/no-import-type-side-effects` wherever `verbatimModuleSyntax` is on; Biome's `useImportType` in `auto` style already cannot produce the shape. | Such an import is not elided — it emits `import {} from "mod"`, a bare side-effect import, with **zero** compiler diagnostics. The bug exists only in emitted JS the author never reads. | `rg -n --pcre2 --glob '*.ts*' 'import \{\s*type [^}]*\} from' src` and confirm every hit carries at least one non-`type` specifier. Then the rule name in `eslint.config.*`, or `useImportType` in `biome.json`. | MUST |
-| TS-MOD-19 | Name `consistent-type-imports` and `no-import-type-side-effects` explicitly in the ESLint config. Never assume a `typescript-eslint` preset supplies either. | Verified against the installed plugin (8.61.0, `dist/configs/flat/*.js`): both appear only in `all` — not in `recommended`, `recommended-type-checked`, `strict`, `strict-type-checked`, `stylistic`, or `stylistic-type-checked`. A config pointing at a strict preset "to get the rule" never contained it. | `rg -l -e consistent-type-imports -e no-import-type-side-effects node_modules/@typescript-eslint/eslint-plugin/dist/configs/flat/` returns only `all.js`. Then `rg -n --glob 'eslint.config.*' -e consistent-type-imports -e no-import-type-side-effects .` — here **empty output is the finding**. | SHOULD |
+| TS-MOD-21 | Never write `importsNotUsedAsValues` or `preserveValueImports` in any tsconfig. | Deprecated in TS 5.0, no-op from 5.5, and a hard `TS5102` build failure from 6.0 — reproduced on 6.0.3, exit 2. On a 6.x floor this is a broken build, not a warning. | see block TS-MOD-21 — a deliberate union; any hit is the violation, empty output is the pass. | MUST |
+| TS-MOD-18 | Never leave an import whose specifiers are **all** inline-`type`. Enable `@typescript-eslint/no-import-type-side-effects` wherever `verbatimModuleSyntax` is on; Biome's `useImportType` in `auto` style already cannot produce the shape. | Such an import is not elided — it emits `import {} from "mod"`, a bare side-effect import, with **zero** compiler diagnostics. The bug exists only in emitted JS the author never reads. | see block TS-MOD-18 and confirm every hit carries at least one non-`type` specifier. Then the rule name in `eslint.config.*`, or `useImportType` in `biome.json`. | MUST |
+| TS-MOD-19 | Name `consistent-type-imports` and `no-import-type-side-effects` explicitly in the ESLint config. Never assume a `typescript-eslint` preset supplies either. | Verified against the installed plugin (8.61.0, `dist/configs/flat/*.js`): both appear only in `all` — not in `recommended`, `recommended-type-checked`, `strict`, `strict-type-checked`, `stylistic`, or `stylistic-type-checked`. A config pointing at a strict preset "to get the rule" never contained it. | see block TS-MOD-19 (1) returns only `all.js`. Then see block TS-MOD-19 (2) — here **empty output is the finding**. | SHOULD |
 | TS-MOD-20 | In a package blocked from the compiler flag by TS-MOD-17, wire `@typescript-eslint/consistent-type-imports: "error"` as the substitute — and do not record that package as satisfying TS-MOD-16. | Autofixable, needs no module-format migration, catches the same import-side pattern. It does not give the export-side elision determinism; naming that shortfall is the point. | The rule name in `eslint.config.*`, then `eslint --fix .` and a clean re-run. | SHOULD |
+
+```sh
+# TS-MOD-16
+grep -H -n -E -e TS1484 -e TS1205 -e TS1287 -e TS1295 -e TS1202 -- tc.log
+```
+
+```sh
+# TS-MOD-21
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/tsconfig*.json' | xargs -0 -r grep -H -n -E -e importsNotUsedAsValues -e preserveValueImports --
+```
+
+```sh
+# TS-MOD-18
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts*' | xargs -0 -r grep -H -n -E -e 'import \{[[:space:]]*type [^}]*\} from' --
+```
+
+```sh
+# TS-MOD-19 (1)
+find node_modules/@typescript-eslint/eslint-plugin/dist/configs/flat/ -type f -print0 | xargs -0 -r grep -l -E -e consistent-type-imports -e no-import-type-side-effects --
+# TS-MOD-19 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/eslint.config.*' | xargs -0 -r grep -H -n -E -e consistent-type-imports -e no-import-type-side-effects --
+```
 
 ```ts
 // wrong — every specifier inline-type; emits `import {} from "./api"`, a side-effect import
@@ -138,18 +165,44 @@ settings: { 'import-x/resolver-next': [createTypeScriptImportResolver({ project:
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-MOD-12 | When enabling **any** Biome `project`-domain rule — `noImportCycles`, `noUndeclaredDependencies`, `noUnresolvedImports`, `noPrivateImports` — set `linter.domains.project` in the same change. | Biome builds the module graph only when the domain is on. The rule name under `linter.rules` alone ships a config that looks enforced and is very plausibly a no-op, with no error to say so. | `rg -n -e noImportCycles -e noUndeclaredDependencies -e noUnresolvedImports -e noPrivateImports biome.json` — a deliberate union; any hit demands that `rg -n -A2 '"domains"' biome.json` show `"project"`. | MUST |
+| TS-MOD-12 | When enabling **any** Biome `project`-domain rule — `noImportCycles`, `noUndeclaredDependencies`, `noUnresolvedImports`, `noPrivateImports` — set `linter.domains.project` in the same change. | Biome builds the module graph only when the domain is on. The rule name under `linter.rules` alone ships a config that looks enforced and is very plausibly a no-op, with no error to say so. | see block TS-MOD-12 (1) — a deliberate union; any hit demands that see block TS-MOD-12 (2) show `"project"`. | MUST |
 | TS-MOD-09 | Enable `import-x/no-cycle` with `ignoreExternal: true` and no `maxDepth` cap, or Biome `noImportCycles`. | A cycle that is safe today is safe by hand-enforced discipline; the rule makes it mechanical before an edit reintroduces an eagerly-read binding across the edge. | `npx madge --circular --extensions ts,tsx <src>` for the baseline — the list it prints is what the enabled rule will report on day one; the enabled rule thereafter. | SHOULD |
 | TS-MOD-10 | When breaking a reported cycle, decide by **when the binding is read**, not by `const`-vs-`function`. A `const` read only inside a function body is exactly as safe as a hoisted function; a function invoked at module top level across the edge is not. | The TDZ hazard is eager top-level evaluation, not the declaration keyword. Flipping the keyword moves code without moving the hazard. | For each binding crossing a reported cycle edge, read the importing file and locate every use: a use outside a function or class body is the violation. Move that binding to a third module rather than changing its keyword. | SHOULD |
-| TS-MOD-11 | Install `eslint-plugin-import-x`, not `eslint-plugin-import`, and wire the resolver through `import-x/resolver-next` + `createTypeScriptImportResolver(...)` — never the legacy `settings['import/resolver'].typescript` object. | `import-x` is the fork that ships the TypeScript-era fixes; upstream declined the `exports`-field requests that produced it. The legacy settings shape is what training-era examples show and it is inert against `import-x >= 4.5.0`. The resolver handles the `./foo.js`→`foo.ts` rewrite correctly (fixture-verified 2026-08-29), so a NodeNext codebase needs no exception. | `rg -n '"eslint-plugin-import"' package.json` returns nothing — the closing quote excludes the `-x` fork. Then `rg -n "'import/resolver'" --glob 'eslint.config.*' .` returns nothing wherever `import-x` is installed. | SHOULD |
+| TS-MOD-11 | Install `eslint-plugin-import-x`, not `eslint-plugin-import`, and wire the resolver through `import-x/resolver-next` + `createTypeScriptImportResolver(...)` — never the legacy `settings['import/resolver'].typescript` object. | `import-x` is the fork that ships the TypeScript-era fixes; upstream declined the `exports`-field requests that produced it. The legacy settings shape is what training-era examples show and it is inert against `import-x >= 4.5.0`. The resolver handles the `./foo.js`→`foo.ts` rewrite correctly (fixture-verified 2026-08-29), so a NodeNext codebase needs no exception. | see block TS-MOD-11 (1) returns nothing — the closing quote excludes the `-x` fork. Then see block TS-MOD-11 (2) returns nothing wherever `import-x` is installed. | SHOULD |
 | TS-MOD-13 | Enable `import-x/no-extraneous-dependencies` (`packageDir` per package in a monorepo) or Biome `noUndeclaredDependencies`, ignoring the host-injected virtual modules your platform supplies — an extension host's `vscode`, a framework's `astro:content`, a runtime's `bun:test`. Never treat a green run in a checkout without `node_modules` as meaningful. | It catches the dependency that lives in `devDependencies` and breaks on a consumer's clean install. Without a resolvable tree the rule silently no-ops, and a no-op is indistinguishable from a clean run. | `test -d node_modules` before trusting any run of this rule. Then the rule's ignore list must name each virtual module the platform injects; `import-x` has no built-in alias exemption, so a `@/`-style path alias needs the TypeScript resolver from TS-MOD-11 or it reads as a scoped npm package. | SHOULD |
+
+```sh
+# TS-MOD-12 (1)
+CHECKS=.claude/rules/typescript-quality/checks    # where this rule's checks/ directory is installed
+git ls-files -z --cached --others --exclude-standard -- 'biome.json' | xargs -0 -r grep -H -n -E -e noImportCycles -e noUndeclaredDependencies -e noUnresolvedImports -e noPrivateImports --
+# TS-MOD-12 (2)
+git ls-files -z --cached --others --exclude-standard -- 'biome.json' | PAT='"domains"' AFTER=2 BEFORE=0 xargs -0 -r awk -f "$CHECKS/context.awk" --
+```
+
+```sh
+# TS-MOD-11 (1)
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e '"eslint-plugin-import"' --
+# TS-MOD-11 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/eslint.config.*' | xargs -0 -r grep -H -n -E -e "'import/resolver'" --
+```
 
 ## Barrels and Package Boundaries
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-MOD-14 | Never flag a file as a barrel because it is named `index.ts`. Target the re-export fan-out pattern instead. | `index.ts` is also the conventional name for a CLI entry point, a subsystem's main file, and framework-mandated router config. A filename rule produces several false positives per real hit, and each one costs a pointless split. | Per file: `rg -c '^export\s.*\bfrom\b' <file>` against `wc -l <file>`. Mostly re-exports is a barrel; substantial own logic is a main file. No output from that count means zero re-exports — not a barrel. | SHOULD |
-| TS-MOD-15 | Never reach across a workspace package boundary with a relative path, not even from a test. Fix it by relocating the fixture, not by rewriting the specifier to the package's bare name. | `no-relative-packages`' autofix rewrites the specifier; if the target is not in the other package's `exports` map the "fix" just moves the failure to `no-unresolved`. Biome has no rule covering this shape at all, so in a Biome workspace the guard is structural or absent. | `rg -n --glob '*.ts*' '\.\./\.\./' <workspace packages dir>` — read each hit and resolve it: one landing inside a sibling package's source tree is the violation. Before accepting any autofix, confirm the target path appears in that package's `exports`. | SHOULD |
+| TS-MOD-14 | Never flag a file as a barrel because it is named `index.ts`. Target the re-export fan-out pattern instead. | `index.ts` is also the conventional name for a CLI entry point, a subsystem's main file, and framework-mandated router config. A filename rule produces several false positives per real hit, and each one costs a pointless split. | Per file: see block TS-MOD-14 against `wc -l <file>`. Mostly re-exports is a barrel; substantial own logic is a main file. No output from that count means zero re-exports — not a barrel. | SHOULD |
+| TS-MOD-15 | Never reach across a workspace package boundary with a relative path, not even from a test. Fix it by relocating the fixture, not by rewriting the specifier to the package's bare name. | `no-relative-packages`' autofix rewrites the specifier; if the target is not in the other package's `exports` map the "fix" just moves the failure to `no-unresolved`. Biome has no rule covering this shape at all, so in a Biome workspace the guard is structural or absent. | see block TS-MOD-15 — read each hit and resolve it: one landing inside a sibling package's source tree is the violation. Before accepting any autofix, confirm the target path appears in that package's `exports`. | SHOULD |
+
+```sh
+# TS-MOD-14
+FILE=src/x.ts    # the file to search
+grep -H -c -E -e '^export[[:space:]](.*[^[:alnum:]_])?from($|[^[:alnum:]_])' -- "$FILE"
+```
+
+```sh
+# TS-MOD-15
+git ls-files -z --cached --others --exclude-standard -- ':(glob)<workspace/**/*.ts*' ':(glob)packages/**/*.ts*' ':(glob)dir>/**/*.ts*' | xargs -0 -r grep -H -n -E -e '\.\./\.\./' --
+```
 
 ## What a Doc May Claim
 

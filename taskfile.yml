@@ -3,6 +3,7 @@
 version: '3'
 
 includes:
+  baseline: { taskfile: taskfiles/baseline.taskfile.yml, flatten: true }
   site: { taskfile: taskfiles/site.yml, optional: true }
   deploy: { taskfile: taskfiles/deploy.yml, optional: true }
   lore: { taskfile: taskfiles/lore.yml, optional: true }
@@ -63,9 +64,7 @@ tasks:
     cmds:
       - '{{.OXC}} oxlint --type-aware'
       - pnpm exec eslint --max-warnings 0 .
-      - cmd: actionlint
-        if: test -d .github/workflows
-      # zizmor: not published on ocx.sh yet, so not pinned and not run.
+      # actionlint + zizmor run in `workflows:lint` (baseline), part of `verify`.
 
   fmt:
     desc: oxfmt --check (ts/js/json/css/md/yaml), prettier --check for .astro
@@ -144,24 +143,27 @@ tasks:
     deps: [install]
     cmds:
       - pnpm exec markdownlint-cli2 "docs/**/*.md"
-      - lychee --offline --no-progress docs/
+      - ocx exec -g docs -- lychee --offline --no-progress docs/
       # ponytail: validates each docs/lore/ skill dir + top-level rule .md via grim build
       # (validate + pack, no push); adjust the glob if WP9's tree shape differs.
       - cmd: >
-          for p in docs/lore/*/; do [ -f "${p}SKILL.md" ] && grim build --offline "${p%/}"; done;
-          for p in docs/lore/*.md; do [ -f "$p" ] && grim build --offline "$p"; done
+          for p in docs/lore/*/; do [ -f "${p}SKILL.md" ] && ocx exec -g lint -- grim build --offline "${p%/}"; done;
+          for p in docs/lore/*.md; do [ -f "$p" ] && ocx exec -g lint -- grim build --offline "$p"; done
         if: test -d docs/lore
 
-  secrets:
-    desc: gitleaks over the git history (what gets published; ignored files like .lighthouseci/ are not)
-    cmds: [gitleaks git --redact .]
+  release:bump-files:
+    desc: Set the @ocx-sh/theme version (the one release.yml verifies against the tag); called by release:prepare with VERSION=x.y.z
+    requires: { vars: [VERSION] }
+    cmds:
+      - pnpm --dir packages/theme version {{.VERSION}} --no-git-tag-version
 
   cutover:verify:
     desc: Owner-local DNS/CDN cutover verification (alias of bunny:cutover-verify)
     cmds: [task: 'bunny:cutover-verify']
 
-  check:
-    desc: Every gate CI runs
+  verify:
+    desc: Every gate the basic CI tier runs, locally
+    aliases: [check]
     cmds:
       - task: lint
       - task: fmt
@@ -169,3 +171,48 @@ tasks:
       - task: test
       - task: build
       - task: css
+      - task: workflows:lint
+
+  playwright:install:
+    internal: true
+    cmds:
+      - pnpm exec playwright install {{if .CI}}--with-deps {{end}}chromium
+
+  ci:lint:
+    desc: CI lint tier (lock, baseline, secrets and workflow lint run beside it in verify-basic)
+    cmds:
+      - task: lint
+      - task: fmt
+
+  ci:test:
+    desc: CI test tier - typecheck, Vitest (JUnit in target/reports/junit/), built-CSS gate
+    cmds:
+      - task: typecheck
+      - mkdir -p target/reports/junit
+      - pnpm exec vitest run --reporter=default --reporter=junit --outputFile.junit=target/reports/junit/vitest.xml
+      - task: build
+      - task: css
+
+  ci:build:
+    desc: CI build tier (no compiled artifact beyond the site builds ci:test and ci:docs run)
+    cmds:
+      - 'echo "ci:build: nothing to build"'
+
+  ci:docs:
+    desc: CI docs tier - site build plus the Lighthouse gate
+    env: { LH_HTML: '1' }
+    cmds:
+      - task: build
+      - task: playwright:install
+      - task: lighthouse
+
+  ci:deep:
+    desc: CI deep tier - Playwright e2e (JUnit in target/reports/junit/) and the pack smoke test
+    cmds:
+      - mkdir -p target/reports/junit
+      - task: build
+      - task: playwright:install
+      - node scripts/require-dist.mjs {{.DISTS}}
+      - cmd: pnpm exec playwright test --reporter=list,junit
+        env: { PLAYWRIGHT_JUNIT_OUTPUT_FILE: target/reports/junit/e2e.xml }
+      - task: pack

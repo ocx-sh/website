@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 
+const repoRoot = join(import.meta.dirname, '..', '..', '..', '..');
 const skillDir = join(import.meta.dirname, '..', '..', '..', '..', 'skills', 'ocx-theme-deploy');
 const skill = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
 const failureModes = readFileSync(join(skillDir, 'references', 'failure-modes.md'), 'utf8');
@@ -85,7 +86,8 @@ describe('skills/ocx-theme-deploy workflow template', () => {
   });
 
   it('passes actionlint', () => {
-    const r = lint('actionlint', [file]);
+    // actionlint is in the ocx `test` group (installed by CI's test job), not on the default PATH.
+    const r = lint('ocx', ['--project', repoRoot, 'exec', '-g', 'test', '--', 'actionlint', file]);
     expect(r.out).toBe('');
     expect(r.status).toBe(0);
   });
@@ -93,9 +95,20 @@ describe('skills/ocx-theme-deploy workflow template', () => {
   // zizmor runs offline: its online audits (impostor commits, known-vulnerable actions) need a token and the
   // placeholder deploy SHA is not a real commit.
   it('passes zizmor', () => {
-    const direct = spawnSync('zizmor', ['--version'], { encoding: 'utf8' });
-    const [cmd, pre] = direct.error ? ['uvx', [`zizmor@${ZIZMOR_VERSION}`]] : ['zizmor', []];
-    const r = lint(cmd, [...pre, '--offline', '--no-progress', file]);
+    // uvx comes with uv in the ocx `test` group too.
+    const r = lint('ocx', [
+      '--project',
+      repoRoot,
+      'exec',
+      '-g',
+      'test',
+      '--',
+      'uvx',
+      `zizmor@${ZIZMOR_VERSION}`,
+      '--offline',
+      '--no-progress',
+      file,
+    ]);
     expect(r.out, r.out).not.toMatch(/\b(?:error|warning)\[/);
     expect(r.status, r.out).toBe(0);
   }, 120_000);

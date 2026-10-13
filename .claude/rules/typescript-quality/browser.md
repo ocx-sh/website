@@ -39,8 +39,20 @@ error boundary catches only the first.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| **TS-WEB-01** | Ship one top-level error boundary — React: a class with `static getDerivedStateFromError` plus `componentDidCatch`, or `react-error-boundary`; Vue: `app.config.errorHandler` paired with a component or app state that renders a fallback — and log inside the handler. | Without a boundary an uncaught render error is a permanent white screen; without a log inside it there is no trace at all. React boundaries are class-only — there is no hook equivalent, and a model will confidently write one. A Vue `errorHandler` alone silences the crash without redrawing anything. | `rg -n -e getDerivedStateFromError -e componentDidCatch -e 'config.errorHandler' -e onErrorCaptured src/` — zero hits in an SPA is the violation. Each hit must contain a log or reporter call in its body. | MUST |
-| **TS-WEB-02** | Register the browser's global handlers, `window.addEventListener('unhandledrejection', …)` and `'error'` — never `process.on('unhandledRejection', …)` — in bundled browser code. | The Node `process` surface does not exist in a tab; under Vite it is either undefined at module load or shimmed to an object with no `.on`, so the handler an agent writes from Node habit never fires and nothing says so. The WHATWG event name is all-lowercase; the Node one is camelCase, and neither runtime accepts the other's spelling. | `rg -n "process\.on\(" src/` — any hit in browser-bundled code is the violation. `rg -n "addEventListener\(['\"]unhandledrejection" src/` — zero hits is the violation. | MUST |
+| **TS-WEB-01** | Ship one top-level error boundary — React: a class with `static getDerivedStateFromError` plus `componentDidCatch`, or `react-error-boundary`; Vue: `app.config.errorHandler` paired with a component or app state that renders a fallback — and log inside the handler. | Without a boundary an uncaught render error is a permanent white screen; without a log inside it there is no trace at all. React boundaries are class-only — there is no hook equivalent, and a model will confidently write one. A Vue `errorHandler` alone silences the crash without redrawing anything. | see block TS-WEB-01 — zero hits in an SPA is the violation. Each hit must contain a log or reporter call in its body. | MUST |
+| **TS-WEB-02** | Register the browser's global handlers, `window.addEventListener('unhandledrejection', …)` and `'error'` — never `process.on('unhandledRejection', …)` — in bundled browser code. | The Node `process` surface does not exist in a tab; under Vite it is either undefined at module load or shimmed to an object with no `.on`, so the handler an agent writes from Node habit never fires and nothing says so. The WHATWG event name is all-lowercase; the Node one is camelCase, and neither runtime accepts the other's spelling. | see block TS-WEB-02 (1) — any hit in browser-bundled code is the violation. see block TS-WEB-02 (2) — zero hits is the violation. | MUST |
+
+```sh
+# TS-WEB-01
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e getDerivedStateFromError -e componentDidCatch -e config.errorHandler -e onErrorCaptured --
+```
+
+```sh
+# TS-WEB-02 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'process\.on\(' --
+# TS-WEB-02 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'addEventListener\(['\''"]unhandledrejection' --
+```
 
 ```ts
 // wrong — no `process` in the tab; the handler is never installed
@@ -60,10 +72,34 @@ config, while Vue's `vue/no-v-html` is **on by default** in
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| **TS-WEB-03** | Turn on the framework's raw-HTML lint and never blanket-disable it: `react/no-danger` as `error` in the flat config; `vue/no-v-html` left at its recommended default. A single site that genuinely needs raw HTML carries a line-scoped disable naming why. | React ships no default-on rule for `dangerouslySetInnerHTML`, so an agent adding one gets a clean lint run and no signal; on the Vue side the agent's fix for a red build is to switch the rule off file-wide. | `rg -n 'react/no-danger' eslint.config.*` — no hit in a React app is the violation. `rg -n -e "'vue/no-v-html': *0" -e "'vue/no-v-html': *'off'" -e 'eslint-disable.*no-v-html' src/ eslint.config.*` — a file-scoped or config-level disable is the violation; a line-scoped one with a reason is not. | SHOULD |
-| **TS-WEB-04** | Sanitize as the last operation before the value reaches `dangerouslySetInnerHTML` or `v-html` — never sanitize and then interpolate, template, or rewrite the result. | Post-sanitize modification can reintroduce exactly the markup the sanitizer removed, which is DOMPurify's own documented warning; the code still reads as sanitized. | `rg -n -e dangerouslySetInnerHTML -e 'v-html' src/` — for each hit, trace the bound expression back to its source and confirm the sanitizer call is the final transform. Empty output is a pass. | MUST |
-| **TS-WEB-05** | Never bind a URL attribute (`href`, `:href`, `src`) to an unvalidated string, and never bind `:style`/`style` to a whole user-supplied object — allowlist the scheme, and set individual style properties. | A `javascript:` URL is script execution through an attribute no HTML sanitizer looks at; a wholesale style binding is a clickjacking surface. Both are escaped correctly by the framework and still exploitable. | `rg -n -e ':href=' -e ':src=' -e ':style=' -e 'href={' -e 'style={' src/` — every hit whose value did not originate in this codebase needs a scheme check or a per-property assignment. | SHOULD |
-| **TS-WEB-06** | Run a static accessibility lint in the same invocation as the rest of the lint, at `error`: `eslint-plugin-jsx-a11y` for JSX, `eslint-plugin-vuejs-accessibility` for SFCs, or Biome's `a11y` group where Biome is the linter. *(Default — an adopter may set `warn`; do not run it as a separate optional job.)* | A11y defects an AST can see (missing label, `onClick` on a `div`, invalid ARIA) are the ones agents introduce most and the only ones that cost nothing to catch; a separate optional job is a job nobody runs. | `rg -n -e jsx-a11y -e vuejs-accessibility eslint.config.*`, or `rg -n '"a11y"' biome.json` — no hit is the violation. Then confirm the a11y plugin is inside the config the CI lint command loads, not a second unused config file. | SHOULD |
+| **TS-WEB-03** | Turn on the framework's raw-HTML lint and never blanket-disable it: `react/no-danger` as `error` in the flat config; `vue/no-v-html` left at its recommended default. A single site that genuinely needs raw HTML carries a line-scoped disable naming why. | React ships no default-on rule for `dangerouslySetInnerHTML`, so an agent adding one gets a clean lint run and no signal; on the Vue side the agent's fix for a red build is to switch the rule off file-wide. | see block TS-WEB-03 (1) — no hit in a React app is the violation. see block TS-WEB-03 (2) — a file-scoped or config-level disable is the violation; a line-scoped one with a reason is not. | SHOULD |
+| **TS-WEB-04** | Sanitize as the last operation before the value reaches `dangerouslySetInnerHTML` or `v-html` — never sanitize and then interpolate, template, or rewrite the result. | Post-sanitize modification can reintroduce exactly the markup the sanitizer removed, which is DOMPurify's own documented warning; the code still reads as sanitized. | see block TS-WEB-04 — for each hit, trace the bound expression back to its source and confirm the sanitizer call is the final transform. Empty output is a pass. | MUST |
+| **TS-WEB-05** | Never bind a URL attribute (`href`, `:href`, `src`) to an unvalidated string, and never bind `:style`/`style` to a whole user-supplied object — allowlist the scheme, and set individual style properties. | A `javascript:` URL is script execution through an attribute no HTML sanitizer looks at; a wholesale style binding is a clickjacking surface. Both are escaped correctly by the framework and still exploitable. | see block TS-WEB-05 — every hit whose value did not originate in this codebase needs a scheme check or a per-property assignment. | SHOULD |
+| **TS-WEB-06** | Run a static accessibility lint in the same invocation as the rest of the lint, at `error`: `eslint-plugin-jsx-a11y` for JSX, `eslint-plugin-vuejs-accessibility` for SFCs, or Biome's `a11y` group where Biome is the linter. *(Default — an adopter may set `warn`; do not run it as a separate optional job.)* | A11y defects an AST can see (missing label, `onClick` on a `div`, invalid ARIA) are the ones agents introduce most and the only ones that cost nothing to catch; a separate optional job is a job nobody runs. | see block TS-WEB-06 (1), or see block TS-WEB-06 (2) — no hit is the violation. Then confirm the a11y plugin is inside the config the CI lint command loads, not a second unused config file. | SHOULD |
+
+```sh
+# TS-WEB-03 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e react/no-danger --
+# TS-WEB-03 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e "'vue/no-v-html': *0" -e "'vue/no-v-html': *'off'" -e 'eslint-disable.*no-v-html' --
+```
+
+```sh
+# TS-WEB-04
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e dangerouslySetInnerHTML -e v-html --
+```
+
+```sh
+# TS-WEB-05
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e :href= -e :src= -e :style= -e 'href=\{' -e 'style=\{' --
+```
+
+```sh
+# TS-WEB-06 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e jsx-a11y -e vuejs-accessibility --
+# TS-WEB-06 (2)
+git ls-files -z --cached --others --exclude-standard -- 'biome.json' | xargs -0 -r grep -H -n -E -e '"a11y"' --
+```
 
 ## CSP in the Built Page
 
@@ -73,14 +109,31 @@ about which directives it drops.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| **TS-WEB-07** | A production policy contains neither `'unsafe-inline'` nor `'unsafe-eval'` in `script-src` or `default-src`. Prefer a nonce- or hash-based `script-src` with `'strict-dynamic'` over a host allowlist. | Either keyword defeats most of what CSP exists to stop, and both are what an agent adds to make a build-time warning go away. | `rg -n -e unsafe-inline -e unsafe-eval index.html public/ vite.config.*` — any hit in the shipped policy is the violation. Empty output is a pass. | MUST |
-| **TS-WEB-08** | Do not write `frame-ancestors`, `report-uri`, or `report-to` into a `<meta>` CSP, and do not claim clickjacking or reporting coverage from one. Those directives are ignored in meta delivery; carry them on the HTTP header or state in the same file that the app has none. | The directive parses without error and reports nothing, so the policy reads as complete while the protection does not exist. `X-Frame-Options` has the same meta-tag gap. | `rg -n -e frame-ancestors -e report-uri -e report-to -e X-Frame-Options index.html public/` — any hit inside a `<meta>` element is the violation. | SHOULD |
+| **TS-WEB-07** | A production policy contains neither `'unsafe-inline'` nor `'unsafe-eval'` in `script-src` or `default-src`. Prefer a nonce- or hash-based `script-src` with `'strict-dynamic'` over a host allowlist. | Either keyword defeats most of what CSP exists to stop, and both are what an agent adds to make a build-time warning go away. | see block TS-WEB-07 — any hit in the shipped policy is the violation. Empty output is a pass. | MUST |
+| **TS-WEB-08** | Do not write `frame-ancestors`, `report-uri`, or `report-to` into a `<meta>` CSP, and do not claim clickjacking or reporting coverage from one. Those directives are ignored in meta delivery; carry them on the HTTP header or state in the same file that the app has none. | The directive parses without error and reports nothing, so the policy reads as complete while the protection does not exist. `X-Frame-Options` has the same meta-tag gap. | see block TS-WEB-08 — any hit inside a `<meta>` element is the violation. | SHOULD |
+
+```sh
+# TS-WEB-07
+git ls-files -z --cached --others --exclude-standard -- 'index.html' ':(glob)public/**' ':(glob)vite.config.*' | xargs -0 -r grep -H -n -E -e unsafe-inline -e unsafe-eval --
+```
+
+```sh
+# TS-WEB-08
+git ls-files -z --cached --others --exclude-standard -- 'index.html' ':(glob)public/**' | xargs -0 -r grep -H -n -E -e frame-ancestors -e report-uri -e report-to -e X-Frame-Options --
+```
 
 ## Bundle Cost
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| **TS-WEB-09** | Gate the entry chunk on a byte budget that exits non-zero — `size-limit`, via a `"size-limit"` key in `package.json` or a `.size-limit.*` file, run in CI. Start the entry-chunk limit at Vite's own 500 kB warning threshold. *(Default — the adopter picks the number and records how it was measured.)* Never `bundlesize`. | `build.chunkSizeWarningLimit` defaults to 500 kB, compares against the **uncompressed** chunk, and only prints — a bundle can double in a single dependency bump with a green build. `bundlesize` last published 2024-03-15 and is stale training data an agent reaches for by name. | `rg -n 'size-limit' package.json` — no hit is the violation; then confirm the CI workflow runs it as its own step. `rg -n 'bundlesize' package.json` must be empty. | SHOULD |
+| **TS-WEB-09** | Gate the entry chunk on a byte budget that exits non-zero — `size-limit`, via a `"size-limit"` key in `package.json` or a `.size-limit.*` file, run in CI. Start the entry-chunk limit at Vite's own 500 kB warning threshold. *(Default — the adopter picks the number and records how it was measured.)* Never `bundlesize`. | `build.chunkSizeWarningLimit` defaults to 500 kB, compares against the **uncompressed** chunk, and only prints — a bundle can double in a single dependency bump with a green build. `bundlesize` last published 2024-03-15 and is stale training data an agent reaches for by name. | see block TS-WEB-09 (1) — no hit is the violation; then confirm the CI workflow runs it as its own step. see block TS-WEB-09 (2) must be empty. | SHOULD |
+
+```sh
+# TS-WEB-09 (1)
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e size-limit --
+# TS-WEB-09 (2)
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e bundlesize --
+```
 
 ## The Generated RPC Boundary
 
@@ -90,8 +143,22 @@ type safety for validation.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| **TS-WEB-10** | Never hand-edit a generated client or message file. Change the schema and regenerate; if the generated shape is wrong for a caller, wrap it in hand-written code beside the generated directory. | A hand edit survives exactly until the next codegen run, and the type error it silenced comes back in CI on someone else's branch with no record of the fix. | `rg --files-without-match '@generated' <generated-dir>` — a file there without the banner is either hand-written in the wrong place or an edited generated file. Then re-run codegen and `git diff --exit-code -- <generated-dir>`; a diff is the violation. | MUST |
-| **TS-WEB-11** | Treat a decoded protobuf message as type-safe, not validated: apply domain checks (non-empty, in-range, allowed enum) after decoding, and never distinguish "absent" from "zero/empty" on a proto3 field that is not declared `optional`. | proto3 implicit presence decodes a missing field and an explicitly-zero field identically, so a falsiness test on a scalar silently conflates them — and generated code guarantees only the declared scalar type, never a value the app can use. | `rg -n 'syntax = "proto3"' <proto-dir>` — if it matches, every field the client tests for presence must carry `optional` in its declaration (`rg -n '^\s*optional ' <proto-dir>`), or the test must not distinguish absent from zero. | MUST |
+| **TS-WEB-10** | Never hand-edit a generated client or message file. Change the schema and regenerate; if the generated shape is wrong for a caller, wrap it in hand-written code beside the generated directory. | A hand edit survives exactly until the next codegen run, and the type error it silenced comes back in CI on someone else's branch with no record of the fix. | see block TS-WEB-10 — a file there without the banner is either hand-written in the wrong place or an edited generated file. Then re-run codegen and `git diff --exit-code -- <generated-dir>`; a diff is the violation. | MUST |
+| **TS-WEB-11** | Treat a decoded protobuf message as type-safe, not validated: apply domain checks (non-empty, in-range, allowed enum) after decoding, and never distinguish "absent" from "zero/empty" on a proto3 field that is not declared `optional`. | proto3 implicit presence decodes a missing field and an explicitly-zero field identically, so a falsiness test on a scalar silently conflates them — and generated code guarantees only the declared scalar type, never a value the app can use. | see block TS-WEB-11 (1) — if it matches, every field the client tests for presence must carry `optional` in its declaration (see block TS-WEB-11 (2)), or the test must not distinguish absent from zero. | MUST |
+
+```sh
+# TS-WEB-10
+GENERATED_DIR=src/generated    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$GENERATED_DIR/**" | xargs -0 -r grep -L -E -e @generated --
+```
+
+```sh
+# TS-WEB-11 (1)
+PROTO_DIR=proto    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$PROTO_DIR/**" | xargs -0 -r grep -H -n -E -e 'syntax = "proto3"' --
+# TS-WEB-11 (2)
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$PROTO_DIR/**" | xargs -0 -r grep -H -n -E -e '^[[:space:]]*optional ' --
+```
 
 Per-call deadlines on an RPC transport are `TS-ASYNC-04`, not this file.
 
@@ -102,6 +169,23 @@ the installed version first; the rule does not apply below the floor named.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| **TS-WEB-12** | On React ≥19 (stable 2024-12-05) do not write `forwardRef` — destructure `ref` from props like any other prop — and give every ref callback a block body returning either nothing or a cleanup function. | `forwardRef` is deprecated as of 19 and is the single most reflexive stale pattern in React training data; the ref-callback tightening turns an implicit return into a type error, which agents then "fix" by widening the callback's type. | `rg -n 'forwardRef\(' src/` against a `react` dependency at `^19` or later — any hit is the violation. The ref-callback half is caught by `tsc --noEmit`. | SHOULD |
-| **TS-WEB-13** | Where `babel-plugin-react-compiler` is installed (stable 1.0.0, 2025-10-07), do not add new `useMemo`/`useCallback`/`React.memo`. If one is genuinely needed, comment the reason the compiler cannot see the call site. | The compiler already memoizes; a manual layer on top is review noise that reads as required, and "always memoize" is the dominant pre-2025 advice a model carries in. | `rg -n 'react-compiler' package.json` — if it matches, `rg -n -e 'useMemo\(' -e 'useCallback\(' -e 'React\.memo\(' src/` and require a justification comment on each hit added by the change under review. | CONSIDER |
-| **TS-WEB-14** | On Vite ≥8 (2026-03-12, Rolldown) write `build.rolldownOptions`; `build.rollupOptions` still works through a compat layer scheduled for removal. | The rename is newer than most training data, so a config edit reintroduces the deprecated key on every touch. | `rg -n 'rollupOptions' vite.config.*` against a `vite` dependency at `^8` or later — any hit is the violation. | SHOULD |
+| **TS-WEB-12** | On React ≥19 (stable 2024-12-05) do not write `forwardRef` — destructure `ref` from props like any other prop — and give every ref callback a block body returning either nothing or a cleanup function. | `forwardRef` is deprecated as of 19 and is the single most reflexive stale pattern in React training data; the ref-callback tightening turns an implicit return into a type error, which agents then "fix" by widening the callback's type. | see block TS-WEB-12 against a `react` dependency at `^19` or later — any hit is the violation. The ref-callback half is caught by `tsc --noEmit`. | SHOULD |
+| **TS-WEB-13** | Where `babel-plugin-react-compiler` is installed (stable 1.0.0, 2025-10-07), do not add new `useMemo`/`useCallback`/`React.memo`. If one is genuinely needed, comment the reason the compiler cannot see the call site. | The compiler already memoizes; a manual layer on top is review noise that reads as required, and "always memoize" is the dominant pre-2025 advice a model carries in. | see block TS-WEB-13 (1) — if it matches, see block TS-WEB-13 (2) and require a justification comment on each hit added by the change under review. | CONSIDER |
+| **TS-WEB-14** | On Vite ≥8 (2026-03-12, Rolldown) write `build.rolldownOptions`; `build.rollupOptions` still works through a compat layer scheduled for removal. | The rename is newer than most training data, so a config edit reintroduces the deprecated key on every touch. | see block TS-WEB-14 against a `vite` dependency at `^8` or later — any hit is the violation. | SHOULD |
+
+```sh
+# TS-WEB-12
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'forwardRef\(' --
+```
+
+```sh
+# TS-WEB-13 (1)
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e react-compiler --
+# TS-WEB-13 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'useMemo\(' -e 'useCallback\(' -e 'React\.memo\(' --
+```
+
+```sh
+# TS-WEB-14
+git ls-files -z --cached --others --exclude-standard -- ':(glob)vite.config.*' | xargs -0 -r grep -H -n -E -e rollupOptions --
+```

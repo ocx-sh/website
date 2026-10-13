@@ -172,9 +172,10 @@ describe('C-071 missing site dist', () => {
   it.skipIf(!hasTask).each(['e2e', 'lighthouse'])('`task %s` fails with `missing dist: site/dist`', (name) => {
     const repo = mkdtempSync(join(tmp, 'repo-'));
     const bin = join(repo, 'bin');
-    for (const d of ['scripts', 'examples/starlight/dist', 'site', 'bin'])
+    for (const d of ['scripts', 'examples/starlight/dist', 'site', 'bin', 'taskfiles'])
       mkdirSync(join(repo, d), { recursive: true });
-    cpSync(join(root, 'Taskfile.yml'), join(repo, 'Taskfile.yml'));
+    cpSync(join(root, 'taskfile.yml'), join(repo, 'taskfile.yml'));
+    cpSync(join(root, 'taskfiles/baseline.taskfile.yml'), join(repo, 'taskfiles/baseline.taskfile.yml'));
     cpSync(join(root, 'scripts/require-dist.mjs'), join(repo, 'scripts/require-dist.mjs'));
     for (const f of ['examples/starlight/package.json', 'site/package.json', 'examples/starlight/dist/index.html'])
       writeFileSync(join(repo, f), '');

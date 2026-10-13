@@ -36,10 +36,32 @@ exists to prevent, and it looks identical to a passing gate from the outside.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-GATE-07 | A repo whose lint config sets any rule to `warn` runs its linter with `--max-warnings 0`. | Without the flag, every `warn` rule fires and the process still exits `0` — the rules are on, the gate reports, and nothing blocks. | `rg -n -e '"warn"' -e "'warn'" eslint.config.*` — a union over both quote styles. Non-zero output with no `max-warnings` hit from `rg -n 'max-warnings' package.json` is the violation; empty from the first is the pass. | MUST |
-| TS-GATE-05 | One named target (`task check`, `npm run check`, or equivalent) chains lint, typecheck and test, and every CI job's `run:` line invokes that target rather than restating its steps. | A hand-copied step list drifts from the local gate silently: the contributor's command and CI's diverge from the first day, and the difference surfaces as a failure nobody can reproduce. | `rg -n -e 'eslint' -e 'tsc ' -e 'vitest' -e 'biome' .github/workflows` — a union over the tool names. Any hit is CI restating a step; the pass is CI naming only the aggregate target. | MUST |
-| TS-GATE-03 | A repo that enables typed linting keeps its standalone `tsc --noEmit` (or `vue-tsc --noEmit`) script and runs it as a separate gate step. | Typed lint is not a diagnostic superset: a plain type mismatch with no rule probing for it produces no lint output at all. Nor is it cheaper — the typed lint run builds its own program and does not reuse the typecheck's. | `rg -n -e '"typecheck"' -e '"check-types"' package.json` — a union over the two common script names; empty output in a repo whose lint is type-aware is the violation. | MUST |
-| TS-GATE-06 | The lint invocation's path argument is `.`, and every `ignores` entry resolves to build output or `node_modules`. | An `ignores` entry or a narrowed glob removes *all* rules from those files, not only the type-aware ones — `no-unused-vars` included. Build scripts and the lint config itself are the files most often dropped this way. | `rg -n '"lint"' package.json` shows the argument. Then read every `ignores` entry: one naming a file that ships or executes is the violation. Out-of-tsconfig files are fixed by TS-GATE-01, never by `ignores`. | MUST |
+| TS-GATE-07 | A repo whose lint config sets any rule to `warn` runs its linter with `--max-warnings 0`. | Without the flag, every `warn` rule fires and the process still exits `0` — the rules are on, the gate reports, and nothing blocks. | see block TS-GATE-07 (1) — a union over both quote styles. Non-zero output with no `max-warnings` hit from see block TS-GATE-07 (2) is the violation; empty from the first is the pass. | MUST |
+| TS-GATE-05 | One named target (`task check`, `npm run check`, or equivalent) chains lint, typecheck and test, and every CI job's `run:` line invokes that target rather than restating its steps. | A hand-copied step list drifts from the local gate silently: the contributor's command and CI's diverge from the first day, and the difference surfaces as a failure nobody can reproduce. | see block TS-GATE-05 — a union over the tool names. Any hit is CI restating a step; the pass is CI naming only the aggregate target. | MUST |
+| TS-GATE-03 | A repo that enables typed linting keeps its standalone `tsc --noEmit` (or `vue-tsc --noEmit`) script and runs it as a separate gate step. | Typed lint is not a diagnostic superset: a plain type mismatch with no rule probing for it produces no lint output at all. Nor is it cheaper — the typed lint run builds its own program and does not reuse the typecheck's. | see block TS-GATE-03 — a union over the two common script names; empty output in a repo whose lint is type-aware is the violation. | MUST |
+| TS-GATE-06 | The lint invocation's path argument is `.`, and every `ignores` entry resolves to build output or `node_modules`. | An `ignores` entry or a narrowed glob removes *all* rules from those files, not only the type-aware ones — `no-unused-vars` included. Build scripts and the lint config itself are the files most often dropped this way. | see block TS-GATE-06 shows the argument. Then read every `ignores` entry: one naming a file that ships or executes is the violation. Out-of-tsconfig files are fixed by TS-GATE-01, never by `ignores`. | MUST |
+
+```sh
+# TS-GATE-07 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e '"warn"' -e "'warn'" --
+# TS-GATE-07 (2)
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e max-warnings --
+```
+
+```sh
+# TS-GATE-05
+git ls-files -z --cached --others --exclude-standard -- ':(glob).github/workflows/**' | xargs -0 -r grep -H -n -E -e eslint -e 'tsc ' -e vitest -e biome --
+```
+
+```sh
+# TS-GATE-03
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e '"typecheck"' -e '"check-types"' --
+```
+
+```sh
+# TS-GATE-06
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e '"lint"' --
+```
 
 Measured on two small repos (8.3k and 4.5k source LOC), typed ESLint cost
 2.0–2.2× the bare `tsc --noEmit` it is often assumed to replace. Upstream's own
@@ -82,10 +104,30 @@ inconsistent counts across fetches.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-GATE-13 | Enabling a typescript-eslint extension rule sets the identically-named core ESLint rule `'off'` in the same config object. | 25 typescript-eslint rules shadow a core rule. With both on, either both fire or the later-declared one silently wins depending on config order. `no-throw-literal` → `only-throw-error` and `no-return-await` → `return-await` are full renames: the old names no longer exist, so a hit on either is stale config doing nothing. | `rg -n -e 'no-unused-vars' -e 'no-shadow' -e 'no-use-before-define' -e 'no-magic-numbers' -e 'max-params' -e 'require-await' -e 'no-throw-literal' -e 'no-return-await' eslint.config.*` — a union over the highest-traffic extension names. A hit lacking the `@typescript-eslint/` prefix, in a config that also enables the prefixed twin, is the violation. | MUST |
-| TS-GATE-04 | A `no-unsafe-*` rule is disabled only inside a config object carrying a `files:` array naming the files that touch the untyped surface, with a comment naming that surface. | This family is the only mechanical defence against `any` flowing out of an untyped dependency. A repo-wide disable to quiet a handful of import sites deletes it everywhere, and the config then claims less than it does. | `rg -n 'no-unsafe-' eslint.config.*` — for every hit set to `"off"`, confirm a sibling `files:` key in the same object. A disable with no `files:` key is the violation. | MUST |
-| TS-GATE-14 | Do not add `prefer-readonly-parameter-types`, `detect-object-injection`, `detect-non-literal-require`, `detect-child-process`, or `detect-possible-timing-attacks`. Overridable per repo — unban one only after counting real hits in your own tree. | The first self-disqualifies in its own docs ("skip this rule if your project does not attempt to enforce strong immutability guarantees of parameters"). The other four come from a plugin whose README concedes it "finds a lot of false positives which need triage by a human" — a direct conflict with a gate that has no human in the loop. Every bracket-index lookup on a typed object trips `detect-object-injection`. | `rg -n -e 'prefer-readonly-parameter-types' -e 'detect-object-injection' -e 'detect-non-literal-require' -e 'detect-child-process' -e 'detect-possible-timing-attacks' eslint.config.* package.json` — a union; any hit is review-blocking, empty output is the pass. | MUST |
-| TS-GATE-15 | Do not hand-pick a type-aware rule outside the repo's chosen preset unless a measured hit on that repo's own code justifies it, named in a comment beside the rule. | 13 of the 61 type-aware rules ship in no preset at all, and the ones that catch real bugs on first run are already inside `recommendedTypeChecked`. "More rules is safer" is how a config becomes unmaintainable, and each addition costs program-build time on every run. | `rg -n '@typescript-eslint/' eslint.config.*` — each hit outside the preset must carry a comment naming the finding that justified it. An uncommented addition is the finding. | SHOULD |
+| TS-GATE-13 | Enabling a typescript-eslint extension rule sets the identically-named core ESLint rule `'off'` in the same config object. | 25 typescript-eslint rules shadow a core rule. With both on, either both fire or the later-declared one silently wins depending on config order. `no-throw-literal` → `only-throw-error` and `no-return-await` → `return-await` are full renames: the old names no longer exist, so a hit on either is stale config doing nothing. | see block TS-GATE-13 — a union over the highest-traffic extension names. A hit lacking the `@typescript-eslint/` prefix, in a config that also enables the prefixed twin, is the violation. | MUST |
+| TS-GATE-04 | A `no-unsafe-*` rule is disabled only inside a config object carrying a `files:` array naming the files that touch the untyped surface, with a comment naming that surface. | This family is the only mechanical defence against `any` flowing out of an untyped dependency. A repo-wide disable to quiet a handful of import sites deletes it everywhere, and the config then claims less than it does. | see block TS-GATE-04 — for every hit set to `"off"`, confirm a sibling `files:` key in the same object. A disable with no `files:` key is the violation. | MUST |
+| TS-GATE-14 | Do not add `prefer-readonly-parameter-types`, `detect-object-injection`, `detect-non-literal-require`, `detect-child-process`, or `detect-possible-timing-attacks`. Overridable per repo — unban one only after counting real hits in your own tree. | The first self-disqualifies in its own docs ("skip this rule if your project does not attempt to enforce strong immutability guarantees of parameters"). The other four come from a plugin whose README concedes it "finds a lot of false positives which need triage by a human" — a direct conflict with a gate that has no human in the loop. Every bracket-index lookup on a typed object trips `detect-object-injection`. | see block TS-GATE-14 — a union; any hit is review-blocking, empty output is the pass. | MUST |
+| TS-GATE-15 | Do not hand-pick a type-aware rule outside the repo's chosen preset unless a measured hit on that repo's own code justifies it, named in a comment beside the rule. | 13 of the 61 type-aware rules ship in no preset at all, and the ones that catch real bugs on first run are already inside `recommendedTypeChecked`. "More rules is safer" is how a config becomes unmaintainable, and each addition costs program-build time on every run. | see block TS-GATE-15 — each hit outside the preset must carry a comment naming the finding that justified it. An uncommented addition is the finding. | SHOULD |
+
+```sh
+# TS-GATE-13
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e no-unused-vars -e no-shadow -e no-use-before-define -e no-magic-numbers -e max-params -e require-await -e no-throw-literal -e no-return-await --
+```
+
+```sh
+# TS-GATE-04
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e no-unsafe- --
+```
+
+```sh
+# TS-GATE-14
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' 'package.json' | xargs -0 -r grep -H -n -E -e prefer-readonly-parameter-types -e detect-object-injection -e detect-non-literal-require -e detect-child-process -e detect-possible-timing-attacks --
+```
+
+```sh
+# TS-GATE-15
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e @typescript-eslint/ --
+```
 
 ## Biome
 
@@ -106,15 +148,37 @@ not evidence the edit took effect.
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
 | TS-GATE-09 | Write every Biome rule key nested under its group (`linter.rules.<group>.<ruleName>`), and look the group up per rule rather than deriving it from the name. | An ungrouped key is silently ignored — not a config error. ESLint's flat rule namespace trains exactly the wrong reflex, so the tell is a lint run showing zero new diagnostics after "enabling" a rule, never a validation failure. | Run `biome lint` before and after the edit and compare the diagnostic count. An unchanged count means the key did not take. | MUST |
-| TS-GATE-12 | After `biome migrate eslint`, hand-check that `noFloatingPromises`, `noMisusedPromises`, `noUnsafeTypeAssertion` and `useReadonlyClassProperties` were actually ported. | Biome's published rule-sources cross-reference — which the migration draws from — omits all four typescript-eslint counterparts, even though three name their source on their own rule page. The tool's silence is not evidence the rule has no equivalent. | `rg -n -e 'noFloatingPromises' -e 'noMisusedPromises' -e 'noUnsafeTypeAssertion' -e 'useReadonlyClassProperties' biome.json` — a union; empty output after a migration is the finding, not the pass. | MUST |
-| TS-GATE-10 | Set `nursery.noFloatingPromises`, `nursery.noMisusedPromises` and `style.useThrowOnlyError` to `"error"`. Overridable — `nursery` is opt-in upstream precisely because those rules may still have bugs. | These are the three real default-severity gaps against typescript-eslint's `recommendedTypeChecked`. Biome's own team measures `noFloatingPromises` at ~75% of the tsc-backed rule's catch rate; partial coverage of an unawaited promise beats none. | `rg -n -e 'noFloatingPromises' -e 'noMisusedPromises' -e 'useThrowOnlyError' biome.json` — a union; each hit must sit under its stated group. Then time `biome check`: any `types`-domain rule triggers a full-project scan. | SHOULD |
-| TS-GATE-16 | Set `complexity.noExcessiveCognitiveComplexity` and `complexity.noExcessiveLinesPerFunction` to `"error"`. Overridable — raise the thresholds rather than deleting the keys. | Both are single-threshold, zero-config and off by default (15 and 50). This is the maintainability class an agent editing without human review most needs a mechanical backstop for, at the cost of one config line. | `rg -n -e 'noExcessiveCognitiveComplexity' -e 'noExcessiveLinesPerFunction' biome.json` — a union; empty output is the finding. | SHOULD |
+| TS-GATE-12 | After `biome migrate eslint`, hand-check that `noFloatingPromises`, `noMisusedPromises`, `noUnsafeTypeAssertion` and `useReadonlyClassProperties` were actually ported. | Biome's published rule-sources cross-reference — which the migration draws from — omits all four typescript-eslint counterparts, even though three name their source on their own rule page. The tool's silence is not evidence the rule has no equivalent. | see block TS-GATE-12 — a union; empty output after a migration is the finding, not the pass. | MUST |
+| TS-GATE-10 | Set `nursery.noFloatingPromises`, `nursery.noMisusedPromises` and `style.useThrowOnlyError` to `"error"`. Overridable — `nursery` is opt-in upstream precisely because those rules may still have bugs. | These are the three real default-severity gaps against typescript-eslint's `recommendedTypeChecked`. Biome's own team measures `noFloatingPromises` at ~75% of the tsc-backed rule's catch rate; partial coverage of an unawaited promise beats none. | see block TS-GATE-10 — a union; each hit must sit under its stated group. Then time `biome check`: any `types`-domain rule triggers a full-project scan. | SHOULD |
+| TS-GATE-16 | Set `complexity.noExcessiveCognitiveComplexity` and `complexity.noExcessiveLinesPerFunction` to `"error"`. Overridable — raise the thresholds rather than deleting the keys. | Both are single-threshold, zero-config and off by default (15 and 50). This is the maintainability class an agent editing without human review most needs a mechanical backstop for, at the cost of one config line. | see block TS-GATE-16 — a union; empty output is the finding. | SHOULD |
+
+```sh
+# TS-GATE-12
+git ls-files -z --cached --others --exclude-standard -- 'biome.json' | xargs -0 -r grep -H -n -E -e noFloatingPromises -e noMisusedPromises -e noUnsafeTypeAssertion -e useReadonlyClassProperties --
+```
+
+```sh
+# TS-GATE-10
+git ls-files -z --cached --others --exclude-standard -- 'biome.json' | xargs -0 -r grep -H -n -E -e noFloatingPromises -e noMisusedPromises -e useThrowOnlyError --
+```
+
+```sh
+# TS-GATE-16
+git ls-files -z --cached --others --exclude-standard -- 'biome.json' | xargs -0 -r grep -H -n -E -e noExcessiveCognitiveComplexity -e noExcessiveLinesPerFunction --
+```
 
 ## What No Linter Enforces
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-GATE-11 | No `any` crosses a typed parameter, property or return without an explicit narrowing check. In a Biome-only repo, write this contract into the repo's own rule text and label it unenforced-by-tooling. | Biome has no equivalent to `no-unsafe-assignment`, `no-unsafe-member-access`, `no-unsafe-call`, `no-unsafe-argument` or `no-unsafe-return` in any group, at any severity — confirmed against both its rule index and its cross-reference at v2.5.11. A reviewer who assumes the linter catches it is wrong, and nothing in the tool says so. | On ESLint repos: `rg -n -e 'no-unsafe-assignment' -e 'no-unsafe-member-access' -e 'no-unsafe-call' -e 'no-unsafe-argument' -e 'no-unsafe-return' eslint.config.*` — a union; each must be at `"error"` under a `*TypeChecked` config. On Biome repos the standing check is `rg -n --glob '*.ts' --glob '*.tsx' 'as unknown as' src` — every hit read by hand, because nothing else will. (TS-TOOL-10 owns the test-fake form of that cast.) | MUST |
+| TS-GATE-11 | No `any` crosses a typed parameter, property or return without an explicit narrowing check. In a Biome-only repo, write this contract into the repo's own rule text and label it unenforced-by-tooling. | Biome has no equivalent to `no-unsafe-assignment`, `no-unsafe-member-access`, `no-unsafe-call`, `no-unsafe-argument` or `no-unsafe-return` in any group, at any severity — confirmed against both its rule index and its cross-reference at v2.5.11. A reviewer who assumes the linter catches it is wrong, and nothing in the tool says so. | On ESLint repos: see block TS-GATE-11 (1) — a union; each must be at `"error"` under a `*TypeChecked` config. On Biome repos the standing check is see block TS-GATE-11 (2) — every hit read by hand, because nothing else will. (TS-TOOL-10 owns the test-fake form of that cast.) | MUST |
+
+```sh
+# TS-GATE-11 (1)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)eslint.config.*' | xargs -0 -r grep -H -n -E -e no-unsafe-assignment -e no-unsafe-member-access -e no-unsafe-call -e no-unsafe-argument -e no-unsafe-return --
+# TS-GATE-11 (2)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | xargs -0 -r grep -H -n -E -e 'as unknown as' --
+```
 
 ## What Agents Get Wrong Here
 

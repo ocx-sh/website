@@ -50,7 +50,12 @@ tends to report zero findings rather than an error.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-TYP-01 | Wire typed linting before adopting any rule below, and prove it fires. | Without `projectService`, the rules that catch every escape hatch here are inert, and inert is indistinguishable from clean. | `rg -n --glob 'eslint.config.*' -e projectService -e 'parserOptions.project' .` — **no hit is the finding**, the one inverted row in this file. Go-red: paste `const s: unknown = 1; s.length;` into a source file and confirm `no-unsafe-member-access` errors. Silence means nothing below is enforced. | MUST |
+| TS-TYP-01 | Wire typed linting before adopting any rule below, and prove it fires. | Without `projectService`, the rules that catch every escape hatch here are inert, and inert is indistinguishable from clean. | see block TS-TYP-01 — **no hit is the finding**, the one inverted row in this file. Go-red: paste `const s: unknown = 1; s.length;` into a source file and confirm `no-unsafe-member-access` errors. Silence means nothing below is enforced. | MUST |
+
+```sh
+# TS-TYP-01
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/eslint.config.*' | xargs -0 -r grep -H -n -E -e projectService -e parserOptions.project --
+```
 
 ## Escape Hatches
 
@@ -59,12 +64,44 @@ Each row names a spelling that does that, and what to write instead.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-TYP-02 | Use `any` at exactly two sites: a genuinely-unbounded generic constraint (`(...args: any[]) => any`) and an `as any` inside a generic function body that a unit test covers. Every other occurrence is `unknown` plus a narrowing check. **Pinned default — an adopter may extend the list, but each site names which exception it claims.** | `any` is not one hole; every operation on an `any` returns `any`, so one untyped parameter erases checking across the whole call graph downstream of it. | `rg -n --glob '*.ts' --glob '*.tsx' -e ': any\b' -e '\bas any\b' -e '<any[>]' src` — a deliberate union over the three spellings. A hit with no adjacent `eslint-disable-next-line @typescript-eslint/no-explicit-any` naming its exception is the finding; empty output is the pass. | SHOULD |
-| TS-TYP-03 | Never write `@ts-ignore` or `@ts-nocheck`. `@ts-expect-error` is allowed in test trees only, and always with a description on the same line. | `@ts-ignore` suppresses an error that may already have been fixed and keeps suppressing forever; `@ts-expect-error` at least fails loudly once the error is gone. | `rg -n -e '@ts-ignore' -e '@ts-nocheck' .` — any hit is the violation, empty output is the pass. Then `rg -n '@ts-expect-error\s*$' .` — a bare directive with no description is the finding. | MUST |
-| TS-TYP-04 | Never assert the shape of data you did not construct — parse and validate it at the boundary instead. | `JSON.parse(x) as Config` compiles, produces no runtime check, and moves the failure to whatever reads a missing field three frames later. | `rg -n -e 'JSON\.parse\(.*\) as ' -e '\.json\(\) as ' src` — a deliberate union over the two spellings; every hit is the finding. Go-red: delete a required key from a fixture payload and confirm the boundary throws. A consumer failing downstream instead is the violation. | MUST |
-| TS-TYP-05 | Treat a hand-written type predicate (`v is T`) as an assertion: delete it where the compiler now infers one, or cover its body with a test. | The body can lie — `typeof v === "object"` returning `v is Config` is an unchecked cast with a reassuring signature. TypeScript 5.5 (2024) infers predicates from a boolean return, so many hand-written ones are also redundant. | `rg -n --glob '*.ts' --glob '*.tsx' '\): \w+ is ' src` — every hit is a candidate; one whose body does not check each property the asserted type declares is the finding. | SHOULD |
-| TS-TYP-06 | Never write `as unknown as T` at a call site. Where a third-party type has no test-double package, put the double-cast inside one named `fake<T>()` helper per faked interface, in the test tree. | The double-cast defeats every assignability check at once; inlined at each call site it becomes the most common escape hatch in a codebase and nothing counts it. | `rg -n 'as unknown as' .` — every hit outside the one helper module is the finding. A count above zero in a `src` tree (as opposed to a test tree) is a separate, worse finding. | SHOULD |
-| TS-TYP-07 | Never widen `Object.keys` / `Object.entries` with an assertion to `keyof`. | Their return type is `string[]` deliberately: a value's static type does not rule out extra runtime keys, so `as (keyof T)[]` reintroduces exactly the unsoundness the language avoided, on your authority. Iterate the known key list, or keep `string` and narrow. | `rg -n -e 'Object\.keys\(.*\) as ' -e 'Object\.entries\(.*\) as ' src` — a deliberate union; every hit is the finding. | SHOULD |
+| TS-TYP-02 | Use `any` at exactly two sites: a genuinely-unbounded generic constraint (`(...args: any[]) => any`) and an `as any` inside a generic function body that a unit test covers. Every other occurrence is `unknown` plus a narrowing check. **Pinned default — an adopter may extend the list, but each site names which exception it claims.** | `any` is not one hole; every operation on an `any` returns `any`, so one untyped parameter erases checking across the whole call graph downstream of it. | see block TS-TYP-02 — a deliberate union over the three spellings. A hit with no adjacent `eslint-disable-next-line @typescript-eslint/no-explicit-any` naming its exception is the finding; empty output is the pass. | SHOULD |
+| TS-TYP-03 | Never write `@ts-ignore` or `@ts-nocheck`. `@ts-expect-error` is allowed in test trees only, and always with a description on the same line. | `@ts-ignore` suppresses an error that may already have been fixed and keeps suppressing forever; `@ts-expect-error` at least fails loudly once the error is gone. | see block TS-TYP-03 (1) — any hit is the violation, empty output is the pass. Then see block TS-TYP-03 (2) — a bare directive with no description is the finding. | MUST |
+| TS-TYP-04 | Never assert the shape of data you did not construct — parse and validate it at the boundary instead. | `JSON.parse(x) as Config` compiles, produces no runtime check, and moves the failure to whatever reads a missing field three frames later. | see block TS-TYP-04 — a deliberate union over the two spellings; every hit is the finding. Go-red: delete a required key from a fixture payload and confirm the boundary throws. A consumer failing downstream instead is the violation. | MUST |
+| TS-TYP-05 | Treat a hand-written type predicate (`v is T`) as an assertion: delete it where the compiler now infers one, or cover its body with a test. | The body can lie — `typeof v === "object"` returning `v is Config` is an unchecked cast with a reassuring signature. TypeScript 5.5 (2024) infers predicates from a boolean return, so many hand-written ones are also redundant. | see block TS-TYP-05 — every hit is a candidate; one whose body does not check each property the asserted type declares is the finding. | SHOULD |
+| TS-TYP-06 | Never write `as unknown as T` at a call site. Where a third-party type has no test-double package, put the double-cast inside one named `fake<T>()` helper per faked interface, in the test tree. | The double-cast defeats every assignability check at once; inlined at each call site it becomes the most common escape hatch in a codebase and nothing counts it. | see block TS-TYP-06 — every hit outside the one helper module is the finding. A count above zero in a `src` tree (as opposed to a test tree) is a separate, worse finding. | SHOULD |
+| TS-TYP-07 | Never widen `Object.keys` / `Object.entries` with an assertion to `keyof`. | Their return type is `string[]` deliberately: a value's static type does not rule out extra runtime keys, so `as (keyof T)[]` reintroduces exactly the unsoundness the language avoided, on your authority. Iterate the known key list, or keep `string` and narrow. | see block TS-TYP-07 — a deliberate union; every hit is the finding. | SHOULD |
+
+```sh
+# TS-TYP-02
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | xargs -0 -r grep -H -n -E -e ': any($|[^[:alnum:]_])' -e '(^|[^[:alnum:]_])as any($|[^[:alnum:]_])' -e '<any[>]' --
+```
+
+```sh
+# TS-TYP-03 (1)
+git ls-files -z --cached --others --exclude-standard -- '.' | xargs -0 -r grep -H -n -E -e @ts-ignore -e @ts-nocheck --
+# TS-TYP-03 (2)
+git ls-files -z --cached --others --exclude-standard -- '.' | xargs -0 -r grep -H -n -E -e '@ts-expect-error[[:space:]]*$' --
+```
+
+```sh
+# TS-TYP-04
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'JSON\.parse\(.*\) as ' -e '\.json\(\) as ' --
+```
+
+```sh
+# TS-TYP-05
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | xargs -0 -r grep -H -n -E -e '\): [[:alnum:]_]+ is ' --
+```
+
+```sh
+# TS-TYP-06
+git ls-files -z --cached --others --exclude-standard -- '.' | xargs -0 -r grep -H -n -E -e 'as unknown as' --
+```
+
+```sh
+# TS-TYP-07
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'Object\.keys\(.*\) as ' -e 'Object\.entries\(.*\) as ' --
+```
 
 ## `satisfies`, `as const`, and Annotations
 
@@ -77,7 +114,12 @@ that a plain annotation-free assignment would have silently exempted.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-TYP-08 | Validate a configuration- or lookup-shaped literal with `satisfies`, not with a widening annotation. | The annotation throws away exactly the information the literal existed to carry: keys stop being a closed set, values widen to `string`, and every read back out needs an assertion to recover what was already known. | `rg -n -e 'const \w+: Record<' -e 'const \w+: \w+\[\] = \[' src` — a deliberate union; each hit whose keys or values are read back out is a candidate. Confirm by swapping the annotation for `satisfies` and re-running `tsc --noEmit`: still clean means the annotation was buying widening and nothing else. | SHOULD |
+| TS-TYP-08 | Validate a configuration- or lookup-shaped literal with `satisfies`, not with a widening annotation. | The annotation throws away exactly the information the literal existed to carry: keys stop being a closed set, values widen to `string`, and every read back out needs an assertion to recover what was already known. | see block TS-TYP-08 — a deliberate union; each hit whose keys or values are read back out is a candidate. Confirm by swapping the annotation for `satisfies` and re-running `tsc --noEmit`: still clean means the annotation was buying widening and nothing else. | SHOULD |
+
+```sh
+# TS-TYP-08
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e 'const [[:alnum:]_]+: Record<' -e 'const [[:alnum:]_]+: [[:alnum:]_]+\[\] = \[' --
+```
 
 ```ts
 // wrong — routes.home.path is `string`; `keyof typeof routes` is `string`
@@ -93,8 +135,18 @@ const routes = { home: { path: "/" } } satisfies Record<string, Route>;
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-TYP-09 | Model a closed set of values as a union of string literals, or an `as const` object plus `(typeof X)[keyof typeof X]`. Never `enum`, and never `const enum`. | `enum` is not erasable syntax: it emits a runtime object, so it hard-errors under Node's native type stripping and under `erasableSyntaxOnly`. A numeric `enum` additionally accepts any bare `number`. A `const enum` needs whole-program knowledge to inline and is rejected — or silently stripped into a `ReferenceError` — by every per-file transpiler (esbuild, swc, Vite, Bun). And JSON data satisfies a string union directly, where an `enum` demands an assertion. | `rg -n --glob '*.ts' --glob '*.tsx' '\benum ' .` — every hit is the finding; a match in prose or a string is not. On TypeScript ≥5.8 (2025), the authoritative check is `tsc --noEmit` with `"erasableSyntaxOnly": true`, which errors on `enum`, runtime `namespace`, and constructor parameter properties in one pass. | MUST |
-| TS-TYP-10 | End every mapping from a closed union to a value with a `never`-typed fallthrough. Own one `assertNever` helper per workspace and call it from each. **Pinned — the helper's name is the adopter's to pick; that there is exactly one is not.** | Adding an arm to a union is the moment the check must fire. Without the `never` branch the compiler stays green, the new arm falls through to a default, and the wrong value ships. `switch-exhaustiveness-check` covers `switch` only — an `if`/`else` chain or a lookup object has no such rule. | The lint covers `switch` (needs TS-TYP-01). For everything else, go-red: add a member to the union and run `tsc --noEmit`. A build that stays green is the violation. Then `rg -n 'assertNever' src` — a codebase with discriminated unions and zero hits has no fallthrough anywhere. | MUST |
+| TS-TYP-09 | Model a closed set of values as a union of string literals, or an `as const` object plus `(typeof X)[keyof typeof X]`. Never `enum`, and never `const enum`. | `enum` is not erasable syntax: it emits a runtime object, so it hard-errors under Node's native type stripping and under `erasableSyntaxOnly`. A numeric `enum` additionally accepts any bare `number`. A `const enum` needs whole-program knowledge to inline and is rejected — or silently stripped into a `ReferenceError` — by every per-file transpiler (esbuild, swc, Vite, Bun). And JSON data satisfies a string union directly, where an `enum` demands an assertion. | see block TS-TYP-09 — every hit is the finding; a match in prose or a string is not. On TypeScript ≥5.8 (2025), the authoritative check is `tsc --noEmit` with `"erasableSyntaxOnly": true`, which errors on `enum`, runtime `namespace`, and constructor parameter properties in one pass. | MUST |
+| TS-TYP-10 | End every mapping from a closed union to a value with a `never`-typed fallthrough. Own one `assertNever` helper per workspace and call it from each. **Pinned — the helper's name is the adopter's to pick; that there is exactly one is not.** | Adding an arm to a union is the moment the check must fire. Without the `never` branch the compiler stays green, the new arm falls through to a default, and the wrong value ships. `switch-exhaustiveness-check` covers `switch` only — an `if`/`else` chain or a lookup object has no such rule. | The lint covers `switch` (needs TS-TYP-01). For everything else, go-red: add a member to the union and run `tsc --noEmit`. A build that stays green is the violation. Then see block TS-TYP-10 — a codebase with discriminated unions and zero hits has no fallthrough anywhere. | MUST |
+
+```sh
+# TS-TYP-09
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.ts' ':(glob)**/*.tsx' | xargs -0 -r grep -H -n -E -e '(^|[^[:alnum:]_])enum ' --
+```
+
+```sh
+# TS-TYP-10
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**' | xargs -0 -r grep -H -n -E -e assertNever --
+```
 
 ```ts
 // wrong — a fourth status ships as `undefined`, silently, no compile error
@@ -118,8 +170,18 @@ one package silently reaches its siblings.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-TYP-11 | Keep `declare global` and `declare module` in `.d.ts` files the `tsconfig` explicitly includes — never inside an implementation module. | Inside a `.ts` file the augmentation is load-bearing and invisible: it changes checking for the whole compilation unit, and no import anywhere records that it exists. | `rg -n --glob '*.ts' --glob '*.tsx' --glob '!*.d.ts' -e '^\s*declare global' -e '^\s*declare module' src` — a deliberate union; every hit is the finding, empty output is the pass. Asset-import shims (`declare module "*.css"`) are the same rule, not an exception — they belong in the `.d.ts` too. | SHOULD |
-| TS-TYP-12 | Never write a bodyless `declare module "pkg";` to quiet an untyped dependency. | The shorthand form types every export of that package as `any`, which propagates through every call — a wider hole than the `any` TS-TYP-02 forbids, opened by a line that looks like configuration. Write the members you actually call, or install the `@types` package. | `rg -n -e "declare module '[^']+';" -e 'declare module "[^"]+";' .` — a deliberate union over the two quote styles; every hit is the finding. A `declare module "x" { … }` with a body does not match. | SHOULD |
+| TS-TYP-11 | Keep `declare global` and `declare module` in `.d.ts` files the `tsconfig` explicitly includes — never inside an implementation module. | Inside a `.ts` file the augmentation is load-bearing and invisible: it changes checking for the whole compilation unit, and no import anywhere records that it exists. | see block TS-TYP-11 — a deliberate union; every hit is the finding, empty output is the pass. Asset-import shims (`declare module "*.css"`) are the same rule, not an exception — they belong in the `.d.ts` too. | SHOULD |
+| TS-TYP-12 | Never write a bodyless `declare module "pkg";` to quiet an untyped dependency. | The shorthand form types every export of that package as `any`, which propagates through every call — a wider hole than the `any` TS-TYP-02 forbids, opened by a line that looks like configuration. Write the members you actually call, or install the `@types` package. | see block TS-TYP-12 — a deliberate union over the two quote styles; every hit is the finding. A `declare module "x" { … }` with a body does not match. | SHOULD |
+
+```sh
+# TS-TYP-11
+git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' ':(exclude,glob)**/*.d.ts' | xargs -0 -r grep -H -n -E -e '^[[:space:]]*declare global' -e '^[[:space:]]*declare module' --
+```
+
+```sh
+# TS-TYP-12
+git ls-files -z --cached --others --exclude-standard -- '.' | xargs -0 -r grep -H -n -E -e "declare module '[^']+';" -e 'declare module "[^"]+";' --
+```
 
 ## What Agents Get Wrong Here
 

@@ -134,17 +134,17 @@ jobs:
         run: |
           export DOCKER_CONFIG="$RUNNER_TEMP/docker"
           echo "DOCKER_CONFIG=$DOCKER_CONFIG" >> "$GITHUB_ENV"
-          printf '%s' "$GITHUB_TOKEN" | ocx exec -- grim login ghcr.io -u "$GITHUB_ACTOR" --password-stdin --allow-insecure-store
+          printf '%s' "$GITHUB_TOKEN" | ocx exec -g lint -- grim login ghcr.io -u "$GITHUB_ACTOR" --password-stdin --allow-insecure-store
       # publish.toml (repo root) names the registry and namespace. --version strips
       # the leading v and cascades X.Y / X / latest; an existing version is a no-op.
       # --git embeds the origin remote, which links each ghcr package to this repo.
       - name: Publish
         env:
           TAG: ${{ github.ref_name }}
-        run: ocx exec -- grim publish --version "$TAG" --git --license Apache-2.0
+        run: ocx exec -g lint -- grim publish --version "$TAG" --git --license Apache-2.0
       - name: Log out
         if: always()
-        run: ocx exec -- grim logout ghcr.io
+        run: ocx exec -g lint -- grim logout ghcr.io
 
   github-release:
     name: GitHub release

@@ -76,7 +76,7 @@ and open questions. Read it before any design or code change.** Research trail:
   `skills-coverage.test.ts` fails on an exported component or plugin option no
   skill names. Skills version with the package: each `vX.Y.Z` tag publishes npm
   and runs `grim publish --version vX.Y.Z`. Validate with
-  `ocx exec -- grim publish --dry-run --version 0.0.0`.
+  `ocx exec -g lint -- grim publish --dry-run --version 0.0.0`.
 
 ## Commands
 
@@ -86,12 +86,13 @@ Tools come from `ocx.toml`; run everything through it: `ocx exec -- task <name>`
   wearing `packages/theme` straight from source. Pulls samples on first run.
 - `task samples` — refresh real pages from consumer repos (`--offline` reuses
   the cache in `.tmp/samples/`).
-- `task check` — the gate: lint, fmt, typecheck, test, build, css. CI
-  (`.github/workflows/ci.yml`) runs check/e2e/lighthouse/pack per job; releases
-  per [`RELEASING.md`](RELEASING.md). `task e2e`, `task visual` and `task pack`
-  (budgets, leak checks) run before every merge alongside `task check`. Locally,
-  Lighthouse runs as `task lighthouse:changed` only; the full `task lighthouse` is
-  CI's gate and the pre-release run.
+- `task verify` (alias `check`) — the gate: lint, fmt, typecheck, test, build, css,
+  workflow lint. CI runs the OCX baseline: `verify-basic.yml` maps its jobs onto
+  `task ci:lint`, `ci:test` and `ci:docs` (Lighthouse), `verify-deep.yml` runs
+  `ci:deep` (e2e, pack) nightly; releases per [`RELEASING.md`](RELEASING.md). `task e2e`,
+  `task visual` and `task pack` (budgets, leak checks) run before every merge alongside
+  `task check`. Locally, Lighthouse runs as `task lighthouse:changed` only; the full
+  `task lighthouse` is CI's gate and the pre-release run.
 - `task lighthouse` — every example page, mobile, 100×4 plus budgets, ~2 min
   cold: 3 lanes (`LH_SHARDS`), each one long-lived Chrome; one run per URL, a
   failing URL gets 3 and is judged on its median run. A URL is skipped only

@@ -1,6 +1,2 @@
-# CLAUDE.md
-
-Import hook only. Project context lives in [`AGENTS.md`](./AGENTS.md); edit
-that file, never this one.
-
+<!-- ocx-baseline: template-owned file — change ocx-sh/conventions, then run task copier:update -->
 @AGENTS.md

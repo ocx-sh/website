@@ -83,7 +83,9 @@ Contents: [The gate](#the-gate) · [Non-negotiables](#non-negotiables) ·
 
 `checks/` below means this rule's own `code-docs/checks/` directory, wherever
 it is installed. The scripts import only the standard library and each other,
-so keep the directory whole. Run every command from the repository root. Exit 0
+so keep the directory whole. Two awk filters in it, `file_gate.awk` and
+`hex_in_comment.awk`, back spot checks in the depth files and run on any POSIX
+awk. Run every command from the repository root. Exit 0
 is clean, 1 is findings, 2 is a usage error or missing input.
 
 ```sh

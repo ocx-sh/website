@@ -70,9 +70,9 @@ python3 checks/linkage_check.py records  --root . --base origin/main
   `pointers`, commit the baseline and the config, then the three lines above
   in CI, then the weekly job (LNK-12).
 - **Your own grep** for any rule here takes its file list from
-  `git ls-files -z`, piped through `xargs -r -0 rg`, as the spot checks below
-  do. A recursive `rg -e PATTERN .` skips hidden directories such as `.claude/`
-  and descends into submodules: it found 2 of one repo's 52 ID-prefixed test
+  `git ls-files -z`, piped through `xargs -0 -r grep`, as the spot checks below
+  do. A recursive ripgrep over the working directory skips hidden directories
+  such as `.claude/` and descends into submodules: it found 2 of one repo's 52 ID-prefixed test
   names, and 5,013 ID lines in another where the repo held 505.
 
 ## Process IDs in Comments
@@ -91,7 +91,8 @@ count, under separate keys. Examples and scripts count as prod.
 
 ```sh
 # LNK-11: must print nothing
-git ls-files -z -- '*.rs' '*.py' | xargs -r -0 rg -n -e 'fn [cs][0-9]{2,4}_' -e 'def test_[cs][0-9]{2,4}_'
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.rs' ':(glob)**/*.py' \
+  | xargs -0 -r grep -H -n -E -e 'fn [cs][0-9]{2,4}_' -e 'def test_[cs][0-9]{2,4}_' --
 ```
 
 ```rust
@@ -169,9 +170,10 @@ says so on stderr: a clean result then means nothing was scanned.
 
 ```sh
 # LNK-08: read every changed citation in the records, uncommitted edits included; add each configured records glob
-git diff --word-diff=plain "$(git merge-base origin/main HEAD)" -- '*adr_*.md' '*/adr/*.md' '*/adrs/*.md' '*/decisions/*.md' '.claude/rules/*.md'
+git diff --word-diff=plain --merge-base origin/main -- '*adr_*.md' '*/adr/*.md' '*/adrs/*.md' '*/decisions/*.md' '.claude/rules/*.md'
 # LNK-09: exactly one definition
-SYMBOL=parse_host_segment; git ls-files -z | xargs -r -0 rg -n -e "fn $SYMBOL\b" -e "def $SYMBOL\b" -e "class $SYMBOL\b" -e "struct $SYMBOL\b" -e "enum $SYMBOL\b" -e "func $SYMBOL\b" -e "function $SYMBOL\b"
+SYMBOL=parse_host_segment; git ls-files -z --cached --others --exclude-standard \
+  | xargs -0 -r grep -H -n -F -w -e "fn $SYMBOL" -e "def $SYMBOL" -e "class $SYMBOL" -e "struct $SYMBOL" -e "enum $SYMBOL" -e "func $SYMBOL" -e "function $SYMBOL" --
 # LNK-10: the deleting commit's rename map (R: destination, D: deleted,
 # nothing: the path never existed as cited), then the destination at HEAD
 OLD=src/legacy/client.rs; git log --diff-filter=D --pretty=%H -n 1 -- "$OLD" | xargs -r -I{} git show -M --name-status --format= {} | grep -F -e "$OLD"
@@ -186,7 +188,8 @@ NEW=src/oci/client.rs; git ls-files --error-unmatch "$NEW"
 
 ```sh
 # fragment citations: the last two path segments, with no tracked match
-git ls-files -z -- '*adr_*.md' '*/adr/*.md' '*/adrs/*.md' '*/decisions/*.md' '.claude/rules/*.md' | xargs -r -0 rg -o -N --no-filename -e '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\.(rs|py|ts|go|java|kt)\b' | sort -u | xargs -r -I{} sh -c 'git ls-files | grep -q -F -e "$1" || echo "unresolved: $1"' _ {}
+git ls-files -z --cached --others --exclude-standard -- '*adr_*.md' '*/adr/*.md' '*/adrs/*.md' '*/decisions/*.md' '.claude/rules/*.md' \
+  | xargs -0 -r -n1 grep -o -E -e '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\.(rs|py|ts|go|java|kt)([^A-Za-z0-9_]|$)' -- | sed -e 's/[^A-Za-z0-9_]$//' | sort -u | xargs -r -I{} sh -c 'git ls-files | grep -q -F -e "$1" || echo "unresolved: $1"' _ {}
 # cross-repo pointers, every clone in the repos map checked out
 python3 checks/linkage_check.py pointers --root .
 # URL liveness; string-literal fixture URLs are noise the diff against last week absorbs
@@ -210,7 +213,7 @@ Ranked by how often each bites in agent-written code, measured 2026-09-27.
 5. **Refactoring without touching the records that cite the moved paths.** Rare,
    but one such commit left 350 stale lines. Caught by LNK-06.
 6. **Trusting a naive detector.** An extensionless regex flags `plan_for`, a
-   recursive `rg` skips `.claude/`, and a "did the record change" test clears a
+   recursive ripgrep skips `.claude/`, and a "did the record change" test clears a
    record that still cites the dead path. Use the shipped checks.
 7. **Trusting `git log --follow` on a deleted path, or stopping at the first
    rename hop.** The empty answer reads as clean. Caught by LNK-10.
