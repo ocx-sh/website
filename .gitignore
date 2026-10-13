@@ -30,3 +30,6 @@ examples/starlight/public/casts/*
 # Python bytecode from the docs-quality checks; zone files written by the cutover tasks.
 __pycache__/
 *.zone
+
+# CI reports (JUnit).
+target/

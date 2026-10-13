@@ -104,7 +104,8 @@ One scanner holds the list: `SRF01_PATTERNS` in `checks/interface_leak.py`,
 
 ```bash
 # SRF-02: removed doc lines beside added plain comments, for reading
-git diff -U0 "$(git merge-base origin/main HEAD)" -- '*.rs' '*.py' '*.ts' '*.js' '*.go' '*.java' '*.kt' | rg -n -e '^\+\+\+ ' -e '^-\s*///' -e '^-\s*\*' -e '^\+\s*//[^/!]' -e '^\+\s*#[^!\[]'
+git diff -U0 --merge-base origin/main -- '*.rs' '*.py' '*.ts' '*.js' '*.go' '*.java' '*.kt' \
+  | grep -n -E -e '^\+\+\+ ' -e '^-[[:space:]]*///' -e '^-[[:space:]]*\*' -e '^\+[[:space:]]*//[^/!]' -e '^\+[[:space:]]*#[^![]'
 ```
 
 Python docstring lines carry no marker, so read every removed line inside the
@@ -223,8 +224,14 @@ helper; the output gate can. Exit codes: 0 clean, 1 findings, 2 usage.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| SRF-04 | Open a doc comment that says more than one sentence with a one-sentence summary of at most 200 rendered characters, then a blank doc line. On a clap-rendered item, rust-quality's DOC-11 short line of about 70 characters applies instead. | rustdoc listings, clap `-h`, TypeDoc and Click split at the first blank line and truncate nothing, so a run-on paragraph becomes the whole listing entry. In one agent-written TS repo, 93 of 196 long blocks had no break at all. | Rust: `rg -n --glob 'Cargo.toml' -e 'too_long_first_doc_paragraph' .` hits under `[workspace.lints.clippy]` (a nursery lint, so opt in), with existing debt ratcheted per crate so it never rises. Any language: the census command below, whose line count must not rise | SHOULD |
+| SRF-04 | Open a doc comment that says more than one sentence with a one-sentence summary of at most 200 rendered characters, then a blank doc line. On a clap-rendered item, rust-quality's DOC-11 short line of about 70 characters applies instead. | rustdoc listings, clap `-h`, TypeDoc and Click split at the first blank line and truncate nothing, so a run-on paragraph becomes the whole listing entry. In one agent-written TS repo, 93 of 196 long blocks had no break at all. | Rust: see block SRF-04 hits under `[workspace.lints.clippy]` (a nursery lint, so opt in), with existing debt ratcheted per crate so it never rises. Any language: the census command below, whose line count must not rise | SHOULD |
 | SRF-05 | State why a module exists once, in its module doc. Item docs in the same file describe only their local mechanism and never repeat the module's pointer or ID. | Without it the reason is restated at nearly every item: one agent-written file repeats one module-level ID 57 times, and 340 of its doc lines carry an ID. | The triage below: a record name or process ID in its output is a finding; a standard name (`UTF-8`, `SHA-256`) is not | SHOULD |
+
+```sh
+# SRF-04
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/Cargo.toml' \
+  | xargs -0 -r grep -H -n -e 'too_long_first_doc_paragraph' --
+```
 
 ```bash
 # SRF-04: every summary paragraph over 200 characters, as file:line:length
@@ -237,7 +244,9 @@ for b in json.load(sys.stdin):
 
 ```bash
 # SRF-05: every record name or ID token repeated within one file, with its count
-git ls-files -z -- '*.rs' '*.py' '*.ts' '*.go' '*.java' '*.kt' | xargs -r -0 rg -o -N --with-filename -e '\badr_[a-z0-9_]+\.md\b' -e '\bplan_[a-z0-9_]+\.md\b' -e '\b[A-Z]{1,5}-[0-9]{1,4}\b' | sort | uniq -c | awk '$1 > 1'
+# (no grep -w: with -o, busybox emits partial tokens. Take each whole word run, keep exact tokens.)
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.rs' ':(glob)**/*.py' ':(glob)**/*.ts' ':(glob)**/*.go' ':(glob)**/*.java' ':(glob)**/*.kt' \
+  | xargs -0 -r grep -H -o -E -e '[A-Za-z0-9_]*(adr_[a-z0-9_]+\.md|plan_[a-z0-9_]+\.md|[A-Z]{1,5}-[0-9]{1,4})[A-Za-z0-9_]*' -- | grep -E -e ':adr_[a-z0-9_]+\.md$' -e ':plan_[a-z0-9_]+\.md$' -e ':[A-Z]{1,5}-[0-9]{1,4}$' | sort | uniq -c | awk '$1 > 1'
 ```
 
 Module-doc presence is not SRF-05's concern; the language rule owns it (for

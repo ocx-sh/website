@@ -4,6 +4,7 @@ clients = ["claude", "codex", "opencode"]
 
 [bundles]
 docs-essentials = "ghcr.io/ocx-sh/lore/docs-essentials:latest"
+code-docs-essentials = "ghcr.io/ocx-sh/lore/code-docs-essentials:latest"
 typescript-essentials = "ghcr.io/ocx-sh/lore/typescript-essentials:latest"
 
 [skills]

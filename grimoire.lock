@@ -3,67 +3,95 @@ agent = []
 [metadata]
 lock_version = 1
 declaration_hash_version = 1
-declaration_hash = "sha256:2f1653d23865b4a41f30818d827124983fa6b14d8423647503ad063ee86793ef"
-generated_by = "grim 0.14.0"
-generated_at = "2026-10-04T15:55:57Z"
+declaration_hash = "sha256:87c27d684e2d713c05f96465366efa7a558f7152dfc200c774ccf5e55ee6381a"
+generated_by = "grim 0.14.3"
+generated_at = "2026-10-11T19:27:43Z"
 
 [[skill]]
 name = "code-docs-cleanup"
 pinned = "ghcr.io/ocx-sh/lore/code-docs-cleanup@sha256:4b312606567dab8769e98fcf9770072bc425e6f2e9d1b71a3638e9c60bcaed18"
-bundle = "ghcr.io/ocx-sh/lore/typescript-essentials"
-bundle_tag = "latest"
+
+[[skill.bundles]]
+repo = "ghcr.io/ocx-sh/lore/code-docs-essentials"
+tag = "latest"
+
+[[skill.bundles]]
+repo = "ghcr.io/ocx-sh/lore/typescript-essentials"
+tag = "latest"
 
 [[skill]]
 name = "docs-instrument"
-pinned = "ghcr.io/ocx-sh/lore/docs-instrument@sha256:e6a5459c18f7d8192ec81efc70bc674809edfbdc305d96bc60bf3cb14b3b790d"
+pinned = "ghcr.io/ocx-sh/lore/docs-instrument@sha256:fb3e1c487517dfacac9761ad95070479faa77a7a089e8fb61219dd813f92213b"
 bundle = "ghcr.io/ocx-sh/lore/docs-essentials"
 bundle_tag = "latest"
 
 [[skill]]
 name = "docs-plan"
-pinned = "ghcr.io/ocx-sh/lore/docs-plan@sha256:cbff12650842b27b1af5513caf447c516bb33b72735121902b48576fa0840778"
+pinned = "ghcr.io/ocx-sh/lore/docs-plan@sha256:09751a25d1535543ac0cae1a52273ec3e1938b9db577b83509de025508757180"
 bundle = "ghcr.io/ocx-sh/lore/docs-essentials"
 bundle_tag = "latest"
 
 [[skill]]
 name = "docs-review"
-pinned = "ghcr.io/ocx-sh/lore/docs-review@sha256:6008173170905e2f0e0562a10d840b5120496a7fb99564d985fce6bbeb05ac5f"
+pinned = "ghcr.io/ocx-sh/lore/docs-review@sha256:e3a08c62f16489d01c00d702fc780c485d85f0cf3f22948e3d07ba09c7e0a3f4"
 bundle = "ghcr.io/ocx-sh/lore/docs-essentials"
 bundle_tag = "latest"
 
 [[rule]]
 name = "code-docs"
-pinned = "ghcr.io/ocx-sh/lore/code-docs@sha256:9ee9c2e3c6198cfd5926ab48b793bcbc874ecfe751b434d65c0c5bd22d576141"
-bundle = "ghcr.io/ocx-sh/lore/typescript-essentials"
-bundle_tag = "latest"
+pinned = "ghcr.io/ocx-sh/lore/code-docs@sha256:0f0e026af937583e31a597a7d6b98b352ac7fefda15dd2e2c000ec31f857883a"
+
+[[rule.bundles]]
+repo = "ghcr.io/ocx-sh/lore/code-docs-essentials"
+tag = "latest"
+
+[[rule.bundles]]
+repo = "ghcr.io/ocx-sh/lore/typescript-essentials"
+tag = "latest"
 
 [[rule]]
 name = "css-theming"
-pinned = "ghcr.io/ocx-sh/lore/css-theming@sha256:b744c16f3c39111e0ea75c2d7609e00b02a745b79fe4bde1d1272ac5a99f64b4"
+pinned = "ghcr.io/ocx-sh/lore/css-theming@sha256:3cd9068e71aab8cc32b827b876da8894bf75f7c603270a4471f67f3434a2b800"
 
 [[rule]]
 name = "docs-quality"
-pinned = "ghcr.io/ocx-sh/lore/docs-quality@sha256:d9ab2df9ccff688f98f539ab1f1c3c9cf56fdfefa91b7d190dfca70d0afed09e"
+pinned = "ghcr.io/ocx-sh/lore/docs-quality@sha256:065355e0be2ce30d340c71b57bb10c5360a954a166023199535cedee56cee96c"
 bundle = "ghcr.io/ocx-sh/lore/docs-essentials"
 bundle_tag = "latest"
 
 [[rule]]
 name = "typescript-packaging"
-pinned = "ghcr.io/ocx-sh/lore/typescript-packaging@sha256:07292079463d943fd5be01d40c3c9f7b3fd88c3a3eb308c0fe119e1a354820f2"
+pinned = "ghcr.io/ocx-sh/lore/typescript-packaging@sha256:bb84da4598396e188bb370f191832cc5f988214303f0a1a6c5c18ed9d1bee7de"
 bundle = "ghcr.io/ocx-sh/lore/typescript-essentials"
 bundle_tag = "latest"
 
 [[rule]]
 name = "typescript-quality"
-pinned = "ghcr.io/ocx-sh/lore/typescript-quality@sha256:0531d9e5197a2634a3be9c287eadabb17ddb81e06cb049adbb28b970d85c951d"
+pinned = "ghcr.io/ocx-sh/lore/typescript-quality@sha256:5df437c8dad6758409deac39b87c1f0c6f7846ee28e8be47ba9d7cbc696427aa"
 bundle = "ghcr.io/ocx-sh/lore/typescript-essentials"
 bundle_tag = "latest"
+
+[[bundle]]
+name = "code-docs-essentials"
+repo = "ghcr.io/ocx-sh/lore/code-docs-essentials"
+tag = "latest"
+pinned = "ghcr.io/ocx-sh/lore/code-docs-essentials@sha256:183da12123e068eb066bd211bd837e4a8fcd5f2de1f1db222b3c34e0b740039a"
+
+[[bundle.member]]
+kind = "skill"
+name = "code-docs-cleanup"
+id = "ghcr.io/ocx-sh/lore/code-docs-cleanup:latest"
+
+[[bundle.member]]
+kind = "rule"
+name = "code-docs"
+id = "ghcr.io/ocx-sh/lore/code-docs:latest"
 
 [[bundle]]
 name = "docs-essentials"
 repo = "ghcr.io/ocx-sh/lore/docs-essentials"
 tag = "latest"
-pinned = "ghcr.io/ocx-sh/lore/docs-essentials@sha256:d8b090ccb9c7871b4fb03b7f1671a9464bf8d0a07e6d1ee8733a25ac79ae9c38"
+pinned = "ghcr.io/ocx-sh/lore/docs-essentials@sha256:21469c134d44ace8bc6f0d2468aadb972394c29aaf0deb0d52b33636832abb6d"
 
 [[bundle.member]]
 kind = "skill"
@@ -89,7 +117,7 @@ id = "ghcr.io/ocx-sh/lore/docs-quality:latest"
 name = "typescript-essentials"
 repo = "ghcr.io/ocx-sh/lore/typescript-essentials"
 tag = "latest"
-pinned = "ghcr.io/ocx-sh/lore/typescript-essentials@sha256:af27f2ad8b40ca2fa3276e143b1866fd899b719487484a7c2a857f48475ad7b7"
+pinned = "ghcr.io/ocx-sh/lore/typescript-essentials@sha256:e0446fdfa48ee779e3d3a31c74efdcebf1f557f91c7f1939d548fdf3d0e6c9b4"
 
 [[bundle.member]]
 kind = "skill"

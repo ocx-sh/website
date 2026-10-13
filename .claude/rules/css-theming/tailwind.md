@@ -46,7 +46,7 @@ That hazard exists in every Tailwind v4 project today.
 ## Three ways a token never reaches the browser
 
 - **`@theme inline { --x: var(--y) }` never emits `--x` at all.** The `var()` is
-  resolved into every utility at build time — `grep --color-accent` returns 0
+  resolved into every utility at build time — `grep -e '--color-accent'` returns 0
   matches — so a consumer `:root` redefinition does nothing. Reach for it only
   for tokens you accept as build-time-frozen.
 - **`--breakpoint-*` and `--container-*` resolve into literal `@media

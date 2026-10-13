@@ -14,6 +14,15 @@
     "infra/bunny/__snapshots__/**",
     "packages/theme/test/fixtures/**",
     "packages/theme/src/**/*.css",
-    "**/*.d.mts"
+    "**/*.d.mts",
+    ".copier-answers.yml",
+    ".pre-commit-config.yaml",
+    ".github/workflows/claude.yml",
+    ".github/workflows/verify-basic.yml",
+    ".github/workflows/verify-deep.yml",
+    ".github/zizmor.yml",
+    "cliff.toml",
+    "renovate.json",
+    "taskfiles/baseline.taskfile.yml"
   ]
 }

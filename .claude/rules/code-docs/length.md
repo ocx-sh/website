@@ -62,7 +62,7 @@ a block; code, a line of another kind, or a test/prod boundary ends it.
 ```bash
 python3 checks/comment_census.py --root . --check .code-docs-length.json    # CI, every change (LEN-03)
 python3 checks/comment_census.py --root . --over-cap                        # every over-cap block by line (LEN-01, LEN-02, LEN-08)
-python3 checks/comment_census.py --root . --over-cap | awk -F: 'FILENAME == ARGV[1] {want[$0]; next} $1 in want' <(git diff --name-only "$(git merge-base origin/main HEAD)" -- .) -   # only files this change touches
+python3 checks/comment_census.py --root . --over-cap | awk -F: 'FILENAME == ARGV[1] {want[$0]; next} $1 in want' <(git diff --name-only --merge-base origin/main -- .) -   # only files this change touches
 python3 checks/comment_census.py --root . --update .code-docs-length.json   # lock in drops; refuses any rise
 python3 checks/comment_census.py --root . --report                          # per package: ratio, char ratio, over-cap lines (context)
 ```
@@ -127,12 +127,18 @@ block and every block a change grows.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| LEN-04 | Set no comment:code target anywhere: not in instructions, rules, CI or review. Never size a new comment to the file around it. Ratio and char ratio appear only in `--report`, beside the human bands, as context. | A ratio target taxes every new within-cap guard and always pays more for deleting a comment than for compressing it. Writing to the surrounding density feeds on an already inflated file. In one agent-written codebase, new code added long-block lines at 4 times its earlier rate within six months (173 to 728 lines per 1,000 code lines, April to September 2026). | `rg -n -i --hidden --glob '!.git' --glob '!**/code-docs*' -e 'comment density' -e 'comment:code' -e 'comment-to-code' -e 'comment ratio' .` Any hit that sets a target, or asks an agent to match a file's density, is a finding. Reading check: judge a new block in a dense file against its cap, never against its neighbours. | MUST |
+| LEN-04 | Set no comment:code target anywhere: not in instructions, rules, CI or review. Never size a new comment to the file around it. Ratio and char ratio appear only in `--report`, beside the human bands, as context. | A ratio target taxes every new within-cap guard and always pays more for deleting a comment than for compressing it. Writing to the surrounding density feeds on an already inflated file. In one agent-written codebase, new code added long-block lines at 4 times its earlier rate within six months (173 to 728 lines per 1,000 code lines, April to September 2026). | see block LEN-04 Any hit that sets a target, or asks an agent to match a file's density, is a finding. Reading check: judge a new block in a dense file against its cap, never against its neighbours. | MUST |
 | LEN-05 | Bring an over-cap guard under the cap by splitting it, never by exempting it, keeping it whole or truncating it. (1) Write one comment per breaking edit, at that edit's own line (GRD-03). (2) Keep caller-visible preconditions in the doc block, and make implementation hazards plain comments. (3) Move the rest behind a file-qualified pointer. Delete a copy of a guard that already sits at its line. If one guard's constraint and consequence still overflow, tighten the wording and never drop either half (GRD-01). | "It is a guard, so it may stay long" protects exactly the doc essays that restate guards already written at their lines. Rewritten to human shape, guards run 1 to 4 plain lines or 3 to 9 doc lines. In a blind reason-recovery eval, cutting 13 over-cap guards to their first line lost 15 points of reason recovery and 21 of full recovery; the clause-by-clause rewrite lost nothing. | Reading heuristic: for each over-cap block, count the distinct breaking edits it names. More than one means split it, not shrink it. Search the enclosing function for a plain comment stating the same edit. A hit means delete the doc copy. Planted: a 12-line `// SAFETY:` block is listed by `--over-cap`. | MUST for never truncating or exempting; SHOULD for the split order |
 | LEN-06 | When a diff removes a comment block the guard recogniser fires on, or shrinks one so it no longer fires, keep its constraint and consequence (GRD-01), or name in one local line a test or lint proven to fail on its breaking edit by a planted run (GRD-07). A pointer never replaces a guard's constraint and consequence. List that block for review, with every other removed block of 3 or more lines. The list informs review and never fails a diff or runs as a CI gate. | The ratchet cannot see a deletion. A deleted within-cap guard leaves every count unchanged, and deleting an over-cap guard earns the same credit as compressing it, for less work. The recogniser finds about 43% of guards, so a quiet result proves nothing. On real history, a hunk-level gate flagged only sound edits. | Build the list by reading, with the commands below. For a cleanup diff, `python3 checks/cleanup_check.py --base origin/main` prints the shortened-guard items and blocks a flagged removal that has no replacement (CLN-01). | SHOULD |
 
 ```sh
-git diff -U0 --diff-algorithm=histogram "$(git merge-base origin/main HEAD)" -- . ':(exclude)*.md' | grep -e '^-' | grep -v -e '^---'
+# LEN-04
+git ls-files -z --cached --others --exclude-standard -- ':(exclude,glob)**/code-docs*' ':(exclude,glob)**/code-docs*/**' \
+  | xargs -0 -r grep -H -n -i -e 'comment density' -e 'comment:code' -e 'comment-to-code' -e 'comment ratio' --
+```
+
+```sh
+git diff -U0 --diff-algorithm=histogram --merge-base origin/main -- . ':(exclude)*.md' | grep -e '^-' | grep -v -e '^---'
 BLOCK='The flush runs before the rename, otherwise a crash leaves a torn file.'
 python3 checks/guard_recogniser.py "$BLOCK"   # FIRE: list it. quiet: unclassified, never safe
 ```

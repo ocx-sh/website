@@ -48,8 +48,19 @@ dead end in the rest. Pick the row before writing the call.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-OBS-01 | Every diagnostic goes through the channel its runtime's row names; extension, action, worker and webview source contains no `console.*` at all. | A log line written to a channel nobody reads is indistinguishable from no logging, and the absence only shows up when a user reports a bug nobody can reproduce. | `rg -n -t ts 'console\.' <non-cli-src>` — every hit is a violation, zero output is expected and clean. Enforce it standing with ESLint `no-console` scoped to those directories, or Biome `suspicious/noConsole`. | MUST |
-| TS-OBS-02 | Do not add a logging library to a CLI, an editor extension, a CI action, or a browser app. The runtime channel plus the error value is the whole requirement; a long-running service shipping to an aggregator is the named exception, declared in the commit body. | A dependency added for "structured logging" in a process with one output channel adds a configuration surface, a bundle, and a second place log level is decided, and removes nothing. | `rg -n -e pino -e winston -e bunyan -e 'consola' <package.json>` — each hit needs the service exception stated; zero output is expected and clean. | SHOULD |
+| TS-OBS-01 | Every diagnostic goes through the channel its runtime's row names; extension, action, worker and webview source contains no `console.*` at all. | A log line written to a channel nobody reads is indistinguishable from no logging, and the absence only shows up when a user reports a bug nobody can reproduce. | see block TS-OBS-01 — every hit is a violation, zero output is expected and clean. Enforce it standing with ESLint `no-console` scoped to those directories, or Biome `suspicious/noConsole`. | MUST |
+| TS-OBS-02 | Do not add a logging library to a CLI, an editor extension, a CI action, or a browser app. The runtime channel plus the error value is the whole requirement; a long-running service shipping to an aggregator is the named exception, declared in the commit body. | A dependency added for "structured logging" in a process with one output channel adds a configuration surface, a bundle, and a second place log level is decided, and removes nothing. | see block TS-OBS-02 — each hit needs the service exception stated; zero output is expected and clean. | SHOULD |
+
+```sh
+# TS-OBS-01
+NON_CLI_SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$NON_CLI_SRC/**/*.ts" ":(glob)$NON_CLI_SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e 'console\.' --
+```
+
+```sh
+# TS-OBS-02
+git ls-files -z --cached --others --exclude-standard -- 'package.json' | xargs -0 -r grep -H -n -E -e pino -e winston -e bunyan -e consola --
+```
 
 ## What a Catch Logs
 
@@ -59,8 +70,20 @@ can be destroyed, and it is destroyed at the log call, not at the throw.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-OBS-03 | A terminal catch passes the error **value** to the channel, never a string built from `.message` or `String(err)`. Where the channel only accepts a string, pass `inspect(err)` (Node) or `err.stack`. The named exception is user-facing text — a toast, a modal, a CLI validation line — which is deliberately message-only, and which then sends the full value to the diagnostic channel in the same block. | `console.error(err)` and `util.inspect(err)` print the entire nested `cause` chain with no depth cap; `err.message` prints one sentence. The bug report pasted out of that log has no trace and no wrapped cause, and nothing downstream recovers them. | `rg -n -t ts -e 'instanceof Error \? [^:]*\.message' -e 'console\.\w+\([^)]*\.message\)' -e '\(String\(e' <src>` — each hit is a log site to read; a hit whose expression does not also name `.stack` is the violation. Watched red on the wrong form below and silent on a `(err.stack ?? err.message)` rewrite of it. | MUST |
-| TS-OBS-04 | Never `JSON.stringify` an error, or an object holding one, for a log line — pass `Object.getOwnPropertyNames(err)` as the replacer, or flatten to `{ name, message, stack, cause }` by hand. | `message`, `stack`, `name` and `cause` are all non-enumerable own properties, so `JSON.stringify(err)` is `"{}"` — the structured log line ships an empty object, with no error and no warning. The replacer array is re-applied at every nesting level, so it recurses the whole cause chain. | `rg -n -t ts 'JSON\.stringify\([a-zA-Z{ ]*[eE]rr\w*\s*\}?\s*\)' <src>` — each hit is a violation, zero output is expected and clean. Watched red on `JSON.stringify(err)` and on `JSON.stringify({ error })`, and silent on the replacer form. | MUST |
+| TS-OBS-03 | A terminal catch passes the error **value** to the channel, never a string built from `.message` or `String(err)`. Where the channel only accepts a string, pass `inspect(err)` (Node) or `err.stack`. The named exception is user-facing text — a toast, a modal, a CLI validation line — which is deliberately message-only, and which then sends the full value to the diagnostic channel in the same block. | `console.error(err)` and `util.inspect(err)` print the entire nested `cause` chain with no depth cap; `err.message` prints one sentence. The bug report pasted out of that log has no trace and no wrapped cause, and nothing downstream recovers them. | see block TS-OBS-03 — each hit is a log site to read; a hit whose expression does not also name `.stack` is the violation. Watched red on the wrong form below and silent on a `(err.stack ?? err.message)` rewrite of it. | MUST |
+| TS-OBS-04 | Never `JSON.stringify` an error, or an object holding one, for a log line — pass `Object.getOwnPropertyNames(err)` as the replacer, or flatten to `{ name, message, stack, cause }` by hand. | `message`, `stack`, `name` and `cause` are all non-enumerable own properties, so `JSON.stringify(err)` is `"{}"` — the structured log line ships an empty object, with no error and no warning. The replacer array is re-applied at every nesting level, so it recurses the whole cause chain. | see block TS-OBS-04 — each hit is a violation, zero output is expected and clean. Watched red on `JSON.stringify(err)` and on `JSON.stringify({ error })`, and silent on the replacer form. | MUST |
+
+```sh
+# TS-OBS-03
+SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$SRC/**/*.ts" ":(glob)$SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e 'instanceof Error \? [^:]*\.message' -e 'console\.[[:alnum:]_]+\([^)]*\.message\)' -e '\(String\(e' --
+```
+
+```sh
+# TS-OBS-04
+SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$SRC/**/*.ts" ":(glob)$SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e 'JSON\.stringify\([a-zA-Z{ ]*[eE]rr[[:alnum:]_]*[[:space:]]*\}?[[:space:]]*\)' --
+```
 
 ```ts
 // Wrong — the stack and every wrapped cause are gone before the log call runs.
@@ -76,22 +99,46 @@ catch (err) { console.error("refresh failed", err); }
 ## Locale, Collation, Ordering
 
 One command finds the whole section's locale half:
-`rg -n -t ts -e '\.toLocale\w*\(\)' -e '\.localeCompare\([^,)]*\)' <src>`.
+`git ls-files -z --cached --others --exclude-standard -- ':(glob)src/**/*.ts' ':(glob)src/**/*.tsx' | xargs -0 -r grep -H -n -E -e '\.toLocale[[:alnum:]_]*\(\)' -e '\.localeCompare\([^,)]*\)' --`.
 Both patterns match only the argument-less call, so every hit is a real
 finding and zero output is expected and clean.
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
 | TS-OBS-05 | Pass an explicit BCP-47 tag to every `toLocaleString`, `toLocaleDateString`, `toLocaleTimeString` and `localeCompare` call. | With no argument both fall back to a locale derived from OS region settings and how ICU was built into the runtime, so the same code formats and orders differently on a laptop, a CI runner, and a slim container — surfacing as a flaky snapshot test rather than as an error. | The section command above; each hit is the violation. | SHOULD |
-| TS-OBS-06 | A comparator whose output is a contract — generated files, a published ordering, a version or identifier sort another implementation must agree with — compares by code unit: `a < b ? -1 : a > b ? 1 : 0`. Never `localeCompare` there, tag or no tag. | Locale collation is not code-unit order. A comparator documented as mirroring another language's ordering agrees with it on plain ASCII and diverges on punctuation-heavy prerelease tags, so the wrong version is published as latest with no crash and no diff. | `rg -n -t ts 'localeCompare' <src>` and read each hit: one inside a comparator that feeds generated output, a version ordering, or any sort a second implementation must reproduce is the violation. Display ordering is not. | MUST |
-| TS-OBS-07 | Every `.sort()` on anything but a `string[]` passes a comparator. | The default comparator coerces to string and compares UTF-16 code units, so `[80, 9].sort()` returns `[80, 9]` — deterministic, silent, and the wrong order. | `@typescript-eslint/require-array-sort-compare`, which is type-aware and needs `projectService` wired before it sees anything. Without it: `rg -n -t ts '\.sort\(\)' <src>` and read each hit; a receiver that is not a `string[]` is the violation. | MUST |
+| TS-OBS-06 | A comparator whose output is a contract — generated files, a published ordering, a version or identifier sort another implementation must agree with — compares by code unit: `a < b ? -1 : a > b ? 1 : 0`. Never `localeCompare` there, tag or no tag. | Locale collation is not code-unit order. A comparator documented as mirroring another language's ordering agrees with it on plain ASCII and diverges on punctuation-heavy prerelease tags, so the wrong version is published as latest with no crash and no diff. | see block TS-OBS-06 and read each hit: one inside a comparator that feeds generated output, a version ordering, or any sort a second implementation must reproduce is the violation. Display ordering is not. | MUST |
+| TS-OBS-07 | Every `.sort()` on anything but a `string[]` passes a comparator. | The default comparator coerces to string and compares UTF-16 code units, so `[80, 9].sort()` returns `[80, 9]` — deterministic, silent, and the wrong order. | `@typescript-eslint/require-array-sort-compare`, which is type-aware and needs `projectService` wired before it sees anything. Without it: see block TS-OBS-07 and read each hit; a receiver that is not a `string[]` is the violation. | MUST |
+
+```sh
+# TS-OBS-06
+SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$SRC/**/*.ts" ":(glob)$SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e localeCompare --
+```
+
+```sh
+# TS-OBS-07
+SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$SRC/**/*.ts" ":(glob)$SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e '\.sort\(\)' --
+```
 
 ## Clocks and Date Construction
 
 | ID | Rule | Rationale | Verification | Severity |
 |---|---|---|---|---|
-| TS-OBS-08 | Measure a duration with `performance.now()`. `Date.now()` is for a calendar delta a human reads, and for nothing else. | `Date.now()` follows the wall clock, so an NTP step or a DST change during the measured window makes the logged duration negative or an hour long for work that took a millisecond. | `rg -n -t ts 'Date\.now\(\) -' <src>` — each hit is a duration computed from the wall clock and is the violation unless it is an explicit calendar delta; zero output is expected and clean. Then read any `Date.now()` stored in a variable and subtracted later. | SHOULD |
-| TS-OBS-09 | Never construct a `Date` from a bare `YYYY-MM-DD` string when the caller means a local day — append `T00:00:00` for local, or `Z` for UTC, and say which. | ECMA-262 parses a date-only string as **UTC** midnight and the same string carrying a time but no offset as **local** midnight. One character flips the instant by up to a day, so a date rendered back to the user is off by one everywhere west of UTC. | `rg -n -t ts 'new Date\("' <src>` — a string-literal argument matching `YYYY-MM-DD` with no offset is the violation. Then read the variable-fed `new Date(` sites for the shape of the string they receive. | SHOULD |
+| TS-OBS-08 | Measure a duration with `performance.now()`. `Date.now()` is for a calendar delta a human reads, and for nothing else. | `Date.now()` follows the wall clock, so an NTP step or a DST change during the measured window makes the logged duration negative or an hour long for work that took a millisecond. | see block TS-OBS-08 — each hit is a duration computed from the wall clock and is the violation unless it is an explicit calendar delta; zero output is expected and clean. Then read any `Date.now()` stored in a variable and subtracted later. | SHOULD |
+| TS-OBS-09 | Never construct a `Date` from a bare `YYYY-MM-DD` string when the caller means a local day — append `T00:00:00` for local, or `Z` for UTC, and say which. | ECMA-262 parses a date-only string as **UTC** midnight and the same string carrying a time but no offset as **local** midnight. One character flips the instant by up to a day, so a date rendered back to the user is off by one everywhere west of UTC. | see block TS-OBS-09 — a string-literal argument matching `YYYY-MM-DD` with no offset is the violation. Then read the variable-fed `new Date(` sites for the shape of the string they receive. | SHOULD |
+
+```sh
+# TS-OBS-08
+SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$SRC/**/*.ts" ":(glob)$SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e 'Date\.now\(\) -' --
+```
+
+```sh
+# TS-OBS-09
+SRC=src    # the directory to search
+git ls-files -z --cached --others --exclude-standard -- ":(glob)$SRC/**/*.ts" ":(glob)$SRC/**/*.tsx" | xargs -0 -r grep -H -n -E -e 'new Date\("' --
+```
 
 ## What Agents Get Wrong Here
 

@@ -106,10 +106,11 @@ block by length alone loses clause 7, the only one a cold editor needs.
 
 ```bash
 python3 checks/comment_census.py --root . --list-blocks --min-block 4 --kind any      # 1
-git diff -U0 "$(git merge-base origin/main HEAD)" -- . ':(exclude)*.md' | grep -e '^-[[:space:]]*//' -e '^-[[:space:]]*#' -e '^-[[:space:]]*\*' | grep -i -e 'instead of' -e 'rather than' -e 'must not' -e 'never' -e 'otherwise'   # 2
+git diff -U0 --merge-base origin/main -- . ':(exclude)*.md' | grep -e '^-[[:space:]]*//' -e '^-[[:space:]]*#' -e '^-[[:space:]]*\*' | grep -i -e 'instead of' -e 'rather than' -e 'must not' -e 'never' -e 'otherwise'   # 2
 python3 checks/cleanup_check.py --base origin/main                                     # 3 comment-only diffs
 git grep -n -E -e '//.*\bcommit [0-9a-f]{7,40}\b' -e '#.*\bcommit [0-9a-f]{7,40}\b' -e '\*.*\bcommit [0-9a-f]{7,40}\b' -- '*.rs' '*.py' '*.ts' '*.go' '*.java' '*.kt'   # 4
-git ls-files -z -- '*.rs' '*.py' '*.ts' '*.go' '*.java' '*.kt' | xargs -r -0 rg -n -P -e '(?://|#).*\b(?=[0-9a-f]{0,39}[0-9])(?=[0-9a-f]{0,39}[a-f])[0-9a-f]{7,40}\b'   # 4b, triage
+git ls-files -z --cached --others --exclude-standard -- ':(glob)**/*.rs' ':(glob)**/*.py' ':(glob)**/*.ts' ':(glob)**/*.go' ':(glob)**/*.java' ':(glob)**/*.kt' \
+  | xargs -0 -r awk -f checks/hex_in_comment.awk --   # 4b, triage
 python3 checks/linkage_check.py pointers --root .                                      # 5
 ```
 
