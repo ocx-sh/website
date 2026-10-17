@@ -4,6 +4,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { computed, resolve } from './tokens.ts';
+import { logReady } from './helpers/log.ts';
 import { settle } from './helpers/settle.ts';
 
 const PAGE = '/docs/stories/search-field/default/';
@@ -52,6 +53,7 @@ test('SearchField: Escape clears a non-empty field and does nothing on an empty 
   await page.goto(PAGE);
   const input = page.locator(`${DEMO} input`);
   await input.fill('zag');
+  await logReady(page);
   await page.keyboard.press('Escape');
   await expect(input).toHaveValue('');
   await expect(input).toBeFocused();

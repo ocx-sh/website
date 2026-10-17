@@ -439,6 +439,9 @@ test.describe('WP13.4 DependencyExplorer', () => {
     await expect(root(page).locator('[data-zag-root="select"]')).toHaveAttribute('data-zag-state', 'live');
     await page.keyboard.press('Enter');
     await expect(licenseList(page)).toBeVisible();
+    // Zag moves focus to the list a frame after opening; an arrow before that is lost.
+    await expect(licenseList(page)).toBeFocused();
+    await expect(licenseList(page).getByRole('option').first()).toHaveAttribute('data-highlighted', '');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await expect(trigger).toHaveText(first[0]);
