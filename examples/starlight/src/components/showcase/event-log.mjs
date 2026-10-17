@@ -23,6 +23,8 @@ export function installEventLogs(doc) {
     if (event.type.startsWith('ocx:') && this instanceof win.Node) record(doc, this, event);
     return dispatch.call(this, event);
   };
+  // Events dispatched before this line are not logged; a spec waits for the mark before it acts.
+  for (const log of doc.querySelectorAll('[data-showcase-log]')) log.setAttribute('data-ready', '');
 }
 
 /** @param {Document} doc @param {Node} origin @param {Event} event */

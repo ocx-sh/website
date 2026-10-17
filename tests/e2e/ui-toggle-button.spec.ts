@@ -3,6 +3,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { computed, resolve } from './tokens.ts';
+import { logReady } from './helpers/log.ts';
 import { settle } from './helpers/settle.ts';
 
 const DEFAULT = '/docs/stories/toggle-button/default/';
@@ -37,6 +38,7 @@ test('ToggleButton: Space toggles aria-pressed and logs the change event', async
   const demo = page.locator('#story .ocx-ui-toggle-button[data-value="hidden"]');
   await expect(demo).toHaveAttribute('aria-pressed', 'false');
   await demo.focus();
+  await logReady(page);
   await page.keyboard.press('Space');
   await expect(demo).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Enter');

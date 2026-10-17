@@ -5,6 +5,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { computed } from './tokens.ts';
+import { logReady } from './helpers/log.ts';
 import { settle } from './helpers/settle.ts';
 
 const DOC = '/docs/components/cycle-button/';
@@ -60,6 +61,7 @@ test('CycleButton: Space and Enter advance it and the change event is logged', a
   await page.goto(PAGE);
   const button = demo(page);
   await button.focus();
+  await logReady(page);
   await page.keyboard.press('Space');
   await expect(button).toHaveAttribute('data-value', 'dark');
   await page.keyboard.press('Enter');
