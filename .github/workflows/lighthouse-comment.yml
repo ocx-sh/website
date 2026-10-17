@@ -98,18 +98,34 @@ jobs:
           text="$RUNNER_TEMP/lighthouse-text.md"
           if [ "$(head -n 1 "$src")" = "$MARKER" ]; then tail -n +2 "$src" > "$text"; else cp "$src" "$text"; fi
 
-          # On a fork PR the text is attacker-written: escape all HTML but <details>/<summary>, and break
-          # @mentions and images, or the bot comment could ping people, load a beacon or forge markup.
-          # GitHub rejects bodies over 65,536 characters, so cut at 60,000 (characters, never mid-codepoint).
+          # On a fork PR the text is attacker-written, so it is posted only if every line is one of the shapes
+          # scripts/lighthouse.mjs `summaryMarkdown` emits; anything else posts nothing. Table cells are a code
+          # span or plain [A-Za-z0-9 .()-] (no www., GH-), so nothing can link, mention, reference or embed.
+          # Over 60,000 characters (GitHub rejects 65,536) fails the same way. The program holds no single quote:
+          # scripts/ci/lighthouse-comment.test.ts extracts it from this file.
+          if ! perl -CSD -0777 -ne '
+            exit 1 if length > 60000;
+            my $plain = qr/(?:(?!www\.|gh-)[A-Za-z0-9 .()-])/i;
+            my $code = qr/`[^\p{C}`|\\]*(?:\\\|[^\p{C}`|\\]*)*`/;
+            my $cell = qr/(?:$plain|$code)*/;
+            my @ok = (
+              qr/\A\z/,
+              qr/\A## Lighthouse\z/,
+              qr/\A### Retried and failed\z/,
+              qr/\A\*\*\d+ URLs?, \d+ retried, \d+ failed\*\*(?: \(\d+ cached green, not audited\))?\z/,
+              qr/\A\d+ more run rows omitted \(size limit\)\.\z/,
+              qr{\A<details><summary>\d+ tightest pages \(lowest performance score\)</summary>\z},
+              qr{\A</details>\z},
+              qr/\A\|(?:$cell\|)+\z/,
+            );
+            for my $line (split /\n/, $_, -1) { grep { $line =~ $_ } @ok or exit 1 }
+          ' "$text"; then
+            echo "::notice::summary.md has a line outside the allowed shapes; nothing to comment"
+            exit 0
+          fi
           body="$RUNNER_TEMP/lighthouse-body.md"
           printf '%s\n' "$MARKER" > "$body"
-          perl -CSD -0777 -pe '
-            s/</&lt;/g;
-            s{&lt;(/?(?:details|summary))>}{<$1>}g;
-            s/@/\@\x{200B}/g;
-            s/!\[/!\x{200B}[/g;
-            $_ = substr($_, 0, 60000) . "\n\n_Summary truncated; see the run artifact._" if length > 60000;
-          ' "$text" >> "$body"
+          cat "$text" >> "$body"
           printf '\n\n_From the docs-reports artifact of this [workflow run](%s)._\n' "$RUN_URL" >> "$body"
 
           gh api --paginate "repos/$REPO/issues/$PR/comments" > "$RUNNER_TEMP/comments.json"
