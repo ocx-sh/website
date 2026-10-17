@@ -5,7 +5,7 @@
  * Contract C-031 — the tarball's `exports` keys are exactly the design §4.1
  * list, each key resolves to a file inside the installed tarball, every JS
  * export (`./starlight`, `./nav`, `./icons`, `./toast`, `./toaster`, `./lazy`, `./csp`) carries a `types` condition whose
- * `.d.mts` (prepack emits them, gitignored) or committed hand-written `.d.ts`
+ * `.d.mts` (committed; prepack re-emits them) or committed hand-written `.d.ts`
  * sibling (`./nav`, `./icons`) is in the tarball, and no `.ts` source ships.
  *
  * Contract C-032 — `publint` and `attw` (JS exports) report clean; `npm
@@ -21,6 +21,8 @@
  * fixture verbatim; its build renders every exported component outside the exempt list, on a doc
  * page or on a story page (checkFixture). The kit's styles reach doc pages only through the
  * example's customCss, so they stay behind there; story pages import them themselves.
+ *
+ * Every typed export must also resolve under `tsc --moduleResolution bundler` in the fixture.
  *
  * Usage: node scripts/pack-smoke.mjs (invoked by `task pack`).
  */
@@ -259,6 +261,8 @@ function main() {
       './cycle-button',
       './lazy',
       './csp',
+      './chrome',
+      './remark',
       '--format',
       'table',
     ]);
@@ -304,6 +308,25 @@ function main() {
     const ui = createRequire(sitePkg).resolve('@ocx-sh/theme/components/ui/Button.astro');
     if (!ui.replaceAll('\\', '/').endsWith('/src/components/ui/Button.astro'))
       throw new Error(`ui export: @ocx-sh/theme/components/ui/Button.astro resolved to ${ui}`);
+    // Every export with a `types` condition resolves for a bundler-resolution consumer: an
+    // unresolved one is TS7016 (implicit any) under strict. Specifiers derive from the manifest.
+    const typed = Object.entries(pkgJson.exports ?? {}).filter(([, v]) => typeof v !== 'string' && v.types);
+    writeFileSync(
+      join(site, 'types-resolve.ts'),
+      `${typed.map(([k], i) => `import * as t${i} from '@ocx-sh/theme${k.slice(1)}';`).join('\n')}\nexport { ${typed.map((_, i) => `t${i}`).join(', ')} };\n`,
+    );
+    run('tsc types resolve', site, join(site, 'node_modules/.bin/tsc'), [
+      '--ignoreConfig',
+      '--noEmit',
+      '--strict',
+      '--skipLibCheck',
+      '--module',
+      'esnext',
+      '--moduleResolution',
+      'bundler',
+      'types-resolve.ts',
+    ]);
+    rmSync(join(site, 'types-resolve.ts'));
     run('astro check', site, join(site, 'node_modules/.bin/astro'), ['check']);
     run('astro build', site, join(site, 'node_modules/.bin/astro'), ['build']);
     // C-124: every exported component rendered by a copied page (tarball's own component list).

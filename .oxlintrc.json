@@ -6,7 +6,8 @@
     ".agents/**",
     ".claude/**",
     ".opencode/**",
-    "tests/fixtures/**"
+    "tests/fixtures/**",
+    "**/*.d.mts"
   ],
   "rules": { "typescript/no-floating-promises": "error" }
 }
