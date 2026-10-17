@@ -150,8 +150,14 @@ const restore =
       pointer-events: none;
     }
     /* A switch crossfades the leaving and the entering panel. Live roots only, so the SSR panel is
-       final at first paint; no @starting-style, the panels are always rendered. */
+       final at first paint; no @starting-style, the panels are always rendered. Only the leaving
+       panel transitions `visibility` (it stays visible until it has faded): a hidden-to-visible
+       transition computes `hidden` until its first frame, and a Tab in that window skipped the
+       entering panel. */
     .ocx-tabs[data-zag-state='live'] > [data-part='content'] {
+      transition: opacity var(--ocx-duration-enter) var(--ocx-ease-out);
+    }
+    .ocx-tabs[data-zag-state='live'] > [data-part='content'][hidden] {
       transition:
         opacity var(--ocx-duration-enter) var(--ocx-ease-out),
         visibility var(--ocx-duration-enter) var(--ocx-ease-out);

@@ -360,7 +360,10 @@ describe('S-001 shell icons are registry icons and C-130f CSS', () => {
     expect(hidden).toMatch(/opacity: 0/);
     expect(bare).not.toContain('@starting-style');
     const live = rule(".ocx-tabs[data-zag-state='live'] > [data-part='content']");
-    expect(live).toMatch(/transition:[\s\S]*opacity[\s\S]*visibility/);
+    expect(live).toMatch(/transition: opacity/);
+    expect(live).not.toMatch(/visibility/); // entering: visible at once, or a Tab in the first frame skips the panel
+    const leaving = rule(".ocx-tabs[data-zag-state='live'] > [data-part='content'][hidden]");
+    expect(leaving).toMatch(/transition:[\s\S]*opacity[\s\S]*visibility/); // leaving: visible until faded
     // A lone code frame switches instantly: opaque, no transition, in the live state too.
     const lone =
       bare
@@ -369,6 +372,6 @@ describe('S-001 shell icons are registry icons and C-130f CSS', () => {
     expect(lone).toContain(".ocx-tabs[data-zag-state='live'] > [data-part='content']:has(");
     expect(lone).toMatch(/opacity: 1/);
     expect(bare).not.toContain('z-index');
-    expect(bare.match(/transition:/g)?.length).toBe(3); // trigger colours, prose crossfade, lone-frame none
+    expect(bare.match(/transition:/g)?.length).toBe(4); // trigger colours, entering and leaving crossfade, lone-frame none
   });
 });

@@ -101,6 +101,28 @@ test.describe('Tabs', () => {
     await expect(root.locator(':scope > [data-part="content"]:not([hidden])')).toBeFocused();
   });
 
+  test('C-130d a Tab right after End or Home lands on the entering panel, not the one still fading out', async ({
+    page,
+  }) => {
+    await page.goto(PLAIN);
+    const root = plain(page);
+    const tabs = root.getByRole('tab');
+    await live(root);
+    // No wait for the crossfade between the key and the Tab: both orders (the entering panel
+    // before and after the leaving one in the DOM).
+    for (const [key, from, to] of [
+      ['End', tabs.first(), tabs.last()],
+      ['Home', tabs.last(), tabs.first()],
+    ] as const) {
+      await from.focus();
+      await page.keyboard.press(key);
+      await expect(to).toBeFocused();
+      await expect(to).toHaveAttribute('aria-selected', 'true');
+      await page.keyboard.press('Tab');
+      await expect(root.locator(':scope > [data-part="content"]:not([hidden])')).toBeFocused();
+    }
+  });
+
   test('C-130e axe is clean with the demo live and with a second tab selected', async ({ page }) => {
     await page.goto(TABS);
     for (const pick of [undefined, 'PowerShell']) {
