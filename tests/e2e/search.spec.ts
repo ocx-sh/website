@@ -43,13 +43,13 @@ test('C-308 (a): one query returns hits from the root and from /docs/, the docs 
   const docs = search(page).locator('input[name="section"][value="docs"]');
   await expect(docs).toHaveCount(1);
   await docs.check({ force: true });
-  await expect.poll(async () => (await hrefs(page)).length).toBeGreaterThan(0);
-  expect((await hrefs(page)).every(inDocs)).toBe(true);
+  // Pagefind re-renders after the click: poll until the unfiltered hits are gone, not just non-empty.
+  await expect.poll(async () => hrefs(page).then((h) => h.length > 0 && h.every(inDocs))).toBe(true);
 });
 
 // Guards the filter (site/legacy-search.mjs), not the runtime fallback: the build already drops every
 // legacy bundle, so the mocks below match requests the page never makes. Each section legacy.json
-// lists is mocked as unreachable (404 for /docs/, a 302 elsewhere); the stage serves a stub bundle
+// lists is mocked as unreachable (a 302); the stage serves a stub bundle
 // for every other merge target (scripts/lhci-stage.mjs), so search works only if the filter holds.
 test('C-308 (b) guards the filter: legacy bundles are never requested, root hits and no errors remain', async ({
   page,
@@ -58,13 +58,12 @@ test('C-308 (b) guards the filter: legacy bundles are never requested, root hits
   page.on('request', (r) => requested.push(new URL(r.url()).pathname));
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.route('**/docs/pagefind/**', (r) => r.fulfill({ status: 404, body: 'not found' }));
   for (const { path } of legacySections)
     await page.route(`**${path}pagefind/**`, (r) => r.fulfill({ status: 302, headers: { location: '/gone/' } }));
   await query(page);
   const found = await hrefs(page);
   expect(found.length).toBeGreaterThan(0);
-  expect(found.some(inDocs)).toBe(false);
+  if (!docsMerged) expect(found.some(inDocs)).toBe(false); // merged, /docs/ hits are legitimate
   // The filter's own check: no legacy section's bundle is requested (were one merged, its mock would kill search).
   for (const { path } of legacySections) expect(requested.filter((p) => p.startsWith(`${path}pagefind/`))).toEqual([]);
   expect(errors).toEqual([]);
