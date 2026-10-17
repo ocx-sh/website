@@ -1,0 +1,119 @@
+name: Lighthouse comment
+
+# Posts the Lighthouse summary that verify-basic uploaded as one sticky PR comment, edited on every rerun.
+# Runs in the base repository with a write token, so it never checks out or runs PR code: the artifact is
+# untrusted text that only ever becomes a comment body. Fork PRs work for that reason.
+on:
+  workflow_run: # zizmor: ignore[dangerous-triggers] no checkout; artifact is used only as comment text
+    workflows: [verify-basic]
+    types: [completed]
+
+permissions: {}
+
+# One run per head repository and branch at a time (forks may reuse a branch name); a second run would
+# race the find-then-POST and leave two comments.
+concurrency:
+  group: lighthouse-comment-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  comment:
+    name: Comment
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pull-requests: write
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+      EVENT_PR: ${{ github.event.workflow_run.pull_requests[0].number }}
+      MARKER: '<!-- ocx-lighthouse -->'
+    steps:
+      - name: Find pull request
+        id: pr
+        run: |
+          pr="$EVENT_PR"
+          if [ -z "$pr" ]; then
+            # Fork PRs carry no pull_requests entry. A commit can sit in several PRs: take only the open one
+            # whose head is this commit from this repository, and only if exactly one is.
+            prs="$(gh api --paginate "repos/$REPO/commits/$HEAD_SHA/pulls" | jq -r --arg sha "$HEAD_SHA" --arg repo "$HEAD_REPO" \
+              '.[] | select(.state == "open" and .head.sha == $sha and .head.repo.full_name == $repo) | .number')"
+            if [ "$(grep -c . <<< "$prs")" -ne 1 ]; then
+              echo "::notice::no single open pull request with head $HEAD_SHA from $HEAD_REPO; nothing to comment"
+              exit 0
+            fi
+            pr="$prs"
+          fi
+          if ! [[ "$pr" =~ ^[0-9]+$ ]]; then
+            echo "::notice::no pull request number for $HEAD_SHA; nothing to comment"
+            exit 0
+          fi
+          # A rerun of an older commit must not overwrite the report of the newer one.
+          state="$(gh api "repos/$REPO/pulls/$pr" --jq '[.state, .head.sha] | @tsv')"
+          if [ "$state" != "open"$'\t'"$HEAD_SHA" ]; then
+            echo "::notice::PR #$pr is closed or its head moved past $HEAD_SHA; nothing to comment"
+            exit 0
+          fi
+          echo "number=$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Download reports
+        id: dl
+        if: steps.pr.outputs.number != ''
+        run: |
+          meta="$(gh api "repos/$REPO/actions/runs/$RUN_ID/artifacts?name=docs-reports" \
+            --jq '[.artifacts[] | select(.name == "docs-reports")][0] // empty | [.expired, .size_in_bytes] | @tsv')"
+          read -r expired size <<< "$meta"
+          # 100 MB: the artifact is untrusted and only ever read as text.
+          if [ -z "$meta" ] || [ "$expired" != "false" ] || [ "$size" -gt 104857600 ]; then
+            echo "::notice::docs-reports missing, expired or over 100 MB on run $RUN_ID; nothing to comment"
+            exit 0
+          fi
+          dir="$(mktemp -d -p "$RUNNER_TEMP")"
+          if ! gh run download "$RUN_ID" -R "$REPO" -n docs-reports -D "$dir"; then
+            echo "::notice::could not download docs-reports from run $RUN_ID; nothing to comment"
+            exit 0
+          fi
+          if [ ! -f "$dir/lighthouse/summary.md" ] || [ -L "$dir/lighthouse/summary.md" ]; then
+            echo "::notice::docs-reports has no lighthouse/summary.md; nothing to comment"
+            exit 0
+          fi
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert comment
+        if: steps.dl.outputs.dir != ''
+        env:
+          DIR: ${{ steps.dl.outputs.dir }}
+          PR: ${{ steps.pr.outputs.number }}
+        run: |
+          # The marker is ours, never the artifact's: drop the artifact's own copy and write one.
+          src="$DIR/lighthouse/summary.md"
+          text="$RUNNER_TEMP/lighthouse-text.md"
+          if [ "$(head -n 1 "$src")" = "$MARKER" ]; then tail -n +2 "$src" > "$text"; else cp "$src" "$text"; fi
+
+          # GitHub rejects bodies over 65,536 characters; bytes are a safe upper bound.
+          body="$RUNNER_TEMP/lighthouse-body.md"
+          printf '%s\n' "$MARKER" > "$body"
+          head -c 60000 "$text" >> "$body"
+          if [ "$(wc -c < "$text")" -gt 60000 ]; then
+            printf '\n\n_Summary truncated; see the run artifact._' >> "$body"
+          fi
+          printf '\n\n[Workflow run](%s)\n' "$RUN_URL" >> "$body"
+
+          gh api --paginate "repos/$REPO/issues/$PR/comments" > "$RUNNER_TEMP/comments.json"
+          ids="$(jq -r --arg m "$MARKER" \
+            '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith($m))) | .id' \
+            "$RUNNER_TEMP/comments.json")"
+          id="${ids%%$'\n'*}"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@"$body" > /dev/null
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -F body=@"$body" > /dev/null
+          fi

@@ -84,7 +84,7 @@ from `site/`; copy it, do not reinvent it.
   with a `lighthouse.budgets.mjs` (budgets, lhci assert matrix, page
   discovery). Build, serve with `astro preview` under the claimed `base`,
   audit every built page mobile, judge with lhci's assertion engine; a failing
-  page reruns up to 3 times and is judged on its median run. Sequential and
+  page reruns up to 3 times in total and passes once one run does. Sequential and
   uncached is fine at about 20 pages.
 - Budgets start from the `content` class of the theme's `tests/budgets.mjs`
   and never go above it.

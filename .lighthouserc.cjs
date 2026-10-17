@@ -1,6 +1,6 @@
 /**
  * Lighthouse CI config for `task lighthouse` (C-057), read by `scripts/lighthouse.mjs`
- * (lanes, retry-on-fail, cache; it judges with lhci's own assertion engine) and still a valid
+ * (lanes, best-of-3 retries, cache, report; it judges with lhci's own assertion engine) and still a valid
  * `lhci autorun` config. `scripts/lhci-stage.mjs` copies `site/dist` to `STAGE_ROOT`
  * and `examples/starlight/dist` to its `docs/`; `staticDistDir` below serves that same root, and
  * every URL is a site path or a `/docs/...` path the static server resolves. Requiring this file
@@ -10,7 +10,7 @@
  * directly (Node 24's `require(esm)` support) rather than duplicated.
  *
  * Category thresholds: C-057 requires score 1 in all four categories on the
- * median of 3 runs, so every category assertion is `error` at `minScore: 1` —
+ * best of 3 runs (a URL passes once one run does), so every category assertion is `error` at `minScore: 1` —
  * no ratchet-then-margin here, the contract is the literal max. Weight and
  * DOM budgets come from tests/budgets.mjs (C-110, C-111).
  */
@@ -49,7 +49,7 @@ module.exports = {
     collect: {
       staticDistDir: STAGE_ROOT,
       url: AUDITED_URLS,
-      // One run; the runner gives a failing URL RETRY_RUNS (3) and judges its median run.
+      // One run; the runner gives a failing URL RETRY_RUNS (3) in total, retries serially, and passes it on its first passing run.
       numberOfRuns: 1,
       // Collect-level, not under `settings`: lhci's healthcheck and runner read it here.
       chromePath: process.env.CHROME_PATH || chromium.executablePath(),
