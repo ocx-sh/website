@@ -38,7 +38,11 @@ export function render(api, root, spread) {
     if (value === api.value) label = el.textContent?.trim() ?? '';
     spread(el, api.getTriggerProps({ value }));
     const panel = panels[i];
-    if (panel) spread(panel, api.getContentProps({ value }));
+    if (panel) {
+      spread(panel, api.getContentProps({ value }));
+      // The leaving panel stays visible while it fades; inert keeps Tab off it meanwhile.
+      panel.toggleAttribute('inert', value !== api.value);
+    }
   });
 
   if (!changed) return;
