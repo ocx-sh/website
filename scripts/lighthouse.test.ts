@@ -161,7 +161,7 @@ describe('summaryMarkdown', () => {
     const table = md.slice(md.indexOf('### Retried'), md.indexOf('<details>'));
     expect(table).toContain('`/apps/`');
     expect(table).not.toContain('/clean/');
-    expect(table).toContain('fail: a \\| b');
+    expect(table).toContain('fail `a \\| b`');
     expect(table.match(/\| (?:1|2) \|/g)).toHaveLength(2);
     expect(table).toContain('| pass |');
   });
@@ -204,6 +204,12 @@ describe('summaryMarkdown', () => {
     expect(SUMMARY_LIMIT).toBeLessThan(60_000);
   });
 
+  it('turns every free-text value into a code span: no backtick, backslash or control character gets out', () => {
+    const md = summaryMarkdown([{ path: '/p`x/', ms: 1, runs: [fail('[a](https://x) `b` \\ @c\n#1'), pass()] }]);
+    expect(md).toContain('| `/p x/` | 1 |');
+    expect(md).toContain('fail `[a](https://x) b @c #1`');
+  });
+
   it('keeps <details> closed when the table fits', () => {
     const md = summaryMarkdown([{ path: '/p/', ms: 1, runs: [pass()] }]);
     expect(md.match(/<details>/g)).toHaveLength(1);
@@ -218,7 +224,7 @@ describe('summaryMarkdown', () => {
     expect(md).toContain('**2 URLs, 0 retried, 1 failed**');
     const table = md.slice(md.indexOf('### Retried'), md.indexOf('<details>'));
     expect(table).toContain('`/crash/`');
-    expect(table).toContain('fail: lane exited (1) mid-audit (reported)');
+    expect(table).toContain('fail `lane exited (1) mid-audit` (reported)');
     expect(table).not.toContain('/ok/');
   });
 

@@ -13,6 +13,7 @@
  *   A URL that never passes is reported with its run of fewest failed assertions.
  * - Cache: a URL whose key (`pageKey`: its HTML, every local file it pulls in, the tool versions,
  *   config, budgets, this script and the preset) matches a previous GREEN result is skipped.
+ *   A key is written the moment its URL passes (pass 1 or a retry), so a killed run keeps its greens.
  *   `LH_NO_CACHE=1` audits everything. Store: `.tmp/lhci-cache/<preset>/`.
  * - Output: one `<page>-<run>.report.json` per run in `.lighthouseci/`; `LH_HTML=1` adds HTML.
  *   `target/reports/lighthouse/` gets `summary.md` (marker line, verdict, retried and failed runs
@@ -161,10 +162,15 @@ const cells = (/** @type {Metrics | undefined} */ m) => [
   m?.cls?.toFixed(3) ?? '-',
   seconds(m?.si),
 ];
-/** One markdown table cell: no pipes or newlines, capped. */
-const cell = (/** @type {string} */ s) => {
-  const flat = s.replace(/\s+/g, ' ').replaceAll('|', '\\|');
-  return flat.length > CELL_MAX ? `${flat.slice(0, CELL_MAX)}…` : flat;
+/**
+ * Free text as one markdown code span in a table cell, capped. The comment workflow posts only cells of
+ * this shape or fixed plain text, so nothing here can link, mention, embed or break the row: no
+ * backtick, backslash or control character survives, and a pipe is escaped.
+ */
+const code = (/** @type {string} */ s) => {
+  const flat = s.replace(/[`\\\s\p{C}]+/gu, ' ').trim();
+  const cut = flat.length > CELL_MAX ? `${flat.slice(0, CELL_MAX)}…` : flat;
+  return `\`${cut.replaceAll('|', '\\|')}\``;
 };
 const row = (/** @type {string[]} */ c) => `| ${c.join(' | ')} |`;
 const rule = (/** @type {number} */ n) => row(Array.from({ length: n }, () => '---'));
@@ -174,6 +180,8 @@ const HEAD = ['Perf', 'FCP', 'LCP', 'TBT', 'CLS', 'SI'];
  * `summary.md`: marker, verdict, every run of the retried and failed URLs, and the pages closest to
  * failing. Kept under `limit` UTF-8 bytes by dropping the tightest table first, then trailing run rows,
  * so a cut never lands inside a row or an open `<details>`.
+ * Every free-text value is a code span (`code`); `.github/workflows/lighthouse-comment.yml` rejects any
+ * other line shape, so a new line or cell shape here needs its pattern there.
  * @param {Result[]} results the audited URLs
  * @param {{ cached?: number, limit?: number }} [opts] `cached`: URLs skipped as cached green
  */
@@ -191,10 +199,10 @@ export function summaryMarkdown(results, { cached = 0, limit = SUMMARY_LIMIT } =
     const best = bestRun(r.runs);
     return r.runs.map((run, i) =>
       row([
-        i ? '' : `\`${r.path}\``,
+        i ? '' : code(r.path),
         String(i + 1),
         ...cells(run.metrics),
-        cell(run.failures.length ? `fail: ${run.failures.join('; ')}` : 'pass') +
+        (run.failures.length ? `fail ${code(run.failures.join('; '))}` : 'pass') +
           (run === best && failedOf(r) ? ' (reported)' : ''),
       ]),
     );
@@ -206,7 +214,7 @@ export function summaryMarkdown(results, { cached = 0, limit = SUMMARY_LIMIT } =
     .filter((t) => t.m)
     .sort((a, b) => (a.m?.score ?? 1) - (b.m?.score ?? 1) || (b.m?.lcp ?? 0) - (a.m?.lcp ?? 0))
     .slice(0, TIGHTEST)
-    .map((t) => row([`\`${t.path}\``, ...cells(t.m)]));
+    .map((t) => row([code(t.path), ...cells(t.m)]));
 
   /** @param {number} nRows @param {boolean} withTight */
   const build = (nRows, withTight) =>
@@ -357,7 +365,8 @@ async function main() {
   );
   /** @type {Result[]} */
   let results = [];
-  if (todo.length) results = await audit(todo, n, preset, reports, out);
+  const keep = (/** @type {string} */ path) => writeFileSync(join(cacheDir, `${slug(path)}.key`), keys.get(path) ?? '');
+  if (todo.length) results = await audit(todo, n, preset, reports, out, keep);
 
   const cachedGreen = collect.url.length - todo.length;
   const md = summaryMarkdown(results, { cached: cachedGreen });
@@ -365,9 +374,6 @@ async function main() {
   writeFileSync(join(out, 'metrics.json'), `${JSON.stringify({ preset, cached: cachedGreen, urls: results })}\n`);
   if (results.length && process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${md}\n`);
 
-  for (const r of results) {
-    if (!failedOf(r)) writeFileSync(join(cacheDir, `${slug(r.path)}.key`), keys.get(r.path) ?? '');
-  }
   const failed = results.filter(failedOf);
   const runs = results.reduce((s, r) => s + r.runs.length, 0);
   console.log(`\nlighthouse: ${runs} run(s) over ${todo.length} URL(s) in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
@@ -392,9 +398,10 @@ async function main() {
  * @param {string} preset
  * @param {string} reports `.lighthouseci/`
  * @param {string} out `target/reports/lighthouse/`
+ * @param {(path: string) => void} keep called the moment a URL passes, in either pass
  * @returns {Promise<Result[]>}
  */
-async function audit(todo, n, preset, reports, out) {
+async function audit(todo, n, preset, reports, out, keep) {
   const FallbackServer =
     /** @type {new (dir: string, spa: boolean) => { port: number, listen(): Promise<void>, close(): Promise<void> }} */ (
       load('@lhci/cli/src/collect/fallback-server.js')
@@ -436,6 +443,7 @@ async function audit(todo, n, preset, reports, out) {
       const r = await runOn(/** @type {import('node:child_process').ChildProcess} */ (children[i]), path, 1, 1);
       const why = failedOf(r) ? `; run 1 failed: ${bestRun(r.runs).failures.join('; ')}` : '';
       console.log(`${failedOf(r) ? 'retry' : 'pass'} ${path} (${secs(r)}${why})`);
+      if (!failedOf(r)) keep(path);
       return r;
     });
 
@@ -451,6 +459,7 @@ async function audit(todo, n, preset, reports, out) {
       const more = await runOn(lane, r.path, RETRY_RUNS - 1, r.runs.length + 1);
       const all = { path: r.path, ms: r.ms + more.ms, runs: [...r.runs, ...more.runs] };
       console.log(`${failedOf(all) ? 'FAIL' : 'pass'} ${r.path} (${all.runs.length} runs, ${secs(all)})`);
+      if (!failedOf(all)) keep(r.path);
       return /** @type {[string, Result]} */ ([r.path, all]);
     });
     const retried = new Map(pairs);
