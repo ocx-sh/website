@@ -363,7 +363,7 @@ async function main() {
   const md = summaryMarkdown(results, { cached: cachedGreen });
   if (results.length) writeFileSync(join(out, 'summary.md'), md);
   writeFileSync(join(out, 'metrics.json'), `${JSON.stringify({ preset, cached: cachedGreen, urls: results })}\n`);
-  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${md}\n`);
+  if (results.length && process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${md}\n`);
 
   for (const r of results) {
     if (!failedOf(r)) writeFileSync(join(cacheDir, `${slug(r.path)}.key`), keys.get(r.path) ?? '');

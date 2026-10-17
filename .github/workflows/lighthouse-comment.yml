@@ -98,14 +98,19 @@ jobs:
           text="$RUNNER_TEMP/lighthouse-text.md"
           if [ "$(head -n 1 "$src")" = "$MARKER" ]; then tail -n +2 "$src" > "$text"; else cp "$src" "$text"; fi
 
-          # GitHub rejects bodies over 65,536 characters; bytes are a safe upper bound.
+          # On a fork PR the text is attacker-written: escape all HTML but <details>/<summary>, and break
+          # @mentions and images, or the bot comment could ping people, load a beacon or forge markup.
+          # GitHub rejects bodies over 65,536 characters, so cut at 60,000 (characters, never mid-codepoint).
           body="$RUNNER_TEMP/lighthouse-body.md"
           printf '%s\n' "$MARKER" > "$body"
-          head -c 60000 "$text" >> "$body"
-          if [ "$(wc -c < "$text")" -gt 60000 ]; then
-            printf '\n\n_Summary truncated; see the run artifact._' >> "$body"
-          fi
-          printf '\n\n[Workflow run](%s)\n' "$RUN_URL" >> "$body"
+          perl -CSD -0777 -pe '
+            s/</&lt;/g;
+            s{&lt;(/?(?:details|summary))>}{<$1>}g;
+            s/@/\@\x{200B}/g;
+            s/!\[/!\x{200B}[/g;
+            $_ = substr($_, 0, 60000) . "\n\n_Summary truncated; see the run artifact._" if length > 60000;
+          ' "$text" >> "$body"
+          printf '\n\n_From the docs-reports artifact of this [workflow run](%s)._\n' "$RUN_URL" >> "$body"
 
           gh api --paginate "repos/$REPO/issues/$PR/comments" > "$RUNNER_TEMP/comments.json"
           ids="$(jq -r --arg m "$MARKER" \

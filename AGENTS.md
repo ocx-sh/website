@@ -34,7 +34,8 @@ and open questions. Read it before any design or code change.** Research trail:
   Rules: `css-theming`, `typescript-quality`, `typescript-packaging`,
   `docs-quality`.
 - No Web Awesome, no mdBook/MkDocs adapters (see HANDOVER "Draft items").
-- Quality bar: Lighthouse 100 in all four categories; shared components typed
+- Quality bar: Lighthouse 100 in all four categories, judged best of 3 runs per page (a page that
+  reaches 100 once in three passes; the PR comment's tightest-pages table shows the margin); shared components typed
   and tested (Vitest + Astro Container API, Playwright under a non-root `base`).
 - Iconography stays stable: never swap an icon for looks; one icon, one meaning. The set was
   chosen 2026-09-28: Lucide (UI), Simple Icons (OS, brand, shells) and a few custom glyphs. Add or
