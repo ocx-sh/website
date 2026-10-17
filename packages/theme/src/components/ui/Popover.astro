@@ -3,8 +3,11 @@
 // surface (overlay.css; design question 1, interim). Esc and outside click close it and return
 // focus. Zag positions the panel with a fixed strategy, so clipping containers do not cut it
 // (D-Z10). The machine loads on the first hover/focus (C-104). `ocx:popover:change {open}`.
+// `src`: the panel is filled by one fetch on its first open (fill.mjs, `ocx:popover:fill {ok}`); the
+// default slot is not rendered then. Nothing is fetched before that open.
 import type { Placement, Props as PopoverProps } from '@zag-js/popover';
 import Button from './Button.astro';
+import Loader from './Loader.astro';
 import { nextUiId } from './ids.mjs';
 import { connect, machine, parts } from './popover.zag.mjs';
 import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
@@ -16,11 +19,19 @@ interface Props {
   placement?: Placement;
   /** Trap focus inside the panel and hide the page from assistive tech while open. */
   modal?: boolean;
+  /**
+   * URL of an HTML fragment of the same origin, fetched on the first open (never before) and cached;
+   * it replaces a loading state, or an error with Retry. Replaces the default slot.
+   */
+  src?: string;
+  /** Texts of the `src` states. */
+  labels?: { loading?: string; error?: string; retry?: string };
   /** Zag machine props passed through verbatim (C-106). */
   zag?: ZagProps<PopoverProps>;
 }
 
-const { placement = 'bottom-start', modal = false, zag } = Astro.props;
+const { placement = 'bottom-start', modal = false, src, labels, zag } = Astro.props;
+const { loading = 'Loading…', error = 'Could not load this.', retry = 'Retry' } = labels ?? {};
 const id = nextUiId('popover');
 const zagProps = { ...zag, modal, positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const } };
 const p = Object.fromEntries(
@@ -34,13 +45,28 @@ const p = Object.fromEntries(
   data-zag-state="idle"
   data-zag-id={id}
   data-zag-props={JSON.stringify(zagProps)}
+  data-fill-src={src}
 >
   <Button {...p.trigger}>
     <slot name="trigger" />
   </Button>
   <div class="ocx-ui-popover__positioner not-content" {...p.positioner}>
     <div class="ocx-ui-overlay ocx-ui-popover__content" {...p.content}>
-      <slot />
+      {src === undefined ? (
+        <slot />
+      ) : (
+        <div data-fill data-fill-state="idle" aria-live="polite">
+          <div data-fill-loading>
+            <Loader size="s" label={loading} />
+          </div>
+          <div data-fill-error>
+            <p>{error}</p>
+            <Button size="s" data-fill-retry>
+              {retry}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   </div>
 </div>
@@ -62,6 +88,18 @@ const p = Object.fromEntries(
       padding: var(--ocx-space-4) var(--ocx-space-5);
       font-family: var(--ocx-font-sans);
       font-size: var(--ocx-text-base);
+    }
+    [data-fill-error] {
+      display: none;
+    }
+    [data-fill-error] p {
+      margin: 0 0 var(--ocx-space-3);
+    }
+    [data-fill][data-fill-state='error'] > [data-fill-loading] {
+      display: none;
+    }
+    [data-fill][data-fill-state='error'] > [data-fill-error] {
+      display: block;
     }
     [data-part='content']:focus-visible {
       outline: var(--ocx-focus-ring);

@@ -1,0 +1,44 @@
+---
+// A plain Astro page on Shell with the docs Sidebar beside the content (no Starlight).
+import Shell from '@ocx-sh/theme/layouts/Shell.astro';
+import Sidebar from '@ocx-sh/theme/components/ui/Sidebar.astro';
+
+const groups = [
+  {
+    label: 'Getting started',
+    href: '/docs/shell/sidebar/',
+    items: [
+      { label: 'Install', href: '/docs/shell/' },
+      { label: 'Sidebar page', href: '/docs/shell/sidebar/', current: true },
+    ],
+  },
+  { label: 'Guides', items: [{ label: 'Neutral mode', href: '/docs/shell/neutral/' }] },
+];
+---
+
+<Shell title="Shell, sidebar" description="A plain Astro page with the docs sidebar.">
+  <div class="sidebar-demo">
+    <aside>
+      <Sidebar groups={groups} />
+    </aside>
+    <div>
+      <h1>Shell, sidebar</h1>
+      <p>The sidebar is the theme's own, rendered at build time, on a page without Starlight.</p>
+    </div>
+  </div>
+</Shell>
+
+<style>
+  @layer ocx {
+    .sidebar-demo {
+      display: grid;
+      grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+      gap: var(--ocx-space-6);
+    }
+    @media (width < 40rem) {
+      .sidebar-demo {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  }
+</style>

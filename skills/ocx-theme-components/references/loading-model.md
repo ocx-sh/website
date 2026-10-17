@@ -22,9 +22,12 @@ before input.
 
 Components without a machine render plain HTML and a small delegated script,
 or no script at all: `Button`, `Link`, `Label`, `InputGroup`, `Meter`,
-`ProgressCircle`, `Skeleton`, `Loader`, `Breadcrumbs`, `Kbd`, `Icon`,
+`ProgressCircle`, `Skeleton`, `Loader`, `Breadcrumbs`, `Sidebar`, `Kbd`, `Icon`,
 `PlatformIcons`, `ToggleButton`, `CycleButton`, `Tree`, `Tooltip`, `Menu`
 (native popover).
+
+A `src` on `Popover` or `Hint` adds no module and no request of its own: the
+fetch runs inside the machine's chunk, on the first open or show.
 
 Because the server renders every part, a component is usable before its
 machine starts: links navigate, native inputs submit, `Tabs` shows the
