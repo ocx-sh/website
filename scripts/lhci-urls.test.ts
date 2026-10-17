@@ -112,7 +112,7 @@ describe('C-111 Lighthouse URL list', () => {
     expect(new Set(urls).size).toBe(urls.length);
   });
 
-  it('runs once per URL, three times (median judged) when the first run fails', () => {
+  it('runs once per URL, up to three times (best run judged) when the first run fails', () => {
     expect(rc.ci.collect.numberOfRuns).toBe(1);
     expect(RETRY_RUNS).toBe(3);
   });

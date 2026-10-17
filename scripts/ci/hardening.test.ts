@@ -52,8 +52,8 @@ describe('.github/workflows (C-328)', () => {
     });
 
     it('pins every uses: but a local path to a 40-hex SHA with a version comment', () => {
+      // May be empty: lighthouse-comment.yml runs gh and jq only.
       const lines = [...text.matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm)].map((m) => m[1]!.trim());
-      expect(lines.length).toBeGreaterThan(0);
       const unpinned = lines.filter((l) => !l.startsWith('./') && !/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d\S*$/.test(l));
       expect(unpinned).toEqual([]);
     });
