@@ -135,11 +135,11 @@
     }
   },
   "devDependencies": {
-    "@astrojs/starlight": "^0.42.4",
+    "@astrojs/starlight": "^0.42.5",
     "@iconify-json/lucide": "1.2.137",
-    "@iconify-json/simple-icons": "1.2.97",
+    "@iconify-json/simple-icons": "1.2.99",
     "@types/mdast": "^4.0.4",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.19.2",
     "ajv": "8.20.0",
     "astro": "7.3.5",
     "remark-mdx": "^3.1.0",
