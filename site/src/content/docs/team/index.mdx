@@ -6,7 +6,13 @@ description: The people who build and maintain ocx.
 {/* doc_type: reference */}
 {/* doc_tier: integration */}
 
+import { getImage } from 'astro:assets';
 import Avatar from '@ocx-sh/theme/components/ui/Avatar.astro';
+import kate from '../../../assets/team/kate.jpg';
+
+{/* public/team/kate.jpg stays only so the old /team/kate.jpg URL still resolves (infra/old-urls.txt); the page uses this sized AVIF. */}
+
+export const kateImage = await getImage({ src: kate, format: 'avif', width: 38, height: 38, densities: [1, 2] });
 
 The people who build, maintain and promote ocx.
 
@@ -18,6 +24,6 @@ Creator and maintainer. Find him on [GitHub](https://www.github.com/michael-herw
 
 ## Katherine Draheim
 
-<Avatar name="Katherine Draheim" src="/team/kate.jpg" size="lg" />
+<Avatar name="Katherine Draheim" src={kateImage.src} srcset={kateImage.srcSet.attribute} size="lg" />
 
 Marketing and community lead. Find her on [GitHub](https://www.github.com/kathescode) and [LinkedIn](https://www.linkedin.com/in/katherine-draheim/).
