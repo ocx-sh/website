@@ -10,7 +10,7 @@
   "dependencies": {
     "@ocx-sh/theme": "*",
     "astro": "7.3.5",
-    "@astrojs/starlight": "0.42.4"
+    "@astrojs/starlight": "0.42.5"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
