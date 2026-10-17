@@ -1,0 +1,12 @@
+---
+title: Fetch failed
+description: A URL that answers 404 shows the error text and a Retry button, which fetches again.
+height: 260
+order: 3
+---
+
+import Popover from '@ocx-sh/theme/components/ui/Popover.astro';
+
+<Popover src="/docs/fill/missing.html" labels={{ error: 'No preview for this version.' }}>
+  <span slot="trigger">Version 0.0.0</span>
+</Popover>

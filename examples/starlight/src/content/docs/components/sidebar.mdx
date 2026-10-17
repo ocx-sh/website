@@ -1,0 +1,40 @@
+---
+title: Sidebar
+description: A docs sidebar for a plain Astro page on the Shell layout, with no client JavaScript.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+The sidebar for a site that is not Starlight: grouped links in a labelled `nav`, rendered at build time. A
+Starlight site keeps its own sidebar (the plugin overrides it); this one wears the same look, so a plain
+Astro section of ocx.sh reads like the rest. The page marks its own current item. Nothing loads for it: no
+script, no request. A [live page](/docs/shell/sidebar/) puts it beside `main` on `Shell`.
+
+## Stories
+
+<Stories of="sidebar" />
+
+## Props
+
+<PropsTable
+  of="ui/Sidebar.astro"
+  rows={[
+    {
+      name: 'groups',
+      type: '{ label, href?, items: { href, label, current? }[] }[]',
+      required: true,
+      description:
+        'In reading order. An empty `label` renders the list without a heading; `href` makes the heading a link.',
+    },
+    { name: 'label', type: 'string', default: "'Documentation'", description: 'Accessible name of the nav landmark.' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Tab | Move through the group headings that link and the page links. |
+| Enter | Follow the focused link. |

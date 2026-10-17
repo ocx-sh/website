@@ -1,6 +1,7 @@
 // Popover behaviour (C-170) on Zag `popover`: Esc and outside click close and return focus;
 // Zag positions the panel (D-Z10). Loaded lazily by Popover.astro through `mount`.
 import { connect, machine } from '@zag-js/popover';
+import { fillOnOpen } from './fill.mjs';
 import { emit } from './zag-runtime.mjs';
 
 export { connect, machine };
@@ -32,9 +33,14 @@ export function render(api, root, spread) {
     const el = root.ownerDocument.getElementById(String(attrs.id));
     if (el) spread(el, attrs);
   }
+  // A panel that starts open fires no onOpenChange: fill it here, once (`idle` only, so an error is not refetched).
+  if (api.open && root.querySelector('[data-fill][data-fill-state="idle"]')) fillOnOpen(root, 'popover', true);
 }
 
 /** Callbacks surface as DOM events (C-105); the only per-root hook `mount` offers. @param {HTMLElement} root */
 export const readDom = (root) => ({
-  onOpenChange: (/** @type {{ open: boolean }} */ { open }) => emit(root, 'popover', 'change', { open }),
+  onOpenChange: (/** @type {{ open: boolean }} */ { open }) => {
+    emit(root, 'popover', 'change', { open });
+    fillOnOpen(root, 'popover', open); // `src`: fetched on the first open only
+  },
 });

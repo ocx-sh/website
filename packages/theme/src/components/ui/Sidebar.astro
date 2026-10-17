@@ -1,0 +1,124 @@
+---
+// Sidebar for a plain Astro site (Shell layout), outside Starlight, which renders its own through
+// starlight/Sidebar.astro. One labelled nav of lists, server-rendered: no script, nothing loads, so the
+// page pays no request for it. The look is Starlight's sidebar (mono-caps group labels, tinted current
+// link) on the same tokens. The page passes `current` per item; that item carries `aria-current="page"`.
+export interface SidebarItem {
+  href: string;
+  label: string;
+  /** The page being rendered. */
+  current?: boolean;
+}
+export interface SidebarGroup {
+  /** Group heading; an empty label renders the list without one. */
+  label: string;
+  /** Makes the heading a link (a section's index page). */
+  href?: string;
+  items: readonly SidebarItem[];
+}
+export interface Props {
+  groups: readonly SidebarGroup[];
+  /** Accessible name of the nav landmark. */
+  label?: string;
+  class?: string;
+}
+
+const { groups, label = 'Documentation', class: className } = Astro.props;
+---
+
+<nav class:list={['ocx-ui-sidebar', className]} aria-label={label}>
+  {groups.map((group) => (
+    <section class="ocx-ui-sidebar__group">
+      {group.label !== '' && (
+        <h2 class="ocx-ui-sidebar__label">
+          {group.href === undefined ? (
+            group.label
+          ) : (
+            <a class="ocx-ui-sidebar__label-link" href={group.href}>
+              {group.label}
+            </a>
+          )}
+        </h2>
+      )}
+      <ul class="ocx-ui-sidebar__list">
+        {group.items.map((item) => (
+          <li>
+            <a class="ocx-ui-sidebar__link" href={item.href} aria-current={item.current ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</nav>
+
+<style>
+  @layer ocx {
+    .ocx-ui-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-5);
+    }
+    .ocx-ui-sidebar__label {
+      margin: 0;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      line-height: 1.4;
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-ui-sidebar__label,
+    .ocx-ui-sidebar__link {
+      overflow-wrap: anywhere;
+    }
+    /* A target of at least 24px (WCAG 2.5.8): the label's line box alone is smaller. */
+    .ocx-ui-sidebar__label-link,
+    .ocx-ui-sidebar__label:not(:has(a)) {
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      min-block-size: var(--ocx-space-6);
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+    }
+    .ocx-ui-sidebar__label-link {
+      color: inherit;
+      text-decoration: none;
+      border-radius: var(--ocx-radius-md);
+    }
+    .ocx-ui-sidebar__label-link:hover {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-ui-sidebar__list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ocx-ui-sidebar__link {
+      display: block;
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      border-radius: var(--ocx-radius-md);
+      font-size: var(--ocx-text-base);
+      line-height: 1.4;
+      color: var(--ocx-color-fg-muted);
+      text-decoration: none;
+      transition: color var(--ocx-duration-base);
+    }
+    .ocx-ui-sidebar__link:hover {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-ui-sidebar__link[aria-current='page'] {
+      color: var(--ocx-color-accent-fg);
+      background: var(--ocx-color-accent-tint);
+      /* A cue that is not colour alone (WCAG 1.4.1). */
+      font-weight: var(--ocx-font-weight-semibold);
+    }
+    .ocx-ui-sidebar__label-link:focus-visible,
+    .ocx-ui-sidebar__link:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: calc(var(--ocx-focus-offset) * -1);
+    }
+  }
+</style>

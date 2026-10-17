@@ -20,15 +20,30 @@ focus to the trigger. The trigger names the panel.
   rows={[
     { name: 'placement', type: 'Placement', default: "'bottom-start'", description: 'Panel side and alignment relative to the trigger.' },
     { name: 'modal', type: 'boolean', default: 'false', description: 'Trap focus in the panel and hide the page from assistive tech while open.' },
+    { name: 'src', type: 'string', description: 'URL of an HTML fragment of the same origin, fetched on the first open and cached. Replaces the default slot.' },
+    { name: 'labels', type: '{ loading?, error?, retry? }', default: "'Loading…', 'Could not load this.', 'Retry'", description: 'Texts of the `src` states.' },
     { name: 'zag', type: 'ZagProps<popover.Props>', description: 'Zag machine props passed through verbatim.' },
   ]}
 />
 
 Slots: `trigger` (the trigger button's content) and the default slot (the panel).
 
+## Fetch on open
+
+`src` fills the panel from a URL, for content the page cannot afford to ship up front (a version preview, a
+long list). Nothing is fetched before the first open: the machine itself loads on the first hover or focus,
+and the fetch starts when the panel opens. The panel shows the Loader, then the fragment, or the error text with
+a Retry button that fetches again. The result is cached by URL for the page's life, so reopening, or a
+second popover with the same `src`, makes no request. The panel floats over the page, so a growing panel never
+moves the content around it. The region is a polite live region with `aria-busy` while loading.
+
+The fragment must be same-origin HTML your own build produced: it is inserted as markup, and any other
+origin counts as an error. For plain text beside an icon button, use [Hint](../hint/)'s `src`.
+
 ## Events
 
 - `ocx:popover:change` `{ open }`: the panel opens or closes.
+- `ocx:popover:fill` `{ ok }`: a `src` fetch finished; `ok` is false on an error. Listen to enhance the fragment.
 
 ## Keyboard
 

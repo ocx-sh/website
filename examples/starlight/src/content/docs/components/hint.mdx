@@ -19,6 +19,7 @@ description while shown. For definitions of terms in prose, use [Tooltip](../too
   of="ui/Hint.astro"
   rows={[
     { name: 'label', type: 'string', required: true, description: 'Hint text.' },
+    { name: 'src', type: 'string', description: 'URL of plain text, fetched on the first show and cached; it replaces `label`, which stays if the fetch fails.' },
     { name: 'openDelay', type: 'number', default: '400', description: 'Hover delay before the hint shows, in ms.' },
     { name: 'placement', type: 'Placement', default: "'bottom'", description: 'Hint side and alignment relative to the button.' },
     { name: 'zag', type: 'ZagProps<tooltip.Props>', description: 'Zag machine props passed through verbatim.' },
@@ -30,6 +31,7 @@ The default slot is the one `<button>` or `<a>` the hint describes.
 ## Events
 
 - `ocx:hint:change` `{ open }`: the hint shows or hides.
+- `ocx:hint:fill` `{ ok }`: a `src` fetch finished; `ok` is false when it failed.
 
 ## Keyboard
 

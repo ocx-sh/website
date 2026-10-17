@@ -3,7 +3,7 @@
 // with one budget assertion block per page class, plus one per page with its own preJsGz cap. It
 // also lists every HTML page of the built root site (C-309), so it reads `site/dist`, which the vitest globalSetup builds.
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, globSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -80,6 +80,15 @@ describe('C-111 Lighthouse URL list', () => {
       ].sort(),
     );
     expect([...examplePages(), ...sitePages()]).toEqual(urls);
+  });
+
+  it('SHELL_PAGES lists every plain Astro page under pages/shell/', () => {
+    const pages = join(root, 'examples/starlight/src/pages/shell');
+    const found = globSync('**/*.astro', { cwd: pages }).map((f) => {
+      const dir = f.replace(/\.astro$/, '').replace(/(^|\/)index$/, '');
+      return `/docs/shell/${dir && `${dir}/`}`;
+    });
+    expect([...SHELL_PAGES].sort()).toEqual(found.sort());
   });
 
   it('lists every committed story page (C-125)', () => {

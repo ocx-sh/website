@@ -51,7 +51,13 @@ No danger variant exists for the confirm button; state the consequence in
 
 **`ui/Popover.astro`**: a non-modal panel from slot `trigger`; default slot
 is the panel. `placement` (default `bottom-start`), `modal` (traps focus).
-Event `ocx:popover:change`.
+Event `ocx:popover:change`. `src` fills the panel from a same-origin HTML
+fragment instead of the default slot: fetched on the first open only (never
+before, no prefetch), Loader while loading, error text plus Retry on failure,
+cached by URL after the first load, a request that takes over 10 s counts as failed; `labels` (`{ loading?, error?, retry? }`)
+sets the texts. Event `ocx:popover:fill` `{ ok }` after each attempt, to
+enhance the fragment. The fragment is inserted as markup: only your own build's
+HTML, never user content.
 
 **`ui/Menu.astro`**: a trigger plus a native-popover panel of **links**
 (disclosure navigation, Tab order, no ARIA menu). `label` (required, trigger
@@ -80,7 +86,10 @@ Pinned by <Tooltip term="OCI digest">A SHA-256 content fingerprint.</Tooltip>, n
 <Hint label="copy command"><Button iconOnly aria-label="Copy command"><Icon name="copy" /></Button></Hint>
 ```
 
-The Hint is a description; the button keeps its own `aria-label`.
+The Hint is a description; the button keeps its own `aria-label`. `src` on a
+Hint fetches plain text on the first show (never before), caches it by URL and
+replaces `label`, which stays when the fetch fails; event `ocx:hint:fill`
+`{ ok }`. Rich fetched content belongs in a `Popover`, not a Hint.
 
 ## Disclosure
 

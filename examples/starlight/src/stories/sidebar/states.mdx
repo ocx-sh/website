@@ -1,0 +1,26 @@
+---
+title: States
+description: A group without a label, a heading that links to its index page, and a long label that wraps.
+height: 520
+order: 1
+block: true
+---
+
+import Sidebar from '@ocx-sh/theme/components/ui/Sidebar.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const flat = [{ label: '', items: [{ label: 'Overview', href: '#demo', current: true }, { label: 'Changelog', href: '#demo' }] }];
+export const linked = [{ label: 'Reference', href: '#demo', items: [{ label: 'Command line', href: '#demo' }] }];
+export const long = [
+  {
+    label: 'Pushing a multi-platform package with attestations',
+    items: [{ label: 'A page title that is much longer than the sidebar is wide and must wrap', href: '#demo' }],
+  },
+];
+
+<StateGrid>
+  <State label="no group label"><Sidebar groups={flat} label="Unlabelled group" /></State>
+  <State label="heading links to its index"><Sidebar groups={linked} label="Linked heading" /></State>
+  <State label="long labels wrap"><Sidebar groups={long} label="Wrapping labels" /></State>
+</StateGrid>

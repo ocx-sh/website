@@ -1,0 +1,13 @@
+---
+title: Text filled on show
+description: The first show fetches plain text that replaces the label; the label stays if the fetch fails.
+height: 200
+order: 2
+---
+
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import Hint from '@ocx-sh/theme/components/ui/Hint.astro';
+
+<Hint label="loading…" src="/docs/fill/hint.txt">
+  <Button iconOnly aria-label="Release info">i</Button>
+</Hint>

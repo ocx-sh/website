@@ -3,6 +3,7 @@
 // inverted label on hover (after `openDelay`) or keyboard focus. The button keeps its own
 // accessible name (`aria-label`); the hint is its description while shown. Design: inverted ink,
 // mono, no arrow, 400 ms (c-feedback). Terms use `Tooltip.astro` (D-Z9). `ocx:hint:change {open}`.
+// `src`: the first show fetches plain text that replaces `label` (kept on failure; `ocx:hint:fill {ok}`).
 import type { Placement, Props as TooltipProps } from '@zag-js/tooltip';
 import { nextUiId } from './ids.mjs';
 import { connect, machine, parts } from './tooltip.zag.mjs';
@@ -12,6 +13,8 @@ import type { ZagProps } from './zag.mjs';
 interface Props {
   /** Hint text. */
   label: string;
+  /** URL of plain text, fetched on the first show (never before) and cached; it replaces `label`. */
+  src?: string;
   /** Hover delay before the hint shows, in ms. */
   openDelay?: number;
   /** Hint side and alignment relative to the button. */
@@ -20,7 +23,7 @@ interface Props {
   zag?: ZagProps<TooltipProps>;
 }
 
-const { label, openDelay = 400, placement = 'bottom', zag } = Astro.props;
+const { label, src, openDelay = 400, placement = 'bottom', zag } = Astro.props;
 const id = nextUiId('hint');
 const zagProps = { ...zag, openDelay, positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const } };
 const p = Object.fromEntries(
@@ -46,6 +49,7 @@ const button = slot.replace(start, (tag) => `${tag} ${trigger}`);
   data-zag-state="idle"
   data-zag-id={id}
   data-zag-props={JSON.stringify(zagProps)}
+  data-fill-src={src}
 >
   <Fragment set:html={button} />
   <span class="ocx-ui-hint__positioner" {...p.positioner}>

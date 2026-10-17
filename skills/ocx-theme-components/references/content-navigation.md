@@ -7,7 +7,7 @@ Import path prefix: `@ocx-sh/theme/components/`.
 
 Contents: [Terminal](#terminal) · [ShellSession](#shellsession) · [FeatureSection](#featuresection) ·
 [HubGrid](#hubgrid) ·
-[Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Toc](#toc) · [Icon](#icon) ·
+[Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Sidebar](#sidebar) · [Toc](#toc) · [Icon](#icon) ·
 [Logo](#logo) · [Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
 
 ## Terminal
@@ -90,6 +90,17 @@ Use **`ui/Breadcrumbs.astro`** only for a trail elsewhere: `items`
 (`{ label, href?, icon? }`, outermost first, the last is the current page),
 `label` (landmark name), `id`. Zero JS: past three items a narrow container
 folds the middle into a native popover.
+
+## Sidebar
+
+**`ui/Sidebar.astro`** is the docs sidebar for a plain Astro site (a `Shell`
+page), not for Starlight, which renders its own through the plugin. `groups`
+(required, `{ label, href?, items: { href, label, current? }[] }[]`; an empty
+`label` renders no heading, `href` links the heading), `label` (landmark name,
+default `Documentation`). The page sets `current` on its own item, which gets
+`aria-current="page"`. Zero JS and no request: it is plain server-rendered
+links in the Starlight sidebar's look. Place it beside `<main>` content in your
+own layout (Shell has no sidebar slot).
 
 ## Toc
 

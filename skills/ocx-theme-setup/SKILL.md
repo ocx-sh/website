@@ -238,6 +238,8 @@ Props: `title` (required), `description`, `canonical` (default: the path on
   Without `footer` the footer is empty (no ocx links); without `note` there is no
   licence line. `nav` or `footer` without
   `brand` throws.
+- **Docs sidebar**: Shell has no sidebar slot; lay out `<main>` content yourself and put
+  `@ocx-sh/theme/components/ui/Sidebar.astro` (props in `ocx-theme-components`) beside it.
 - **CSP**: `INLINE_SCRIPT_HASHES` from `@ocx-sh/theme/csp` is the frozen list of
   `sha256-<base64>` sources of every inline script Shell, `SiteHeader` and
   `SiteFooter` emit (theme and platform scripts); put each in `script-src` as

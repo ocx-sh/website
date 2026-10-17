@@ -1,6 +1,6 @@
 ---
 name: ocx-theme-components
-description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, accessibility contracts, events, lazy Zag loading (nothing loads before interaction, first paint is final). Use when writing or reviewing an .astro or .mdx page that imports from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, Choice, RadioGroup, Slider, Tag, TagGroup, TagsInput, Dialog, AlertDialog, ConfirmDialog, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, Skeleton, toast, Avatar, Terminal, Kbd, Breadcrumbs, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer or when a component fires no event, loads JavaScript early, shifts layout or fails an a11y check. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
+description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, accessibility contracts, events, lazy Zag loading (nothing loads before interaction, first paint is final). Use when writing or reviewing an .astro or .mdx page that imports from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, Choice, RadioGroup, Slider, Tag, TagGroup, TagsInput, Dialog, AlertDialog, ConfirmDialog, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, Skeleton, toast, Avatar, Terminal, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer or when a component fires no event, loads JavaScript early, shifts layout or fails an a11y check. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
 license: Apache-2.0
 metadata:
   summary: Which @ocx-sh/theme component to use, how to import it, the props and a11y contracts that matter, and the lazy-loading rules
@@ -79,11 +79,11 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/ConfirmDialog.astro` | Confirm / cancel question, opened by event | [overlays](references/overlays-disclosure.md) |
 | `ui/AlertDialog.astro` | One-button notice with a tone, opened by event | [overlays](references/overlays-disclosure.md) |
 | `ui/Drawer.astro` | Side or bottom sheet | [overlays](references/overlays-disclosure.md) |
-| `ui/Popover.astro` | Rich non-modal panel from a trigger | [overlays](references/overlays-disclosure.md) |
+| `ui/Popover.astro` | Rich non-modal panel from a trigger (`src`: fragment fetched on first open) | [overlays](references/overlays-disclosure.md) |
 | `ui/Menu.astro` | A trigger with a panel of navigation links | [overlays](references/overlays-disclosure.md) |
 | `ui/ActionMenu.astro` | A list of commands (APG menu), or a context menu | [overlays](references/overlays-disclosure.md) |
 | `Tooltip.astro` | A term in prose with a definition popup | [overlays](references/overlays-disclosure.md) |
-| `ui/Hint.astro` | A short label for an icon button | [overlays](references/overlays-disclosure.md) |
+| `ui/Hint.astro` | A short label for an icon button (`src`: text fetched on first show) | [overlays](references/overlays-disclosure.md) |
 | `Accordion.astro` + `AccordionItem.astro` | Stacked sections, one or several open | [overlays](references/overlays-disclosure.md) |
 | `Collapsible.astro` | One show/hide region | [overlays](references/overlays-disclosure.md) |
 | `Tabs.astro` + `TabItem.astro` | Alternative panels (shell variants); Starlight-compatible | [overlays](references/overlays-disclosure.md) |
@@ -105,6 +105,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `HubGrid.astro` | One hub's entries from `nav.json` as category groups of cards | [content](references/content-navigation.md) |
 | `ui/Kbd.astro` | Keyboard keys, OS-adaptive (`Mod+K`) | [content](references/content-navigation.md) |
 | `ui/Breadcrumbs.astro` | A breadcrumb trail outside the page title | [content](references/content-navigation.md) |
+| `ui/Sidebar.astro` | Docs sidebar for a plain Astro (Shell) page, outside Starlight | [content](references/content-navigation.md) |
 | `Toc.astro` | Scroll-spy table of contents inside a page | [content](references/content-navigation.md) |
 | `ui/Icon.astro` | One registry icon, inline | [content](references/content-navigation.md) |
 | `ui/Logo.astro` | The ocx mark, optionally with its wordmark or as a link | [content](references/content-navigation.md) |

@@ -298,6 +298,8 @@ describe('Select, Combobox and overlay CSS', () => {
       'cycle-button.mjs',
       // DataTable sort/filter/paging has no Zag machine for tables (owner finding).
       'data-table.mjs',
+      // `src` of Popover and Hint: a fetch on the first open, called from popover.zag.mjs and tooltip.zag.mjs.
+      'fill.mjs',
       // Combobox fuzzy match helper is plain logic, not Zag behaviour (owner finding).
       'fuzzy.mjs',
       'ids.mjs',

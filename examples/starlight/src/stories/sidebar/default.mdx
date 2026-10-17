@@ -1,0 +1,28 @@
+---
+title: Docs sidebar
+description: Grouped links for a plain Astro page; the current page is tinted and marked aria-current.
+height: 460
+block: true
+---
+
+import Sidebar from '@ocx-sh/theme/components/ui/Sidebar.astro';
+
+export const groups = [
+  {
+    label: 'Getting started',
+    href: '#demo',
+    items: [
+      { label: 'Install', href: '#demo' },
+      { label: 'First package', href: '#demo', current: true },
+    ],
+  },
+  {
+    label: 'Guides',
+    items: [
+      { label: 'Publishing', href: '#demo' },
+      { label: 'Signing packages', href: '#demo' },
+    ],
+  },
+];
+
+<Sidebar groups={groups} />

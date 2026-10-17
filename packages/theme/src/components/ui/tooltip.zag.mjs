@@ -2,6 +2,7 @@
 // hint; the wrapped button keeps its own accessible name. Loaded lazily by Hint.astro through
 // `mount`; Zag positions the hint (D-Z10). Not the term `Tooltip.astro` (D-Z9).
 import { connect, machine } from '@zag-js/tooltip';
+import { fillOnOpen } from './fill.mjs';
 import { emit } from './zag-runtime.mjs';
 
 export { connect, machine };
@@ -38,6 +39,8 @@ export function render(api, root, spread) {
   // (a hover as the pointer move Zag's open delay starts from).
   if (started.has(root)) return;
   started.add(root);
+  // A hint that starts open fires no onOpenChange: fill it once here (a failure retries on the next show).
+  if (api.open) fillOnOpen(root, 'hint', true);
   const trigger = root.ownerDocument.getElementById(String(all.trigger.id));
   setTimeout(() => {
     if (trigger?.matches(':focus-visible')) api.setOpen(true);
@@ -48,5 +51,8 @@ export function render(api, root, spread) {
 
 /** Callbacks surface as DOM events (C-105); the only per-root hook `mount` offers. @param {HTMLElement} root */
 export const readDom = (root) => ({
-  onOpenChange: (/** @type {{ open: boolean }} */ { open }) => emit(root, 'hint', 'change', { open }),
+  onOpenChange: (/** @type {{ open: boolean }} */ { open }) => {
+    emit(root, 'hint', 'change', { open });
+    fillOnOpen(root, 'hint', open); // `src`: fetched on the first show only
+  },
 });
