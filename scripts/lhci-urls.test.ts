@@ -131,7 +131,7 @@ describe('C-111 Lighthouse URL list', () => {
       }
       expect(a['resource-summary:script:size']).toEqual(['error', { maxNumericValue: b.preJsGz }]);
       expect(a['total-byte-weight']).toEqual(['error', { maxNumericValue: b.totalBytes }]);
-      expect(a['dom-size']).toEqual(['error', { maxNumericValue: b.domElements }]);
+      expect(a['dom-size-insight']).toEqual(['error', { maxNumericValue: b.domElements }]);
     }
   });
 });

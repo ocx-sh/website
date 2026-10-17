@@ -31,7 +31,7 @@ const assertions = (budget) => ({
   ...CATEGORIES,
   'resource-summary:script:size': ['error', { maxNumericValue: budget.preJsGz }],
   'total-byte-weight': ['error', { maxNumericValue: budget.totalBytes }],
-  'dom-size': ['error', { maxNumericValue: budget.domElements }],
+  'dom-size-insight': ['error', { maxNumericValue: budget.domElements }],
 });
 const own = Object.keys(PRE_JS_VISIBLE);
 // One block per page class (C-110): its pathname pattern, prefixed to match lhci's full URLs,
