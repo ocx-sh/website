@@ -7,7 +7,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { AstroIntegration, FontProvider } from 'astro';
+import type { AstroIntegration } from 'astro';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import type { HookParameters, StarlightUserConfig } from '@astrojs/starlight/types';
 import { describe, expect, it, vi } from 'vitest';
@@ -16,7 +16,6 @@ import pkg from '../package.json' with { type: 'json' };
 import nav from '../src/nav.json' with { type: 'json' };
 import { mergeTargets } from '../src/registry.mjs';
 import type { Nav } from '../src/registry.mjs';
-import { italicOptional } from '../src/starlight/fonts.mjs';
 import ocxTheme from '../src/starlight/index.mjs';
 
 type SetupContext = HookParameters<'config:setup'>;
@@ -115,6 +114,7 @@ async function injected(
       provider: { name: string; resolveFont: (options: never) => unknown };
       fallbacks?: string[];
       optimizedFallbacks?: boolean;
+      styles?: string[];
       weights?: number[];
     }[];
   };
@@ -251,22 +251,10 @@ describe('ocxTheme plugin', () => {
     expect(fonts.map((f) => f.cssVariable).sort()).toEqual(['--ocx-font-mono', '--ocx-font-sans']);
   });
 
-  it('italic faces get font-display: optional, upright faces keep the family default', async () => {
-    const face = (style: string) => ({ src: [{ name: 'x' }], style, weight: 400 });
-    const stub = { name: 'stub', resolveFont: () => Promise.resolve({ fonts: [face('normal'), face('italic')] }) };
-    const wrapped = italicOptional(stub as unknown as FontProvider);
-    expect(wrapped.name).toBe('stub');
-    const resolved = await wrapped.resolveFont({} as never);
-    expect(Object.fromEntries((resolved?.fonts ?? []).map((x) => [x.style, x.display]))).toEqual({
-      normal: undefined,
-      italic: 'optional',
-    });
-    // The plugin registers the wrapper, not the bare fontsource provider, and sets no family-wide display.
+  it('registers upright faces only: an italic face costs ~25 KB and blows the page-weight budget', async () => {
     const { addIntegration, astroConfig } = await setup();
     for (const f of (await injected(addIntegration, astroConfig)).fonts ?? []) {
-      expect((f as { display?: unknown }).display).toBeUndefined();
-      expect(f.provider.resolveFont.name).toBe('resolveFont');
-      expect(f.provider.resolveFont.toString()).toContain('optional');
+      expect(f.styles).toEqual(['normal']);
     }
   });
 

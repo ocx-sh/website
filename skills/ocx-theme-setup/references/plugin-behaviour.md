@@ -62,7 +62,11 @@ The plugin registers two Fontsource families through the Astro Fonts API:
 Fallbacks lead with the metric-matched `OCX Sans Fallback` and
 `OCX Mono Fallback` faces from `base.css`, so the swap causes no layout shift.
 Use the variables, never a family name. Do not add a third family: every
-font file counts against the page weight budget.
+font file counts against the page weight budget. Only upright faces ship:
+an `<em>` renders the browser's synthesized oblique, because the true Plex Sans
+italic is ~25 KB per weight and one `<em>` would push a content page past the
+147 KiB weight budget. Never add `styles: ['italic']` or a `font-style: italic`
+`@font-face`.
 
 ## Search merge
 
