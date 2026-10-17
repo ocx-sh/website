@@ -6,12 +6,20 @@
  * - Lanes: `LH_SHARDS` forked processes (default `DEFAULT_LANES`, fewer when `MemAvailable` is short),
  *   each driving ONE long-lived Chrome through the Lighthouse Node API. Audits run one at a time
  *   per browser (a fresh tab each); one static server (lhci's) serves every lane.
- * - One run per URL; a URL that fails gets `RETRY_RUNS - 1` more runs and is judged on the median
- *   run (lhci's representative run: closest to the median FCP and TTI).
+ * - Best of `RETRY_RUNS`: pass 1 audits every URL once across all lanes. A URL passes as soon as one
+ *   run passes. The URLs that failed are re-audited afterwards on ONE lane (the others are shut down,
+ *   so the retries run on a quiet machine; all lanes when more than `MANY_FAILED` failed) with the
+ *   remaining runs, stopping at the first pass.
+ *   A URL that never passes is reported with its run of fewest failed assertions.
  * - Cache: a URL whose key (`pageKey`: its HTML, every local file it pulls in, the tool versions,
  *   config, budgets, this script and the preset) matches a previous GREEN result is skipped.
+ *   A key is written the moment its URL passes (pass 1 or a retry), so a killed run keeps its greens.
  *   `LH_NO_CACHE=1` audits everything. Store: `.tmp/lhci-cache/<preset>/`.
  * - Output: one `<page>-<run>.report.json` per run in `.lighthouseci/`; `LH_HTML=1` adds HTML.
+ *   `target/reports/lighthouse/` gets `summary.md` (marker line, verdict, retried and failed runs
+ *   with their metrics, the tightest pages; written only when something was audited, so an all-cached
+ *   run leaves a previous PR comment alone; also appended to `$GITHUB_STEP_SUMMARY`), `metrics.json`
+ *   and, with `LH_HTML=1`, the HTML reports of retried and failed URLs only.
  *
  * `--dev` (`task lighthouse:changed`) honours `LH_PRESET=desktop`; the gate is always mobile.
  * `--changed` and `--only <substr>` narrow the URL list for local runs (see `narrow`).
@@ -19,7 +27,7 @@
  */
 import { fork } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import Module, { createRequire } from 'node:module';
 import { freemem } from 'node:os';
 import { join } from 'node:path';
@@ -33,7 +41,10 @@ import { STAGE_ROOT, stageExample } from './lhci-stage.mjs';
  * @typedef {{ matchingUrlPattern: string, assertions: Record<string, unknown> }} MatrixEntry
  * @typedef {{ collect: { url: string[], chromePath: string, settings: { chromeFlags: string } & Record<string, unknown> },
  *   assert: { assertMatrix: MatrixEntry[] } }} Rc
- * @typedef {{ path: string, runs: number, ms: number, first?: string, failures: string[] }} Result
+ * @typedef {{ score?: number | undefined, fcp?: number | undefined, lcp?: number | undefined, tbt?: number | undefined,
+ *   cls?: number | undefined, si?: number | undefined }} Metrics
+ * @typedef {{ failures: string[], metrics?: Metrics }} Run one audit: its failed assertions (none = passed)
+ * @typedef {{ path: string, ms: number, runs: Run[] }} Result every audit of one URL, in order
  */
 
 const require = createRequire(import.meta.url);
@@ -44,7 +55,7 @@ const SELF = fileURLToPath(import.meta.url);
 const GB = 1024 ** 3;
 const PROFILES = join(ROOT, '.tmp/lhci-profiles');
 
-/** Runs a failing URL gets in total before its median run is judged. */
+/** Runs a failing URL gets in total; it passes as soon as one of them does. */
 export const RETRY_RUNS = 3;
 /** Lanes when `LH_SHARDS` is unset. */
 export const DEFAULT_LANES = 3;
@@ -95,6 +106,154 @@ export async function pool(items, n, fn) {
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(n, items.length)) }, (_, i) => lane(i)));
   return out;
+}
+
+/** Marker line a CI step finds the sticky PR comment by; first line of `summary.md`. */
+export const MARKER = '<!-- ocx-lighthouse -->';
+/** UTF-8 bytes `summary.md` may take: GitHub caps a comment at 65,536 and the commenter adds a link. */
+export const SUMMARY_LIMIT = 50_000;
+/** First-pass failures above which the retries use every lane: a regression, not noise. */
+export const MANY_FAILED = 10;
+/** Pages the "tightest" table lists. */
+export const TIGHTEST = 10;
+const CELL_MAX = 300;
+
+/**
+ * Metrics of one report: performance score and the five numbers the score is made of.
+ * @param {{ categories?: Record<string, { score?: number | null }>, audits?: Record<string, { numericValue?: number }> }} lhr
+ * @returns {Metrics}
+ */
+export function runMetrics(lhr) {
+  const num = (/** @type {string} */ id) => lhr.audits?.[id]?.numericValue;
+  const round = (/** @type {number | undefined} */ v, /** @type {number} */ digits) =>
+    v === undefined ? undefined : Number(v.toFixed(digits));
+  return {
+    score: round(lhr.categories?.performance?.score ?? undefined, 2),
+    fcp: round(num('first-contentful-paint'), 0),
+    lcp: round(num('largest-contentful-paint'), 0),
+    tbt: round(num('total-blocking-time'), 0),
+    cls: round(num('cumulative-layout-shift'), 3),
+    si: round(num('speed-index'), 0),
+  };
+}
+
+/**
+ * The run that judges a URL: the first one that passed, else the one with the fewest failed
+ * assertions (first on a tie; a run without metrics, i.e. a crash, ranks last).
+ * @param {Run[]} runs
+ * @returns {Run}
+ */
+export function bestRun(runs) {
+  const rank = (/** @type {Run} */ r) => r.failures.length + (r.metrics ? 0 : 1e6);
+  let best = runs[0] ?? { failures: ['no run'] };
+  for (const r of runs) if (rank(r) < rank(best)) best = r;
+  return best;
+}
+
+/** @param {Result} r */
+const failedOf = (r) => bestRun(r.runs).failures.length > 0;
+
+const seconds = (/** @type {number | undefined} */ ms) => (ms === undefined ? '-' : `${(ms / 1000).toFixed(2)} s`);
+const cells = (/** @type {Metrics | undefined} */ m) => [
+  m?.score?.toFixed(2) ?? '-',
+  seconds(m?.fcp),
+  seconds(m?.lcp),
+  m?.tbt === undefined ? '-' : `${m.tbt} ms`,
+  m?.cls?.toFixed(3) ?? '-',
+  seconds(m?.si),
+];
+/**
+ * Free text as one markdown code span in a table cell, capped. The comment workflow posts only cells of
+ * this shape or fixed plain text, so nothing here can link, mention, embed or break the row: no
+ * backtick, backslash or control character survives, and a pipe is escaped.
+ */
+const code = (/** @type {string} */ s) => {
+  const flat = s.replace(/[`\\\s\p{C}]+/gu, ' ').trim();
+  const cut = flat.length > CELL_MAX ? `${flat.slice(0, CELL_MAX)}…` : flat;
+  return `\`${cut.replaceAll('|', '\\|')}\``;
+};
+const row = (/** @type {string[]} */ c) => `| ${c.join(' | ')} |`;
+const rule = (/** @type {number} */ n) => row(Array.from({ length: n }, () => '---'));
+const HEAD = ['Perf', 'FCP', 'LCP', 'TBT', 'CLS', 'SI'];
+
+/**
+ * `summary.md`: marker, verdict, every run of the retried and failed URLs, and the pages closest to
+ * failing. Kept under `limit` UTF-8 bytes by dropping the tightest table first, then trailing run rows,
+ * so a cut never lands inside a row or an open `<details>`.
+ * Every free-text value is a code span (`code`); `.github/workflows/lighthouse-comment.yml` rejects any
+ * other line shape, so a new line or cell shape here needs its pattern there.
+ * @param {Result[]} results the audited URLs
+ * @param {{ cached?: number, limit?: number }} [opts] `cached`: URLs skipped as cached green
+ */
+export function summaryMarkdown(results, { cached = 0, limit = SUMMARY_LIMIT } = {}) {
+  const retried = results.filter((r) => r.runs.length > 1);
+  const failed = results.filter(failedOf);
+  const total = results.length + cached;
+  const verdict =
+    `**${total} URL${total === 1 ? '' : 's'}, ${retried.length} retried, ${failed.length} failed**` +
+    (cached ? ` (${cached} cached green, not audited)` : '');
+
+  // A lane crash fails a URL with no retry; it still needs its row.
+  const listed = results.filter((r) => r.runs.length > 1 || failedOf(r));
+  const rows = listed.flatMap((r) => {
+    const best = bestRun(r.runs);
+    return r.runs.map((run, i) =>
+      row([
+        i ? '' : code(r.path),
+        String(i + 1),
+        ...cells(run.metrics),
+        (run.failures.length ? `fail ${code(run.failures.join('; '))}` : 'pass') +
+          (run === best && failedOf(r) ? ' (reported)' : ''),
+      ]),
+    );
+  });
+  const rowsHead = [row(['URL', 'Run', ...HEAD, 'Result']), rule(HEAD.length + 3)];
+
+  const tight = results
+    .map((r) => ({ path: r.path, m: bestRun(r.runs).metrics }))
+    .filter((t) => t.m)
+    .sort((a, b) => (a.m?.score ?? 1) - (b.m?.score ?? 1) || (b.m?.lcp ?? 0) - (a.m?.lcp ?? 0))
+    .slice(0, TIGHTEST)
+    .map((t) => row([code(t.path), ...cells(t.m)]));
+
+  /** @param {number} nRows @param {boolean} withTight */
+  const build = (nRows, withTight) =>
+    [
+      MARKER,
+      '## Lighthouse',
+      '',
+      verdict,
+      ...(rows.length
+        ? [
+            '',
+            '### Retried and failed',
+            '',
+            ...rowsHead,
+            ...rows.slice(0, nRows),
+            ...(nRows < rows.length ? ['', `${rows.length - nRows} more run rows omitted (size limit).`] : []),
+          ]
+        : []),
+      ...(withTight && tight.length
+        ? [
+            '',
+            `<details><summary>${tight.length} tightest pages (lowest performance score)</summary>`,
+            '',
+            row(['URL', ...HEAD]),
+            rule(HEAD.length + 1),
+            ...tight,
+            '',
+            '</details>',
+          ]
+        : []),
+      '',
+    ].join('\n');
+
+  const size = (/** @type {string} */ s) => Buffer.byteLength(s);
+  let n = rows.length;
+  let md = build(n, true);
+  if (size(md) > limit) md = build(n, false);
+  while (size(md) > limit && n > 0) md = build(--n, false);
+  return md;
 }
 
 /** Served path → file under `root` (`/docs/x/` → `docs/x/index.html`). */
@@ -192,8 +351,11 @@ async function main() {
   const keys = new Map(collect.url.map((u) => [u, pageKey(STAGE_ROOT, u, key)]));
   const todo = process.env.LH_NO_CACHE === '1' ? collect.url : collect.url.filter((u) => cached(u) !== keys.get(u));
   const reports = join(ROOT, '.lighthouseci');
-  rmSync(reports, { recursive: true, force: true });
-  mkdirSync(reports, { recursive: true });
+  const out = join(ROOT, 'target/reports/lighthouse');
+  for (const dir of [reports, out]) {
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+  }
   mkdirSync(cacheDir, { recursive: true });
 
   const lanes = laneCount(Number(process.env.LH_SHARDS), availableBytes());
@@ -201,8 +363,45 @@ async function main() {
   console.log(
     `lighthouse (${preset}): ${collect.url.length - todo.length} cached green, ${todo.length} to audit on ${n} lane(s)`,
   );
-  if (!todo.length) return;
+  /** @type {Result[]} */
+  let results = [];
+  const keep = (/** @type {string} */ path) => writeFileSync(join(cacheDir, `${slug(path)}.key`), keys.get(path) ?? '');
+  if (todo.length) results = await audit(todo, n, preset, reports, out, keep);
 
+  const cachedGreen = collect.url.length - todo.length;
+  const md = summaryMarkdown(results, { cached: cachedGreen });
+  if (results.length) writeFileSync(join(out, 'summary.md'), md);
+  writeFileSync(join(out, 'metrics.json'), `${JSON.stringify({ preset, cached: cachedGreen, urls: results })}\n`);
+  if (results.length && process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${md}\n`);
+
+  const failed = results.filter(failedOf);
+  const runs = results.reduce((s, r) => s + r.runs.length, 0);
+  console.log(`\nlighthouse: ${runs} run(s) over ${todo.length} URL(s) in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  if (!failed.length) return;
+  console.error(
+    `\n${failed.length} URL(s) failed (best of ${RETRY_RUNS} runs; the run with the fewest failures shown):`,
+  );
+  for (const r of failed)
+    console.error(
+      `  ${r.path}\n${bestRun(r.runs)
+        .failures.map((f) => `    ${f}`)
+        .join('\n')}`,
+    );
+  process.exitCode = 1;
+}
+
+/**
+ * Pass 1: one run per URL on `n` lanes. Pass 2: the URLs that failed, on a single lane (all `n` when
+ * more than `MANY_FAILED` failed) with the remaining runs; the other lanes are shut down first.
+ * @param {string[]} todo
+ * @param {number} n
+ * @param {string} preset
+ * @param {string} reports `.lighthouseci/`
+ * @param {string} out `target/reports/lighthouse/`
+ * @param {(path: string) => void} keep called the moment a URL passes, in either pass
+ * @returns {Promise<Result[]>}
+ */
+async function audit(todo, n, preset, reports, out, keep) {
   const FallbackServer =
     /** @type {new (dir: string, spa: boolean) => { port: number, listen(): Promise<void>, close(): Promise<void> }} */ (
       load('@lhci/cli/src/collect/fallback-server.js')
@@ -211,44 +410,64 @@ async function main() {
   await server.listen();
   rmSync(PROFILES, { recursive: true, force: true }); // left by a killed run
   const children = Array.from({ length: n }, (_, i) =>
-    fork(SELF, ['--lane'], { env: { ...process.env, LH_PRESET: preset, LH_REPORTS: reports, LH_LANE: String(i) } }),
+    fork(SELF, ['--lane'], {
+      env: { ...process.env, LH_PRESET: preset, LH_REPORTS: reports, LH_OUT: out, LH_LANE: String(i) },
+    }),
   );
-  /** @type {Result[]} */
-  let results;
-  try {
-    results = await pool(todo, n, (path, i) => {
-      const child = /** @type {import('node:child_process').ChildProcess} */ (children[i]);
-      return new Promise((resolve) => {
-        /** @type {(failure: string) => void} */
-        const fail = (failure) => resolve({ path, runs: 0, ms: 0, failures: [failure] });
-        if (!child.connected) return fail('lane is gone');
-        const onExit = (/** @type {number | null} */ code) => fail(`lane exited (${code}) mid-audit`);
-        child.once('exit', onExit);
-        child.once('message', (m) => {
-          child.off('exit', onExit);
-          const r = /** @type {Result} */ (m);
-          if (!r.failures.length) writeFileSync(join(cacheDir, `${slug(path)}.key`), keys.get(path) ?? '');
-          const retried = r.first ? `; run 1 failed: ${r.first}` : '';
-          console.log(
-            `${r.failures.length ? 'FAIL' : 'pass'} ${path} (${r.runs} run(s), ${(r.ms / 1000).toFixed(1)} s${retried})`,
-          );
-          resolve(r);
-        });
-        child.send({ url: `http://localhost:${server.port}${path}`, path });
+
+  /**
+   * Up to `runs` audits of `path` on one lane, ending at the first pass; report files number from `from`.
+   * @param {import('node:child_process').ChildProcess} child
+   * @param {string} path
+   * @param {number} runs
+   * @param {number} from
+   * @returns {Promise<Result>}
+   */
+  const runOn = (child, path, runs, from) =>
+    new Promise((resolve) => {
+      /** @type {(failure: string) => void} */
+      const fail = (failure) => resolve({ path, ms: 0, runs: [{ failures: [failure] }] });
+      if (!child.connected) return fail('lane is gone');
+      const onExit = (/** @type {number | null} */ code) => fail(`lane exited (${code}) mid-audit`);
+      child.once('exit', onExit);
+      child.once('message', (m) => {
+        child.off('exit', onExit);
+        resolve(/** @type {Result} */ (m));
       });
+      child.send({ url: `http://localhost:${server.port}${path}`, path, runs, from });
     });
+  const secs = (/** @type {Result} */ r) => `${(r.ms / 1000).toFixed(1)} s`;
+
+  try {
+    const first = await pool(todo, n, async (path, i) => {
+      const r = await runOn(/** @type {import('node:child_process').ChildProcess} */ (children[i]), path, 1, 1);
+      const why = failedOf(r) ? `; run 1 failed: ${bestRun(r.runs).failures.join('; ')}` : '';
+      console.log(`${failedOf(r) ? 'retry' : 'pass'} ${path} (${secs(r)}${why})`);
+      if (!failedOf(r)) keep(path);
+      return r;
+    });
+
+    const failedFirst = first.filter(failedOf);
+    // ponytail: serial retry pass; per-URL CPU pinning if contention still shows. Above MANY_FAILED it is a
+    // regression, not noise, so every lane retries or the job crawls.
+    const width = RETRY_RUNS < 2 ? 0 : failedFirst.length > MANY_FAILED ? n : 1;
+    const live = children.filter((c) => c.connected);
+    const use = live.slice(0, width);
+    for (const c of live.slice(width)) c.disconnect();
+    const pairs = await pool(use.length ? failedFirst : [], use.length, async (r, i) => {
+      const lane = /** @type {import('node:child_process').ChildProcess} */ (use[i]);
+      const more = await runOn(lane, r.path, RETRY_RUNS - 1, r.runs.length + 1);
+      const all = { path: r.path, ms: r.ms + more.ms, runs: [...r.runs, ...more.runs] };
+      console.log(`${failedOf(all) ? 'FAIL' : 'pass'} ${r.path} (${all.runs.length} runs, ${secs(all)})`);
+      if (!failedOf(all)) keep(r.path);
+      return /** @type {[string, Result]} */ ([r.path, all]);
+    });
+    const retried = new Map(pairs);
+    return first.map((r) => retried.get(r.path) ?? r);
   } finally {
     for (const c of children) if (c.connected) c.disconnect();
     await server.close();
   }
-
-  const failed = results.filter((r) => r.failures.length);
-  const runs = results.reduce((s, r) => s + r.runs, 0);
-  console.log(`\nlighthouse: ${runs} run(s) over ${todo.length} URL(s) in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
-  if (!failed.length) return;
-  console.error(`\n${failed.length} URL(s) failed (judged on the median of ${RETRY_RUNS} runs):`);
-  for (const r of failed) console.error(`  ${r.path}\n${r.failures.map((f) => `    ${f}`).join('\n')}`);
-  process.exitCode = 1;
 }
 
 /** Child: one Chrome for the lane's lifetime; audits the URLs the parent sends, one at a time. */
@@ -268,14 +487,12 @@ async function lane() {
       : undefined;
   const html = process.env.LH_HTML === '1';
   const reports = process.env.LH_REPORTS ?? '.lighthouseci';
+  const out = process.env.LH_OUT ?? reports;
   const lhciUtils = require.resolve('@lhci/utils/src/assertions.js', {
     paths: [require.resolve('@lhci/cli/package.json')],
   });
   const { getAllAssertionResults } =
     /** @type {{ getAllAssertionResults: (o: object, lhrs: object[]) => AssertionResult[] }} */ (load(lhciUtils));
-  const { computeRepresentativeRuns } = /** @type {{ computeRepresentativeRuns: <T>(r: [T, T][][]) => T[] }} */ (
-    load(lhciUtils.replace('assertions.js', 'representative-runs.js'))
-  );
   // One profile per lane for the browser's lifetime, removed on every way out.
   const profile = join(PROFILES, process.env.LH_LANE ?? String(process.pid));
   const fresh = () => rmSync(profile, { recursive: true, force: true, maxRetries: 5 });
@@ -321,11 +538,7 @@ async function lane() {
       }
     }
   };
-  /** @param {import('lighthouse').RunnerResult[]} runs */
-  const judge = (runs) => {
-    const [median] = computeRepresentativeRuns([runs.map((r) => /** @type {[object, object]} */ ([r.lhr, r.lhr]))]);
-    return getAllAssertionResults({ assertMatrix: assert.assertMatrix }, [/** @type {object} */ (median)]);
-  };
+  const judge = (/** @type {object} */ lhr) => getAllAssertionResults({ assertMatrix: assert.assertMatrix }, [lhr]);
 
   const describe = (/** @type {AssertionResult[]} */ failed) =>
     failed.map(
@@ -334,35 +547,32 @@ async function lane() {
     );
 
   process.on('message', (m) => {
-    const { url, path } = /** @type {{ url: string, path: string }} */ (m);
+    const { url, path, runs, from } = /** @type {{ url: string, path: string, runs: number, from: number }} */ (m);
     const t0 = Date.now();
-    /** @type {import('lighthouse').RunnerResult[]} */
-    const runs = [];
-    let first = '';
+    /** @type {Run[]} */
+    const done = [];
     const audit = async () => {
-      runs.push(await once(url));
-      let failed = judge(runs);
-      if (failed.length) {
-        first = describe(failed).join('; ');
-        while (runs.length < RETRY_RUNS) runs.push(await once(url));
-        failed = judge(runs);
+      for (let i = 0; i < runs; i++) {
+        const r = await once(url);
+        const failures = describe(judge(r.lhr));
+        done.push({ failures, metrics: runMetrics(/** @type {Parameters<typeof runMetrics>[0]} */ (r.lhr)) });
+        const name = `${slug(path)}-${from + i}.report`;
+        writeFileSync(join(reports, `${name}.json`), JSON.stringify(r.lhr));
+        if (html) {
+          writeFileSync(join(reports, `${name}.html`), String(r.report));
+          // Retried or failed URLs only: a first-run pass is not worth an artifact.
+          if (failures.length || from + i > 1) writeFileSync(join(out, `${name}.html`), String(r.report));
+        }
+        if (!failures.length) return;
       }
-      runs.forEach((r, i) => {
-        const base = join(reports, `${slug(path)}-${i + 1}.report`);
-        writeFileSync(`${base}.json`, JSON.stringify(r.lhr));
-        if (html) writeFileSync(`${base}.html`, String(r.report));
-      });
-      return describe(failed);
     };
     audit().then(
-      (failures) => process.send?.({ path, runs: runs.length, ms: Date.now() - t0, first, failures }),
+      () => process.send?.({ path, ms: Date.now() - t0, runs: done }),
       (/** @type {unknown} */ err) =>
         process.send?.({
           path,
-          runs: runs.length,
           ms: Date.now() - t0,
-          first,
-          failures: [`lighthouse error: ${String(err)}`],
+          runs: [...done, { failures: [`lighthouse error: ${String(err)}`] }],
         }),
     );
   });

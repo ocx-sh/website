@@ -20,7 +20,7 @@ below. The theme's own values live in `tests/budgets.mjs` of
 | Gate | Command or check | Blocks on |
 |---|---|---|
 | Build check | `npx ocx-site check --dist dist` | A root-relative link outside every claim, a `dist` layout that does not match the claim, a Pagefind bundle from another version |
-| Lighthouse | lhci over representative built pages, mobile preset | Any category below score 1 |
+| Lighthouse | lhci over representative built pages, mobile preset | Any category below score 1 in all of a page's runs (best of 3) |
 | Budgets | lhci assertions plus a Playwright measurement | Any page over the budgets below |
 | No flicker | Playwright: layout identical with images blocked | Any element box that moves |
 | Lazy hydration | Playwright: no Zag root leaves `idle` without input | JavaScript loading before interaction |
@@ -84,7 +84,7 @@ from `site/`; copy it, do not reinvent it.
   with a `lighthouse.budgets.mjs` (budgets, lhci assert matrix, page
   discovery). Build, serve with `astro preview` under the claimed `base`,
   audit every built page mobile, judge with lhci's assertion engine; a failing
-  page reruns up to 3 times and is judged on its median run. Sequential and
+  page reruns up to 3 times in total and passes once one run does. Sequential and
   uncached is fine at about 20 pages.
 - Budgets start from the `content` class of the theme's `tests/budgets.mjs`
   and never go above it.

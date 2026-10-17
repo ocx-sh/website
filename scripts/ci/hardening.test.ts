@@ -25,6 +25,9 @@ interface Workflow {
   jobs: Record<string, Job>;
 }
 
+/** `uses:` values of a workflow; none for one that runs only gh and jq, like lighthouse-comment.yml. */
+const usesOf = (text: string) => [...text.matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm)].map((m) => m[1]!.trim());
+
 /** Secrets a job reads, other than the always-present GITHUB_TOKEN. */
 const secretsRead = (job: Job) =>
   [...JSON.stringify(job).matchAll(/secrets\.(\w+)/g)].map((m) => m[1]!).filter((n) => n !== 'GITHUB_TOKEN');
@@ -43,6 +46,10 @@ describe('.github/workflows (C-328)', () => {
     );
   });
 
+  it('finds uses: lines at all, so the per-workflow pin check is not vacuous', () => {
+    expect(names.flatMap((n) => usesOf(read(`${dir}/${n}`))).length).toBeGreaterThan(0);
+  });
+
   describe.each(names)('%s', (name) => {
     const text = read(`${dir}/${name}`);
     const wf = parse(text) as Workflow;
@@ -52,8 +59,7 @@ describe('.github/workflows (C-328)', () => {
     });
 
     it('pins every uses: but a local path to a 40-hex SHA with a version comment', () => {
-      const lines = [...text.matchAll(/^\s*(?:-\s+)?uses:\s*(.+)$/gm)].map((m) => m[1]!.trim());
-      expect(lines.length).toBeGreaterThan(0);
+      const lines = usesOf(text);
       const unpinned = lines.filter((l) => !l.startsWith('./') && !/^[\w.-]+\/[\w./-]+@[0-9a-f]{40} # v\d\S*$/.test(l));
       expect(unpinned).toEqual([]);
     });

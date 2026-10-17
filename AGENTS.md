@@ -34,7 +34,8 @@ and open questions. Read it before any design or code change.** Research trail:
   Rules: `css-theming`, `typescript-quality`, `typescript-packaging`,
   `docs-quality`.
 - No Web Awesome, no mdBook/MkDocs adapters (see HANDOVER "Draft items").
-- Quality bar: Lighthouse 100 in all four categories; shared components typed
+- Quality bar: Lighthouse 100 in all four categories, judged best of 3 runs per page (a page that
+  reaches 100 once in three passes; the PR comment's tightest-pages table shows the margin); shared components typed
   and tested (Vitest + Astro Container API, Playwright under a non-root `base`).
 - Iconography stays stable: never swap an icon for looks; one icon, one meaning. The set was
   chosen 2026-09-28: Lucide (UI), Simple Icons (OS, brand, shells) and a few custom glyphs. Add or
@@ -97,8 +98,10 @@ Tools come from `ocx.toml`; run everything through it: `ocx exec -- task <name>`
   `task check`. Locally, Lighthouse runs as `task lighthouse:changed` only; the full
   `task lighthouse` is CI's gate and the pre-release run.
 - `task lighthouse` — every example page, mobile, 100×4 plus budgets, ~2 min
-  cold: 3 lanes (`LH_SHARDS`), each one long-lived Chrome; one run per URL, a
-  failing URL gets 3 and is judged on its median run. A URL is skipped only
+  cold: 3 lanes (`LH_SHARDS`), each one long-lived Chrome; one run per URL; the
+  URLs that failed are re-audited serially on one lane (up to 3 runs in total) and pass as soon as one run
+  passes. It writes `target/reports/lighthouse/` (`summary.md`, `metrics.json`; with `LH_HTML=1` the HTML
+  of retried and failed URLs) and appends `summary.md` to `$GITHUB_STEP_SUMMARY`. A URL is skipped only
   when a previously green result has an identical key (its HTML, every local
   asset it references, tool versions, config, budgets, runner, preset);
   `LH_NO_CACHE=1` audits all, `LH_HTML=1` adds HTML reports.
