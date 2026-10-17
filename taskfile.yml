@@ -88,6 +88,18 @@ tasks:
       - for: { var: APPS }
         cmd: pnpm --dir {{.ITEM}} run check
 
+  dts:check:
+    desc: Regenerate packages/theme's committed .d.mts typings (the prepack emit) and fail if they differ from the tree
+    deps: [install]
+    cmds:
+      - pnpm --dir packages/theme run prepack
+      - cmd: |
+          if [ -n "$(git status --porcelain -- ':(glob)packages/theme/src/**/*.d.mts')" ]; then
+            git status --short -- ':(glob)packages/theme/src/**/*.d.mts'
+            echo 'stale .d.mts: run `pnpm --dir packages/theme run prepack` and commit the result' >&2
+            exit 1
+          fi
+
   test:
     desc: Vitest (packages, scripts, infra, deploy action)
     deps: [install]
@@ -168,6 +180,7 @@ tasks:
       - task: lint
       - task: fmt
       - task: typecheck
+      - task: dts:check
       - task: test
       - task: build
       - task: css
@@ -188,6 +201,7 @@ tasks:
     desc: CI test tier - typecheck, Vitest (JUnit in target/reports/junit/), built-CSS gate
     cmds:
       - task: typecheck
+      - task: dts:check
       - mkdir -p target/reports/junit
       - pnpm exec vitest run --reporter=default --reporter=junit --outputFile.junit=target/reports/junit/vitest.xml
       - task: build

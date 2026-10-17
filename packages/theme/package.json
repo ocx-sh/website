@@ -91,7 +91,6 @@
   ],
   "scripts": {
     "prepack": "node -e \"for (const f of require('node:fs').globSync('src/**/*.d.mts')) require('node:fs').rmSync(f)\" && tsc --allowJs --declaration --emitDeclarationOnly -p tsconfig.dts.json",
-    "postpack": "node -e \"for (const f of require('node:fs').globSync('src/**/*.d.mts')) require('node:fs').rmSync(f)\"",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {

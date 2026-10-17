@@ -68,7 +68,7 @@ allowBuilds:
 
 The exact key is printed in the `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` message
 (a `file://` remote prints `@ocx-sh/theme@git+file://…#<sha>&path:/packages/theme`).
-Setting the entry to `false` also installs, but skips the generated `.d.mts` typings.
+Setting the entry to `false` also installs; the `.d.mts` typings are committed, so they ship either way (the build only refreshes them).
 A repin edits three places: the dependency, this key, and the deploy action `uses:`
 SHA (`ocx-theme-deploy`); Dependabot and Renovate cannot track a git SHA. Move to the
 npm version after the release.
