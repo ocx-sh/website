@@ -67,8 +67,11 @@ page.
 - **Styles before content.** First-paint CSS loads in the head, never inside
   the content it styles. Do not import a styled Starlight component into a
   chrome override: its stylesheet inlines into every page.
-- **Fonts**: only the theme's two families at 400 and 600. A third family or
-  weight costs a preload and the performance score.
+- **Fonts**: only the theme's two families at 400 and 600, upright only. A third
+  family or weight costs a preload and the performance score, and an italic
+  face (~25 KB) on its own pushes a page with one `<em>` over the 147 KiB
+  budget; emphasis uses the browser's synthesized oblique. Do not add italics
+  to a consumer's recipe budget either.
 - **Contrast and focus** come from tokens (`ocx-theme-theming`); a raw colour
   is the usual cause of an accessibility drop.
 

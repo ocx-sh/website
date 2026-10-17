@@ -8,7 +8,6 @@ import pkg from '../../package.json' with { type: 'json' };
 import nav from '../nav.json' with { type: 'json' };
 import { mergeTargets } from '../registry.mjs';
 import { EXPRESSIVE_CODE } from './ec.mjs';
-import { italicOptional } from './fonts.mjs';
 
 const SITE = 'https://ocx.sh';
 const INDEX_WEIGHT = 1;
@@ -180,18 +179,22 @@ export default function ocxTheme({ breadcrumbs = {} } = {}) {
                 // local("Courier New"), absent on Linux, so the swap would shift layout there.
                 fonts: [
                   {
-                    provider: italicOptional(fontProviders.fontsource()),
+                    provider: fontProviders.fontsource(),
                     name: 'IBM Plex Sans',
                     cssVariable: '--ocx-font-sans',
                     weights: [400, 600],
+                    // Upright only: an <em> gets the browser's synthesized oblique. The true italic is ~25 KB
+                    // per weight, which alone pushes a ~131 KB page over the 147 KiB weight budget (#14).
+                    styles: ['normal'],
                     fallbacks: ['OCX Sans Fallback', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
                     optimizedFallbacks: false,
                   },
                   {
-                    provider: italicOptional(fontProviders.fontsource()),
+                    provider: fontProviders.fontsource(),
                     name: 'IBM Plex Mono',
                     cssVariable: '--ocx-font-mono',
                     weights: [400, 600],
+                    styles: ['normal'],
                     fallbacks: [
                       'OCX Mono Fallback',
                       'ui-monospace',

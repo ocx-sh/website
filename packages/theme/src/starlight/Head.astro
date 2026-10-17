@@ -3,7 +3,7 @@
 // two families the plugin registers (their cssVariables are the theme tokens).
 // Preloads the four upright faces, the only weights the theme loads (sans and
 // mono at 400/600, tokens.css): Lighthouse counts each font fetched before LCP.
-// Italics are never preloaded and use font-display: optional (fonts.mjs): no block, no late swap.
+// No italic face is registered (index.mjs `styles`): <em> is the browser's synthesized oblique.
 import Default from '@astrojs/starlight/components/Head.astro';
 import { Font } from 'astro:assets';
 import { PLATFORM_SCRIPT } from '../head-scripts.mjs';
