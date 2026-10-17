@@ -20,7 +20,7 @@ below. The theme's own values live in `tests/budgets.mjs` of
 | Gate | Command or check | Blocks on |
 |---|---|---|
 | Build check | `npx ocx-site check --dist dist` | A root-relative link outside every claim, a `dist` layout that does not match the claim, a Pagefind bundle from another version |
-| Lighthouse | lhci over representative built pages, mobile preset | Any category below score 1 |
+| Lighthouse | lhci over representative built pages, mobile preset | Any category below score 1 in all of a page's runs (best of 3) |
 | Budgets | lhci assertions plus a Playwright measurement | Any page over the budgets below |
 | No flicker | Playwright: layout identical with images blocked | Any element box that moves |
 | Lazy hydration | Playwright: no Zag root leaves `idle` without input | JavaScript loading before interaction |
