@@ -498,6 +498,7 @@ describe('C-031: package surface (declared)', () => {
         './prose-code.css',
         './lazy',
         './csp',
+        './markdown',
       ].sort(),
     );
   });
@@ -515,6 +516,7 @@ describe('C-031: package surface (declared)', () => {
       './command-palette',
       './lazy',
       './csp',
+      './markdown',
     ]) {
       const cond = exportsMap[key] as Record<string, string>;
       const names = Object.keys(cond);

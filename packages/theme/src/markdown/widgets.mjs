@@ -162,6 +162,31 @@ export const widgets = {
   },
 };
 
+// Starlight's four aside variants, the directives `widgets` turns alerts into.
+const ASIDE_VARIANTS = new Set(['note', 'tip', 'caution', 'danger']);
+
+/**
+ * Sätteri mdast plugin for pages outside Starlight: renders the aside directives `widgets` produces as
+ * Starlight's own Aside markup (minus the icon, which the theme hides), so one stylesheet serves both.
+ * Never add it to a Starlight processor: Starlight's asides plugin renders them there.
+ * @type {import('satteri').MdastPluginDefinition}
+ */
+export const asides = {
+  name: '@ocx-sh/theme/asides',
+  containerDirective(node, ctx) {
+    if (!ASIDE_VARIANTS.has(node.name)) return;
+    const [first, ...rest] = node.children;
+    const labelled = first?.type === 'paragraph' && first.data && 'directiveLabel' in first.data;
+    const title = labelled ? ctx.textContent(first) : node.name;
+    const heading = element('p', { className: ['starlight-aside__title'], ariaHidden: 'true' }, [
+      { type: 'text', value: title },
+    ]);
+    const content = element('div', { className: ['starlight-aside__content'] }, labelled ? rest : node.children);
+    const props = { ariaLabel: title, className: ['starlight-aside', `starlight-aside--${node.name}`] };
+    return /** @type {Node} */ (/** @type {unknown} */ (element('aside', props, [heading, content])));
+  },
+};
+
 /** @typedef {import('satteri').HastNode} HastChild */
 
 /** @param {HastChild} node @returns {string} */

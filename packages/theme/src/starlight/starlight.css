@@ -250,17 +250,6 @@ main:has(.ocx-footer) { --sl-main-pad: 0; }
 main > .content-panel:has(.ocx-footer) { padding-bottom: 0; }
 h1[id='_top'] { margin-top: 0; font-weight: var(--ocx-font-weight-bold); letter-spacing: var(--ocx-tracking-display); color: var(--ocx-color-fg); }
 
-/* Asides → .ocx-callout shape */
-.starlight-aside { border: var(--ocx-border-width) solid var(--ocx-color-border); border-inline-start-width: var(--ocx-border-width-marker); border-radius: var(--ocx-radius-md); background: var(--ocx-color-surface); }
-.starlight-aside { padding: var(--ocx-space-4) var(--ocx-space-5); }
-.starlight-aside__icon { display: none; }                /* mock c-callout: the kind in mono caps, no glyph */
-.starlight-aside__content { font-size: var(--ocx-text-md); }
-.starlight-aside__title { font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold); letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; }
-.starlight-aside--note { --sl-color-asides-text-accent: var(--ocx-color-keyword); border-inline-start-color: var(--ocx-color-keyword); }
-.starlight-aside--tip { --sl-color-asides-text-accent: var(--ocx-color-success); border-inline-start-color: var(--ocx-color-success); }
-.starlight-aside--caution { --sl-color-asides-text-accent: var(--ocx-color-warning); border-inline-start-color: var(--ocx-color-warning); }
-.starlight-aside--danger { --sl-color-asides-text-accent: var(--ocx-color-danger); border-inline-start-color: var(--ocx-color-danger); }
-
 /* Buttons, cards, badges, steps, file tree */
 .sl-link-button { /* = ui/Button m */
   box-sizing: border-box; min-block-size: var(--ocx-control-2xl); padding: 0 var(--ocx-space-5);

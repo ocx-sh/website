@@ -37,6 +37,10 @@
       "types": "./src/chrome.d.mts",
       "default": "./src/chrome.mjs"
     },
+    "./markdown": {
+      "types": "./src/markdown/widgets.d.mts",
+      "default": "./src/markdown/widgets.mjs"
+    },
     "./nav.json": "./src/nav.json",
     "./nav": {
       "types": "./src/nav.d.ts",

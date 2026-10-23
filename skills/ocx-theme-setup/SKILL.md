@@ -141,6 +141,11 @@ overriding any of these; it lists merge rules and the exact override set.
   shortcodes, styled `<details>`, math, `{#id}` headings, `.md` links and includes
   (syntax table in `ocx-theme-components`). Leave `markdown.processor` unset: with
   any other processor, `unified()` included, none of them run and the plugin warns.
+- Outside Starlight (a package README rendered by your own build), import the same plugins from
+  `@ocx-sh/theme/markdown` and run Sätteri yourself:
+  `markdownToHtml(src, { features: { directive: false }, mdastPlugins: [widgets, asides], hastPlugins: [taskLabels] })`.
+  `asides` renders alerts as Starlight's Aside markup, which `base.css` styles; never add it under
+  Starlight, whose own asides plugin renders them there. Untrusted input still needs a sanitiser after.
 - Smart punctuation without dashes: `--flag` in prose stays as written; quotes and ellipses still
   curl. `markdown.smartypants: false` turns all of it off.
 
