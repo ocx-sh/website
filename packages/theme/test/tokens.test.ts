@@ -172,7 +172,8 @@ describe('tokens.css', () => {
     expect(light.get('--ocx-color-hover-border')).toBe('var(--ocx-color-border-control)');
   });
 
-  it.each(['AccordionItem.astro', 'Collapsible.astro'])(
+  // Collapsible's look lives in ui/collapsible.css (prose <details> shares it), so no :global() there.
+  it.each(['AccordionItem.astro', 'ui/collapsible.css'])(
     'owner: %s draws no frame and marks the open item with the accent (bar, title, chevron)',
     (file) => {
       const s = component(file);
@@ -181,7 +182,9 @@ describe('tokens.css', () => {
       const open = [...s.matchAll(/\[data-state='open'\][^{]*\{([^}]*)\}/g)].map((m) => m[1]).join('');
       expect(open).toContain('var(--ocx-color-focus)');
       expect(open).toContain('var(--ocx-color-accent-fg)');
-      expect(s).toMatch(/\[data-state='open'\]\s*>\s*:global\(\.ocx-[a-z]+__chevron\)\s*\{[^}]*\brotate:\s*180deg/);
+      expect(s).toMatch(
+        /\[data-state='open'\]\s*>\s*(?::global\()?\.ocx-[a-z]+__chevron\)?[^{]*\{[^}]*\brotate:\s*180deg/,
+      );
       expect(s).toMatch(/@media \(forced-colors: active\)\s*\{[^}]*\}\s*[^}]*\[data-state='open'\][^}]*Highlight/);
     },
   );

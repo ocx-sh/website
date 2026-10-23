@@ -6,6 +6,7 @@ import { gzipSync } from 'node:zlib';
 import { fontProviders } from 'astro/config';
 import pkg from '../../package.json' with { type: 'json' };
 import nav from '../nav.json' with { type: 'json' };
+import { addMarkdownPlugins } from '../markdown/index.mjs';
 import { mergeTargets } from '../registry.mjs';
 import { EXPRESSIVE_CODE } from './ec.mjs';
 
@@ -78,6 +79,9 @@ const OVERRIDES = [
   'MobileMenuToggle',
   'PageFrame',
 ];
+const MARKDOWN_WARNING =
+  'markdown.processor is "NAME", not Sätteri: the theme\'s Markdown widgets (alerts, emoji, collapsibles, math, ' +
+  "includes, .md links, heading ids) do not run. Remove the processor option to use Astro's default.";
 // Absolute, forward slashes on every OS (no export key exists for it, §4.1).
 const MIDDLEWARE = fileURLToPath(new URL('./route-middleware.mjs', import.meta.url)).replaceAll('\\', '/');
 const FAVICON = fileURLToPath(new URL('./favicon.mjs', import.meta.url)).replaceAll('\\', '/');
@@ -89,17 +93,20 @@ const OPTIONS_ID = 'virtual:ocx-theme/options';
  * @typedef {{ label: string, href: string }} Crumb
  * @typedef {{
  *   breadcrumbs?: false | { root?: Crumb | false },
+ *   math?: boolean,
  * }} OcxThemeOptions
  */
 
 /**
- * Starlight plugin: OCX tokens, base styles, overrides, code theme, search merge.
+ * Starlight plugin: OCX tokens, base styles, overrides, code theme, search merge, Markdown widgets.
  * `breadcrumbs`: the trail above every page title (default on, no root crumb: section first);
  * `false` drops it, `{ root: { label, href } }` adds a root crumb.
+ * `math`: also render `$…$` and `$$…$$` as math (```` ```math ```` fences always render). Off by
+ * default: prose with two shell variables (`$HOME` and `$PATH`) would turn into a formula.
  * @param {OcxThemeOptions} [options]
  * @returns {import('@astrojs/starlight/types').StarlightPlugin}
  */
-export default function ocxTheme({ breadcrumbs = {} } = {}) {
+export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
   // Defaults live in the route middleware, which reads this.
   const runtime = { breadcrumbs };
   return {
@@ -124,12 +131,24 @@ export default function ocxTheme({ breadcrumbs = {} } = {}) {
           name: '@ocx-sh/theme/site',
           hooks: {
             'astro:config:setup'({ config: astro, updateConfig, injectRoute }) {
-              // Astro keys its content cache on this config minus integrations: without the Expressive Code
-              // hash in it, a changed EC config keeps serving cached .md pages that link a stale ec.<hash>.css
-              // (404, unstyled code) until the cache is cleared. A visitor-less Sätteri plugin carries it, pushed
-              // the way Starlight adds its own. ponytail: a unified() processor gets no key; clear .astro there.
-              const md = /** @type {{ hastPlugins?: object[] } | undefined} */ (astro.markdown?.processor?.options);
-              md?.hastPlugins?.push({ name: '@ocx-sh/theme/ec-cache-key', ecKey });
+              const processor = astro.markdown?.processor;
+              if (processor?.name !== 'satteri') {
+                logger.warn(MARKDOWN_WARNING.replace('NAME', String(processor?.name)));
+              } else {
+                const md = /** @type {import('../markdown/index.mjs').SatteriOptions} */ (processor.options);
+                addMarkdownPlugins(md, {
+                  srcDir: fileURLToPath(astro.srcDir),
+                  docsDir: fileURLToPath(new URL('content/docs/', astro.srcDir)),
+                  base: own,
+                  math,
+                  smartypants: astro.markdown.smartypants !== false,
+                });
+                // Astro keys its content cache on this config minus integrations and functions: without the
+                // EC hash and the theme version in it, a changed EC config or a theme upgrade keeps serving
+                // cached .md pages (stale ec.<hash>.css links, old widget markup) until .astro is cleared.
+                // A visitor-less Sätteri plugin carries both, pushed the way Starlight adds its own.
+                md.hastPlugins.push({ name: '@ocx-sh/theme/cache-key', ecKey, version: pkg.version, math });
+              }
               // Starlight's default favicon is `/favicon.svg`; the logo fills it unless the consumer has one.
               if (config.favicon === undefined && !existsSync(new URL('favicon.svg', astro.publicDir)))
                 injectRoute({ pattern: '/favicon.svg', entrypoint: FAVICON, prerender: true });

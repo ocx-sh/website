@@ -5,18 +5,11 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { markdownToHtml } from 'satteri';
 import { test } from 'vitest';
 
-import { remarkIncludes } from '../src/remark/includes.mjs';
-
-interface TestNode {
-  type: string;
-  url?: string;
-  value?: string;
-  lang?: string | null;
-  children: TestNode[];
-  data?: { hProperties?: { id?: string } };
-}
+import { includes } from '../src/markdown/includes.mjs';
 
 function site() {
   const srcDir = mkdtempSync(join(tmpdir(), 'includes-'));
@@ -27,38 +20,23 @@ function site() {
   return srcDir;
 }
 
-async function run(srcDir: string, source: string): Promise<TestNode> {
-  const { unified } = await import('unified');
-  const { default: remarkParse } = await import('remark-parse');
-  const { VFile } = await import('vfile');
-  const processor = unified().use(remarkParse).use(remarkIncludes, { srcDir });
-  const file = new VFile({ value: source, path: join(srcDir, 'docs', 'page.md') });
-  return (await processor.run(processor.parse(file), file)) as unknown as TestNode;
+async function run(srcDir: string, source: string): Promise<string> {
+  const fileURL = pathToFileURL(join(srcDir, 'docs', 'page.md'));
+  return (await markdownToHtml(source, { mdastPlugins: [includes({ srcDir })], fileURL })).html.trim();
 }
 
 test('<<< @/path{lang} becomes a fenced block of the file', async () => {
-  const tree = await run(site(), '<<< @/_scripts/demo.sh{sh}\n');
-  assert.equal(tree.children.length, 1);
-  assert.deepEqual(
-    { type: tree.children[0]!.type, lang: tree.children[0]!.lang, value: tree.children[0]!.value },
-    { type: 'code', lang: 'sh', value: '#!/bin/sh\necho demo' },
-  );
+  const html = await run(site(), '<<< @/_scripts/demo.sh{sh}\n');
+  assert.equal(html, '<pre><code class="language-sh">#!/bin/sh\necho demo\n</code></pre>');
 });
 
 test('<!--@include: path{3,}--> splices lines 3 to the end as markdown', async () => {
-  const tree = await run(site(), '<!--@include: ../snippet.md{3,}-->\n');
-  assert.deepEqual(
-    tree.children.map((node) => node.type),
-    ['heading', 'paragraph'],
-  );
-  assert.equal(tree.children[0]!.children[0]!.value, 'Kept heading');
-  assert.equal(tree.children[1]!.children[0]!.value, 'kept body');
+  const html = await run(site(), '<!--@include: ../snippet.md{3,}-->\n');
+  assert.equal(html, '<h1>Kept heading</h1>\n<p>kept body</p>');
 });
 
 test('an include without a range takes the whole file', async () => {
-  const tree = await run(site(), '<!--@include: ../snippet.md-->\n');
-  assert.equal(tree.children[0]!.type, 'paragraph');
-  assert.match(tree.children[0]!.children[0]!.value ?? '', /^dropped one/);
+  assert.match(await run(site(), '<!--@include: ../snippet.md-->\n'), /^<p>dropped one/);
 });
 
 test('a missing file is an error that names the path', async () => {
@@ -84,4 +62,22 @@ test('a cyclic markdown include names the chain', async () => {
   writeFileSync(join(srcDir, 'a.md'), '<!--@include: b.md-->\n');
   writeFileSync(join(srcDir, 'b.md'), '<!--@include: a.md-->\n');
   await assert.rejects(run(srcDir, '<!--@include: ../a.md-->\n'), /include cycle: .*a\.md -> .*b\.md -> .*a\.md/);
+});
+
+test("an included file's own includes expand, but not inside its code fences", async () => {
+  const srcDir = site();
+  writeFileSync(
+    join(srcDir, 'outer.md'),
+    'outer\n\n<!--@include: snippet.md{5,}-->\n\n```md\n<!--@include: snippet.md-->\n```\n',
+  );
+  const html = await run(srcDir, '<!--@include: ../outer.md-->\n');
+  assert.match(html, /<p>kept body<\/p>/);
+  assert.match(html, /<code class="language-md">&lt;!--@include: snippet.md--&gt;/);
+  assert.doesNotMatch(html, /dropped/);
+});
+
+test('a code include whose file holds a fence gets a longer fence', async () => {
+  const srcDir = site();
+  writeFileSync(join(srcDir, 'fenced.md'), 'a\n```sh\nb\n```\n');
+  assert.match(await run(srcDir, '<<< @/fenced.md{md}\n'), /<code class="language-md">a\n```sh\nb\n```\n<\/code>/);
 });

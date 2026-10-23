@@ -28,7 +28,6 @@ const pkg = () => ({
     './prose-code.css': './src/prose-code.css',
     './lazy': { types: './src/components/ui/lazy.d.mts', default: './src/components/ui/lazy.mjs' },
     './csp': { types: './src/csp.d.mts', default: './src/csp.mjs' },
-    './remark': { types: './src/remark/index.d.mts', default: './src/remark/index.mjs' },
     './copy': { types: './src/components/copy.d.mts', default: './src/components/copy.mjs' },
     './logo-tile': { types: './src/components/ui/logo-tile.d.mts', default: './src/components/ui/logo-tile.mjs' },
     './command-palette': {
@@ -75,8 +74,6 @@ const FILES = [
   'src/components/ui/lazy.mjs',
   'src/components/ui/lazy.d.mts',
   'src/csp.mjs',
-  'src/remark/index.d.mts',
-  'src/remark/index.mjs',
   'src/csp.d.mts',
 ];
 

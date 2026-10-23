@@ -1,0 +1,143 @@
+/* Collapsible look, shared by the Collapsible component and prose <details> (the Markdown widgets put
+ * the component's chevron into every <summary>): a full-width trigger row with a trailing chevron in the
+ * prose flow, no frame. Open = a 2px focus-coloured start bar down the whole disclosure, accent-fg title
+ * and chevron, the chevron turned up. Hover is the neutral tint. A native <details> has no Zag state:
+ * [open] stands in for [data-state='open']. Accordion items keep their own copy (AccordionItem.astro). */
+@layer ocx {
+  .ocx-collapsible,
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) {
+    inline-size: 100%;
+    box-shadow: inset var(--ocx-border-width-strong) 0 0 transparent; /* closed: the open bar, transparent */
+  }
+  /* An inset shadow, so opening shifts nothing.
+   * ponytail: physical left edge; a :dir(rtl) mirror when an RTL consumer appears. */
+  .ocx-collapsible[data-state='open'],
+  :is(.ocx-prose, .sl-markdown-content) details[open]:not(.not-content *) {
+    box-shadow: inset var(--ocx-border-width-strong) 0 0 var(--ocx-color-focus);
+  }
+  .ocx-collapsible__trigger,
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary {
+    display: flex;
+    align-items: center;
+    gap: var(--ocx-space-3);
+    box-sizing: border-box;
+    inline-size: 100%;
+    margin: 0;
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    border: 0;
+    border-radius: 0;
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-prose-body);
+    font-weight: var(--ocx-font-weight-medium);
+    line-height: var(--ocx-lh-heading);
+    text-align: start;
+    color: var(--ocx-color-fg);
+    background: none;
+    cursor: pointer;
+    /* On the base rule, not only :focus-visible: the ring's geometry is part of the look. */
+    outline-offset: var(--ocx-focus-offset-inset);
+    transition:
+      color var(--ocx-duration-base),
+      background-color var(--ocx-duration-base);
+  }
+  .ocx-collapsible__label {
+    flex: 1;
+    min-inline-size: 0;
+  }
+  .ocx-collapsible__chevron {
+    color: var(--ocx-color-fg-muted);
+    transition: rotate var(--ocx-duration-moderate) var(--ocx-ease-in-out);
+  }
+  /* A summary's text is no label element, so the chevron pushes itself to the end. */
+  details > summary > .ocx-collapsible__chevron {
+    margin-inline-start: auto;
+  }
+  .ocx-collapsible__trigger:hover:not([data-disabled]),
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary:hover {
+    background: var(--ocx-color-hover);
+  }
+  .ocx-collapsible__trigger:hover:not([data-disabled], [data-state='open']) > .ocx-collapsible__chevron,
+  details:not([open]) > summary:hover > .ocx-collapsible__chevron {
+    color: var(--ocx-color-fg);
+  }
+  .ocx-collapsible__trigger[data-state='open'],
+  .ocx-collapsible__trigger[data-state='open'] > .ocx-collapsible__chevron,
+  :is(.ocx-prose, .sl-markdown-content) details[open]:not(.not-content *) > summary,
+  details[open] > summary > .ocx-collapsible__chevron {
+    color: var(--ocx-color-accent-fg);
+  }
+  .ocx-collapsible__trigger[data-state='open'] > .ocx-collapsible__chevron,
+  details[open] > summary > .ocx-collapsible__chevron {
+    rotate: 180deg;
+  }
+  .ocx-collapsible__trigger[data-disabled] {
+    color: var(--ocx-color-fg-subtle);
+    cursor: not-allowed;
+  }
+  .ocx-collapsible__trigger[data-disabled] > .ocx-collapsible__chevron {
+    color: inherit;
+  }
+  .ocx-collapsible__trigger:focus-visible,
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary:focus-visible {
+    outline: var(--ocx-focus-ring);
+  }
+  /* Open/close motion of the component: disclosure.css, live roots only. */
+  .ocx-collapsible__content {
+    margin: 0;
+    padding: 0 var(--ocx-space-4) var(--ocx-space-4);
+  }
+  .ocx-collapsible__content > :first-child,
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary + * {
+    margin-top: 0;
+  }
+  .ocx-collapsible__content > :last-child,
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > :last-child:not(summary) {
+    margin-bottom: 0;
+  }
+
+  /* Prose <details> drops Starlight's frame and marker. Its content box is the component's content
+   * padding, and it opens and closes by growing (the TreeNode pattern): `content-visibility`
+   * (allow-discrete) keeps the closing content painted until the box has shrunk; one rendered open is
+   * final on first paint (an initial style never transitions). Height needs `interpolate-size`
+   * (Chromium); elsewhere it snaps. Components' own details (.not-content) keep theirs. */
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) {
+    padding: 0;
+    border: 0;
+    interpolate-size: allow-keywords;
+  }
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary {
+    list-style: none;
+  }
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary::-webkit-details-marker {
+    display: none;
+  }
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) > summary::before {
+    content: none;
+  }
+  :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *)::details-content {
+    block-size: 0;
+    padding: 0 var(--ocx-space-4);
+    overflow: clip;
+    overflow-clip-margin: var(--ocx-space-2);
+    transition:
+      block-size var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      padding-block-end var(--ocx-duration-moderate) var(--ocx-ease-in-out),
+      content-visibility var(--ocx-duration-moderate) allow-discrete;
+  }
+  :is(.ocx-prose, .sl-markdown-content) details[open]:not(.not-content *)::details-content {
+    block-size: auto;
+    padding-block-end: var(--ocx-space-4);
+  }
+
+  /* Forced colours drop box-shadow: the open bar becomes a system-coloured border. */
+  @media (forced-colors: active) {
+    .ocx-collapsible,
+    :is(.ocx-prose, .sl-markdown-content) details:not(.not-content *) {
+      border-inline-start: var(--ocx-border-width-strong) solid Canvas;
+    }
+    .ocx-collapsible[data-state='open'],
+    :is(.ocx-prose, .sl-markdown-content) details[open]:not(.not-content *) {
+      border-inline-start-color: Highlight;
+    }
+  }
+}

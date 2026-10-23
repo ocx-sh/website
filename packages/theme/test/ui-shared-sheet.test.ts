@@ -1,4 +1,4 @@
-// Primitives whose styles ride in base.css (Link, Breadcrumbs, Button, Loader, Skeleton's base): a component <style> would be a
+// Primitives whose styles ride in base.css (Link, Breadcrumbs, Button, Loader, Collapsible, Skeleton's base): a component <style> would be a
 // stylesheet chunk of its own, one more render-blocking request per page (Lighthouse perf 0.99).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -9,6 +9,7 @@ const SHARED = [
   ['Breadcrumbs', 'breadcrumbs'],
   ['Button', 'button'],
   ['Loader', 'loader'],
+  ['../Collapsible', 'collapsible'],
 ] as const;
 
 describe('shared-sheet primitives', () => {
@@ -26,7 +27,7 @@ describe('shared-sheet primitives', () => {
 
   it("base.css's @imports lead the sheet (CSS drops an @import after any rule)", () => {
     const body = src('base.css').replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(body.trimStart()).toMatch(/^(@import [^;]+;\s*){5}@font-face/);
+    expect(body.trimStart()).toMatch(/^(@import [^;]+;\s*){6}@font-face/);
   });
 
   it("Skeleton's base (text primitive, sweep) rides in base.css: the DependencyExplorer's first viewport paints it", () => {

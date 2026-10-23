@@ -55,6 +55,7 @@ async function setup(
     site: undefined,
     trailingSlash: 'always',
     publicDir: pathToFileURL(join(tmpdir(), 'ocx-no-public/')),
+    srcDir: pathToFileURL(join(tmpdir(), 'ocx-site/src/')),
     ...astro,
   } as AstroConfig;
   const updateConfig = vi.fn<SetupContext['updateConfig']>();
@@ -147,19 +148,83 @@ describe('ocxTheme plugin', () => {
     expect(plugin?.load(id ?? '')).toBe(`export default ${JSON.stringify(runtime)};`);
   });
 
+  /** A Sätteri processor as Astro creates it, with Starlight's plugins already added. */
+  const satteri = () => ({
+    name: 'satteri',
+    options: {
+      features: {} as Record<string, unknown>,
+      mdastPlugins: [{ name: 'starlight-asides' }] as { name: string }[],
+      hastPlugins: [{ name: 'starlight-heading-ids' }] as { name: string; ecKey?: string; version?: string }[],
+    },
+  });
+  const run = async (config: Partial<StarlightUserConfig> = {}, options?: Parameters<typeof ocxTheme>[0]) => {
+    const { addIntegration, astroConfig, logger } = await setup(config, {}, options);
+    const processor = satteri();
+    await injected(addIntegration, { ...astroConfig, markdown: { processor } } as unknown as AstroConfig);
+    return { ...processor.options, logger };
+  };
+
   it("Astro's content cache key carries the Expressive Code config: it changes with it, and only with it", async () => {
     const key = async (config: Partial<StarlightUserConfig>) => {
-      const { addIntegration, astroConfig } = await setup(config);
-      const hastPlugins: { name: string; ecKey?: string }[] = [];
-      const astro = { ...astroConfig, markdown: { processor: { name: 'satteri', options: { hastPlugins } } } };
-      await injected(addIntegration, astro as unknown as AstroConfig);
-      expect(hastPlugins.map((p) => p.name)).toEqual(['@ocx-sh/theme/ec-cache-key']);
-      return hastPlugins[0]?.ecKey;
+      const { hastPlugins } = await run(config);
+      expect(hastPlugins.map((p) => p.name)).toEqual([
+        'starlight-heading-ids',
+        '@ocx-sh/theme/task-labels',
+        '@ocx-sh/theme/cache-key',
+      ]);
+      return hastPlugins[2]?.ecKey;
     };
     const base = await key({});
     expect(base).toMatch(/^[0-9a-f]{16}$/);
     expect(await key({})).toBe(base);
     expect(await key({ expressiveCode: { styleOverrides: { codeFontSize: '1rem' } } })).not.toBe(base);
+  });
+
+  it('the content cache key carries the theme version, so an upgrade re-renders cached Markdown', async () => {
+    expect((await run()).hastPlugins[2]?.version).toBe(pkg.version);
+  });
+
+  it("the Markdown widgets join Sätteri around Starlight's asides, which render the directives they make", async () => {
+    const { mdastPlugins, features } = await run();
+    expect(mdastPlugins.map((p) => p.name)).toEqual([
+      '@ocx-sh/theme/includes',
+      '@ocx-sh/theme/widgets',
+      'starlight-asides',
+      '@ocx-sh/theme/md-links',
+      '@ocx-sh/theme/math',
+    ]);
+    expect(features).toEqual({ headingAttributes: true, smartPunctuation: { dashes: false } });
+  });
+
+  it('math: true turns on $ parsing; a consumer feature setting wins', async () => {
+    expect((await run({}, { math: true })).features).toEqual({
+      headingAttributes: true,
+      math: true,
+      smartPunctuation: { dashes: false },
+    });
+    const { addIntegration, astroConfig } = await setup({}, {}, { math: true });
+    const processor = satteri();
+    const own = { headingAttributes: false, math: false, smartPunctuation: true };
+    processor.options.features = { ...own };
+    await injected(addIntegration, { ...astroConfig, markdown: { processor } } as unknown as AstroConfig);
+    expect(processor.options.features).toEqual(own);
+  });
+
+  it('markdown.smartypants: false keeps punctuation untouched; the theme only stops dashes', async () => {
+    const { addIntegration, astroConfig } = await setup();
+    const processor = satteri();
+    const markdown = { processor, smartypants: false };
+    await injected(addIntegration, { ...astroConfig, markdown } as unknown as AstroConfig);
+    expect(processor.options.features).toEqual({ headingAttributes: true });
+  });
+
+  it('a processor other than Sätteri gets no plugins and a warning naming it', async () => {
+    const { addIntegration, astroConfig, logger } = await setup();
+    const processor = { name: 'unified', options: { remarkPlugins: [] } };
+    await injected(addIntegration, { ...astroConfig, markdown: { processor } } as unknown as AstroConfig);
+    expect(processor.options).toEqual({ remarkPlugins: [] });
+    expect(logger.warn).toHaveBeenCalledOnce();
+    expect(logger.warn.mock.calls[0]?.[0]).toMatch(/"unified", not Sätteri/);
   });
 
   it('C-016: a base that is not a claim path throws, naming the base and every claim', async () => {
@@ -433,7 +498,6 @@ describe('C-031: package surface (declared)', () => {
         './prose-code.css',
         './lazy',
         './csp',
-        './remark',
       ].sort(),
     );
   });
@@ -451,7 +515,6 @@ describe('C-031: package surface (declared)', () => {
       './command-palette',
       './lazy',
       './csp',
-      './remark',
     ]) {
       const cond = exportsMap[key] as Record<string, string>;
       const names = Object.keys(cond);

@@ -1,10 +1,10 @@
 ---
 name: ocx-theme-setup
-description: Adding the @ocx-sh/theme Starlight plugin to an Astro site that joins ocx.sh, covering the ocxTheme() plugin options (breadcrumbs, root crumb), the base path that must be a nav.json claim, trailingSlash, site, fonts, favicon, customCss order, the Starlight component overrides, what overriding Search drops, Expressive Code and Pagefind merge settings, the VitePress CSS adapter, and the ocx-site check CLI. Use when installing or upgrading @ocx-sh/theme, writing or debugging astro.config.mjs for an ocx.sh section, when a build fails with "is not a claim path", "trailingSlash must be 'always'" or "site ... is not https://ocx.sh", when overriding a Starlight component such as Header, Search or Sidebar, when fonts, breadcrumbs or search merging look wrong, or when a new repo needs a path on ocx.sh. Not for picking or using individual components (ocx-theme-components) or deploying (ocx-theme-deploy).
+description: Adding the @ocx-sh/theme Starlight plugin to an Astro site that joins ocx.sh, covering the ocxTheme() plugin options (breadcrumbs, root crumb, math), Sätteri as the required Markdown processor, the base path that must be a nav.json claim, trailingSlash, site, fonts, favicon, customCss order, the Starlight component overrides, what overriding Search drops, Expressive Code and Pagefind merge settings, the VitePress CSS adapter, and the ocx-site check CLI. Use when installing or upgrading @ocx-sh/theme, writing or debugging astro.config.mjs for an ocx.sh section, when a build fails with "is not a claim path", "trailingSlash must be 'always'" or "site ... is not https://ocx.sh", when overriding a Starlight component such as Header, Search or Sidebar, when fonts, breadcrumbs or search merging look wrong, or when a new repo needs a path on ocx.sh. Not for picking or using individual components (ocx-theme-components) or deploying (ocx-theme-deploy).
 license: Apache-2.0
 metadata:
   summary: Wire @ocx-sh/theme into an Astro Starlight site on ocx.sh - base path, plugin options, overrides, fonts, search merge
-  keywords: ocx,ocx-sh,astro,starlight,starlight-plugin,theme,astro-config,base-path,trailing-slash,pagefind,expressive-code,fonts,breadcrumbs,overrides,vitepress
+  keywords: ocx,ocx-sh,astro,starlight,starlight-plugin,theme,astro-config,base-path,trailing-slash,pagefind,expressive-code,fonts,breadcrumbs,overrides,vitepress,markdown,satteri,math
 ---
 
 # ocx-theme-setup
@@ -108,12 +108,13 @@ the build. Hard failures, all thrown in the plugin's `config:setup`:
 
 ## 4. Plugin options
 
-`ocxTheme(options)` takes one option today:
+`ocxTheme(options)` takes two options:
 
 | Option | Default | Effect |
 |---|---|---|
 | `breadcrumbs` | `{}` (on, no root crumb) | The trail above every page title: section or hub, ecosystem entry, sidebar groups, page. `false` drops it. Splash pages never show one |
 | `breadcrumbs.root` | absent | `{ label, href }` prepends a root crumb (e.g. `{ label: 'ocx.sh', href: '/' }`); `false` or absent means none |
+| `math` | `false` | Also render `$…$` and `$$…$$` as math. ```` ```math ```` fences render either way. Off by default because prose naming two shell variables (`$HOME` and `$PATH`) would become a formula |
 
 ```js
 plugins: [ocxTheme({ breadcrumbs: { root: { label: 'ocx.sh', href: '/' } } })];
@@ -136,6 +137,12 @@ overriding any of these; it lists merge rules and the exact override set.
   finds every section.
 - A `/favicon.svg` route with the logo, unless you ship `public/favicon.svg` or
   set Starlight's `favicon`.
+- Markdown widgets on Astro's default Sätteri processor: GitHub alerts, emoji
+  shortcodes, styled `<details>`, math, `{#id}` headings, `.md` links and includes
+  (syntax table in `ocx-theme-components`). Leave `markdown.processor` unset: with
+  any other processor, `unified()` included, none of them run and the plugin warns.
+- Smart punctuation without dashes: `--flag` in prose stays as written; quotes and ellipses still
+  curl. `markdown.smartypants: false` turns all of it off.
 
 **Overriding `Search` drops four features.** The theme's `Search.astro` script
 also mounts the header nav menu, the mobile menu drawer, the sidebar
@@ -151,12 +158,12 @@ Call `mountChrome(document)` from `@ocx-sh/theme/chrome` in your override's
   set `editUrl` in each page's frontmatter to the true source file (not the gitignored output),
   or set Starlight's `editLink.baseUrl` for hand-written ones. There is no theme option.
 - **VitePress-style sources** (`{#id}` headings, `./x.md#a` links, `<<< @/path{lang}` and
-  `<!--@include: path-->` includes): `@ocx-sh/theme/remark` exports `remarkHeadingIds`,
-  `remarkMdLinks` (`{ root, base }`) and `remarkIncludes` (`{ srcDir }`). Astro 7 runs remark only
-  on the `unified` processor, so install `@astrojs/markdown-remark` and set
-  `markdown: { processor: unified({ remarkPlugins: [...] }) }`; the Starlight plugin adds none.
+  `<!--@include: path-->` includes) work as written: the plugin handles them on Sätteri. `@/` names
+  `src/`; links resolve against `src/content/docs/` and the base. In `.mdx`, write `{#id}` unescaped:
+  the old `\{#id\}` escape now renders literally. `@ocx-sh/theme/remark` is gone (0.3.0): drop it,
+  `@astrojs/markdown-remark` and the `markdown.processor` option.
 - **Heading ids**: Starlight slugs with github-slugger (an em dash becomes a double hyphen:
-  `bootstrap-only--ocx_install_`), unlike MkDocs. Starlight has no `{#id}` syntax. Rewrite
+  `bootstrap-only--ocx_install_`), unlike MkDocs. A `{#id}` suffix sets the id explicitly. Otherwise rewrite
   cross-page links to the slugger id and check every fragment against the built HTML.
   Stardoc's `<a id=X></a>` above `## X` duplicates the heading id: drop the anchor when it
   equals the next heading's id. `ocx-site check` does not flag repeated ids; add your own check.

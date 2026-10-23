@@ -63,7 +63,6 @@ const EXPORT_KEYS = [
   './prose-code.css',
   './lazy',
   './csp',
-  './remark',
   './copy',
   './logo-tile',
   './command-palette',
@@ -265,7 +264,6 @@ function main() {
       './lazy',
       './csp',
       './chrome',
-      './remark',
       '--format',
       'table',
     ]);

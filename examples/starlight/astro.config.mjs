@@ -130,6 +130,7 @@ export default defineConfig({
                 { label: 'Code colours', link: '/components/code-colours/' },
                 { label: 'Feature sections', link: '/components/feature-section/' },
                 { label: 'Hub grid', link: '/components/hub-grid/' },
+                { label: 'Markdown', link: '/components/markdown/' },
                 { label: 'Prose', link: '/components/prose/' },
                 { label: 'ShellSession', link: '/components/shell-session/' },
                 { label: 'Terminal', link: '/components/terminal/' },

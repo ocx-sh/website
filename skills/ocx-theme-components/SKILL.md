@@ -1,10 +1,10 @@
 ---
 name: ocx-theme-components
-description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, a11y contracts, events, lazy Zag loading. Use when writing or reviewing an .astro or .mdx page importing from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CopyMenu, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, TagsInput, Choice, RadioGroup, Slider, Tag, TagGroup, Dialog, AlertDialog, ConfirmDialog, CommandPalette, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, toast, Avatar, LogoTile, Terminal, ProseCodeCopy, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer, or when a component fires no event, loads JS early, shifts layout or fails a11y. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
+description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, a11y contracts, events, lazy Zag loading. Use when writing or reviewing an .astro or .mdx page importing from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CopyMenu, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, TagsInput, Choice, RadioGroup, Slider, Tag, TagGroup, Dialog, AlertDialog, ConfirmDialog, CommandPalette, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, toast, Avatar, LogoTile, Terminal, ProseCodeCopy, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer, for Markdown alerts, emoji, details or math, or when a component fires no event, loads JS early, shifts layout or fails a11y. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
 license: Apache-2.0
 metadata:
   summary: Which @ocx-sh/theme component to use, how to import it, the props and a11y contracts that matter, and the lazy-loading rules
-  keywords: ocx,ocx-sh,astro,starlight,components,mdx,zag,accessibility,a11y,button,select,combobox,dialog,tabs,accordion,tree,data-table,toast,lazy-loading,first-paint
+  keywords: ocx,ocx-sh,astro,starlight,components,mdx,zag,accessibility,a11y,button,select,combobox,dialog,tabs,accordion,tree,data-table,toast,lazy-loading,first-paint,markdown,gfm,alerts,emoji,details,math
 ---
 
 # ocx-theme-components
@@ -123,6 +123,28 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 [data-feedback](references/data-feedback.md). Starlight's own `Aside`,
 `Badge`, `Card`, `CardGrid`, `LinkCard` and `Steps` are restyled by the theme:
 import them from `@astrojs/starlight/components` as usual.
+
+## Markdown widgets
+
+Plain `.md` (and `.mdx`) renders GitHub and GitLab syntax with the theme's components at build
+time, with no import and no script. Write the GitHub form; it reads the same in a README.
+
+| Write | Renders as |
+|---|---|
+| `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]` on a quote's first line; GitLab's `> [!warning] Title` | Starlight `Aside`: note, tip, note, caution, danger, titled with the GitHub word or your title |
+| `:::note`, `:::tip`, `:::caution`, `:::danger`; also `:::warning`, `:::info`, `:::important`, each optionally `[Title]` | `Aside` |
+| `<details><summary>…</summary>`, or `:::details[Title]{open}` | Native `<details>` that looks exactly like `Collapsible`, no JavaScript |
+| `:rocket:` (GitHub's gemoji names) | 🚀. An unknown name, code, or a shortcode inside a word stays as written |
+| ```` ```math ```` fence; `$…$` / `$$…$$` only with `ocxTheme({ math: true })` | MathML (no script, stylesheet or font). It lays out with the system math font: Windows and macOS ship one, Linux needs one installed (`fonts-stix`). A formula that does not parse fails the build |
+| `- [ ]` / `- [x]`, `[^1]` footnotes, tables, `~~strike~~` | GFM, styled by the theme; each task checkbox is named by its item's text |
+| `{+ added +}`, `{- removed -}` (GitLab) | `<ins>`, `<del>` |
+| `[[_TOC_]]`, `[TOC]` | Dropped; the page has its own table of contents |
+| `## Title {#id}` | The heading's id |
+| `[text](./other.md#frag)` | That page's route, so the link works on GitHub and on the site |
+| `<!-- comment -->` | Dropped from the HTML |
+| `![x](dark.png#gh-dark-mode-only)` / `#gh-light-mode-only` | Shown only in that colour scheme |
+
+Mermaid fences stay highlighted code. `Collapsible`, `Tabs` and other components still need `.mdx`.
 
 ## Choosing between neighbours
 
