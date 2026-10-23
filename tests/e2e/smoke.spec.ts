@@ -93,3 +93,12 @@ test('C-120 the component index filters as you type', async ({ page }) => {
   await expect(cards).toHaveCount(total);
   await expect(status).toHaveText(`${total} components`);
 });
+
+// Starlight pads below its last panel and `main`; under the footer that read as an oversized footer.
+test('the footer closes a long doc: nothing below it', async ({ page }) => {
+  await page.goto('/docs/probe/long/');
+  const below = await page
+    .locator('.ocx-footer')
+    .evaluate((el) => document.documentElement.scrollHeight - (el.getBoundingClientRect().bottom + scrollY));
+  expect(below).toBeLessThan(1);
+});

@@ -243,6 +243,11 @@ mobile-starlight-toc .toggle { border-radius: var(--ocx-radius-md); }
 /* Page title (mock #1b): H1 in the content column, no banner rule, no extra padding. */
 main > .content-panel:first-child { padding-top: var(--ocx-space-8); padding-bottom: 0; }
 main > .content-panel + .content-panel { border-top: 0; }
+/* The footer closes the page as it does in Shell: Starlight's padding below the last panel and `main` (3vh)
+ * would leave a band under it taller than the footer itself. `main`'s comes from an unlayered rule, so only
+ * its variable reaches it from this layer. */
+main:has(.ocx-footer) { --sl-main-pad: 0; }
+main > .content-panel:has(.ocx-footer) { padding-bottom: 0; }
 h1[id='_top'] { margin-top: 0; font-weight: var(--ocx-font-weight-bold); letter-spacing: var(--ocx-tracking-display); color: var(--ocx-color-fg); }
 
 /* Asides → .ocx-callout shape */

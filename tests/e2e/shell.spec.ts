@@ -264,3 +264,17 @@ test.describe('footer stamp', () => {
     expect(after).not.toEqual(before);
   });
 });
+
+test('the footer rule is a line: beside the footer box it paints nothing', async ({ page }, testInfo) => {
+  test.skip(isMobile(testInfo), 'desktop width: the footer keeps the column inset');
+  await open(page, OCX);
+  const footer = page.locator('.ocx-footer');
+  await footer.scrollIntoViewIfNeeded();
+  const box = (await footer.boundingBox())!;
+  expect(box.x, 'no strip beside the footer to look at').toBeGreaterThan(8);
+  // The strip left of the box, below the rule.
+  const shot = () => page.screenshot({ clip: { x: 0, y: box.y, width: box.x, height: box.height } });
+  const painted = await shot();
+  await footer.evaluate((el) => (el.style.visibility = 'hidden'));
+  expect((await shot()).equals(painted), 'the footer paints beside its box').toBe(true);
+});

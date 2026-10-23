@@ -575,10 +575,11 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     gap: var(--ocx-space-3) var(--ocx-space-6);
     margin-top: var(--ocx-space-9);
     padding: var(--ocx-space-4);
-    /* The rule runs edge to edge like the header's, while the text keeps the column's inset: a shadow
-       spread sideways, clipped to the band above the box. Ink overflow, so it never scrolls the page. */
-    box-shadow: 0 calc(var(--ocx-border-width) * -1) 0 100vmax var(--ocx-color-border);
-    clip-path: inset(calc(var(--ocx-border-width) * -1) -100vmax 0);
+    /* The rule runs edge to edge like the header's, while the text keeps the column's inset: a border
+       image with only a top edge, outset sideways. Ink overflow, so it never scrolls the page. (A spread
+       shadow filled the strips beside the box too.) */
+    border-image: linear-gradient(var(--ocx-color-border) 0 0) 1 / var(--ocx-border-width) 0 0 /
+      var(--ocx-border-width) 100vmax 0;
     font-family: var(--ocx-font-mono);
     font-size: var(--ocx-text-xs);
     color: var(--ocx-color-fg-subtle);
