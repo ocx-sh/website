@@ -2,6 +2,10 @@
 title: Components
 description: Every theme component and restyled Starlight built-in, one page each.
 tableOfContents: false
+# The gallery links every page already. Prev/next would add ~330 B gz and push this HTML past
+# Lighthouse's first round trip (tests/budgets.mjs, HTML_GZ_MAX): mobile performance drops to 0.99.
+prev: false
+next: false
 ---
 
 import ComponentFilter from '../../../components/showcase/ComponentFilter.astro';
