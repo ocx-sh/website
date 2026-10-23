@@ -39,8 +39,12 @@ test.describe('icon catalog', () => {
     const images: string[] = [];
     page.on('request', (r) => r.resourceType() === 'image' && images.push(r.url()));
     await page.goto(CATALOG);
+    // os and shell cards carry names only; their glyphs sit on the OS icons page.
     const svgs = page.locator('[data-icon-catalog] li svg.ocx-icon');
-    await expect(svgs).toHaveCount(await page.locator('[data-icon-catalog] li').count());
+    const bare = page.locator(
+      '[data-icon-catalog] li:has(span:text-is("os")), [data-icon-catalog] li:has(span:text-is("shell"))',
+    );
+    await expect(svgs).toHaveCount((await page.locator('[data-icon-catalog] li').count()) - (await bare.count()));
     expect(images.filter((u) => u.includes('icon'))).toEqual([]);
   });
 });

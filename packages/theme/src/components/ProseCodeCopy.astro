@@ -1,0 +1,14 @@
+---
+// ProseCodeCopy (D-064, D-112): a "Copy code" button on every `pre` inside prose (`.ocx-prose`,
+// `.sl-markdown-content`, `.vp-doc`), for content that is plain HTML: a mirrored README, docs
+// rendered without Expressive Code. Place it once on a page that has prose: its script loads wherever
+// it renders, so not in a layout every page shares. It renders no markup. The button is inserted by
+// script (prose-code-copy.mjs); the first click loads the clipboard and toast code, copies the block's
+// code and asks the page toaster for "Copied — code block". Starlight's Expressive Code frames are skipped: they have their own.
+import './prose-code-copy.css';
+---
+
+<script>
+  import { enhanceProseCode } from './prose-code-copy.mjs';
+  enhanceProseCode(document);
+</script>

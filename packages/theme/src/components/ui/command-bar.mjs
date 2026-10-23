@@ -76,6 +76,29 @@ export function host(nav) {
  */
 export const PRE_PAINT = `(()=>{try{const apply=${String(apply)},host=${String(host)},bar=document.currentScript.closest('.ocx-cmdbar'),os=host(navigator);if(bar&&os)apply(bar,os)}catch{}})()`;
 
+/** @typedef {{ value: string, label: string, command: string }} Choice */
+
+/**
+ * Replaces the bar's choices: the data, the picker's width and its options. A swapped choice keeps the
+ * icon its label had (the registry markup lives only in the SSR options); a label the bar never rendered gets none.
+ * @param {HTMLElement} bar
+ * @param {Choice[]} choices
+ */
+function setChoices(bar, choices) {
+  bar.dataset['choices'] = JSON.stringify(choices);
+  bar.style.setProperty('--ocx-cmdbar-ch', String(Math.max(0, ...choices.map((c) => c.label.length))));
+  const select = bar.querySelector('select');
+  const icons = new Map([...(select?.options ?? [])].map((o) => [o.text, o.dataset['icon']]));
+  select?.replaceChildren(
+    ...choices.map((c) => {
+      const option = new Option(c.label, c.value);
+      const icon = icons.get(c.label);
+      if (icon) option.dataset['icon'] = icon;
+      return option;
+    }),
+  );
+}
+
 /**
  * Wires every bar: a pick moves the copy machine's value, a copy is announced in the bar's status.
  * @param {Document} [doc]
@@ -100,6 +123,41 @@ export function install(doc = document) {
       const command = apply(bar, /** @type {CustomEvent<{ value: string }>} */ (event).detail.value);
       if (command !== undefined)
         /** @type {{ setValue?: (value: string) => void } | undefined} */ (handle.api)?.setValue?.(command);
+    });
+    // `ocx:command-bar:set {command?, label?, choices?, value?}`: a consumer retargets the bar. `choices` replaces the
+    // picker's choices, `value` picks one (the command follows it); `command` alone sets the shown command. The
+    // text, the copy name and the machine's value follow, with no pick event.
+    bar.addEventListener('ocx:command-bar:set', (event) => {
+      const {
+        label,
+        choices,
+        value,
+        command: given,
+      } = /** @type {CustomEvent<{ command?: string, label?: string, choices?: Choice[], value?: string } | null>} */ (
+        event
+      ).detail ?? {};
+      // An unknown `value` changes nothing, with or without `choices`: no swap that would strand the shown command.
+      /** @type {unknown} */
+      const stored = JSON.parse(bar.dataset['choices'] ?? '[]');
+      const known = choices ?? /** @type {Choice[]} */ (stored);
+      if (value !== undefined && !known.some((c) => c.value === value)) return;
+      if (choices) setChoices(bar, choices);
+      const command = (value === undefined ? undefined : apply(bar, value)) ?? given;
+      if (value !== undefined)
+        bar
+          .querySelector('[data-zag-root="select"]')
+          ?.dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value } }));
+      if (command === undefined) return;
+      const text = bar.querySelector('.ocx-cmdbar__text');
+      if (text) text.textContent = command;
+      if (label) root.dataset['label'] = `${label} ${bar.dataset['noun']}`;
+      /** @type {unknown} */
+      const props = JSON.parse(root.dataset['zagProps'] ?? '{}');
+      root.dataset['zagProps'] = JSON.stringify({
+        .../** @type {Record<string, unknown>} */ (props),
+        defaultValue: command,
+      });
+      /** @type {{ setValue?: (value: string) => void } | undefined} */ (handle.api)?.setValue?.(command);
     });
     bar.addEventListener('ocx:clipboard:copy', () => say(`Copied ${root.dataset['label']}`));
     bar.addEventListener('ocx:clipboard:error', () => say('Copy failed'));

@@ -1,0 +1,35 @@
+---
+title: Set from code
+description: ocx:select:set changes the chosen option from code, before or after the machine starts, and logs no change event.
+height: 300
+order: 2
+log: true
+---
+
+import Select from '@ocx-sh/theme/components/ui/Select.astro';
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+
+export const sortKeys = [
+  { value: 'name', label: 'Name' },
+  { value: 'updated', label: 'Updated' },
+  { value: 'rating', label: 'Rating' },
+];
+
+<Select label="Sort by" options={sortKeys} value="name" />
+
+<div style="display:flex;gap:var(--ocx-space-3);margin-block-start:var(--ocx-space-4)">
+  <Button
+    type="button"
+    size="s"
+    onclick="document.querySelector('[data-zag-root=select]').dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value: 'updated' }, bubbles: true }))"
+  >
+    Set updated
+  </Button>
+  <Button
+    type="button"
+    size="s"
+    onclick="document.querySelector('[data-zag-root=select]').dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value: 'rating' }, bubbles: true }))"
+  >
+    Set rating
+  </Button>
+</div>

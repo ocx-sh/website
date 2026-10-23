@@ -5,11 +5,12 @@
 // no classes (the style is global, selected through the root) and no keywords: those (~590 B gz
 // in the HTML) come with the registry, imported when the search box is first used. The script
 // reads name and group from the card's text.
+// The os and shell groups render as name-only cards (no glyph, ~2.1 KB gz saved): the OS icons
+// page shows those glyphs with names. They stay searchable and counted.
 // The glyph is Icon.astro's markup minus `data-icon`: the name already sits in the card's <code>,
 // and a per-card unique attribute splits the otherwise identical attribute run into separate gzip
 // matches (~600 B gz over the catalog). Same class, so Icon's global styles apply. Also minus the
-// stroke-width (Icon's `[stroke]` rule sets it from a token) and the round caps and joins (the rule
-// below), ~400 B gz over the 49 cards.
+// stroke-width, round caps and joins (Icon's `[stroke]` rule sets them), ~400 B gz over the 49 cards.
 import Input from '@ocx-sh/theme/components/ui/Input.astro';
 import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
 ---
@@ -19,20 +20,26 @@ import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
   <p aria-live="polite" data-count>
     {ICON_NAMES.length} icons
   </p>
+  <p>
+    The <a href="../os/">OS icons</a> page shows the os and shell glyphs.
+  </p>
   <ul>
     {ICON_NAMES.map((name) => {
       const { viewBox, body, stroke, group } = ICONS[name];
+      const bare = group === 'os' || group === 'shell';
       return (
         <li>
-          <svg
-            class="ocx-icon"
-            data-size="lg"
-            viewBox={viewBox}
-            fill={stroke ? 'none' : 'currentColor'}
-            stroke={stroke ? 'currentColor' : undefined}
-            aria-hidden="true"
-            set:html={body}
-          />
+          {!bare && (
+            <svg
+              class="ocx-icon"
+              data-size="lg"
+              viewBox={viewBox}
+              fill={stroke ? 'none' : 'currentColor'}
+              stroke={stroke ? 'currentColor' : undefined}
+              aria-hidden="true"
+              set:html={body}
+            />
+          )}
           <code>{name}</code>
           <span>{group}</span>
         </li>
@@ -116,10 +123,6 @@ import { ICON_NAMES, ICONS } from '@ocx-sh/theme/icons';
     }
     .icon-catalog li[hidden] {
       display: none;
-    }
-    .icon-catalog svg[stroke] {
-      stroke-linecap: round;
-      stroke-linejoin: round;
     }
     .icon-catalog li > code {
       font-size: var(--ocx-text-sm);

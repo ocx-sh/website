@@ -1,6 +1,6 @@
 ---
 // C-180: copies `value`, reads "copied" for 1.5 s (design c-code), then asks the page toaster for
-// "Copied <label ?? value>" (C-181). Behaviour: Zag clipboard via clipboard.zag.mjs, loaded on
+// "Copied — <label ?? value>" (C-181). Behaviour: Zag clipboard via clipboard.zag.mjs, loaded on
 // first hover/focus/touch; the button is a secondary `s` Button.
 import type { Props as ClipboardProps } from '@zag-js/clipboard';
 import Button from './ui/Button.astro';

@@ -32,6 +32,7 @@ Use it for a few options that stay visible, such as a platform or a scope. Past 
     },
     { name: 'value', type: 'string | string[]', description: 'Initially pressed value(s).' },
     { name: 'label', type: 'string', required: true, description: 'Accessible name of the group.' },
+    { name: 'size', type: "'s' | 'm'", default: "'m'", description: 'Cell height, as ToggleButton: s = 30, m = 32.' },
     {
       name: 'zag',
       type: 'ZagProps<toggle-group.Props>',
@@ -45,6 +46,18 @@ Use it for a few options that stay visible, such as a platform or a scope. Past 
 | Event                     | Detail                                   | When                              |
 | ------------------------- | ---------------------------------------- | --------------------------------- |
 | `ocx:toggle-group:change` | `{ value }`, the pressed values in order | An option is pressed or released. |
+
+## Setting the value from code
+
+Dispatch `ocx:toggle-group:set` on the group root (`[data-zag-root="toggle-group"]`) to set the
+pressed option(s) from a URL or stored state. The detail is `{ value }`, a string or an array of
+strings; a value no item carries leaves every item off. It works before the machine has started (the
+group then boots from the value) and after, and it never fires `ocx:toggle-group:change`. Do not write
+`aria-checked`, `aria-pressed`, `data-state` or `data-zag-props` yourself.
+
+```js
+group.dispatchEvent(new CustomEvent('ocx:toggle-group:set', { detail: { value: 'linux' }, bubbles: true }));
+```
 
 ## Keyboard
 

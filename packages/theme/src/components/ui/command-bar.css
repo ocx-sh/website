@@ -25,8 +25,9 @@
   }
   .ocx-cmdbar__picker .ocx-ui-select__control {
     --_glyph: 0px;
+    /* One ch of slack: the control's ch and the value's glyphs differ by a few pixels, which clipped a label as long as the longest. */
     inline-size: calc(
-      var(--ocx-cmdbar-ch) * 1ch + var(--_glyph) + var(--ocx-space-4) + var(--ocx-icon-md) + var(--ocx-space-3) +
+      (var(--ocx-cmdbar-ch) + 1) * 1ch + var(--_glyph) + var(--ocx-space-4) + var(--ocx-icon-md) + var(--ocx-space-3) +
         var(--ocx-space-4)
     );
     border-start-end-radius: 0;
@@ -58,7 +59,16 @@
     inline-size: var(--ocx-icon-xs);
     block-size: var(--ocx-icon-xs);
   }
-  /* Not the picker: a z-index would cap its popup inside the bar's stacking context. */
+  /* The picker draws its whole border over the field it overlaps by one border: at rest, and above the field's own
+     raise while hovered, focused or open (open outlives focus: a click into another window keeps it open). The
+     bar is no stacking context, so the picker's level also lifts its popup over the bars below. */
+  .ocx-cmdbar__picker {
+    z-index: 1;
+  }
+  .ocx-cmdbar__picker:is(:hover, :focus-within, :has([data-state='open'])) {
+    z-index: 2;
+  }
+  /* The field's raise on hover or focus: its whole border over the picker's resting edge. */
   .ocx-cmdbar__copy:hover,
   .ocx-cmdbar__copy:focus-within,
   .ocx-cmdbar__action :is(a, button):is(:hover, :focus-visible) {
@@ -140,6 +150,28 @@
     background: none;
     border: 0;
     border-radius: 0;
+  }
+
+  /* Decorative lead: an icon and a shell prompt before the text, in the muted ink and the accent. */
+  .ocx-cmdbar__lead {
+    flex: none;
+    align-self: center;
+    margin-inline-start: var(--ocx-space-4);
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-cmdbar__prompt {
+    flex: none;
+    align-self: center;
+    margin-inline-start: var(--ocx-space-4);
+    color: var(--ocx-color-accent-fg);
+    user-select: none;
+  }
+  .ocx-cmdbar__lead + .ocx-cmdbar__prompt {
+    margin-inline-start: var(--ocx-space-3);
+  }
+  .ocx-cmdbar__lead + .ocx-cmdbar__text,
+  .ocx-cmdbar__prompt + .ocx-cmdbar__text {
+    padding-inline-start: var(--ocx-space-3);
   }
 
   /* Copy and check share one grid cell and crossfade on the code block's duration and curve. */

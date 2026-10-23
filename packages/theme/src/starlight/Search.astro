@@ -397,7 +397,7 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
       /* Full window, not the scrollbar-less viewport: when the scroll lock lifts on close the
          scrollbar returns mid-fade, and `inset: 0` would shift the content sideways. */
       inset-inline-end: auto;
-      inline-size: 100vw;
+      inline-size: var(--ocx-window-width);
       block-size: auto;
       max-inline-size: none;
       max-block-size: none;
@@ -419,7 +419,7 @@ const content = { ...api.getContentProps(), 'aria-describedby': undefined };
       position: fixed;
       inset: 0;
       inset-inline-end: auto; /* full window, as on the layer */
-      inline-size: 100vw;
+      inline-size: var(--ocx-window-width);
       display: flex;
       flex-direction: column;
       gap: var(--ocx-space-5);

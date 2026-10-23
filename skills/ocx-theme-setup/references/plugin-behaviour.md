@@ -19,7 +19,7 @@ replaces the theme's for that slot only.
 | `Footer` | `nav.json` footer links, licence and copyright line |
 | `PageTitle` | Breadcrumb trail (the `breadcrumbs` option) and the H1 |
 | `TableOfContents` | Adds "edit this page" and "report an issue" links |
-| `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu. A switch crossfades the page (a view transition, `--ocx-duration-moderate`); under reduced motion, or without the API, it flips at once |
+| `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu. The glyph shows the current state (sun while light, moon while dark), right at first paint. A switch crossfades the page (a view transition, `--ocx-duration-moderate`); under reduced motion, or without the API, it flips at once. It sets `html[data-theme]` and `html.dark`; a choice that equals the OS scheme is stored as `auto`, and a page with no pinned choice follows OS changes live |
 | `ThemeProvider` | Inline pre-paint theme script, no markup |
 | `MobileMenuFooter` | Icon theme toggle inside the mobile menu |
 | `MarkdownContent` | Wraps every page body |

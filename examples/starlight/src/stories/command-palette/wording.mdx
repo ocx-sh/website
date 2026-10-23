@@ -1,0 +1,23 @@
+---
+title: Own wording
+description: Every text is a prop. "/" is left to the page; "zzz" finds nothing.
+height: 460
+order: 1
+log: true
+---
+
+import CommandPalette from '@ocx-sh/theme/components/ui/CommandPalette.astro';
+import CommandPaletteDemo from '../../components/showcase/CommandPaletteDemo.astro';
+
+<CommandPalette
+  class="demo-no-slash"
+  label="Find"
+  triggerLabel="Find a package"
+  placeholder="Package or guide…"
+  description="Type a package or a guide title. The arrow keys move through the results and Enter opens one."
+  noResults="Nothing matches “{query}”."
+  count="{count} matches"
+  resultsLabel="Matches"
+  closeLabel="Close the finder (Esc)"
+/>
+<CommandPaletteDemo />

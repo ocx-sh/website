@@ -1,0 +1,144 @@
+---
+// CommandPalette (D-094..D-107 parity): a header trigger plus a modal "Search" dialog holding an
+// editable combobox over grouped link results. The dialog is Dialog's Zag machine (dialog.zag.mjs:
+// focus trap, scroll lock, Escape, outside click, return focus) in a palette layout: --ocx-palette-top from the
+// top, the search bar pinned, only the results scroll. Results are real `<a href role="option">`
+// rows, so middle click and "copy link address" work; the combobox keeps focus in the input and
+// points at the row with aria-activedescendant. This file renders the shell only: the data comes
+// from the page's `source` function, wired by `mountCommandPalette` (@ocx-sh/theme/command-palette),
+// which loads the dialog machine and the search code on first use, never before input.
+import type { Props as DialogProps } from '@zag-js/dialog';
+import { connect, machine, parts } from './dialog.zag.mjs';
+import Icon from './Icon.astro';
+import { nextUiId } from './ids.mjs';
+import Kbd from './Kbd.astro';
+import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
+import type { ZagProps } from './zag.mjs';
+import './command-palette.css';
+
+export interface Props {
+  /** Root id; also the prefix of the ids inside it. */
+  id?: string;
+  /** Accessible name of the dialog and of its search input. */
+  label?: string;
+  /** Visible text and accessible name of the header trigger (so it never reduces to "Ctrl K" when narrow). */
+  triggerLabel?: string;
+  /** Placeholder of the search input. */
+  placeholder?: string;
+  /** Visually hidden description of the dialog, read by screen readers on open. */
+  description?: string;
+  /** Guidance shown while the query is empty. Empty: nothing is shown. */
+  hint?: string;
+  /** Status line for a query without results; `{query}` is replaced by the text typed. */
+  noResults?: string;
+  /** Status line announcing the number of results; `{count}` is replaced by it. */
+  count?: string;
+  /** Status line shown when the source fails; the next query retries. */
+  error?: string;
+  /** Accessible name of the results list. */
+  resultsLabel?: string;
+  /** Accessible name of the visible "Esc" close button. */
+  closeLabel?: string;
+  /** Zag dialog machine props passed through verbatim. */
+  zag?: ZagProps<DialogProps>;
+  class?: string;
+}
+
+const {
+  id = nextUiId('cmdpalette'),
+  label = 'Search',
+  triggerLabel = 'Search',
+  placeholder = 'Search…',
+  description = 'Type to search. Use the up and down arrow keys to move through the results and Enter to open one.',
+  hint = '',
+  noResults = 'No results for “{query}”',
+  count = '{count} results',
+  error = 'Could not load results. Try again.',
+  resultsLabel = 'Results',
+  closeLabel = 'Close (Esc)',
+  zag,
+  class: className,
+} = Astro.props;
+const zagProps = { ...zag, defaultOpen: false, modal: true };
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }))).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+const listId = `${id}-list`;
+---
+
+<div
+  class:list={['ocx-cmdpalette', className]}
+  data-zag-root="dialog"
+  data-zag-state="idle"
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+  data-zag-trigger="manual"
+  data-no-results={noResults}
+  data-count={count}
+  data-error={error}
+>
+  {/* No Zag trigger props: mountCommandPalette owns the click, so a live machine never toggles it twice. */}
+  <button
+    type="button"
+    class="ocx-header__search ocx-cmdpalette__trigger"
+    data-cmdpalette-trigger
+    aria-label={triggerLabel}
+    aria-haspopup="dialog"
+    aria-expanded="false"
+    aria-keyshortcuts="Control+K"
+  >
+    <Icon name="search" />
+    <span class="ocx-header__search-label">{triggerLabel}</span>
+    <Kbd keys="Mod+K" />
+  </button>
+  <div class="ocx-cmdpalette__backdrop" {...p.backdrop}></div>
+  <div class="ocx-cmdpalette__positioner not-content" {...p.positioner}>
+    <div class="ocx-cmdpalette__content" {...p.content}>
+      <h2 class="ocx-cmdpalette__sr" {...p.title}>
+        {label}
+      </h2>
+      {description && (
+        <p class="ocx-cmdpalette__sr" {...p.description}>
+          {description}
+        </p>
+      )}
+      <div class="ocx-cmdpalette__bar">
+        <Icon name="search" class="ocx-cmdpalette__icon" />
+        <input
+          type="text"
+          class="ocx-cmdpalette__input"
+          id={`${id}-input`}
+          data-cmdpalette-input
+          data-autofocus
+          role="combobox"
+          aria-label={label}
+          aria-expanded="false"
+          aria-controls={listId}
+          aria-autocomplete="list"
+          placeholder={placeholder}
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          {...{ autocorrect: 'off' }}
+        />
+        <button type="button" class="ocx-cmdpalette__close" data-cmdpalette-close aria-label={closeLabel}>
+          <Kbd>Esc</Kbd>
+        </button>
+      </div>
+      <div class="ocx-cmdpalette__results">
+        <p class="ocx-cmdpalette__hint" data-cmdpalette-hint hidden={!hint}>
+          {hint}
+        </p>
+        <p class="ocx-cmdpalette__status" data-cmdpalette-status role="status" aria-live="polite"></p>
+        <div
+          class="ocx-cmdpalette__list"
+          id={listId}
+          data-cmdpalette-list
+          role="listbox"
+          aria-label={resultsLabel}
+          hidden
+        ></div>
+      </div>
+    </div>
+  </div>
+</div>

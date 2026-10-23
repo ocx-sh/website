@@ -110,13 +110,13 @@ test('C-181 a focused toast stays past its 2.5 s', async ({ page }) => {
   await expect(toasts(page)).toHaveCount(1);
 });
 
-test('C-180 CopyButton copies, shows copied for 1.5 s and toasts "Copied <label>"', async ({ page }) => {
+test('C-180 D-143 CopyButton copies, shows copied for 1.5 s and toasts "Copied — <label>"', async ({ page }) => {
   await page.goto(PAGE);
   const root = copyButton(page);
   await trigger(root).click();
   await expect(root).toHaveAttribute('data-zag-state', 'live');
   await expect(root).toHaveAttribute('data-copied', '');
-  await expect(toasts(page).locator('[data-part="title"]')).toHaveText('Copied install command');
+  await expect(toasts(page).locator('[data-part="title"]')).toHaveText('Copied — install command');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('ocx install ocx.sh/nodejs/node:24');
   await expect(root).not.toHaveAttribute('data-copied', /.*/, { timeout: 3000 });
 });
@@ -141,11 +141,11 @@ test('C-182 an Expressive Code copy button toasts its first line, cut to 40', as
   await page.goto(CODE);
   const buttons = page.locator('.expressive-code .copy button');
   await buttons.nth(0).click();
-  await expect(toasts(page).locator('[data-part="title"]')).toHaveText('Copied ocx install ocx.sh/nodejs/node:24');
+  await expect(toasts(page).locator('[data-part="title"]')).toHaveText('Copied — ocx install ocx.sh/nodejs/node:24');
   await clearToasts(page);
   await buttons.nth(1).click(); // ocx.toml: the first line is a 50-character schema comment
   await expect(toasts(page).locator('[data-part="title"]')).toHaveText(
-    'Copied #:schema https://ocx.sh/schemas/project…',
+    'Copied — #:schema https://ocx.sh/schemas/project…',
   );
 });
 
@@ -159,8 +159,8 @@ test("C-182 a second code-block copy while EC's feedback still shows toasts succ
   await button.click();
   await expect.poll(async () => (await count()).length, { timeout: 3000 }).toBe(2);
   expect(await count()).toEqual([
-    'Copied ocx install ocx.sh/nodejs/node:24',
-    'Copied ocx install ocx.sh/nodejs/node:24',
+    'Copied — ocx install ocx.sh/nodejs/node:24',
+    'Copied — ocx install ocx.sh/nodejs/node:24',
   ]);
 });
 
@@ -196,7 +196,7 @@ test('C-182 every copy control on the showcase pages shows exactly one toast', a
       await expect(toasts(page).first()).toBeVisible();
       await page.waitForTimeout(100);
       expect((await count()).length, `${path}: a second toast for one copy`).toBe(before + 1);
-      expect((await count()).at(-1)).toMatch(/^Copied /);
+      expect((await count()).at(-1)).toMatch(/^Copied — /);
       await clearToasts(page);
       controls++;
     }

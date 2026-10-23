@@ -165,7 +165,7 @@ test.describe('C-301 Skeleton sweep', () => {
     });
     expect(style.fn).toBe('linear');
     expect(style.iterations).toBe('infinite');
-    expect(style.duration).toBe(await resolve(page, 'transition-duration', 'calc(var(--ocx-duration-slow) * 5)'));
+    expect(style.duration).toBe(await resolve(page, 'transition-duration', 'var(--ocx-duration-shimmer)'));
     const moved = async () => line.evaluate((el) => getComputedStyle(el, '::after').translate);
     const first = await moved();
     await expect.poll(moved).not.toBe(first);

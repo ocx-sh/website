@@ -23,7 +23,13 @@ hidden.
     {
       name: 'label',
       type: 'string',
-      description: 'Required. Accessible name; the clear button is named "Clear label".',
+      description: 'Required. Accessible name; the clear button is named "Clear label" unless clearLabel is set.',
+    },
+    {
+      name: 'clearLabel',
+      type: 'string',
+      default: '"Clear " + label',
+      description: 'The clear button\'s accessible name, for a field whose label does not read well after "Clear", such as "Clear search" for "Search packages".',
     },
     {
       name: 'hideLabel',

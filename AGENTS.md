@@ -58,8 +58,10 @@ and open questions. Read it before any design or code change.** Research trail:
   `@zag-js/vanilla` is imported only in
   `ui/zag-runtime.mjs`, a `@zag-js/<machine>` only in a `*.zag.mjs` (D-Z17).
   Nothing loads before interaction: `mount` triggers on first hover/focus/touch;
-  `visible` only for `Toc`; `manual` only for search, toaster and the mobile
-  toggle (C-104); a Dialog/Drawer rendered open starts eagerly. Header nav,
+  `visible` only for `Toc`; `manual` only for search, the command palette (it mounts explicitly via `mountCommandPalette`), CopyMenu context mode, toaster and the mobile
+  toggle (C-104); a Dialog/Drawer rendered open starts eagerly. One accepted exception:
+  `ProseCodeCopy` inserts its "Copy code" buttons when its page script runs (about 1 KB;
+  they must be visible and reachable by a screen reader), while clipboard and toast code stay lazy. Header nav,
   sidebar groups, mobile drawer, toaster and the CycleButton click listener mount from `Search.astro`'s
   every-page script: overriding `Search` drops them (the plugin warns).
 - Budgets (JS, HTML, weight, DOM, heap) live in `tests/budgets.mjs`, enforced by

@@ -1,0 +1,34 @@
+---
+title: Copy menu on a tag list
+description: Right-click a version tag (or focus it and press the menu key) to copy its identifier, tag, link or install command; each choice toasts what it copied.
+height: 260
+log: true
+toaster: true
+---
+
+import CopyMenu from '@ocx-sh/theme/components/CopyMenu.astro';
+
+export const items = [
+  { value: 'identifier', label: 'Copy identifier', icon: 'copy' },
+  { value: 'tag', label: 'Copy tag', icon: 'pin' },
+  { value: 'link', label: 'Copy link', icon: 'external' },
+  { value: 'install', label: 'ocx install', meaning: 'install command', icon: 'download' },
+];
+export const tags = ['24.1', '24.0', '22.12', '22.11'];
+export const data = (tag) =>
+  JSON.stringify({
+    identifier: `ocx.sh/nodejs/node:${tag}`,
+    tag,
+    link: `https://ocx.sh/catalog/nodejs/node/${tag}`,
+    install: `ocx install ocx.sh/nodejs/node:${tag}`,
+  });
+
+<style>{`@layer ocx { .story-tags { display: flex; flex-wrap: wrap; gap: var(--ocx-space-3); margin: 0; padding: 0; list-style: none; } .story-tags li { padding: var(--ocx-space-1) var(--ocx-space-4); font-family: var(--ocx-font-mono); font-size: var(--ocx-text-xs); border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-sm); } .story-tags li:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); } }`}</style>
+
+<CopyMenu label="Version actions" items={items} context>
+  <ul class="story-tags">
+    {tags.map((tag) => (
+      <li tabindex="0" data-copy={data(tag)}>{tag}</li>
+    ))}
+  </ul>
+</CopyMenu>

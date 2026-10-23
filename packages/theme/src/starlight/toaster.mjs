@@ -7,13 +7,6 @@ import { mount } from '../components/ui/zag.mjs';
 
 /** @typedef {import('../components/toast.mjs').ToastDetail} ToastDetail */
 
-// Same as toast.mjs's helpers, repeated so the every-page script stays one request: importing
-// them would split toast.mjs into its own chunk, shared with clipboard.zag.mjs (a chained fetch).
-/** @param {string} text */
-const copiedTitle = (text) => `Copied ${text.length > 40 ? `${text.slice(0, 39)}…` : text}`;
-/** @param {EventTarget} target @param {ToastDetail} detail */
-const toast = (target, detail) => target.dispatchEvent(new CustomEvent('ocx:toast', { detail, bubbles: true }));
-
 /**
  * Starts the page toaster on the first `ocx:toast`, and toasts Expressive Code's copy buttons.
  * @param {Document} doc
@@ -48,23 +41,17 @@ export function installToaster(doc) {
       .then(() => /** @type {{ dismiss?: (id?: string) => void } | undefined} */ (h.api)?.dismiss?.(detail?.id));
   });
 
-  // Expressive Code copy buttons: EC copies and, only on success, adds its "Copied!" feedback
-  // to the frame's live region; that addition is the signal for our toast (first line, C-182).
+  // Expressive Code copy buttons (C-182): the click only says which button; the code that watches EC's
+  // feedback and toasts loads on the first one (toaster-code-copy.mjs), so a page without EC pays a
+  // listener, not the observer. EC adds its feedback after an async clipboard write; the handler gets
+  // the feedback count at click time, so a load that outlasts the feedback still toasts at once.
   doc.addEventListener('click', (event) => {
     const button = /** @type {Element | null} */ (event.target)?.closest?.('.expressive-code .copy button');
-    const live = button?.parentElement?.querySelector('[aria-live]');
-    if (!(button instanceof HTMLElement) || !live) return;
-    const line = (button.dataset['code'] ?? '').split('\u007f').find((l) => l.trim()) ?? '';
-    // EC adds no new feedback while an earlier one is still shown or fading: that one means copied.
-    const had = live.childElementCount > 0;
-    /** @param {boolean} ok */
-    const done = (ok) => {
-      observer.disconnect();
-      clearTimeout(timer);
-      toast(button, ok ? { title: copiedTitle(line) } : { title: 'Copy failed', tone: 'danger' });
-    };
-    const observer = new MutationObserver((records) => records.some((r) => r.addedNodes.length) && done(true));
-    observer.observe(live, { childList: true });
-    const timer = setTimeout(() => done(had || live.childElementCount > 0), 1000);
+    if (!button) return;
+    // Counted now, not when the chunk arrives: a feedback EC added in between is this click's.
+    const before = button.parentElement?.querySelector('[aria-live]')?.childElementCount ?? 0;
+    import('./toaster-code-copy.mjs')
+      .then((m) => m.toastCodeCopy(event, before))
+      .catch((error) => console.error('[ocx] the Expressive Code copy toast failed to load', error));
   });
 }

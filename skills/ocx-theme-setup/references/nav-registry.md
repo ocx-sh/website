@@ -40,6 +40,7 @@ A claim is `{ "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "searc
 | `zoneName(repo)` | The Bunny storage zone: `ocx-sh/rules_ocx` → `sh-ocx-rules-ocx` |
 | `mergeTargets(nav, ownPath)` | The search bundles a section merges |
 | `activeSection(nav, pathname)` | The header section id for a URL |
+| `externalLink(href)` | `{ out, attrs }`: `out` shows the external icon, `attrs` is `target="_blank"` and `rel="noopener noreferrer"` for an external `http(s)` href, `{}` for an internal or `mailto:` one |
 | `PAGEFIND_VERSION` | The Pagefind version the theme was built against |
 
 ## Adding a section

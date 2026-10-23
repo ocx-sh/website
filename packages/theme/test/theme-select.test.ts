@@ -71,7 +71,7 @@ describe('C-024 toggle behaviour', () => {
     const btn = toggleButton(win.document);
     const current = () => btn.querySelector('.ocx-ui-cycle-button__current')?.getAttribute('data-icon');
     expect(btn.dataset.value).toBe('dark');
-    expect(current()).toBe('moon');
+    expect(current()).toBe('moon'); // the glyph is the state, moon while dark
     expect(nameOf(btn)).toBe('Dark mode (click for Light mode)');
     btn.click();
     expect(btn.dataset.value).toBe('light');

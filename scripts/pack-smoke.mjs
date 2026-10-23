@@ -64,6 +64,9 @@ const EXPORT_KEYS = [
   './lazy',
   './csp',
   './remark',
+  './copy',
+  './logo-tile',
+  './command-palette',
 ];
 
 /**

@@ -1,0 +1,42 @@
+---
+title: States
+description: A button menu, a context menu over cards, a host that has no tag, and empty space that keeps the browser's own menu.
+height: 520
+order: 1
+toaster: true
+---
+
+import CopyMenu from '@ocx-sh/theme/components/CopyMenu.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+export const button = [
+  { value: 'identifier', label: 'Copy identifier', text: 'ocx.sh/nodejs/node:24', icon: 'copy' },
+  { value: 'install', label: 'ocx install', meaning: 'install command', text: 'ocx install ocx.sh/nodejs/node:24', icon: 'download' },
+];
+export const context = [
+  { value: 'identifier', label: 'Copy identifier' },
+  { value: 'tag', label: 'Copy tag' },
+  { value: 'link', label: 'Copy link' },
+];
+export const card = (name, tag) =>
+  JSON.stringify({
+    identifier: tag ? `ocx.sh/nodejs/${name}:${tag}` : `ocx.sh/nodejs/${name}`,
+    ...(tag && { tag }),
+    link: `https://ocx.sh/catalog/nodejs/${name}`,
+  });
+
+<style>{`@layer ocx { .story-cards { display: flex; gap: var(--ocx-space-5); } .story-cards a { padding: var(--ocx-space-3) var(--ocx-space-5); border: var(--ocx-border-width) solid var(--ocx-color-border); border-radius: var(--ocx-radius-sm); } .story-note { margin: var(--ocx-space-5) 0 0; } }`}</style>
+
+<StateGrid wide>
+  <State label="button"><CopyMenu label="Copy" items={button} /></State>
+  <State label="context, cards">
+    <CopyMenu label="Package actions" items={context} context>
+      <div class="story-cards">
+        <a href="#node" data-copy={card('node', '24')}>node 24</a>
+        <a href="#deno" data-copy={card('deno')}>deno (no tag: no Copy tag)</a>
+      </div>
+      <p class="story-note">Empty space: the browser's own menu.</p>
+    </CopyMenu>
+  </State>
+</StateGrid>

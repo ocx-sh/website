@@ -129,7 +129,7 @@ const p = Object.fromEntries(
       /* Full window, not the scrollbar-less viewport: when the scroll lock lifts on close the
          scrollbar returns mid-fade, and `inset: 0` would shift the content sideways. */
       inset-inline-end: auto;
-      inline-size: 100vw;
+      inline-size: var(--ocx-window-width);
       z-index: var(--ocx-z-modal);
       display: flex;
       align-items: center;

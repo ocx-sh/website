@@ -279,7 +279,7 @@ describe('WP14a Skeleton', () => {
     expect(s).toMatch(/__line::after\s*\{[^}]*translate:\s*-100% 0/);
     expect(s).not.toMatch(/background-position/);
     const media = /\n( *)@media \(prefers-reduced-motion: no-preference\)\s*\{([\s\S]*?)\n\1\}/.exec(s)?.[2] ?? '';
-    expect(media).toMatch(/animation:\s*ocx-ui-skeleton-sweep calc\(var\(--ocx-duration-slow\) \* 5\) linear infinite/);
+    expect(media).toMatch(/animation:\s*ocx-ui-skeleton-sweep var\(--ocx-duration-shimmer\) linear infinite/);
     expect(media).toContain(":not([data-animated='false'])");
     // Nothing animates outside that block.
     expect(s.replace(media, '').match(/animation:/g)).toBeNull();

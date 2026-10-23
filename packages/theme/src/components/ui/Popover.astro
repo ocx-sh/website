@@ -26,11 +26,13 @@ interface Props {
   src?: string;
   /** Texts of the `src` states. */
   labels?: { loading?: string; error?: string; retry?: string };
+  /** Trigger Button size (s = 30 mono · m = 38 · l = 42). */
+  size?: 's' | 'm' | 'l';
   /** Zag machine props passed through verbatim (C-106). */
   zag?: ZagProps<PopoverProps>;
 }
 
-const { placement = 'bottom-start', modal = false, src, labels, zag } = Astro.props;
+const { placement = 'bottom-start', modal = false, size = 'm', src, labels, zag } = Astro.props;
 const { loading = 'Loading…', error = 'Could not load this.', retry = 'Retry' } = labels ?? {};
 const id = nextUiId('popover');
 const zagProps = { ...zag, modal, positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const } };
@@ -47,7 +49,7 @@ const p = Object.fromEntries(
   data-zag-props={JSON.stringify(zagProps)}
   data-fill-src={src}
 >
-  <Button {...p.trigger}>
+  <Button size={size} {...p.trigger}>
     <slot name="trigger" />
   </Button>
   <div class="ocx-ui-popover__positioner not-content" {...p.positioner}>

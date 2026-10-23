@@ -22,7 +22,7 @@ const ITEMS = [
   { value: 'windows', label: 'windows' },
   { value: 'freebsd', label: 'freebsd', disabled: true },
 ];
-const OWN = /^(class|data-astro-.*|data-zag-(root|state|props|id)|aria-label)$/;
+const OWN = /^(class|data-astro-.*|data-zag-(root|state|props|id)|data-size|data-icon-only|aria-label)$/;
 const zagAttrs = (el: Element | null | undefined) =>
   Object.fromEntries([...(el?.attributes ?? [])].filter((a) => !OWN.test(a.name)).map((a) => [a.name, a.value]));
 
@@ -55,6 +55,13 @@ describe('C-130a/b ToggleGroup SSR equals connect()', () => {
       expect(zagAttrs(items[i])).toEqual(domAttrs(api.getItemProps({ value, disabled }))),
     );
     expect(d.querySelector('[data-focus], [data-focus-visible]')).toBeNull();
+  });
+
+  it('size: every item carries data-size, m by default, s on request', async () => {
+    const sizes = async (props: Record<string, unknown>) =>
+      [...(await render(props)).querySelectorAll('[data-part="item"]')].map((i) => i.getAttribute('data-size'));
+    expect(await sizes({})).toEqual(['m', 'm', 'm', 'm']);
+    expect(await sizes({ size: 's' })).toEqual(['s', 's', 's', 's']);
   });
 
   it('C-130b root carries data-zag-root="toggle-group", data-zag-state="idle", the SSR id and the label', async () => {
@@ -137,6 +144,7 @@ describe('toggle-group.zag render emits under the root scope (C-105, C-272)', ()
       id: 'toggle-group:x',
       dataset: zagRoot ? { zagRoot } : {},
       querySelectorAll: () => [],
+      addEventListener: () => {},
       dispatchEvent: (e: CustomEvent) => events.push(e),
     } as unknown as HTMLElement;
     const api = (value: string[]) => ({ value, getRootProps: () => ({}) }) as never;
@@ -165,5 +173,22 @@ describe('C-130f ToggleGroup styles', () => {
     expect(css).not.toContain("[data-state='on']"); // the cell look is toggle-button.css
     expect(source).toContain("import './ui/toggle-button.css'");
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|\brgba?\(|\b\d+px\b/i);
+  });
+});
+
+describe('D-047 ToggleGroup setter wiring', () => {
+  it('D-047 SSR carries what the idle setter rewrites: root props, per-item ids and states', async () => {
+    const d = await render({ multiple: true, value: ['linux'] });
+    const root = d.querySelector<HTMLElement>('[data-zag-root]')!;
+    expect(JSON.parse(root.dataset['zagProps']!)).toMatchObject({ multiple: true, defaultValue: ['linux'] });
+    const [linux] = [...d.querySelectorAll('[data-part="item"]')];
+    expect(linux?.id).toBe(`${root.id}:linux`);
+    expect(linux?.getAttribute('data-state')).toBe('on');
+    expect(linux?.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('D-047 the page script listens for ocx:toggle-group:set through value-set.mjs', () => {
+    const source = readFileSync(new URL('../src/components/ToggleGroup.astro', import.meta.url), 'utf8');
+    expect(source).toContain("document.addEventListener('ocx:toggle-group:set', onToggleGroupSet)");
   });
 });

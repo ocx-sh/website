@@ -130,7 +130,9 @@
     align-self: start;
     inline-size: auto;
   }
+  /* The trigger fills a box stretched wider than its own width, so the whole box clicks and the chevron sits at its end. */
   .ocx-ui-input-group > .ocx-ui-select__control {
+    flex: 1 1 auto;
     align-self: stretch;
     block-size: auto;
     padding: 0 calc(var(--ocx-icon-md) + var(--ocx-space-3)) 0 0;
@@ -179,6 +181,11 @@
     caret-color: var(--ocx-color-accent);
     background: transparent;
     border: 0;
+    outline: none;
+  }
+  /* The box draws the focus (:focus-within above). Beats base.css's global :focus-visible ring, which would otherwise
+     draw a second ring inside the box wherever base.css loads after this file (a popover, a dialog). */
+  .ocx-ui-input-group__input:focus-visible {
     outline: none;
   }
   .ocx-ui-input-group__input::placeholder {

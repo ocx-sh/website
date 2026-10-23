@@ -1,9 +1,10 @@
 ---
 // Starlight `ThemeSelect` override: the one icon toggle, rendered by Header and MobileMenuFooter
-// (C-024), a two-state CycleButton. ThemeProvider sets `html[data-theme]` before paint and SSR cannot
-// know it, so the button renders `light` and the dark rules below show the dark glyph (moon) from the
-// attribute alone; theme-toggle.mjs (wired from Search.astro's early script) then syncs the state and
-// the name.
+// (C-024), a two-state CycleButton. The glyph is the state: sun while light, moon while dark.
+// ThemeProvider sets `html[data-theme]` before paint and SSR cannot know it, so the button renders
+// `light` and the dark rules in base.css show the moon from the attribute alone (the button is never
+// empty, script or not); theme-toggle.mjs (wired from Search.astro's early script) then syncs the
+// state and the name.
 import CycleButton from '../components/ui/CycleButton.astro';
 
 const states: { value: string; label: string; icon: 'sun' | 'moon' }[] = [

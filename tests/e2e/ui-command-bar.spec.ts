@@ -40,7 +40,7 @@ test.describe('desktop', () => {
     await expect(trigger).toHaveAttribute('data-copied', '');
     expect(await clipboard(page)).toBe(LINUX);
     await expect(page.locator('[data-zag-root="toast"] [data-part="root"]')).toContainText(
-      'Copied Linux install command',
+      'Copied — Linux install command',
     );
     await expect(demo(page).locator('.ocx-cmdbar__status')).toHaveText('Copied Linux install command');
     // Copy and check crossfade: at rest the check is transparent, while copied the copy glyph is.
@@ -81,7 +81,7 @@ test.describe('desktop', () => {
     await expect(bar.locator('.ocx-cmdbar__trigger')).toHaveAttribute('data-copied', '');
     expect(await clipboard(page)).toBe(WINDOWS);
     await expect(page.locator('[data-zag-root="toast"] [data-part="root"]')).toContainText(
-      'Copied Windows install command',
+      'Copied — Windows install command',
     );
   });
 

@@ -116,6 +116,28 @@ describe('C-161 Select markup (Zag select)', () => {
     expect(JSON.parse(root?.getAttribute('data-zag-props') ?? '')).toEqual({ loopFocus: true });
   });
 
+  it('option data cannot inject icon markup: data.icon is dropped, other keys pass', async () => {
+    const evil = '<img src=x onerror=alert(1)>';
+    const doc = await render(Select, {
+      label: 'L',
+      options: [{ value: 'a', label: 'A', data: { icon: evil, rank: '2' } }],
+    });
+    const option = doc.querySelector('select option')!;
+    expect(option.hasAttribute('data-icon')).toBe(false);
+    expect(option.getAttribute('data-rank')).toBe('2');
+    expect(doc.documentElement.innerHTML).not.toContain('onerror');
+  });
+
+  it('D-047 SSR carries what the idle setter rewrites (native select with its options, the value text); the page script wires the set event', async () => {
+    const doc = await render(Select, { label: 'License', options: OPTIONS, value: 'Apache-2.0' });
+    const root = doc.querySelector('.ocx-ui-select');
+    expect([...(root?.querySelectorAll('select option') ?? [])].map((o) => (o as HTMLOptionElement).value)).toEqual(
+      OPTIONS.map((o) => o.value),
+    );
+    expect(root?.querySelector('[data-part="value-text"]')?.textContent?.trim()).toBe('Apache-2.0');
+    expect(source('Select.astro')).toContain("document.addEventListener('ocx:select:set', onSelectSet)");
+  });
+
   it('C-161 the trigger is a combobox named by the label and shows the chosen label; none chosen = the first enabled option (as native)', async () => {
     const doc = await render(Select, { label: 'License', options: OPTIONS, value: 'Apache-2.0', class: 'extra' });
     const root = doc.querySelector('.ocx-ui-select');
@@ -295,6 +317,10 @@ describe('Select, Combobox and overlay CSS', () => {
       'choice.mjs',
       // CommandBar and CycleButton: native controls plus DOM glue, no Zag machine fits.
       'command-bar.mjs',
+      // CommandPalette: DOM glue over Dialog's machine (dialog.zag.mjs): the eager shortcuts, and the lazy search half.
+      'command-palette-live.mjs',
+      'command-palette-session.mjs',
+      'command-palette.mjs',
       'cycle-button.mjs',
       // DataTable sort/filter/paging has no Zag machine for tables (owner finding).
       'data-table.mjs',
@@ -304,6 +330,9 @@ describe('Select, Combobox and overlay CSS', () => {
       'fuzzy.mjs',
       'ids.mjs',
       'lazy.mjs',
+      // LogoTile: an <img> error fallback to the monogram, no Zag machine fits.
+      'logo-tile-install.mjs',
+      'logo-tile.mjs',
       // C-302 leave(): the WAAPI exit for a node a script removes, not a machine.
       'motion.mjs',
       'number-stepper.mjs',
@@ -313,6 +342,8 @@ describe('Select, Combobox and overlay CSS', () => {
       'search-field.mjs',
       'tag-group.mjs',
       'toggle-button.mjs',
+      // D-047 the idle half of the ToggleGroup / Select setters: rewrites the DOM a not-yet-started machine reads.
+      'value-set.mjs',
       'zag-runtime.mjs',
       'zag.mjs',
     ]);

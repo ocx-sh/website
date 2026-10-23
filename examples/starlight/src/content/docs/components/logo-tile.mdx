@@ -1,0 +1,44 @@
+---
+title: Logo tile
+description: A logo over a monogram in one reserved box, so a slow, missing or broken logo never leaves a hole.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A tile for cards, table rows and detail headers. The monogram (up to two initials on one
+of four hues picked by hashing the name) paints with the markup. The logo is a lazy image stacked
+over it: it cross-fades in once it has loaded and shows bare, with no box, background or radius. A
+logo that fails (also one that failed before the script ran) leaves the monogram; a failed logo
+is retried once with the `fallback` URL first, when you pass one. With neither a logo nor initials the tile shows a cube.
+The box size is a token, so images blocked never move layout; the cross-fade stands still under
+`prefers-reduced-motion: reduce`. The tile is decorative, so put the name beside it.
+
+The four hues are the `--ocx-color-monogram-0` to `-3` tokens, each with a `-tint`, in both schemes:
+override them to rebrand every tile. To fill a tile from script (a card cloned from a template),
+render one with no `name` and no `src` and call `fillLogoTile(tile, { name, seed, src, fallback })` from
+`@ocx-sh/theme/logo-tile`; `monogramInitials` and `monogramHue` are exported from there too.
+
+## Script API
+
+`@ocx-sh/theme/logo-tile` exports `fillLogoTile(tile, { name, seed?, src?, fallback? })`,
+`monogramInitials(name)`, `monogramHue(seed)` and `install()` (settles logos that finished loading
+before the script ran; the tile's page script calls it).
+
+## Stories
+
+<Stories of="logo-tile" />
+
+## Props
+
+<PropsTable
+  of="ui/LogoTile.astro"
+  rows={[
+    { name: 'name', type: 'string', default: "''", description: 'Bare name the initials derive from (cmake gives CM). Empty: no monogram.' },
+    { name: 'seed', type: 'string', description: 'Hue key, hashed to one of four colour pairs; defaults to name. Pass <namespace>/<name>.' },
+    { name: 'src', type: 'string', description: 'Logo URL, used as given. Omit to show the monogram alone.' },
+    { name: 'fallback', type: 'string', description: 'Tried once when src fails to load, before the monogram. Omit for none.' },
+    { name: 'size', type: "'sm' | 'md' | 'lg' | 'xl'", default: "'md'", description: 'Box size: 20, 30, 38 or 56 px (control and space tokens).' },
+    { name: 'class', type: 'string', description: 'Extra class on the root.' },
+  ]}
+/>

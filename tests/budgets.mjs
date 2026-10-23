@@ -110,11 +110,19 @@ export const CLASS_PATTERNS = {
   showcase: '^/docs/components/',
   story: '^/docs/stories/',
   content:
-    '^(?:/docs/(?:probe/[^/]+/|shell/(?:neutral/|sidebar/)?|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/team/|/404\\.html)$',
+    '^(?:/docs/(?:probe/[^/]+/|shell/(?:neutral/|sidebar/|extras/|full/|prefix/|wide/)?|404\\.html|previews/)?|/|/integrations/|/apps/|/install/|/team/|/404\\.html)$',
 };
 
 /** Plain Astro pages on the Shell layout (`examples/starlight/src/pages/shell/`): built, not docs-tree files. */
-export const SHELL_PAGES = ['/docs/shell/', '/docs/shell/neutral/', '/docs/shell/sidebar/'];
+export const SHELL_PAGES = [
+  '/docs/shell/',
+  '/docs/shell/extras/',
+  '/docs/shell/full/',
+  '/docs/shell/neutral/',
+  '/docs/shell/prefix/',
+  '/docs/shell/sidebar/',
+  '/docs/shell/wide/',
+];
 
 /** Default docs tree of the Starlight example. */
 export const DOCS_DIR = fileURLToPath(new URL('../examples/starlight/src/content/docs/', import.meta.url));

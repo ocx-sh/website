@@ -1,7 +1,7 @@
 // Shared core of the native `Tree` and the Zag `TreeView`: icons, the chevron, and the native
 // tree's single selection. Server and client import it; everything here is tiny and pure.
 
-import { ICONS } from '../icons/icons.generated.mjs';
+import { chevronRight } from '../icons/icons.client.generated.mjs';
 
 /** Default icons by exact name (ocx FileTreeNode.vue DEFAULT_ICONS). */
 const DEFAULT_ICONS = /** @type {Record<string, string>} */ ({
@@ -32,12 +32,12 @@ export function iconsFor(name, isDir, icon, openIcon) {
 
 /**
  * The one disclosure chevron of both trees: the registry's `chevron-right`, drawn in currentColor
- * at the `--ocx-icon-stroke` weight; CSS rotates it when open. Reads `icons.generated.mjs` (pure
- * data) rather than `icons.mjs`, and is `#__PURE__`, so Tree.astro's client script, which imports
- * `select` from here, tree-shakes the registry out of its bundle.
+ * at the `--ocx-icon-stroke` weight; CSS rotates it when open. Reads the client glyph module
+ * (pure data), and is `#__PURE__`, so Tree.astro's client script, which imports `select` from
+ * here, tree-shakes it out of its bundle.
  */
 export const CHEVRON = /*#__PURE__*/ (() => {
-  const { viewBox, body, stroke } = ICONS['chevron-right'];
+  const { viewBox, body, stroke } = chevronRight;
   return `<svg viewBox="${viewBox}" width="16" height="16" fill="none" stroke="currentColor" stroke-width="${stroke}" stroke-linecap="round" stroke-linejoin="round" style="stroke-width:var(--ocx-icon-stroke)" aria-hidden="true" focusable="false">${body.replace('<path ', '<path vector-effect="non-scaling-stroke" ')}</svg>`;
 })();
 

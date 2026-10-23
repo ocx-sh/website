@@ -11,7 +11,7 @@ import { ssrApi, ssrAttrs } from '../src/components/ui/zag-runtime.mjs';
 import { mount } from '../src/components/ui/zag.mjs';
 import type { ZagModule } from '../src/components/ui/zag.mjs';
 
-type Detail = { title: string; tone?: string };
+type Detail = { title: string; tone?: string; duration?: number; slot?: string; persistent?: boolean };
 // Time is driven, not waited for: once a toaster is live (liveToaster) the clock is fake and
 // `until` steps it 10 ms at a time, so a loaded host cannot race a wall-clock budget. Before that
 // (module imports, a bare document) real timers still apply.
@@ -64,7 +64,7 @@ async function liveCopy({ value, label }: { value: string; label?: string }) {
 }
 
 describe('C-180 CopyButton behaviour', () => {
-  it('copies the value, shows copied, then asks for "Copied <label>"', async () => {
+  it('D-131 D-143 copies the value, shows copied, then asks for "Copied — <label>" for 2 s', async () => {
     const writeText = vi.fn(() => Promise.resolve());
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const seen = recordEvents();
@@ -74,7 +74,7 @@ describe('C-180 CopyButton behaviour', () => {
     expect(writeText).toHaveBeenCalledWith('ocx add uv');
     expect(seen).toEqual([
       { type: 'ocx:clipboard:copy', detail: { value: 'ocx add uv' } },
-      { type: 'ocx:toast', detail: { title: 'Copied install command' } },
+      { type: 'ocx:toast', detail: { title: 'Copied — install command', duration: 2000, slot: 'copy' } },
     ]);
     expect(root.hasAttribute('data-copied')).toBe(true);
     expect(trigger.hasAttribute('data-copied')).toBe(true);
@@ -88,7 +88,10 @@ describe('C-180 CopyButton behaviour', () => {
     const { trigger } = await liveCopy({ value });
     trigger.click();
     await until(() => seen.some((e) => e.type === 'ocx:toast'));
-    expect(seen.at(-1)).toEqual({ type: 'ocx:toast', detail: { title: copiedTitle(value) } });
+    expect(seen.at(-1)).toEqual({
+      type: 'ocx:toast',
+      detail: { title: copiedTitle(value), duration: 2000, slot: 'copy' },
+    });
   });
 
   it.each([
@@ -104,7 +107,7 @@ describe('C-180 CopyButton behaviour', () => {
         },
       }),
     ],
-  ])('%s → "Copy failed" danger toast, no copied state, nothing uncaught', async (_, nav) => {
+  ])('D-084 %s → "Copy failed" danger toast, no copied state, nothing uncaught', async (_, nav) => {
     vi.stubGlobal('navigator', nav());
     const errors: unknown[] = [];
     const onError = (e: unknown) => errors.push(e);
@@ -117,7 +120,7 @@ describe('C-180 CopyButton behaviour', () => {
       await tick();
       expect(seen).toEqual([
         { type: 'ocx:clipboard:error', detail: { value: 'v' } },
-        { type: 'ocx:toast', detail: { title: 'Copy failed', tone: 'danger' } },
+        { type: 'ocx:toast', detail: { title: 'Copy failed', tone: 'danger', slot: 'copy' } },
       ]);
       expect(root.hasAttribute('data-copied')).toBe(false);
       expect(errors).toEqual([]);
@@ -218,5 +221,92 @@ describe('C-181 toaster behaviour', () => {
     expect(root.dataset.zagState).toBe('idle');
     expect(toasts(root)).toHaveLength(2);
     expect(close.getAttribute('aria-label')).toBe('Dismiss notification');
+  });
+});
+
+describe('D-143 D-166 one copy toast, a re-copy restarts the window', () => {
+  const titles = (root: HTMLElement) =>
+    toasts(root)
+      .filter((el) => el.dataset.state !== 'closed')
+      .map((el) => el.querySelector('[data-part="title"]')?.textContent);
+
+  it('D-143 a copy toast with a slot replaces the one showing in that slot, others stack', async () => {
+    const { root, show } = await liveToaster();
+    show({ title: 'Copied — identifier', duration: 2000, slot: 'copy' });
+    await until(() => toasts(root).length === 1);
+    show({ title: 'Something else' });
+    show({ title: 'Copied — tag', duration: 2000, slot: 'copy' });
+    await until(() => titles(root).includes('Copied — tag'));
+    await until(() => !titles(root).includes('Copied — identifier'), 1000);
+    expect(titles(root)).toHaveLength(2);
+    expect(titles(root)).toEqual(expect.arrayContaining(['Copied — tag', 'Something else']));
+  });
+
+  it('D-143 under saturation, superseded copy toasts never surface later: the newest per slot enters', async () => {
+    const { root, show } = await liveToaster();
+    show({ title: 'other 1', persistent: true });
+    show({ title: 'other 2', persistent: true });
+    show({ title: 'Copied — one', duration: 2000, slot: 'copy' });
+    await until(() => toasts(root).length === 3);
+    show({ title: 'Copied — two', duration: 2000, slot: 'copy' });
+    show({ title: 'Copied — three', duration: 2000, slot: 'copy' });
+    const seen = new Set<string>();
+    for (let t = 0; t < 4000; t += 10) {
+      titles(root).forEach((title) => seen.add(String(title)));
+      await vi.advanceTimersByTimeAsync(10);
+    }
+    expect(seen).toContain('Copied — three');
+    expect(seen).not.toContain('Copied — two');
+    expect(seen).toContain('other 1');
+  });
+
+  it('D-143 a copy toast lasts 2 s, not the default 2.5 s', async () => {
+    const { root, show } = await liveToaster();
+    show({ title: 'Copied — code block', duration: 2000, slot: 'copy' });
+    await until(() => toasts(root).length === 1);
+    await vi.advanceTimersByTimeAsync(1900);
+    expect(toasts(root)).toHaveLength(1);
+    await until(() => toasts(root).length === 0, 600); // 2 s, then the 200 ms exit
+  });
+
+  it('D-166 a second copy 1 s into the first starts a full new window', async () => {
+    const { root, show } = await liveToaster();
+    show({ title: 'Copied — code block', duration: 2000, slot: 'copy' });
+    await until(() => toasts(root).length === 1);
+    await vi.advanceTimersByTimeAsync(1000);
+    show({ title: 'Copied — code block', duration: 2000, slot: 'copy' });
+    await until(() => toasts(root).length === 1, 1000); // the first one has left
+    await vi.advanceTimersByTimeAsync(1800); // 2.8 s after the first copy: its own window is long over
+    expect(titles(root)).toEqual(['Copied — code block']);
+    await until(() => toasts(root).length === 0, 800);
+  });
+});
+
+describe('D-166 CopyButton: a re-copy restarts the copied window', () => {
+  it('D-166 a second copy within 1500 ms keeps it copied for a full new window', async () => {
+    vi.stubGlobal('navigator', { clipboard: { writeText: () => Promise.resolve() } });
+    const { root, trigger } = await liveCopy({ value: 'v' });
+    vi.useFakeTimers();
+    trigger.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(root.hasAttribute('data-copied')).toBe(true);
+    await vi.advanceTimersByTimeAsync(1000);
+    trigger.click();
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(1000); // 2000 ms: the first window (1500) is over
+    expect(root.hasAttribute('data-copied')).toBe(true);
+    await vi.advanceTimersByTimeAsync(600); // 2600 ms: past the second window (1000 + 1500)
+    expect(root.hasAttribute('data-copied')).toBe(false);
+  });
+
+  it('D-166 the default window is 1500 ms', async () => {
+    vi.stubGlobal('navigator', { clipboard: { writeText: () => Promise.resolve() } });
+    const { root, trigger } = await liveCopy({ value: 'v' });
+    vi.useFakeTimers();
+    trigger.click();
+    await vi.advanceTimersByTimeAsync(1400);
+    expect(root.hasAttribute('data-copied')).toBe(true);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(root.hasAttribute('data-copied')).toBe(false);
   });
 });

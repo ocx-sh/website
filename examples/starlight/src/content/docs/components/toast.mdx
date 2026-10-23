@@ -7,8 +7,9 @@ import Stories from '../../../components/showcase/Stories.astro';
 
 `toast()` (`@ocx-sh/theme/toast`) asks the page toaster to show a notification, bottom-right, for
 2.5 s by default. There is nothing to place: the toaster mounts itself, lazily, on the first call.
-It dispatches the `ocx:toast` DOM event, the one `CopyButton` and Expressive Code's copy buttons
-use, so calling `toast()` never imports Zag.
+It dispatches the `ocx:toast` DOM event, the one `CopyButton`, `CopyMenu`, `ProseCodeCopy` and
+Expressive Code's copy buttons use, so calling `toast()` never imports Zag. A copy confirmation reads
+"Copied — &lt;meaning&gt;", shows for 2 s and replaces the previous one.
 
 A `'loading'` toast draws the shared [ProgressCircle](/docs/components/progress-circle/) ring: a
 spinning arc, and a determinate ring once you pass `progress` (0–100).
@@ -32,6 +33,7 @@ Import it with `import { toast } from '@ocx-sh/theme/toast'`.
 | `persistent`  | `boolean`                                                  | `false`     | Never auto-dismisses (`duration: Infinity`); dismiss it by id or with the close button.                                                                                                                                                |
 | `action`      | `{ label: string, event: string }`                         | –           | A text button; clicking it dispatches `event` on `document` and dismisses the toast. A toast with an action never auto-dismisses (WCAG 2.2.1: the reader needs the time to reach it).                                                  |
 | `progress`    | `number` (0–100)                                           | –           | Loading toasts only: draws the ring determinate at that percentage (clamped). Update by `id` to move it; an update that leaves it out keeps the last value. Ignored on every other tone.                                               |
+| `slot`        | `string`                                                   | –           | A new toast replaces the one showing in the same slot, so repeated confirmations never stack and each starts a full window. Copy confirmations share the slot `copy` (see `copyWithToast` in `@ocx-sh/theme/copy`). An update by `id` keeps its place. |
 | `id`          | `string`                                                   | generated   | Pass the same id back into `toast()` to update that toast in place, or into `toast.dismiss()`. An update changes only the options it passes: `toast('Retrying…', { id })` keeps the toast's tone, description, action and persistence. |
 
 Returns the toast's `id`: `const id = toast('Saved')`.

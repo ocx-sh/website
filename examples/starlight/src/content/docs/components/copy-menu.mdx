@@ -1,0 +1,65 @@
+---
+title: Copy menu
+description: A menu of copy items, from a button or as a context menu over any element; every choice copies and toasts "Copied — <meaning>".
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A menu of copy items on the [ActionMenu](../action-menu/) machine. Choosing one copies its text and
+asks the page toaster for **Copied — &lt;meaning&gt;** (2 s; a new copy replaces the one showing). Two
+shapes:
+
+- **Button.** A trigger opens the menu; each item carries its own `text`.
+- **Context** (`context`). The default slot holds the *hosts*: any element with a `data-copy`
+  attribute, a JSON object of `{ "<item value>": "<text>" }`. Right-click, the menu key,
+  <kbd>Shift</kbd> + <kbd>F10</kbd> or a long-press on a host opens the menu at the pointer with the
+  items that host has a text for. One menu serves a tag list, a card grid or a table; the data stays
+  on each host, so a menu that opens before its script has loaded still copies that host's text.
+
+A host keeps its own tab stop (give it `tabindex="0"` or make it a link or button); the menu adds none,
+and focus returns to the host when the menu closes. On empty space, and on an element without
+`data-copy`, the browser's own menu shows.
+
+## Stories
+
+<Stories of="copy-menu" />
+
+## Props
+
+<PropsTable
+  of="CopyMenu.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Trigger text; in context mode the accessible name of the menu.' },
+    { name: 'items', type: '{ value, label, meaning?, text?, icon? }[]', required: true, description: 'value keys the host map and is sent in ocx:menu:select; meaning is what the toast names (default: the label without a leading "Copy "); text is the copied text, required outside context mode; icon is a registry name.' },
+    { name: 'context', type: 'boolean', default: 'false', description: 'The default slot holds the hosts (elements with data-copy) instead of a trigger button.' },
+    { name: 'placement', type: 'Placement', default: "'bottom-start'", description: 'Panel side and alignment relative to the trigger.' },
+    { name: 'triggerIcon', type: 'IconName', description: 'Button shape: an icon-only trigger; label stays its accessible name.' },
+    { name: 'zag', type: 'ZagProps<menu.Props>', description: 'Zag machine props passed through verbatim.' },
+  ]}
+/>
+
+## Host data
+
+| Attribute | Value | Meaning |
+| --- | --- | --- |
+| `data-copy` | JSON object | `{ "<item value>": "<text to copy>" }`. A host shows only the items it has a text for. Absent, malformed, or without a string text: the element is not a host. |
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:menu:select` | `{ value }` | An item is chosen, before the copy. |
+| `ocx:menu:change` | `{ open }` | The menu opens or closes. |
+| `ocx:toast` | `{ title, duration, slot }` | After the copy: "Copied — &lt;meaning&gt;", or "Copy failed" (danger) when the browser has no clipboard or refuses the write. |
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Menu key, <kbd>Shift</kbd> + <kbd>F10</kbd> | On a host: open the menu under it. |
+| ArrowDown, ArrowUp | Next or previous item. |
+| Home, End | First or last item. |
+| A letter | Highlight the next item starting with it. |
+| Enter, Space | Copy the highlighted item and close. |
+| Escape | Close; focus returns to the host (or the trigger). |

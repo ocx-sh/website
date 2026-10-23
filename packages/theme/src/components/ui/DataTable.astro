@@ -21,6 +21,10 @@ export interface Column {
   numeric?: boolean;
   /** Identifiers (commands, paths, versions): mono. */
   mono?: boolean;
+  /** Cell alignment; `numeric` already ends. */
+  align?: 'center';
+  /** Takes the width the other columns leave, on one line; the others shrink to their content. */
+  grow?: boolean;
 }
 
 interface Props {
@@ -88,15 +92,17 @@ const id = nextUiId('data-table');
     />
   )}
   <div class="ocx-data-table__scroll" role="region" aria-label={caption} tabindex="0">
-    <table class="ocx-data-table__table" id={id}>
+    <table class="ocx-data-table__table" id={id} data-ocx-fit={columns.some((c) => c.grow) ? '' : undefined}>
       <caption>{caption}</caption>
       <thead>
         <tr>
-          {columns.map(({ key, label, sortable = true, numeric }) => (
+          {columns.map(({ key, label, sortable = true, numeric, align, grow }) => (
             <th
               scope="col"
               data-ocx-key={key}
               data-ocx-numeric={numeric ? '' : undefined}
+              data-ocx-align={align}
+              data-ocx-grow={grow ? '' : undefined}
               aria-sort={sort?.key === key ? direction : undefined}
             >
               {sortable ? (
@@ -118,8 +124,13 @@ const id = nextUiId('data-table');
       <tbody>
         {sequence.map((index) => (
           <tr data-ocx-row hidden={!shown.has(index)}>
-            {columns.map(({ key, numeric, mono }) => (
-              <td data-ocx-numeric={numeric ? '' : undefined} data-ocx-mono={mono ? '' : undefined}>
+            {columns.map(({ key, numeric, mono, align, grow }) => (
+              <td
+                data-ocx-numeric={numeric ? '' : undefined}
+                data-ocx-mono={mono ? '' : undefined}
+                data-ocx-align={align}
+                data-ocx-grow={grow ? '' : undefined}
+              >
                 {text[index]?.[key]}
               </td>
             ))}
@@ -152,7 +163,7 @@ const id = nextUiId('data-table');
   import type { Pager } from './data-table.mjs';
   import { mount } from './zag.mjs';
 
-  const ARM = ['pointerenter', 'focusin', 'touchstart'];
+  const ARM = ['pointerenter', 'focusin', 'touchstart', 'ocx:data-table:require'];
   for (const root of document.querySelectorAll<HTMLElement>('[data-ocx-data-table]')) {
     const nav = root.querySelector<HTMLElement>('[data-zag-root="pagination"]');
     const handle = nav && mount(nav, { load: () => import('../pagination.zag.mjs') });
@@ -272,6 +283,16 @@ const id = nextUiId('data-table');
     :where(.ocx-data-table__table) :is(th, td)[data-ocx-numeric] {
       text-align: end;
       font-variant-numeric: tabular-nums;
+    }
+    :where(.ocx-data-table__table) :is(th, td)[data-ocx-align='center'] {
+      text-align: center;
+    }
+    :where(.ocx-data-table__table) :is(th, td)[data-ocx-grow] {
+      inline-size: 100%;
+    }
+    /* Only beside a grow column do the others shrink to their content; without one they wrap as before. */
+    :where(.ocx-data-table__table[data-ocx-fit]) :is(th, td):not([data-ocx-grow]) {
+      white-space: nowrap;
     }
     :where(.ocx-data-table__table) td[data-ocx-mono] {
       font-family: var(--ocx-font-mono);

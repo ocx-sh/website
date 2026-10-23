@@ -37,7 +37,9 @@ export default defineConfig({
                 { label: 'Button', link: '/components/button/' },
                 { label: 'Command bar', link: '/components/command-bar/' },
                 { label: 'Copy button', link: '/components/copy-button/' },
+                { label: 'Copy menu', link: '/components/copy-menu/' },
                 { label: 'Link', link: '/components/link/' },
+                { label: 'Prose code copy', link: '/components/prose-code-copy/' },
               ],
             },
             {
@@ -64,6 +66,7 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { label: 'ActionMenu', link: '/components/action-menu/' },
+                { label: 'Command palette', link: '/components/command-palette/' },
                 { label: 'Dialog', link: '/components/dialog/' },
                 { label: 'Dialog presets', link: '/components/dialog-presets/' },
                 { label: 'Drawer', link: '/components/drawer/' },
@@ -97,6 +100,7 @@ export default defineConfig({
                 { label: 'Dependency explorer', link: '/components/dependency-explorer/' },
                 { label: 'Keyboard', link: '/components/keyboard/' },
                 { label: 'List', link: '/components/list/' },
+                { label: 'Logo tile', link: '/components/logo-tile/' },
                 { label: 'Tables', link: '/components/tables/' },
                 { label: 'Tag group', link: '/components/tag-group/' },
                 { label: 'Tree', link: '/components/tree/' },

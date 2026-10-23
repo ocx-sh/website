@@ -4,7 +4,7 @@
  * @param {View} view
  * @returns {Arranged}
  */
-export function arrange(rows: Record<string, string>[], { key, direction, query, page, pageSize }: View): Arranged;
+export function arrange(rows: Record<string, string>[], { key, direction, query, page, pageSize, require }: View): Arranged;
 /**
  * The status line under the table.
  * @param {number} count matching rows
@@ -50,6 +50,10 @@ export type View = {
      * rows per page; none shows every match
      */
     pageSize?: number;
+    /**
+     * column keys whose cell must be non-empty (an external filter, ANDed)
+     */
+    require?: string[];
 };
 export type Arranged = {
     /**

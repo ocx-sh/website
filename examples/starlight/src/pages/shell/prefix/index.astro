@@ -1,0 +1,17 @@
+---
+// Neutral mode: a home link with `match: 'prefix'` stays current under the base unless a longer link matches.
+import Shell from '@ocx-sh/theme/layouts/Shell.astro';
+---
+
+<Shell
+  title="Shell, home prefix"
+  description="A neutral nav whose home link is current under the base."
+  brand={{ title: 'Example mirror', wordmark: 'example' }}
+  nav={[
+    { label: 'Catalog', href: '/docs/', match: 'prefix' },
+    { label: 'Wide', href: '/docs/shell/wide/' },
+  ]}
+>
+  <h1>Shell, home prefix</h1>
+  <p>The Catalog link is current here; on the wide page the longer Wide link is.</p>
+</Shell>

@@ -1,3 +1,4 @@
+/** @typedef {import('../components/toast.mjs').ToastDetail} ToastDetail */
 /**
  * Starts the page toaster on the first `ocx:toast`, and toasts Expressive Code's copy buttons.
  * @param {Document} doc

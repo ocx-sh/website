@@ -2,9 +2,16 @@
 // the options: a consumer appends <option value data-meta> to it at runtime and the list follows.
 // SSR renders the closed parts; the popup and its rows are built here on start.
 import { collection, connect, machine } from '@zag-js/select';
+import { bindSet, fromCode } from './value-set.mjs';
 import { emit } from './zag-runtime.mjs';
 
 export { connect, machine };
+
+/** @type {WeakMap<HTMLElement, () => void>} pushes the native select's options into the running machine */
+const resync = new WeakMap();
+
+/** @type {WeakMap<Element, string>} what a popup row was last built from */
+const rowSig = new WeakMap();
 
 /** @typedef {{ value: string, label: string, meta?: string | undefined, icon?: string | undefined, disabled?: boolean | undefined }} SelectItem */
 
@@ -56,6 +63,16 @@ function popup(root) {
  */
 export function render(api, root, spread) {
   const part = (/** @type {string} */ name) => /** @type {HTMLElement} */ (root.querySelector(`[data-part="${name}"]`));
+  // `ocx:select:set {value}`: moves the value with no change event (the idle half is value-set.mjs).
+  bindSet(root, 'select', api, (latest, detail) => {
+    const value = String(detail);
+    // Options a consumer just swapped reach the collection on the observer's microtask; a set right behind them must not miss.
+    resync.get(root)?.();
+    const live = latest();
+    if (!live.collection.has(value) || live.value[0] === value) return false;
+    live.setValue([value]);
+    return true;
+  });
   spread(root, api.getRootProps());
   spread(part('label'), api.getLabelProps());
   const control = root.querySelector('[data-part="control"]');
@@ -75,12 +92,27 @@ export function render(api, root, spread) {
   const content = root.querySelector('.ocx-ui-select__list') ?? popup(root);
   spread(/** @type {Element} */ (content.parentElement), api.getPositionerProps());
   spread(content, api.getContentProps());
-  // ponytail: rows are only ever appended (options added at runtime); a removed option keeps its row.
-  for (const item of /** @type {SelectItem[]} */ (api.collection.items)) {
-    const el = content.querySelector(`[data-value="${CSS.escape(item.value)}"]`) ?? content.appendChild(row(item));
+  // Rows follow the collection: one the native select no longer holds is dropped (a consumer swapping its options).
+  const values = new Set(/** @type {SelectItem[]} */ (api.collection.items).map((i) => i.value));
+  for (const stale of content.querySelectorAll('[data-value]'))
+    if (!values.has(/** @type {HTMLElement} */ (stale).dataset['value'] ?? '')) stale.remove();
+  /** @type {SelectItem[]} */ (api.collection.items).forEach((item, i) => {
+    let el = content.querySelector(`[data-value="${CSS.escape(item.value)}"]`);
+    const sig = JSON.stringify([item.label, item.meta, item.icon]);
+    // A reused row whose native option changed (CommandBar swapping choices) is rebuilt in place.
+    if (el && rowSig.get(el) !== sig) {
+      const fresh = row(item);
+      el.replaceChildren(...fresh.childNodes);
+      if (item.icon) el.setAttribute('data-with-icon', '');
+      else el.removeAttribute('data-with-icon');
+    }
+    el ??= row(item);
+    rowSig.set(el, sig);
+    // Rows keep the native options' order, also for options swapped in later.
+    if (content.children[i] !== el) content.insertBefore(el, content.children[i] ?? null);
     spread(el, api.getItemProps({ item }));
     spread(/** @type {Element} */ (el.querySelector('.ocx-ui-option__label')), api.getItemTextProps({ item }));
-  }
+  });
   spread(/** @type {Element} */ (root.querySelector('select')), api.getHiddenSelectProps());
 }
 
@@ -96,7 +128,9 @@ export function readDom(root, update) {
   // With slots the popup hangs under the whole box, not just the trigger inside it.
   const control = /** @type {HTMLElement | null} */ (root.querySelector('[data-part="control"]'));
   // ponytail: never disconnected; after destroy() `update` is a no-op and the observer dies with the node.
-  new MutationObserver(() => update({ collection: read(select) })).observe(select, { childList: true });
+  const sync = () => update({ collection: read(select) });
+  resync.set(root, sync);
+  new MutationObserver(sync).observe(select, { childList: true });
   return {
     collection: read(select),
     defaultValue: select.selectedIndex < 0 ? [] : [select.value],
@@ -112,7 +146,8 @@ export function readDom(root, update) {
       ...(control && { getAnchorElement: () => control }),
       .../** @type {{ positioning?: object }} */ (own).positioning,
     },
-    onValueChange: (/** @type {{ value: string[] }} */ { value }) =>
-      emit(root, 'select', 'change', { value: value[0] ?? '' }),
+    onValueChange: (/** @type {{ value: string[] }} */ { value }) => {
+      if (!fromCode(root)) emit(root, 'select', 'change', { value: value[0] ?? '' });
+    },
   };
 }

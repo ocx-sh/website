@@ -15,3 +15,13 @@ export type Nav = import('./registry.mjs').Nav;
  * for the ecosystem menu followed by its hubs, then the install action.
  */
 export function sectionLinks(nav: Nav, pathname: string): { label: string; href?: string; current?: boolean }[];
+/**
+ * The one current link among a neutral-mode header's hrefs: the longest matching prefix, else `undefined`.
+ */
+export function currentHref(
+  pathname: string,
+  links: readonly (string | { href: string; match?: 'prefix' })[],
+  base?: string,
+): string | undefined;
+/** Whether a link leaves the site: an absolute http(s) or protocol-relative URL. */
+export function isExternal(href: string): boolean;

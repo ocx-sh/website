@@ -1,0 +1,15 @@
+---
+// The command-palette showcase's wiring: mounts every palette on the page on a small fixed index.
+// The search module is a lazy chunk (`command-palette-demo.mjs`, imported on first open, like a
+// consumer's real source). A palette carrying the class `demo-no-slash` leaves "/" to the page.
+---
+
+<script>
+  import { mountCommandPalette } from '@ocx-sh/theme/command-palette';
+
+  for (const root of document.querySelectorAll<HTMLElement>('.ocx-cmdpalette'))
+    mountCommandPalette(root, {
+      source: () => import('./command-palette-demo.mjs'),
+      slash: !root.classList.contains('demo-no-slash'),
+    });
+</script>

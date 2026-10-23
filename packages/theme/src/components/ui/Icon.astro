@@ -25,9 +25,6 @@ if (!icon) throw new Error(`Icon: no icon named "${String(name)}"`);
   viewBox={icon.viewBox}
   fill={icon.stroke ? 'none' : 'currentColor'}
   stroke={icon.stroke ? 'currentColor' : undefined}
-  stroke-width={icon.stroke}
-  stroke-linecap={icon.stroke ? 'round' : undefined}
-  stroke-linejoin={icon.stroke ? 'round' : undefined}
   role={label ? 'img' : undefined}
   aria-label={label}
   aria-hidden={label ? undefined : 'true'}
@@ -56,10 +53,13 @@ if (!icon) throw new Error(`Icon: no icon named "${String(name)}"`);
       inline-size: var(--ocx-icon-lg);
       block-size: var(--ocx-icon-lg);
     }
-    /* Line icons: the token beats the stroke-width attribute, and a non-scaling stroke keeps it one
-       weight at every size instead of scaling with the 24px viewBox (~1.2px at md). */
+    /* Line icons: weight and round ends come from here, not per-svg attributes (~70 B of every
+       icon's HTML); a non-scaling stroke keeps the weight one value at every size instead of scaling
+       with the 24px viewBox (~1.2px at md). */
     :where(.ocx-icon[stroke]) {
       stroke-width: var(--ocx-icon-stroke);
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
     :where(.ocx-icon[stroke] *) {
       vector-effect: non-scaling-stroke;

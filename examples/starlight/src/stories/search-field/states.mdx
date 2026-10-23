@@ -21,6 +21,9 @@ import StateGrid from '../../components/showcase/StateGrid.astro';
   <State label="visible label">
     <SearchField label="Search versions" hideLabel={false} />
   </State>
+  <State label="custom clear label">
+    <SearchField label="Search packages" clearLabel="Clear search" value="cmake" />
+  </State>
   <State label="disabled">
     <SearchField label="Search files" value="disabled" disabled />
   </State>

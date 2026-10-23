@@ -6,9 +6,9 @@ import * as toast from '@zag-js/toast';
 import css from './toast.css?inline';
 import ringCss from './ui/progress-circle.css?inline';
 import { progressCircleSvg } from './ui/progress-circle.mjs';
-// Named glyphs, not the ICONS registry: that object cannot be tree-shaken and would ship every icon
-// in this lazy chunk.
-import { close, error, info, success, warning } from '../icons/icons.generated.mjs';
+// Named glyphs from the client module, not the ICONS registry: that object cannot be tree-shaken and
+// would ship every icon in this lazy chunk.
+import { close, error, info, success, warning } from '../icons/icons.client.generated.mjs';
 
 // Design c-toast: bottom-right, 2.5 s, 3 visible max (design question 10, more queue) — overridable
 // per page via `data-placement`/`data-max` on the toaster root (Footer's `[data-zag-root="toast"]"]`),
@@ -19,6 +19,8 @@ const max = Number(toasterEl?.getAttribute('data-max')) || 3;
 const DEFAULT_DURATION = 2500;
 const store = toast.createStore({ placement, max, duration: DEFAULT_DURATION, offsets: 'var(--ocx-space-5)' });
 const group = toast.group.machine;
+/** @type {Map<string, string>} the toast showing in each `slot` (ToastDetail) */
+const slots = new Map();
 
 /** @type {Record<string, string>} unknown/legacy tones fall back to 'info' */
 const TONE_TO_TYPE = {
@@ -29,6 +31,67 @@ const TONE_TO_TYPE = {
   loading: 'loading',
   danger: 'error',
 };
+
+/** @type {Map<string, import('./toast.mjs').ToastDetail>} slotted toasts held back while the store is full */
+const waiting = new Map();
+// Zag's queue cannot drop an entry, so a slotted toast that finds the store full waits here (the newest
+// per slot wins) and enters when a toast leaves: an obsolete copy notice never surfaces later.
+store.subscribe((/** @type {{ dismiss?: boolean }} */ event) => {
+  if (event.dismiss) queueMicrotask(flush);
+});
+function flush() {
+  for (const [slot, detail] of waiting) {
+    if (store.getCount() >= store.attrs.max) return;
+    waiting.delete(slot);
+    show(detail);
+  }
+}
+
+/** @param {import('./toast.mjs').ToastDetail} detail */
+function show(detail) {
+  const { id, title, description, tone, duration, persistent, action, progress, slot } = detail;
+  // Update by id is partial: only keys the caller gave (store.create spreads `...data` over the
+  // showing toast, so an `undefined` would erase its tone, description or action). Defaults
+  // (success tone, duration) apply to a new toast only.
+  const showing = id === undefined ? undefined : store.getVisibleToasts().find((t) => t.id === id);
+  if (slot !== undefined && !showing && store.getCount() >= store.attrs.max) {
+    waiting.set(slot, detail);
+    const held = slots.get(slot);
+    if (held !== undefined) store.dismiss(held);
+    return;
+  }
+  /** @type {toast.Options} */
+  const data = { title };
+  // An explicit `id: undefined` key would overwrite the store's own computed uuid: omit it.
+  if (id !== undefined) data.id = id;
+  if (description !== undefined) data.description = description;
+  // Progress rides in Zag's `meta` (replaced whole on an update, so only set when given: an update
+  // without it keeps the last value). Whether it draws is `render`'s call: loading toasts only.
+  if (progress !== undefined) data.meta = { progress };
+  // No tone at all is the pre-existing `ocx:toast` contract (CopyButton, EC copy): success.
+  if (tone !== undefined || !showing) data.type = /** @type {toast.Type} */ (TONE_TO_TYPE[tone ?? 'success'] ?? 'info');
+  // A loading toast's persistence ends with loading (toast.promise's loading → success/error).
+  const settles = showing?.type === 'loading' && data.type !== undefined && data.type !== 'loading';
+  // Always explicit: an absent duration would fall to Zag's per-type defaults (2 s / 5 s), not the
+  // store's. An action toast never auto-dismisses (WCAG 2.2.1: time to reach the action).
+  if (!showing || settles || duration !== undefined || persistent !== undefined || action !== undefined)
+    data.duration = persistent || action ? Infinity : (duration ?? DEFAULT_DURATION);
+  if (action)
+    data.action = {
+      label: action.label,
+      onClick: () => {
+        document.dispatchEvent(new CustomEvent(action.event, { bubbles: true }));
+      },
+    };
+  const created = store.create(data);
+  // A new toast takes its slot over (D-143): the one showing there leaves, so a re-copy is a fresh
+  // window and one message, not a stack. An update by id keeps its slot's holder.
+  if (slot !== undefined && !showing) {
+    const held = slots.get(slot);
+    if (held !== undefined && held !== created) store.dismiss(held);
+    slots.set(slot, created);
+  }
+}
 
 /** The group machine bound to this page's store (a store is not JSON, so it never crosses SSR). */
 /** @type {toast.GroupMachine} */
@@ -55,39 +118,10 @@ export function connect(service, normalize) {
   return {
     ...toast.group.connect(service, normalize),
     service,
-    /** @param {import('./toast.mjs').ToastDetail} detail */
-    show: ({ id, title, description, tone, duration, persistent, action, progress }) => {
-      // Update by id is partial: only keys the caller gave (store.create spreads `...data` over the
-      // showing toast, so an `undefined` would erase its tone, description or action). Defaults
-      // (success tone, duration) apply to a new toast only.
-      const showing = id === undefined ? undefined : store.getVisibleToasts().find((t) => t.id === id);
-      /** @type {toast.Options} */
-      const data = { title };
-      // An explicit `id: undefined` key would overwrite the store's own computed uuid: omit it.
-      if (id !== undefined) data.id = id;
-      if (description !== undefined) data.description = description;
-      // Progress rides in Zag's `meta` (replaced whole on an update, so only set when given: an update
-      // without it keeps the last value). Whether it draws is `render`'s call: loading toasts only.
-      if (progress !== undefined) data.meta = { progress };
-      // No tone at all is the pre-existing `ocx:toast` contract (CopyButton, EC copy): success.
-      if (tone !== undefined || !showing)
-        data.type = /** @type {toast.Type} */ (TONE_TO_TYPE[tone ?? 'success'] ?? 'info');
-      // A loading toast's persistence ends with loading (toast.promise's loading → success/error).
-      const settles = showing?.type === 'loading' && data.type !== undefined && data.type !== 'loading';
-      // Always explicit: an absent duration would fall to Zag's per-type defaults (2 s / 5 s), not the
-      // store's. An action toast never auto-dismisses (WCAG 2.2.1: time to reach the action).
-      if (!showing || settles || duration !== undefined || persistent !== undefined || action !== undefined)
-        data.duration = persistent || action ? Infinity : (duration ?? DEFAULT_DURATION);
-      if (action)
-        data.action = {
-          label: action.label,
-          onClick: () => {
-            document.dispatchEvent(new CustomEvent(action.event, { bubbles: true }));
-          },
-        };
-      store.create(data);
-    },
+    show,
     dismiss: (id) => {
+      if (id === undefined) waiting.clear();
+      else for (const [slot, detail] of waiting) if (detail.id === id) waiting.delete(slot);
       store.dismiss(id);
     },
   };

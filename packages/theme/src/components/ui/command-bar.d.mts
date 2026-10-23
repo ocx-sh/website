@@ -31,3 +31,8 @@ export function install(doc?: Document): void;
  * when the bar offers it (a choice whose `value` is 'linux', 'macos' or 'windows'). Never throws.
  */
 export const PRE_PAINT: string;
+export type Choice = {
+    value: string;
+    label: string;
+    command: string;
+};

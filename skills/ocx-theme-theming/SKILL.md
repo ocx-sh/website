@@ -28,7 +28,7 @@ For the generic cascade and token discipline this builds on, see the
    inline it.
 2. **Colour is the only per-scheme family.** Light sits on `:root` (and
    `:root[data-theme='light']`), dark on `.dark` and
-   `:root[data-theme='dark']`. Every colour token has both; geometry, type and
+   `:root[data-theme='dark']` (the theme script sets both on `<html>`). Every colour token has both; geometry, type and
    motion tokens are declared once.
 3. **Coral is the only interactive colour.** Accent marks links, the current
    or selected item, the one primary action per view, and focus. Every other
@@ -59,6 +59,8 @@ For the generic cascade and token discipline this builds on, see the
 of yours beats any theme rule regardless of specificity.
 
 - Want to change a theme look for your site? Write a plain, unlayered rule.
+- Shell's element defaults (`*`, `body`, `main a`) are wrapped in `:where()` inside the layer: zero
+  specificity, so even a layered component rule beats them.
 - Writing CSS inside the theme itself? Put it in `@layer ocx`; only
   `@font-face` sits outside.
 - Style Starlight markup from CSS, not by importing a styled Starlight

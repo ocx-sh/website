@@ -1,6 +1,7 @@
 // Theme toggle shared by the header and the mobile menu (C-024): every `[data-ocx-theme]` is a
 // CycleButton (light, dark). Starlight's ThemeProvider reads localStorage['starlight-theme'] and
-// <html data-theme>; this keeps both, and every button, in step.
+// <html data-theme>; this keeps both, `<html class="dark">` (D-127), and every button, in step. A click to
+// the OS's own scheme stores `auto` and a page with no pinned choice follows OS changes live (D-133).
 import { install, setValue } from '../components/ui/cycle-button.mjs';
 
 /**
@@ -33,6 +34,35 @@ function switchTheme(doc, apply) {
 }
 
 /**
+ * The pinned scheme in storage, else `undefined` (follow the OS). A 0.5.x visitor's choice was already moved
+ * to `starlight-theme` by THEME_SCRIPT (D-132). A blocked storage reads as nothing pinned.
+ * @param {Storage | undefined} storage
+ * @returns {'light' | 'dark' | undefined}
+ */
+export function storedTheme(storage) {
+  let value;
+  try {
+    value = storage?.getItem('starlight-theme');
+  } catch {
+    // Storage blocked: nothing pinned.
+  }
+  return value === 'light' || value === 'dark' ? value : undefined;
+}
+
+/**
+ * The window's localStorage, or `undefined` when reaching it throws (blocked storage makes the getter throw).
+ * @param {Window | null} view
+ * @returns {Storage | undefined}
+ */
+function localStore(view) {
+  try {
+    return view?.localStorage;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Sync every `[data-ocx-theme]` button in `doc` to the page theme and follow their cycle event:
  * set `html[data-theme]`, sync the buttons and persist; storage failures (private mode) are ignored
  * so the toggle still works for the current page.
@@ -41,24 +71,33 @@ function switchTheme(doc, apply) {
  */
 export function wireThemeToggles(doc = document) {
   const root = doc.documentElement;
+  const view = doc.defaultView;
+  const osLight = view?.matchMedia?.('(prefers-color-scheme: light)');
   // ThemeProvider always sets `light` or `dark`; anything else leaves the SSR `light` (setValue ignores it).
   const sync = () => {
     for (const btn of doc.querySelectorAll('[data-ocx-theme]'))
       setValue(btn, /** @type {string} */ (root.dataset['theme']));
   };
+  /** @param {string} theme */
+  const set = (theme) => {
+    root.dataset['theme'] = theme;
+    root.classList.toggle('dark', theme === 'dark');
+    sync();
+  };
   install(doc);
   sync();
+  // No pinned choice: the page follows the OS as it changes (an OS pin or a click to the OS value is `auto`).
+  osLight?.addEventListener?.('change', () => {
+    if (!storedTheme(localStore(view))) set(osLight.matches ? 'light' : 'dark');
+  });
   doc.addEventListener('ocx:cycle-button:change', (event) => {
     // CycleButton dispatches it on the button itself.
     if (!(/** @type {Element | null} */ (event.target)?.matches?.('[data-ocx-theme]'))) return;
     const theme = /** @type {CustomEvent<{ value: string }>} */ (event).detail.value;
-    const apply = () => {
-      root.dataset['theme'] = theme;
-      sync();
-    };
-    switchTheme(doc, apply);
+    switchTheme(doc, () => set(theme));
+    const isOs = osLight && theme === (osLight.matches ? 'light' : 'dark');
     try {
-      doc.defaultView?.localStorage.setItem('starlight-theme', theme);
+      view?.localStorage.setItem('starlight-theme', isOs ? 'auto' : theme);
     } catch {
       // Storage blocked: the page still flips.
     }

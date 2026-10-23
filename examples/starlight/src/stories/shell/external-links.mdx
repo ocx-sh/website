@@ -1,0 +1,15 @@
+---
+title: External links
+description: A neutral header and footer link that leaves the site opens in a new tab and shows the external icon.
+height: 200
+order: 2
+block: true
+---
+
+import MountChrome from '../../components/showcase/MountChrome.astro';
+import SiteHeader from '@ocx-sh/theme/components/SiteHeader.astro';
+import SiteFooter from '@ocx-sh/theme/components/SiteFooter.astro';
+
+<SiteHeader brand={{ title: 'Example mirror', wordmark: 'example' }} nav={[{ label: 'Home', href: '/docs/' }, { label: 'Source', href: 'https://example.com/source/' }]} />
+<SiteFooter links={[{ label: 'Home', href: '/docs/' }, { label: 'Source', href: 'https://example.com/source/' }]} note="Apache-2.0" />
+<MountChrome />

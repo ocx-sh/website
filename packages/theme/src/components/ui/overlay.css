@@ -120,20 +120,28 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* An icon row adds a column between the check and the label. */
+  /* An icon row has no check column: the icon takes the accent when its row is the pick, and a check beside it
+     would be two marks for one fact. */
   .ocx-ui-option[data-with-icon] {
-    grid-template-columns: var(--ocx-space-5) var(--ocx-icon-md) minmax(0, 1fr) auto;
+    grid-template-columns: var(--ocx-icon-md) minmax(0, 1fr) auto;
   }
   .ocx-ui-option__icon {
-    grid-column: 2;
+    grid-column: 1;
     display: flex;
     color: var(--ocx-color-fg-muted);
   }
   .ocx-ui-option[data-with-icon] .ocx-ui-option__label {
-    grid-column: 3;
+    grid-column: 2;
   }
   .ocx-ui-option[data-with-icon] .ocx-ui-option__meta {
-    grid-column: 4;
+    grid-column: 3;
+  }
+  .ocx-ui-option[data-with-icon][data-state='checked'] .ocx-ui-option__icon {
+    color: var(--ocx-color-accent-fg);
+  }
+  /* The pick is also the heavier label, so it does not rest on colour alone. */
+  .ocx-ui-option[data-with-icon][data-state='checked'] .ocx-ui-option__label {
+    font-weight: var(--ocx-font-weight-semibold);
   }
   .ocx-ui-option__meta {
     grid-column: 3;
@@ -155,7 +163,7 @@
   .ocx-ui-option[data-state='checked'] {
     color: var(--ocx-color-accent-fg);
   }
-  .ocx-ui-option[data-state='checked']::before {
+  .ocx-ui-option[data-state='checked']:not([data-with-icon])::before {
     content: '✓' / '';
     grid-column: 1;
     grid-row: 1;
@@ -208,6 +216,9 @@
   .ocx-ui-select__control:is(:focus-visible, [aria-expanded='true']) {
     outline: none;
     border-color: var(--ocx-color-focus);
+  }
+  .ocx-ui-select[data-size='s'] .ocx-ui-select__control {
+    block-size: var(--ocx-control-lg);
   }
   /* The keyboard focus border is the focus indicator: it lands at once (D-R7 g); open by pointer fades. */
   .ocx-ui-select__control:focus-visible {

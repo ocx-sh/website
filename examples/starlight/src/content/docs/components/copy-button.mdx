@@ -7,8 +7,12 @@ import PropsTable from '../../../components/showcase/PropsTable.astro';
 import Stories from '../../../components/showcase/Stories.astro';
 
 Click copy: the value goes to the clipboard, the button reads "copied" for 1.5 s, and a toast
-confirms it bottom-right for 2.5 s. Every copy control in the theme toasts, including the copy
-button of a code block. The toaster loads on the first toast; three toasts stack at most.
+confirms it bottom-right for 2 s: **Copied — &lt;label&gt;**. A second copy while it reads "copied" starts
+the 1.5 s over. Every copy control in the theme toasts the same way and replaces the toast
+showing, including [CopyMenu](../copy-menu/), [ProseCodeCopy](../prose-code-copy/) and the copy button of
+a code block. Where the browser has no clipboard (an insecure context) or refuses the write, nothing
+throws: the toast reads "Copy failed" and the button stays as it was. The toaster loads on the first
+toast; three toasts stack at most.
 
 ## Stories
 
@@ -20,7 +24,7 @@ button of a code block. The toaster loads on the first toast; three toasts stack
   of="CopyButton.astro"
   rows={[
     { name: 'value', type: 'string', required: true, description: 'Text written to the clipboard.' },
-    { name: 'label', type: 'string', description: 'Named in the toast instead of the value ("Copied <label>").' },
+    { name: 'label', type: 'string', description: 'Named in the toast instead of the value ("Copied — <label>").' },
     { name: 'zag', type: 'ZagProps<clipboard.Props>', default: '{}', description: 'Zag clipboard machine props, e.g. timeout (default 1500 ms).' },
   ]}
 />
@@ -31,7 +35,7 @@ button of a code block. The toaster loads on the first toast; three toasts stack
 | --- | --- | --- |
 | `ocx:clipboard:copy` | `{ value }` | The value is on the clipboard. |
 | `ocx:clipboard:error` | `{ value }` | The browser refused the write. |
-| `ocx:toast` | `{ title, tone? }` | After either: "Copied …", or "Copy failed" with `tone: "danger"`. Any script may dispatch it. |
+| `ocx:toast` | `{ title, duration?, tone?, slot }` | After either: "Copied — …" (2000 ms), or "Copy failed" with `tone: "danger"`; both in the `copy` slot. Any script may dispatch it. |
 
 ## Keyboard
 

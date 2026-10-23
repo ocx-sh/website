@@ -1,0 +1,26 @@
+---
+// `width="wide"` in neutral mode, with a nested nav (the deeper link alone is current) and an external link.
+import Shell from '@ocx-sh/theme/layouts/Shell.astro';
+---
+
+<Shell
+  title="Shell, wide"
+  description="A plain Astro page on the wide column."
+  width="wide"
+  brand={{ title: 'Example mirror', wordmark: 'example' }}
+  nav={[
+    { label: 'Home', href: '/docs/shell/' },
+    { label: 'Wide', href: '/docs/shell/wide/' },
+    { label: 'Source', href: 'https://example.com/source/' },
+  ]}
+  footer={{
+    links: [
+      { label: 'Home', href: '/docs/shell/' },
+      { label: 'Source', href: 'https://example.com/source/' },
+    ],
+    note: 'Apache-2.0',
+  }}
+>
+  <h1>Shell, wide</h1>
+  <p>The column is the page maximum, not the prose width.</p>
+</Shell>

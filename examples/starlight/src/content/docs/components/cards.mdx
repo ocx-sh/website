@@ -5,11 +5,9 @@ description: Starlight's Card, CardGrid and LinkCard, and the theme's .ocx-card,
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Every card is the same box: a hairline border, a 2px corner, the card padding and no shadow. An
-icon sits in a square neutral tile beside the title. A card that is a link lifts its border to
-the neutral hover border on hover and shows the focus ring on keyboard focus; it never turns
-coral, which is kept for links, the current item, primary actions and focus. A card that is not a
-link has no hover. Hover the link cards below, and switch the theme in the header for dark mode.
+Every card is one box: hairline border, 2px corner, card padding, no shadow. A link card lifts
+its border to the neutral hover border and shows the focus ring; it never turns coral. A card
+that is not a link has no hover.
 
 ## Card
 
@@ -23,20 +21,9 @@ Without an icon:
 
 <Card title="catalog">Browse packages in the index.</Card>
 
-With a longer body of several paragraphs:
-
-<Card title="Install" icon="rocket">
-
-One command installs `ocx` into your shell.
-
-A second paragraph keeps the card's own spacing.
-
-</Card>
-
 ## CardGrid
 
-Cards in a row are equal height, whatever their body length. The page reuses two icons: each
-Starlight icon is an inline SVG, and every distinct one costs this page's HTML budget.
+Cards in a row are equal height, whatever their body length.
 
 <CardGrid>
   <Card title="docs" icon="open-book">
@@ -45,12 +32,6 @@ Starlight icon is an inline SVG, and every distinct one costs this page's HTML b
   <Card title="catalog" icon="rocket">
     Browse packages in the index. This body runs longer, and the card beside it grows to the same height.
   </Card>
-  <Card title="github" icon="open-book">
-    Star the repo, file issues, or contribute code.
-  </Card>
-  <Card title="discord" icon="rocket">
-    Ask questions and follow development.
-  </Card>
 </CardGrid>
 
 ## LinkCard
@@ -58,10 +39,6 @@ Starlight icon is an inline SVG, and every distinct one costs this page's HTML b
 With a description:
 
 <LinkCard title="Install ocx" href="/install/" description="One command, every shell." />
-
-Title only:
-
-<LinkCard title="All components" href="../" />
 
 In a grid:
 

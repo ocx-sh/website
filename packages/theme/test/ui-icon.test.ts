@@ -59,16 +59,19 @@ describe('icon registry', () => {
       );
   });
 
-  it('icons.generated.mjs, icons.sources.generated.mjs and icons.d.ts are what the generator writes (run `pnpm --filter @ocx-sh/theme icons`)', () => {
+  it('icons.generated.mjs, icons.client.generated.mjs, icons.sources.generated.mjs and icons.d.ts are what the generator writes (run `pnpm --filter @ocx-sh/theme icons`)', () => {
     const out = generate();
     expect(readFileSync(OUT.mjs, 'utf8')).toBe(out.mjs);
+    expect(readFileSync(OUT.core, 'utf8')).toBe(out.core);
     expect(readFileSync(OUT.sources, 'utf8')).toBe(out.sources);
     expect(readFileSync(OUT.dts, 'utf8')).toBe(out.dts);
   });
 
   it('line icons draw at the --ocx-icon-stroke weight at every size (non-scaling stroke)', () => {
     const css = readFileSync(new URL('../src/components/ui/Icon.astro', import.meta.url), 'utf8');
-    expect(css).toMatch(/:where\(\.ocx-icon\[stroke\]\) \{\s*stroke-width: var\(--ocx-icon-stroke\);/);
+    expect(css).toMatch(
+      /:where\(\.ocx-icon\[stroke\]\) \{\s*stroke-width: var\(--ocx-icon-stroke\);\s*stroke-linecap: round;\s*stroke-linejoin: round;/,
+    );
     expect(css).toMatch(/:where\(\.ocx-icon\[stroke\] \*\) \{\s*vector-effect: non-scaling-stroke;/);
     const tokens = readFileSync(new URL('../src/tokens.css', import.meta.url), 'utf8');
     expect(tokens).toMatch(/--ocx-icon-stroke: [\d.]+px;/);
@@ -92,8 +95,6 @@ describe('Icon', () => {
     const line = (await render(Icon, { name: 'check' })).querySelector('svg');
     expect(line?.getAttribute('fill')).toBe('none');
     expect(line?.getAttribute('stroke')).toBe('currentColor');
-    expect(line?.getAttribute('stroke-width')).toBe('2');
-    expect(line?.getAttribute('stroke-linecap')).toBe('round');
     const fill = (await render(Icon, { name: 'linux' })).querySelector('svg');
     expect(fill?.getAttribute('fill')).toBe('currentColor');
     expect(fill?.hasAttribute('stroke')).toBe(false);

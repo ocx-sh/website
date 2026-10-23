@@ -57,7 +57,7 @@ const body = story.replace(LINK, '');
 // `prose` wraps the story in base.css's prose rules. Demo is rendered in two branches: an empty
 // `log` slot still counts as present (a blank log column).
 const content = meta.prose ? `<div class="ocx-prose">${body}</div>` : body;
-const boot = `(()=>{const d=document.documentElement,q=new URLSearchParams(location.search),f=q.get('theme'),a=()=>{let t=f;if(t!=='light'&&t!=='dark'){try{t=localStorage.getItem('starlight-theme')}catch{}}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.dataset.theme=t};a();if(!f)addEventListener('storage',a);if(q.has('thumb'))d.dataset.thumb='';const p=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'';d.dataset.platform=/mac/i.test(p)?'mac':/linux/i.test(p)?'linux':'windows'})()`;
+const boot = `(()=>{const d=document.documentElement,q=new URLSearchParams(location.search),f=q.get('theme'),a=()=>{let t=f;if(t!=='light'&&t!=='dark'){try{t=localStorage.getItem('starlight-theme')}catch{}}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.dataset.theme=t};a();if(!f)addEventListener('storage',a);if(q.has('thumb'))d.dataset.thumb='';const p=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'';d.dataset.platform=/mac|iphone|ipad|ipod/i.test(p)?'mac':/linux/i.test(p)?'linux':'windows'})()`;
 ---
 
 <html lang="en" data-story-height={meta.height}>

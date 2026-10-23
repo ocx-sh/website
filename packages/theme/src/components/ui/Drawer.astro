@@ -214,6 +214,11 @@ const p = Object.fromEntries(
     .ocx-ui-drawer__body {
       margin-block-start: var(--ocx-space-5);
     }
+    /* The close control sits above the sheet's own content; a consumer overrides the token. */
+    .ocx-ui-drawer__head > [data-part='close-trigger'] {
+      position: relative;
+      z-index: var(--ocx-z-drawer-close);
+    }
     .ocx-ui-drawer__x {
       inline-size: var(--ocx-icon-md);
       block-size: var(--ocx-icon-md);

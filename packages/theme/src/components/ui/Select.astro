@@ -31,6 +31,8 @@ export interface SelectOption {
   meta?: string;
   /** Registry icon before the label in the popup row, and in the trigger while selected. */
   icon?: IconName;
+  /** Extra `data-*` attributes on the native option (`{ rank: '2' }` is `data-rank`), for a consumer reading its select. */
+  data?: Record<string, string>;
   disabled?: boolean;
 }
 
@@ -41,6 +43,8 @@ export interface Props extends Omit<HTMLAttributes<'select'>, 'multiple'> {
   options?: SelectOption[];
   /** Selected value; as with a native select, none selects the first enabled option. */
   value?: string;
+  /** Box height: m = 38 (the Input box), s = 30 (beside Button s, ToggleButton s, filter chips). */
+  size?: 's' | 'm';
   /** Zag machine props. */
   zag?: ZagProps<SelectMachineProps>;
 }
@@ -50,6 +54,7 @@ const {
   hideLabel = false,
   options = [],
   value,
+  size = 'm',
   zag,
   class: className,
   id,
@@ -89,6 +94,7 @@ const box = grouped ? { disabled: Boolean(disabled), ...ssrAttrs(api.getControlP
 
 <div
   class:list={['ocx-ui-field', 'ocx-ui-select', className]}
+  data-size={size}
   data-zag-root="select"
   data-zag-id={zagId}
   data-zag-state="idle"
@@ -122,6 +128,11 @@ const box = grouped ? { disabled: Boolean(disabled), ...ssrAttrs(api.getControlP
         selected={o.value === selected}
         disabled={o.disabled}
         data-meta={o.meta}
+        {...Object.fromEntries(
+          Object.entries(o.data ?? {})
+            .filter(([k]) => k.toLowerCase() !== 'icon') // data-icon is registry markup, set below, never consumer data
+            .map(([k, v]) => [`data-${k}`, v]),
+        )}
         data-icon={o.icon && iconSvg(o.icon)}
       >
         {o.label}
@@ -131,7 +142,10 @@ const box = grouped ? { disabled: Boolean(disabled), ...ssrAttrs(api.getControlP
 </div>
 
 <script>
+  import { onSelectSet } from './value-set.mjs';
   import { mount } from './zag.mjs';
+
+  document.addEventListener('ocx:select:set', onSelectSet);
 
   for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="select"]'))
     mount(root, { load: () => import('./select.zag.mjs') });

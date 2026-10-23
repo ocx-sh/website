@@ -45,11 +45,15 @@ export namespace toast {
     }, target?: EventTarget): Promise<T>;
 }
 /**
- * The title of a copy confirmation (C-180, C-182): "Copied <text>", text cut to 40 characters.
- * @param {string} text
+ * The title of a copy confirmation (C-180, C-182, D-143): "Copied — <meaning>", meaning cut to 40
+ * characters.
+ * @param {string} meaning
  * @returns {string}
  */
-export function copiedTitle(text: string): string;
+export function copiedTitle(meaning: string): string;
+/** How long a copy confirmation shows (D-143), and the slot every one shares so a re-copy replaces it. */
+export const COPY_TOAST_MS: 2000;
+export const COPY_TOAST_SLOT: "copy";
 export type ToastTone = "info" | "success" | "warning" | "error" | "loading";
 export type ToastAction = {
     label: string;
@@ -60,7 +64,9 @@ export type ToastAction = {
  * 2500 ms) and are left as they are on an update by `id`. `persistent` or an `action` means no
  * auto-dismiss: a reader must have time to reach the action (WCAG 2.2.1). A 'loading' toast
  * persists until an update gives it another tone. `progress` (0–100) turns a 'loading' toast's
- * ring determinate, and an update by `id` moves it; on any other tone it is ignored.
+ * ring determinate, and an update by `id` moves it; on any other tone it is ignored. A new toast
+ * with a `slot` replaces the one showing in the same slot (copy confirmations share `copy`), so
+ * the newest copy always restarts a fresh window instead of stacking.
  */
 export type ToastDetail = {
     title: string;
@@ -71,4 +77,5 @@ export type ToastDetail = {
     action?: ToastAction;
     progress?: number;
     id?: string;
+    slot?: string;
 };

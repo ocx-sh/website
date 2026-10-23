@@ -1,0 +1,35 @@
+---
+title: Set from code
+description: ocx:toggle-group:set moves the pressed option from code, before or after the machine starts, and logs no change event.
+height: 260
+order: 2
+log: true
+---
+
+import ToggleGroup from '@ocx-sh/theme/components/ToggleGroup.astro';
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+
+export const platforms = [
+  { value: 'linux', label: 'linux' },
+  { value: 'macos', label: 'macos' },
+  { value: 'windows', label: 'windows' },
+];
+
+<ToggleGroup label="Platform" items={platforms} value="macos" />
+
+<div style="display:flex;gap:var(--ocx-space-3);margin-block-start:var(--ocx-space-4)">
+  <Button
+    type="button"
+    size="s"
+    onclick="document.querySelector('[data-zag-root=toggle-group]').dispatchEvent(new CustomEvent('ocx:toggle-group:set', { detail: { value: 'linux' }, bubbles: true }))"
+  >
+    Set linux
+  </Button>
+  <Button
+    type="button"
+    size="s"
+    onclick="document.querySelector('[data-zag-root=toggle-group]').dispatchEvent(new CustomEvent('ocx:toggle-group:set', { detail: { value: 'windows' }, bubbles: true }))"
+  >
+    Set windows
+  </Button>
+</div>

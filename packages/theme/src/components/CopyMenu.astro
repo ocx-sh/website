@@ -1,0 +1,174 @@
+---
+// CopyMenu (D-056, D-083) on the ActionMenu machine (ui/menu.zag.mjs), behaviour in
+// copy-menu.zag.mjs: a menu of copy items. Every selection copies the item's text and toasts
+// "Copied — <meaning>" (copy.mjs). Two shapes:
+//   - button: a trigger opens the menu; each item carries its own `text`.
+//   - `context`: the default slot is the hosts' container. Any element in it with a `data-copy`
+//     JSON attribute (`{ "<item value>": "<text>" }`) is a host: right-click, the menu key,
+//     Shift+F10 or a long-press on it opens the menu at the pointer with the items that host has a
+//     text for. The menu is one; the data is on the host. No wrapper tab stop: the hosts keep their
+//     own, and focus returns to the host on close. Empty space gets the browser's own menu. The
+//     machine and the copy code load on the first interaction with a host (`data-zag-trigger="manual"`,
+//     started by copy-host.mjs), never at page load or on a hover over the container.
+// Events: `ocx:menu:select {value}`, `ocx:menu:change {open}`, `ocx:toast`.
+import type { Props as MenuProps } from '@zag-js/menu';
+import type { IconName } from '../icons/icons.mjs';
+import Button from './ui/Button.astro';
+import Icon from './ui/Icon.astro';
+import { nextUiId } from './ui/ids.mjs';
+import { connect, machine, parts } from './ui/menu.zag.mjs';
+import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
+import type { ZagProps } from './ui/zag.mjs';
+import './ui/overlay.css';
+
+type Placement = NonNullable<NonNullable<MenuProps['positioning']>['placement']>;
+
+export interface CopyMenuItem {
+  /** Keys the host's `data-copy` map; sent in `ocx:menu:select`. */
+  value: string;
+  label: string;
+  /** What the toast names; default the label without a leading "Copy ". */
+  meaning?: string;
+  /** Button menu: the text this item copies. A context menu takes it from the host. */
+  text?: string;
+  /** Leading registry icon; once one item has an icon, the others keep its slot so labels align. */
+  icon?: IconName;
+}
+
+export interface Props {
+  /** Trigger text; in context mode the menu's accessible name. */
+  label: string;
+  items: CopyMenuItem[];
+  /** Open on the hosts in the default slot instead of from a trigger button. */
+  context?: boolean;
+  /** Panel side and alignment relative to the trigger. */
+  placement?: Placement;
+  /** Button menu: an icon-only trigger (a bare icon, `label` is its accessible name) instead of the text button. */
+  triggerIcon?: IconName;
+  /** Zag menu machine props passed through verbatim (C-106). */
+  zag?: ZagProps<MenuProps>;
+}
+
+const { label, items, context = false, placement = 'bottom-start', triggerIcon, zag } = Astro.props;
+if (!context)
+  for (const { value, text } of items)
+    if (text === undefined) throw new Error(`CopyMenu: item "${value}" needs a text outside context mode`);
+const id = nextUiId('copy-menu');
+const iconSlot = items.some((item) => item.icon);
+const zagProps = {
+  ...zag,
+  ...(context && { 'aria-label': label }),
+  positioning: { ...zag?.positioning, placement, strategy: 'fixed' as const },
+};
+const p = Object.fromEntries(
+  Object.entries(parts(ssrApi(machine, connect, { ...zagProps, id }), items)).map(([k, v]) => [k, ssrAttrs(v)]),
+);
+---
+
+<div
+  class="ocx-copy-menu"
+  data-context={context ? '' : undefined}
+  data-zag-root="copy-menu"
+  data-zag-state="idle"
+  data-zag-trigger={context ? 'manual' : undefined}
+  data-zag-id={id}
+  data-zag-props={JSON.stringify(zagProps)}
+>
+  {context ? (
+    <slot />
+  ) : triggerIcon ? (
+    <Button variant="ghost" size="s" iconOnly aria-label={label} {...p.trigger}>
+      <Icon name={triggerIcon} />
+    </Button>
+  ) : (
+    <Button {...p.trigger}>
+      {label}
+      <Icon name="chevron-down" size="sm" />
+    </Button>
+  )}
+  <div class="ocx-copy-menu__positioner not-content" {...p.positioner}>
+    <div class="ocx-ui-overlay ocx-copy-menu__content" {...p.content}>
+      {items.map((item) => (
+        <div
+          class="ocx-copy-menu__item"
+          data-copy-text={item.text}
+          data-copy-meaning={item.meaning ?? item.label.replace(/^Copy /, '')}
+          {...p[`item:${item.value}`]}
+        >
+          {item.icon ? (
+            <Icon name={item.icon} class="ocx-copy-menu__icon" />
+          ) : (
+            iconSlot && <span class="ocx-copy-menu__icon" aria-hidden="true" />
+          )}
+          {item.label}
+        </div>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  import { mount } from './ui/zag.mjs';
+  import { holdEarlyContextMenu } from './copy-host.mjs';
+  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="copy-menu"]')) {
+    const context = root.hasAttribute('data-context');
+    // Context mode: the hosts start the load, not a hover over the container (copy-host.mjs).
+    const handle = mount(root, {
+      load: () => import('./copy-menu.zag.mjs'),
+      trigger: context ? 'manual' : 'interaction',
+    });
+    if (context) holdEarlyContextMenu(root, handle);
+  }
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-copy-menu {
+      display: inline-block;
+    }
+    .ocx-copy-menu[data-context] {
+      display: block;
+    }
+    /* A long-press on a host is the touch way in: no iOS callout over the menu. */
+    .ocx-copy-menu[data-context] :global([data-copy]) {
+      -webkit-touch-callout: none;
+    }
+    [data-part='content'] {
+      display: flex;
+      flex-direction: column;
+      min-inline-size: calc(var(--ocx-space-12) + var(--ocx-space-9));
+      font-family: var(--ocx-font-sans);
+      outline: none;
+    }
+    [data-part='content'][hidden],
+    [data-part='item'][hidden] {
+      display: none;
+    }
+    [data-part='item'] {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      padding: var(--ocx-space-3) var(--ocx-space-4);
+      font-size: var(--ocx-text-base);
+      font-weight: var(--ocx-font-weight-medium);
+      color: var(--ocx-color-fg);
+      white-space: nowrap;
+      border-radius: var(--ocx-radius-md);
+      cursor: default;
+      transition: background-color var(--ocx-duration-fast);
+    }
+    /* As ActionMenu: pointer and keyboard both highlight; the ring marks keyboard use. */
+    [data-part='item'] > :global(.ocx-copy-menu__icon) {
+      flex-shrink: 0;
+      inline-size: var(--ocx-icon-md);
+      block-size: var(--ocx-icon-md);
+    }
+    [data-part='item'][data-highlighted] {
+      background: var(--ocx-color-hover);
+    }
+    [data-part='content']:focus-visible [data-part='item'][data-highlighted] {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+  }
+</style>

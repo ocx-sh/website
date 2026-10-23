@@ -56,6 +56,10 @@
       "types": "./src/components/toast.d.mts",
       "default": "./src/components/toast.mjs"
     },
+    "./copy": {
+      "types": "./src/components/copy.d.mts",
+      "default": "./src/components/copy.mjs"
+    },
     "./toaster": {
       "types": "./src/starlight/toaster.d.mts",
       "default": "./src/starlight/toaster.mjs"
@@ -63,6 +67,14 @@
     "./cycle-button": {
       "types": "./src/components/ui/cycle-button.d.mts",
       "default": "./src/components/ui/cycle-button.mjs"
+    },
+    "./logo-tile": {
+      "types": "./src/components/ui/logo-tile.d.mts",
+      "default": "./src/components/ui/logo-tile.mjs"
+    },
+    "./command-palette": {
+      "types": "./src/components/ui/command-palette.d.mts",
+      "default": "./src/components/ui/command-palette.mjs"
     },
     "./prose-code.css": "./src/prose-code.css",
     "./lazy": {

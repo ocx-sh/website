@@ -1,0 +1,19 @@
+---
+title: Copy code in prose
+description: Every code block in a README-style prose block gets a Copy code button; one click copies the block and toasts "Copied — code block".
+height: 320
+log: true
+prose: true
+toaster: true
+---
+
+import ProseCodeCopy from '@ocx-sh/theme/components/ProseCodeCopy.astro';
+
+<ProseCodeCopy />
+
+<div class="ocx-prose">
+  <p>Install the tool, then add it to a project:</p>
+  <pre><code>{`ocx install ocx.sh/astral-sh/uv:0.10`}</code></pre>
+  <pre><code>{`ocx add astral-sh/uv:0.10
+ocx lock`}</code></pre>
+</div>

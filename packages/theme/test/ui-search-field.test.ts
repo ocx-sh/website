@@ -93,6 +93,13 @@ describe('SearchField SSR', () => {
     expect(button.disabled).toBe(false);
   });
 
+  it('D-020 clearLabel names the clear button; the label alone names the field', async () => {
+    const doc = await render({ label: 'Search packages', clearLabel: 'Clear search' });
+    expect(doc.querySelector('button')!.getAttribute('aria-label')).toBe('Clear search');
+    expect(doc.querySelector('label')!.textContent.trim()).toBe('Search packages');
+    expect(doc.querySelector('input')!.hasAttribute('clearlabel')).toBe(false);
+  });
+
   it('disabled disables the input and the clear button and greys the group', async () => {
     const doc = await render({ disabled: true });
     expect(doc.querySelector('input')!.disabled).toBe(true);

@@ -30,12 +30,14 @@ sort, filter and pages on first interaction.
 | Prop | Notes |
 |---|---|
 | `caption` | Required; the visually hidden caption and scroll region name |
-| `columns` | `{ key, label, sortable? (default true), numeric?, mono? }` |
+| `columns` | `{ key, label, sortable? (default true), numeric?, mono?, align? ('center'), grow? }`; beside a `grow` column the others shrink to their content (`data-ocx-fit` on the table, `nowrap`), without one cells wrap |
 | `rows` | `Record<string, string \| number>[]` |
 | `pageSize` | Enables pagination; without it every match shows |
 | `filter` | Text filter above the table, default true |
 | `sort`, `query`, `page` | Initial state: `{ key, direction? }`, filter text, page from 1 |
 | `empty` | Shown when no row matches |
+
+External filter: set `data-ocx-require` on the root (column keys, comma-joined; only rows with a value in each stay) and dispatch `ocx:data-table:require` on it to re-arrange. It is not a column key.
 
 Markdown tables stay static; use DataTable only for data a page passes in.
 
@@ -117,8 +119,9 @@ toast.dismiss(id);
 
 Options: `description`, `tone` `info`, `success` (default), `warning`,
 `error`, `loading`; `duration` (default 2500 ms), `persistent`, `action`
-(`{ label, event }`; implies persistent), `progress` (loading only), `id`
-(pass it back to update or dismiss). The helper only dispatches `ocx:toast`,
+(`{ label, event }`; implies persistent), `progress` (loading only), `slot` (a
+new toast replaces the one showing in the same slot; copy confirmations use
+`copy`, 2000 ms, "Copied — meaning"), `id` (pass it back to update or dismiss). The helper only dispatches `ocx:toast`,
 so calling it never imports Zag; the page toaster loads on the first toast.
 In Starlight the toaster mounts from the theme's `Search` script. A page
 without Starlight's chrome renders the toaster root (as the theme's `Footer`
@@ -132,6 +135,20 @@ does) and calls `installToaster(document)` from `@ocx-sh/theme/toaster`.
 box, so a slow or blocked image never shifts layout. **`ui/AvatarGroup.astro`**:
 `items` (`{ name, src?, srcset?, initials? }`), `size`, `max` (the rest fold
 into "+N").
+
+**`ui/LogoTile.astro`**: a logo over a monogram in one token-sized box (the
+`size` map is tied to the control size tokens).
+`name` (bare name, initials source), `seed` (hue key, defaults to
+`name`; pass the full identity such as `<namespace>/<name>`), `src` (logo URL, used as given),
+`fallback` (one URL tried once when `src` fails, else none; nothing guesses a `.png` from an `.svg`), `size`
+`sm`/`md`/`lg`/`xl`. The monogram paints with the markup, the lazy logo
+cross-fades in bare (no box or radius) and a failed one (`fallback` first, also when it failed before the script ran) leaves the
+monogram; neither logo nor initials shows a cube. Decorative (`aria-hidden`).
+The four hues are `--ocx-color-monogram-{0..3}` and `-tint` in both schemes:
+override them to rebrand. To fill a cloned tile (render one with no `name` and
+no `src`), call `fillLogoTile(tile, { name, seed, src, fallback })` from
+`@ocx-sh/theme/logo-tile`, which also exports `monogramInitials` and
+`monogramHue`.
 
 **`PlatformIcons.astro`**: `platforms` (required, `os/arch` strings such as
 `linux/amd64`), `mode` `os` (glyphs) or `os-arch` (glyph, OS name and

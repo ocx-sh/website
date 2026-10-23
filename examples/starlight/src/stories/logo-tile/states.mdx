@@ -1,0 +1,28 @@
+---
+title: States
+description: Logo, monogram, a broken logo, its fallback, the four hues, four sizes and the empty cube.
+height: 680
+block: true
+order: 1
+---
+
+import LogoTile from '@ocx-sh/theme/components/ui/LogoTile.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+import State from '../../components/showcase/State.astro';
+
+<StateGrid>
+  <State label="logo"><LogoTile name="cmake" seed="kitware/cmake" size="lg" src={"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%23888'/%3E%3C/svg%3E"} /></State>
+  <State label="monogram (no logo)"><LogoTile name="shellcheck" seed="koalaman/shellcheck" size="lg" /></State>
+  <State label="broken logo"><LogoTile name="gh" seed="cli/gh" size="lg" src="data:," /></State>
+  <State label="broken logo, working fallback"><LogoTile name="gh" seed="cli/gh" size="lg" src="data:," fallback={"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='4' fill='%23888'/%3E%3C/svg%3E"} /></State>
+  <State label="separated name"><LogoTile name="cmake-tools" seed="kitware/cmake-tools" size="lg" /></State>
+  <State label="hue 0"><LogoTile name="a" seed="hue/2" size="lg" /></State>
+  <State label="hue 1"><LogoTile name="b" seed="hue/3" size="lg" /></State>
+  <State label="hue 2"><LogoTile name="c" seed="hue/0" size="lg" /></State>
+  <State label="hue 3"><LogoTile name="d" seed="hue/1" size="lg" /></State>
+  <State label="size sm"><LogoTile name="uv" seed="astral/uv" size="sm" /></State>
+  <State label="size md"><LogoTile name="uv" seed="astral/uv" size="md" /></State>
+  <State label="size lg"><LogoTile name="uv" seed="astral/uv" size="lg" /></State>
+  <State label="size xl"><LogoTile name="uv" seed="astral/uv" size="xl" /></State>
+  <State label="neither logo nor initials"><LogoTile size="lg" /></State>
+</StateGrid>

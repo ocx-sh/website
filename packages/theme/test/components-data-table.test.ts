@@ -409,3 +409,78 @@ describe('Pagination ocx:pagination:set', () => {
     handle.destroy();
   });
 });
+
+describe('DataTable columns and require', () => {
+  const cols = (extra: Record<string, unknown>) => COLUMNS.map((c) => (c.key === 'note' ? { ...c, ...extra } : c));
+
+  it('align=center marks the header and every cell of its column, numeric only its own', async () => {
+    const root = await place({ columns: cols({ align: 'center' }) });
+    expect(root.querySelectorAll('[data-ocx-align="center"]')).toHaveLength(1 + ROWS.length);
+    expect(root.querySelectorAll('[data-ocx-numeric]')).toHaveLength(1 + ROWS.length);
+  });
+
+  it('grow marks header and cells, and only a table with one is fit (the others shrink to content)', async () => {
+    const grown = await place({ columns: cols({ grow: true }) });
+    expect(grown.querySelectorAll('[data-ocx-grow]')).toHaveLength(1 + ROWS.length);
+    expect(grown.querySelector('table')?.hasAttribute('data-ocx-fit')).toBe(true);
+    expect((await place({})).querySelector('table')?.hasAttribute('data-ocx-fit')).toBe(false);
+    const s = style('ui/DataTable.astro').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(s).toMatch(/\[data-ocx-fit\]\) :is\(th, td\):not\(\[data-ocx-grow\]\)\s*\{\s*white-space: nowrap/);
+    expect(s).not.toMatch(/__table\) :is\(th, td\):not\(\[data-ocx-grow\]\)/);
+  });
+
+  it('require drops rows whose listed cells are empty, ANDed with the filter and the paging', () => {
+    const text = [
+      { a: 'x', b: '1' },
+      { a: '', b: '2' },
+      { a: ' ', b: '3' },
+      { a: 'y', b: '' },
+      { a: 'z', b: '5' },
+    ];
+    expect(arrange(text, { require: ['a'] }).order).toEqual([0, 3, 4]);
+    expect(arrange(text, { require: ['a', 'b'] }).order).toEqual([0, 4]);
+    expect(arrange(text, { require: ['a', 'b'], query: 'z' }).order).toEqual([4]);
+    expect(arrange(text, { require: ['a'], pageSize: 2, page: 2 })).toMatchObject({ visible: [4], pages: 2 });
+  });
+
+  it('bind: data-ocx-require filters on ocx:data-table:require, from page 1, and the status follows', async () => {
+    const root = await place({
+      columns: COLUMNS,
+      rows: [...ROWS.slice(0, 3), { name: 'empty', version: '', size: 0, note: '' }],
+    });
+    bind(root);
+    expect(visible(root)).toHaveLength(4);
+    root.dataset['ocxRequire'] = 'version';
+    root.dispatchEvent(new CustomEvent('ocx:data-table:require'));
+    expect(visible(root)).toEqual(['cmake', 'ninja', 'nodejs']);
+    expect(status(root)).toBe('3 of 4 rows');
+    root.dataset['ocxRequire'] = '';
+    root.dispatchEvent(new CustomEvent('ocx:data-table:require'));
+    expect(visible(root)).toHaveLength(4);
+  });
+
+  it('bind: a paged table keeps the tallest page it has shown as a min-height on its region', async () => {
+    const root = await place({ pageSize: 2 });
+    const region = root.querySelector<HTMLElement>('.ocx-data-table__scroll');
+    let height = 120;
+    Object.defineProperty(region, 'offsetHeight', { get: () => height });
+    bind(root);
+    root.dispatchEvent(new CustomEvent('ocx:data-table:require'));
+    expect(region?.style.minBlockSize).toBe('120px');
+    height = 80;
+    root.dispatchEvent(new CustomEvent('ocx:data-table:require'));
+    expect(region?.style.minBlockSize).toBe('120px');
+    height = 200;
+    root.dispatchEvent(new CustomEvent('ocx:data-table:require'));
+    expect(region?.style.minBlockSize).toBe('200px');
+  });
+
+  it('bind: an unpaged table never sets the lock', async () => {
+    const root = await place({});
+    const region = root.querySelector<HTMLElement>('.ocx-data-table__scroll');
+    Object.defineProperty(region, 'offsetHeight', { get: () => 100 });
+    bind(root);
+    root.dispatchEvent(new CustomEvent('ocx:data-table:require'));
+    expect(region?.style.minBlockSize).toBe('');
+  });
+});

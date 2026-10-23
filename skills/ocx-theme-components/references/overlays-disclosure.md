@@ -43,6 +43,31 @@ document.addEventListener('ocx:dialog-result', (e) => {
 No danger variant exists for the confirm button; state the consequence in
 `message`.
 
+**`ui/CommandPalette.astro`**: a header search trigger plus a modal "Search"
+dialog (Dialog's machine, palette layout) holding a combobox over grouped link
+results. The component renders the shell; call `mountCommandPalette(root, { source })`
+from `@ocx-sh/theme/command-palette` in a page script (explicit mounting is the intended API; nothing mounts it for you). `source` is a dynamic
+`import()` of your module, which exports `search(query, signal)` returning
+`[{ label, items: [{ href, label, description? }] }]` and optionally `warm()`.
+Nothing loads before input but the key and click listeners: the open/close
+bookkeeping, the dialog machine and your module load on the first open, and a chord
+pressed meanwhile is swallowed at once and opens the palette when the chunk arrives. Props (all text): `label`, `triggerLabel` (visible and accessible name of
+the trigger), `placeholder`, `description` (visually hidden), `hint` (empty-query
+guidance), `noResults` (`{query}`), `count` (`{count}`), `error`, `resultsLabel`,
+`closeLabel`, `id`, `zag`. Ctrl/Cmd+K toggles (markup says `aria-keyshortcuts="Control+K"`, mount sets `Meta+K` on a mac); `/` opens unless
+`slash: false` (or a function answering false) because the page claims `/`.
+Rows are real `<a href>` links drawn with `textContent`; non-http(s) hrefs are
+dropped. Event `ocx:dialog:change` `{ open }`. The card's size and place are tokens: `--ocx-palette-width`, `--ocx-palette-height`, `--ocx-palette-top` (override them in `:root`).
+
+```astro
+<CommandPalette triggerLabel="Search packages" hint="Search by name or keyword." />
+<script>
+  import { mountCommandPalette } from '@ocx-sh/theme/command-palette';
+  const root = document.querySelector<HTMLElement>('.ocx-cmdpalette');
+  if (root) mountCommandPalette(root, { source: () => import('./search.js') });
+</script>
+```
+
 **`ui/Drawer.astro`**: Dialog's contract plus swipe to close. `title`
 (required), `description`, `open`, `modal`, `side` `start`, `end` or
 `bottom`. Slot `trigger`. Event `ocx:drawer:change`.

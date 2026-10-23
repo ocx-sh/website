@@ -22,6 +22,7 @@ focus to the trigger. The trigger names the panel.
     { name: 'modal', type: 'boolean', default: 'false', description: 'Trap focus in the panel and hide the page from assistive tech while open.' },
     { name: 'src', type: 'string', description: 'URL of an HTML fragment of the same origin, fetched on the first open and cached. Replaces the default slot.' },
     { name: 'labels', type: '{ loading?, error?, retry? }', default: "'Loading…', 'Could not load this.', 'Retry'", description: 'Texts of the `src` states.' },
+    { name: 'size', type: "'s' | 'm' | 'l'", default: "'m'", description: 'Trigger Button size (s = 30 mono, m = 38, l = 42).' },
     { name: 'zag', type: 'ZagProps<popover.Props>', description: 'Zag machine props passed through verbatim.' },
   ]}
 />

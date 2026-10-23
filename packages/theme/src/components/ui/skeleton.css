@@ -32,7 +32,7 @@
   }
   @media (prefers-reduced-motion: no-preference) {
     .ocx-ui-skeleton:not([data-animated='false']) .ocx-ui-skeleton__line::after {
-      animation: ocx-ui-skeleton-sweep calc(var(--ocx-duration-slow) * 5) linear infinite;
+      animation: ocx-ui-skeleton-sweep var(--ocx-duration-shimmer) linear infinite;
     }
   }
   @keyframes ocx-ui-skeleton-sweep {

@@ -10,6 +10,11 @@ export const ICON_SOURCES: {
     warning: string;
     error: string;
     search: string;
+    sparkles: string;
+    refresh: string;
+    'circle-dashed': string;
+    'circle-dot-dashed': string;
+    'circle-dot': string;
     menu: string;
     more: string;
     sort: string;

@@ -274,8 +274,10 @@ describe('CommandBar styles (command-bar.css)', () => {
     expect(css).not.toMatch(/transition:[^;]*(outline|all)\b/);
   });
 
-  it('accent is not used (focus, success and hover tokens only)', () => {
-    expect(css).not.toMatch(/--ocx-color-accent/);
+  it('accent is used only by the decorative shell prompt (focus, success and hover tokens otherwise)', () => {
+    const rest = css.replace(/\.ocx-cmdbar__prompt\s*\{[^}]*\}/, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    expect(rest).not.toMatch(/--ocx-color-accent/);
+    expect(css).toMatch(/\.ocx-cmdbar__prompt\s*\{[^}]*color: var\(--ocx-color-accent-fg\)/);
   });
 
   it('the component ships no <style> of its own and imports the sheet', () => {

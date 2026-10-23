@@ -23,6 +23,7 @@ list. The `start` and `end` slots put a control inside the box, such as a sort-d
     { name: 'hideLabel', type: 'boolean', default: 'false', description: 'Keep the label for assistive tech only.' },
     { name: 'options', type: '{ value, label, meta?, disabled? }[]', default: '[]', description: 'Build-time options; append <option value data-meta> to the hidden <select> for more at runtime.' },
     { name: 'value', type: 'string', default: 'first enabled option', description: 'Selected value.' },
+    { name: 'size', type: "'s' | 'm'", default: "'m'", description: 'Box height: m = 38 (the Input box), s = 30 (beside Button s, ToggleButton s, filter chips).' },
     { name: 'zag', type: 'ZagProps<select.Props>', description: 'Zag machine props.' },
     { name: 'rest → <select>', type: 'HTMLAttributes', description: 'name, required, form, disabled and aria-invalid drive the machine; every other attribute except multiple goes to the hidden <select>.' },
   ]}
@@ -31,6 +32,17 @@ list. The `start` and `end` slots put a control inside the box, such as a sort-d
 ## Events
 
 - `ocx:select:change` `{ value }`: An option is chosen.
+
+## Setting the value from code
+
+Dispatch `ocx:select:set` on the select root (`[data-zag-root="select"]`) to choose an option from a
+URL or stored state. The detail is `{ value }`, the option's value; a value no option carries changes
+nothing. It works before the machine has started (the select then boots from the value) and after,
+and it never fires `ocx:select:change`. Do not write `select.value` or the shown text yourself.
+
+```js
+select.dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value: 'updated' }, bubbles: true }));
+```
 
 ## Keyboard
 

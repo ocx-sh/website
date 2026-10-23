@@ -1,5 +1,6 @@
 // Zag `toggle-group` for <ToggleGroup> (C-153) and selectable <TagGroup> (C-272). Loaded lazily by
 // `mount` (D-Z17).
+import { bindSet, fromCode } from './ui/value-set.mjs';
 import { emit } from './ui/zag-runtime.mjs';
 
 export { connect, machine } from '@zag-js/toggle-group';
@@ -10,7 +11,8 @@ const last = new WeakMap();
 /**
  * Spreads the live api onto the root and items; a changed value emits
  * `ocx:<scope>:change {value}` (the pressed values, in order), scope = the root's `data-zag-root`
- * (`toggle-group`, `tag-group`).
+ * (`toggle-group`, `tag-group`). A toggle-group root also takes `ocx:toggle-group:set {value}`: the
+ * value moves with no change event (the idle half is ui/value-set.mjs).
  * @param {import('@zag-js/toggle-group').Api} api
  * @param {HTMLElement} root
  * @param {import('./ui/zag.mjs').Spread} spread
@@ -20,9 +22,17 @@ export function render(api, root, spread) {
   // Zag item ids are `<root id>:<value>`; the SSR wrote both.
   for (const el of root.querySelectorAll(`[data-part="item"][data-ownedby="${root.id}"]`))
     spread(el, api.getItemProps({ value: el.id.slice(root.id.length + 1), disabled: el.hasAttribute('disabled') }));
+  if (root.dataset['zagRoot'] === 'toggle-group')
+    bindSet(root, 'toggle-group', api, (latest, detail) => {
+      const live = latest();
+      const next = [detail ?? []].flat().map(String);
+      if (JSON.stringify(next) === JSON.stringify(live.value)) return false;
+      live.setValue(next);
+      return true;
+    });
   const value = JSON.stringify(api.value);
   const prev = last.get(root);
   last.set(root, value);
-  if (prev !== undefined && prev !== value)
+  if (prev !== undefined && prev !== value && !fromCode(root))
     emit(root, root.dataset['zagRoot'] ?? 'toggle-group', 'change', { value: api.value });
 }

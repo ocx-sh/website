@@ -26,9 +26,9 @@ export function clear(tree: Element): void;
 export function select(tree: Element, row: Element): void;
 /**
  * The one disclosure chevron of both trees: the registry's `chevron-right`, drawn in currentColor
- * at the `--ocx-icon-stroke` weight; CSS rotates it when open. Reads `icons.generated.mjs` (pure
- * data) rather than `icons.mjs`, and is `#__PURE__`, so Tree.astro's client script, which imports
- * `select` from here, tree-shakes the registry out of its bundle.
+ * at the `--ocx-icon-stroke` weight; CSS rotates it when open. Reads the client glyph module
+ * (pure data), and is `#__PURE__`, so Tree.astro's client script, which imports `select` from
+ * here, tree-shakes it out of its bundle.
  */
 export const CHEVRON: string;
 export function isSelectable(tree: Element, row: Element): boolean;

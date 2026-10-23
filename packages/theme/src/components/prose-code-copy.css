@@ -1,0 +1,60 @@
+/* The prose code-block copy button (ProseCodeCopy.astro). Imported from its frontmatter: an imported
+   sheet is neither scoped nor layered, so the whole body sits in @layer ocx. A bare icon that fades
+   in with the block (hover, or focus on the button), always visible where there is no hover. */
+@layer ocx {
+  pre[data-ocx-code-copy] {
+    position: relative;
+  }
+  .ocx-prose-copy {
+    position: absolute;
+    inset-block-start: var(--ocx-space-3);
+    inset-inline-end: var(--ocx-space-3);
+    display: grid;
+    place-items: center;
+    inline-size: var(--ocx-control-md);
+    block-size: var(--ocx-control-md);
+    padding: 0;
+    color: var(--ocx-color-fg-subtle);
+    background: none;
+    border: 0;
+    border-radius: var(--ocx-radius-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition:
+      opacity var(--ocx-duration-base),
+      color var(--ocx-duration-base);
+  }
+  pre:hover > .ocx-prose-copy,
+  .ocx-prose-copy:focus-visible,
+  .ocx-prose-copy[data-copied] {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    .ocx-prose-copy {
+      opacity: 1;
+    }
+  }
+  .ocx-prose-copy:hover {
+    color: var(--ocx-color-accent);
+  }
+  .ocx-prose-copy:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+  .ocx-prose-copy[data-copied] {
+    color: var(--ocx-color-success);
+  }
+  /* Both glyphs share the cell; the state decides which one shows. */
+  .ocx-prose-copy > svg {
+    grid-area: 1 / 1;
+    inline-size: var(--ocx-icon-md);
+    block-size: var(--ocx-icon-md);
+  }
+  .ocx-prose-copy > [data-part='done'],
+  .ocx-prose-copy[data-copied] > [data-part='idle'] {
+    display: none;
+  }
+  .ocx-prose-copy[data-copied] > [data-part='done'] {
+    display: block;
+  }
+}

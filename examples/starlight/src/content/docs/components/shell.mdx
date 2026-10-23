@@ -14,7 +14,16 @@ without `brand` throws. On a narrow viewport the menu button opens a native popo
 
 The Starlight overrides render the same `SiteHeader` and `SiteFooter`; `Shell` is the way to use them directly.
 Shell does no claim, `site` or `trailingSlash` validation: that stays in the Starlight plugin and `ocx-site check`.
-Live pages: [ocx mode](/docs/shell/), [neutral mode](/docs/shell/neutral/) and [with a sidebar](/docs/shell/sidebar/).
+Live pages: [ocx mode](/docs/shell/), [neutral mode](/docs/shell/neutral/), [with a sidebar](/docs/shell/sidebar/), [`width="wide"`](/docs/shell/wide/)
+(a nested nav, an external link), [`width="full"`](/docs/shell/full/), [a home link with `match: 'prefix'`](/docs/shell/prefix/)
+and [ocx chrome with its own header link, footer link and icon](/docs/shell/extras/).
+
+The body is a sticky-footer frame: the footer sits at the viewport bottom on a short page. `width` sizes the
+column: `prose` (default), `wide` (`--ocx-page-max`, for a card grid or a docs page with sidebar, prose and
+outline) or `full` (no cap, no gutter). A neutral nav marks one link current, the longest href prefix of the
+path; an absolute `http(s)` nav or footer link opens in a new tab with the external icon; a header with no
+`nav` has no menu button. The theme script sets `data-theme` and `<html class="dark">`, moves a 0.5.x
+visitor's `vitepress-theme-appearance` choice once into `starlight-theme`, and follows the OS until the visitor pins a scheme.
 
 ## Stories
 
@@ -31,23 +40,29 @@ Live pages: [ocx mode](/docs/shell/), [neutral mode](/docs/shell/neutral/) and [
 | `canonical` | `string \| URL` | Default: the request path on `Astro.site`, when a site is set. |
 | `activeSection` | `string` | ocx mode only. Default: the section the request path belongs to. |
 | `brand` | `{ title; wordmark?; logoSrc? }` | Given means neutral mode. |
-| `nav` | `{ label; href }[]` | Neutral mode header links. |
-| `footer` | `{ links; note? }` | Neutral mode footer. |
+| `nav` | `{ label; href; title?; match? }[]` | Neutral mode header links. `match: 'prefix'` on a home link (`/` or the base) keeps it current under that prefix unless a longer link matches. |
+| `footer` | `{ links: { label; href; title? }[]; note? }` | Neutral mode footer. |
+| `extraNav` | `{ label; href; title? }[]` | ocx mode: the page's own header links, after the `nav.json` sections. The longest matching one is current and then no section is. |
+| `extraFooterLinks` | `{ label; href; title? }[]` | ocx mode: footer links appended after the `nav.json` ones. `title` is a tooltip. |
+| `icon` | `string` | The page's own icon href: replaces the default `favicon.svg` (ocx mode) or the empty icon (neutral mode). |
+| `skipTarget` | `string` | The element id the skip link lands on. Default `main`; a docs page passes the id of its prose column to skip the sidebar too. |
+| `width` | `'prose' \| 'wide' \| 'full'` | The content column and the footer under it. Default `prose`. |
 
 <PropsTable
   of="SiteHeader.astro"
   rows={[
     { name: 'active', type: 'string', description: 'ocx mode: the active section id, written to `data-ocx-active`.' },
     { name: 'brand', type: '{ title: string; wordmark?: string; logoSrc?: string }', description: 'Neutral mode: the mirror\'s brand. Absent means the ocx.sh chrome.' },
-    { name: 'nav', type: '{ label: string; href: string }[]', description: 'Neutral mode: the header links; `aria-current` when the path starts with the href.' },
-    { name: 'menu', type: 'boolean', description: 'Render the mobile menu button and its popover list. Default `false`.' },
+    { name: 'nav', type: '{ label: string; href: string; title?: string; match?: \'prefix\' }[]', description: 'Neutral mode: the header links; `aria-current` on the longest href prefix of the path; an absolute `http(s)` href opens in a new tab with the external icon.' },
+    { name: 'extraNav', type: '{ label: string; href: string; title?: string }[]', description: 'ocx mode: the page\'s own header links, plain entries after the `nav.json` sections and in the mobile menu. The longest matching one is current and then no section is.' },
+    { name: 'menu', type: 'boolean', description: 'Render the mobile menu button and its popover list (not with an empty neutral `nav`). Default `false`.' },
   ]}
 />
 
 <PropsTable
   of="SiteFooter.astro"
   rows={[
-    { name: 'links', type: '{ label: string; href: string }[]', description: 'Default: the `nav.json` footer links.' },
+    { name: 'links', type: '{ label: string; href: string; title?: string }[]', description: 'Default: the `nav.json` footer links. `title` is a tooltip.' },
     { name: 'note', type: 'string', description: 'Default: the licence line.' },
   ]}
 />
@@ -56,7 +71,7 @@ Live pages: [ocx mode](/docs/shell/), [neutral mode](/docs/shell/neutral/) and [
 
 | Event | Detail | When |
 | --- | --- | --- |
-| `ocx:cycle-button:change` | `{ value, previous }` | The theme toggle advances; the page flips `data-theme` and stores `starlight-theme`. |
+| `ocx:cycle-button:change` | `{ value, previous }` | The theme toggle advances; the page flips `data-theme` and `html.dark`, and stores `starlight-theme`: the scheme, or `auto` when it equals the OS scheme. |
 | `ocx:toast` | `{ title, ... }` | Any script dispatches it on the document; the footer's toaster shows the toast. |
 
 ## Keyboard

@@ -26,8 +26,11 @@ Copying is the [copy button](../copy-button/)'s, the picker a compact [select](.
     { name: 'pickerText', type: 'boolean', default: 'false', description: 'Label next to the picker icon; default icon only.' },
     { name: 'noun', type: 'string', default: '"command"', description: 'Name of the copy after the choice label: "Linux install command".' },
     { name: 'detect', type: 'boolean', default: 'false', description: 'Preselect the visitor OS before first paint.' },
+    { name: 'prompt', type: 'string', description: 'Decorative shell prompt drawn before the command, e.g. "$"; never copied.' },
+    { name: 'icon', type: 'IconName', description: 'Decorative registry glyph before the prompt; never copied. Not the picker icon: that is choice.icon.' },
     { name: 'zag', type: 'ZagProps<clipboard.Props>', default: '{}', description: 'Zag clipboard machine props.' },
     { name: 'class', type: 'string', description: 'Extra class on the bar.' },
+    { name: 'rest → <div>', type: 'HTMLAttributes', description: 'Any other div attribute (id, aria-*, data-*) lands on the bar.' },
   ]}
 />
 
@@ -38,7 +41,7 @@ Copying is the [copy button](../copy-button/)'s, the picker a compact [select](.
 | `ocx:select:change` | `{ value }` | A choice is picked. |
 | `ocx:clipboard:copy` | `{ value }` | The command is on the clipboard. |
 | `ocx:clipboard:error` | `{ value }` | The browser refused the write. |
-| `ocx:toast` | `{ title, tone? }` | After a copy: "Copied Linux install command". |
+| `ocx:toast` | `{ title, duration, slot }` | After a copy: "Copied — Linux install command". |
 
 ## Keyboard
 

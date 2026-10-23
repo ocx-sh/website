@@ -29,11 +29,13 @@ export interface Props {
   value?: string | string[];
   /** Accessible name of the group. */
   label: string;
+  /** Cell height, as ToggleButton: s = 30 · m = 32. */
+  size?: 's' | 'm';
   /** Zag `toggle-group` machine props (data only). */
   zag?: ZagProps<ToggleGroupMachineProps>;
 }
 
-const { items, multiple = false, value = [], label, zag } = Astro.props;
+const { items, multiple = false, value = [], label, size = 'm', zag } = Astro.props;
 const id = nextUiId('toggle-group');
 const props = {
   defaultValue: Array.isArray(value) ? value : [value],
@@ -56,6 +58,7 @@ const api = ssrApi(machine, connect, { id, ...props });
     <button
       {...ssrAttrs(api.getItemProps(item))}
       class="ocx-ui-toggle-button"
+      data-size={size}
       aria-label={item.iconOnly && item.icon ? item.label : undefined}
       data-icon-only={item.iconOnly && item.icon ? '' : undefined}
     >
@@ -66,7 +69,10 @@ const api = ssrApi(machine, connect, { id, ...props });
 </div>
 
 <script>
+  import { onToggleGroupSet } from './ui/value-set.mjs';
   import { mount } from './ui/zag.mjs';
+
+  document.addEventListener('ocx:toggle-group:set', onToggleGroupSet);
 
   // Replay on: the items are plain buttons, so an early click did nothing natively (C-104).
   for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="toggle-group"]'))

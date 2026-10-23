@@ -4,7 +4,7 @@
 @layer ocx {
   [data-scope='toast'][data-part='group'] {
     z-index: var(--ocx-z-toast) !important; /* over Zag's inline max z-index: below the skip link */
-    inline-size: min(var(--ocx-toast-width), calc(100vw - 2 * var(--ocx-space-5)));
+    inline-size: min(var(--ocx-toast-width), calc(var(--ocx-window-width) - 2 * var(--ocx-space-5)));
   }
   [data-scope='toast'][data-part='root'] {
     display: flex;

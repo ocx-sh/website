@@ -111,6 +111,13 @@
     align-items: center;
     gap: var(--ocx-space-2);
   }
+  /* A filter chip is a control: it takes the compact control height (Button s, ToggleButton s, Select s), so a
+     toolbar of chips, buttons and selects lines up. */
+  .ocx-ui-tag[data-variant='filter'] {
+    box-sizing: border-box;
+    block-size: var(--ocx-control-lg);
+    padding-inline: var(--ocx-space-4);
+  }
 
   /* Remove: square, inside the chip padding; Tag itself does nothing on click. */
   .ocx-ui-tag__remove {

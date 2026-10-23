@@ -1,7 +1,10 @@
 /* Link (Link.astro). In base.css, not the component: every Starlight page renders a Link in its
    breadcrumb trail, and a component sheet would be one more render-blocking request per page. */
 @layer ocx {
+  /* Positioned: the visually hidden suffix is placed against the link, so a clipped (ellipsised) link clips it too;
+     against the page it sat at the full text's end and widened a truncated row's page into a horizontal scroll. */
   .ocx-ui-link {
+    position: relative;
     color: var(--ocx-color-accent-fg);
     text-decoration: underline;
     text-decoration-thickness: var(--ocx-border-width);

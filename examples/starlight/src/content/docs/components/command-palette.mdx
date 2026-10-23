@@ -1,0 +1,88 @@
+---
+title: Command palette
+description: A header search trigger and a modal combobox over results from your own lazy source.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A palette for searching a site or a catalog. The header trigger, <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd>+<kbd>K</kbd>)
+and <kbd>/</kbd> open a modal "Search" dialog, the [dialog](../dialog/)'s Zag machine, `--ocx-palette-top` from the top at
+`--ocx-palette-width`, with the search bar pinned and only the results scrolling. Its input is a combobox: the arrow keys
+move a highlight while focus stays in the field. Rows are real links, and picking one closes the palette before the page
+navigates.
+
+`ui/CommandPalette.astro` renders the shell; your own module supplies the data through `mountCommandPalette`:
+
+```astro
+<CommandPalette triggerLabel="Search packages" hint="Search packages by name or keyword." />
+
+<script>
+  import { mountCommandPalette } from '@ocx-sh/theme/command-palette';
+
+  const root = document.querySelector<HTMLElement>('.ocx-cmdpalette')!;
+  mountCommandPalette(root, { source: () => import('./search.js') });
+</script>
+```
+
+Nothing heavy loads before input: the dialog machine and your `source` module load on the first open. The module
+exports `search(query, signal)`, returning groups of rows, and optionally `warm()` (runs on every open):
+
+```js
+export async function search(query, signal) {
+  const items = await findPackages(query, { signal }); // [{ href, label, description }]
+  return [{ label: 'Packages', items }];
+}
+```
+
+Rows are drawn with `textContent`; one whose `href` is not http(s) or relative is dropped. `search` should cap its
+results; every row is drawn. A failed `source` import or `search`
+shows the `error` line; the next query retries. A newer query aborts the older one's `signal` and its answer is ignored.
+
+## Stories
+
+<Stories of="command-palette" />
+
+## Props
+
+<PropsTable
+  of="ui/CommandPalette.astro"
+  rows={[
+    { name: 'id', type: 'string', description: 'Root id and prefix of the ids inside it.' },
+    { name: 'label', type: 'string', default: '"Search"', description: 'Name of the dialog and its input.' },
+    { name: 'triggerLabel', type: 'string', default: '"Search"', description: 'Text and name of the header trigger, at every width.' },
+    { name: 'placeholder', type: 'string', default: '"Search…"', description: 'Input placeholder.' },
+    { name: 'description', type: 'string', description: 'Visually hidden description read on open.' },
+    { name: 'hint', type: 'string', default: '""', description: 'Shown while the query is empty.' },
+    { name: 'noResults', type: 'string', default: '"No results for “{query}”"', description: 'Status for a query without rows; {query} is the text.' },
+    { name: 'count', type: 'string', default: '"{count} results"', description: 'Visually hidden row count status; {count} is the number.' },
+    { name: 'error', type: 'string', default: '"Could not load results. Try again."', description: 'Status when the source fails.' },
+    { name: 'resultsLabel', type: 'string', default: '"Results"', description: 'Name of the results list.' },
+    { name: 'closeLabel', type: 'string', default: '"Close (Esc)"', description: 'Name of the Esc button.' },
+    { name: 'zag', type: 'ZagProps<dialog.Props>', description: 'Zag dialog props, passed through.' },
+    { name: 'class', type: 'string', description: 'Extra root class.' },
+  ]}
+/>
+
+`mountCommandPalette(root, options)` returns `{ destroy() }`.
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `source` | `() => Promise<{ search, warm? }>` | required | Dynamic `import()` of the search module. |
+| `slash` | `boolean \| () => boolean` | `true` | Open on <kbd>/</kbd>; `false`, or a function answering false, leaves it to the page. |
+
+## Events
+
+| Event | Detail | When |
+| --- | --- | --- |
+| `ocx:dialog:change` | `{ open }` | The palette opens or closes. |
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| Ctrl+K, ⌘K | Open; with it open, close. Ignored while typing in another field. |
+| / | Open, unless the page opted out or you are typing in a field. |
+| ArrowDown, ArrowUp | Move the highlight, wrapping at both ends. The first row starts highlighted. |
+| Enter | Open the highlighted row (Ctrl/Cmd+Enter: new tab). |
+| Escape | Close in one press, whatever is typed. |

@@ -1,0 +1,19 @@
+---
+title: States
+description: A block outside prose, a block in a Starlight docs body, and a plain pre without a code child.
+height: 540
+order: 1
+toaster: true
+---
+
+import ProseCodeCopy from '@ocx-sh/theme/components/ProseCodeCopy.astro';
+import State from '../../components/showcase/State.astro';
+import StateGrid from '../../components/showcase/StateGrid.astro';
+
+<ProseCodeCopy />
+
+<StateGrid wide>
+  <State label="outside prose: no button"><pre><code>{`ocx install ocx.sh/pnpm/pnpm:11`}</code></pre></State>
+  <State label=".sl-markdown-content"><div class="sl-markdown-content"><pre><code>{`ocx install ocx.sh/pnpm/pnpm:11`}</code></pre></div></State>
+  <State label="pre without code"><div class="ocx-prose"><pre>{`plain text block`}</pre></div></State>
+</StateGrid>

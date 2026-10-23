@@ -201,7 +201,7 @@ describe('install(): pick and copy', () => {
     trigger.click();
     await until(() => toasts.length > 0);
     expect(write).toHaveBeenCalledWith(CHOICES[0]!.command);
-    expect(toasts).toEqual([{ title: 'Copied Linux install command' }]);
+    expect(toasts).toEqual([{ title: 'Copied — Linux install command', duration: 2000, slot: 'copy' }]);
     expect(status.textContent).toBe('Copied Linux install command');
     expect(trigger.hasAttribute('data-copied')).toBe(true);
   });
@@ -218,7 +218,7 @@ describe('install(): pick and copy', () => {
     trigger.click();
     await until(() => toasts.length > 0);
     expect(write).toHaveBeenCalledWith('irm https://setup.ocx.sh/pwsh | iex');
-    expect(toasts[0]?.title).toBe('Copied Windows install command');
+    expect(toasts[0]?.title).toBe('Copied — Windows install command');
     expect(status.textContent).toBe('Copied Windows install command');
   });
 
@@ -273,6 +273,67 @@ describe('install(): pick and copy', () => {
     writeText();
     const { picker, text } = await live();
     pick(picker, 'nope');
+    expect(text.textContent).toBe(CHOICES[0]!.command);
+  });
+
+  it('ocx:command-bar:set swaps choices and picks one: text, copy name, picker, machine value, no pick event', async () => {
+    const write = writeText();
+    const { bar, trigger, text, select, root, picker } = await live();
+    const picks: unknown[] = [];
+    bar.addEventListener('ocx:select:change', (e) => picks.push((e as CustomEvent).detail));
+    const choices = [
+      { value: 'linux', label: 'Linux', command: 'apt install ocx' },
+      { value: 'nix', label: 'Nix', command: 'nix profile install ocx' },
+    ];
+    bar.dispatchEvent(new CustomEvent('ocx:command-bar:set', { detail: { choices, value: 'nix' } }));
+    expect(JSON.parse(bar.dataset['choices']!)).toEqual(choices);
+    expect([...select.options].map((o) => o.value)).toEqual(['linux', 'nix']);
+    // A kept label keeps its icon; a new one has none.
+    expect(select.options[0]!.dataset['icon']).toBe(icon('linux'));
+    expect(select.options[1]!.dataset['icon']).toBeUndefined();
+    expect(select.value).toBe('nix');
+    expect(text.textContent).toBe('nix profile install ocx');
+    expect(root.dataset['label']).toBe('Nix install command');
+    expect(picker.querySelector('[data-part="value-text"]')?.textContent).toBe('Nix');
+    expect(picks).toEqual([]);
+    await new Promise((r) => setTimeout(r, 0));
+    trigger.click();
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith('nix profile install ocx'));
+  });
+
+  it('ocx:command-bar:set with only a command and label retargets the shown command', async () => {
+    const write = writeText();
+    const { bar, trigger, text, root } = await live();
+    bar.dispatchEvent(new CustomEvent('ocx:command-bar:set', { detail: { command: 'ocx --help', label: 'Help' } }));
+    expect(text.textContent).toBe('ocx --help');
+    expect(root.dataset['label']).toBe('Help install command');
+    await new Promise((r) => setTimeout(r, 0));
+    trigger.click();
+    await vi.waitFor(() => expect(write).toHaveBeenCalledWith('ocx --help'));
+  });
+
+  it('ocx:command-bar:set with an unknown value and no command changes nothing', async () => {
+    const { bar, text } = await live();
+    bar.dispatchEvent(new CustomEvent('ocx:command-bar:set', { detail: { value: 'nope' } }));
+    expect(text.textContent).toBe(CHOICES[0]!.command);
+  });
+
+  it('ocx:command-bar:set with an unknown value and new choices changes nothing: no swap, old command kept', async () => {
+    const { bar, text, select } = await live();
+    const before = bar.dataset['choices'];
+    bar.dispatchEvent(
+      new CustomEvent('ocx:command-bar:set', {
+        detail: { choices: [{ value: 'nix', label: 'Nix', command: 'nix i' }], value: 'nope' },
+      }),
+    );
+    expect(bar.dataset['choices']).toBe(before);
+    expect(select.options.length).toBe(CHOICES.length);
+    expect(text.textContent).toBe(CHOICES[0]!.command);
+  });
+
+  it('ocx:command-bar:set without a detail (bare CustomEvent) does not throw', async () => {
+    const { bar, text } = await live();
+    expect(() => bar.dispatchEvent(new CustomEvent('ocx:command-bar:set'))).not.toThrow();
     expect(text.textContent).toBe(CHOICES[0]!.command);
   });
 

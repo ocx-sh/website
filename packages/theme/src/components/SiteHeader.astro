@@ -5,7 +5,7 @@
 // plain links, theme toggle). Classes are styled by base.css plus the block below.
 import ocx from '../nav.json';
 import logo from '../logo.svg?raw';
-import { isCurrent, sectionLinks } from '../nav.mjs';
+import { currentHref, EXTERNAL_LABEL, externalLink, sectionLinks } from '../nav.mjs';
 import EcosystemMenu from './EcosystemMenu.astro';
 import { NAV_ID, connect, ids, lean, machine, parts } from './navigation-menu.zag.mjs';
 import Icon from './ui/Icon.astro';
@@ -17,13 +17,18 @@ export interface Props {
   active?: string;
   /** Neutral mode: a mirror's own brand. Absent means the ocx.sh chrome. */
   brand?: { title: string; wordmark?: string; logoSrc?: string; logoAlt?: string } | undefined;
-  /** Neutral mode: the header links. */
-  nav?: { label: string; href: string }[] | undefined;
+  /**
+   * Neutral mode: the header links. `match: 'prefix'` on a home link (`/` or the base) keeps it current
+   * under that prefix when no longer link matches (D-138); `title` is a tooltip.
+   */
+  nav?: { label: string; href: string; title?: string; match?: 'prefix' }[] | undefined;
+  /** ocx mode (D-139): the consumer's own header links, plain entries after the nav.json sections. */
+  extraNav?: { label: string; href: string; title?: string }[] | undefined;
   /** Render a mobile menu button (native popover, no JavaScript) listing the sections / links. */
   menu?: boolean;
 }
 
-const { active = '', brand, nav = [], menu = false } = Astro.props;
+const { active = '', brand, nav = [], extraNav = [], menu = false } = Astro.props;
 const path = Astro.url.pathname;
 const base = import.meta.env.BASE_URL;
 // C-190: hover opens after 200 ms (Zag's default, pinned here), click toggles; the close delay
@@ -32,14 +37,26 @@ const zag = { openDelay: 200, closeDelay: 300 };
 const part = parts(ssrApi(machine, connect, { ...zag, id: NAV_ID, ids }));
 const github = ocx.actions.find((a) => a.id === 'github');
 const install = ocx.actions.find((a) => a.id === 'install');
+// D-126: one current link, the longest matching prefix (`/` and `/docs/` are not both current on `/docs/x/`).
+const current = currentHref(path, nav, base);
+// D-139: in ocx mode a consumer link that matches the path is more specific than the nav.json section claim,
+// so it alone is current.
+const extraCurrent = brand ? undefined : currentHref(path, extraNav, base);
+const shown = extraCurrent === undefined ? active : '';
 const drawer = brand
-  ? nav.map((l) => ({ label: l.label, href: l.href, current: isCurrent(path, l.href, base) }))
-  : sectionLinks(ocx, path);
+  ? nav.map((l) => ({ label: l.label, href: l.href, current: l.href === current }))
+  : [
+      ...sectionLinks(ocx, path).map((l) => ({ ...l, current: l.current && extraCurrent === undefined })),
+      ...extraNav.map((l) => ({ label: l.label, href: l.href, current: l.href === extraCurrent })),
+    ];
+// D-141: a neutral header with no links has nothing to open, so it renders no menu button.
+const hasMenu = menu && drawer.length > 0;
+const ext = (l: { label: string; href: string; title?: string }) => ({ ...l, ...externalLink(l.href) });
 ---
 
 {/* The nav's `mount` runs in chrome.mjs, the page's one early script: a script of its own was one more
 early request, which cost Lighthouse performance (0.99) on pages whose LCP waits on a body stylesheet. */}
-<div class="ocx-header" data-ocx-active={brand ? undefined : active}>
+<div class="ocx-header" data-ocx-active={brand ? undefined : shown}>
   {brand ? (
     <a class="ocx-header__brand" href={import.meta.env.BASE_URL} aria-label={`${brand.title} home`}>
       {brand.logoSrc && (
@@ -61,9 +78,10 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
   <div class="ocx-header__end">
     {brand ? (
       <nav class="ocx-header__nav" aria-label="Main">
-        {nav.map((l) => (
-          <a href={l.href} aria-current={isCurrent(path, l.href, base) ? 'page' : undefined}>
+        {nav.map(ext).map((l) => (
+          <a href={l.href} title={l.title} aria-current={l.href === current ? 'page' : undefined} {...l.attrs}>
             {l.label}
+            {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
           </a>
         ))}
       </nav>
@@ -87,7 +105,7 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
                     <a
                       href={s.href}
                       data-ocx-section={s.id}
-                      {...ssrAttrs(lean(part.link(s.id, s.id === active), { nav: true }))}
+                      {...ssrAttrs(lean(part.link(s.id, s.id === shown), { nav: true }))}
                     >
                       {s.label}
                     </a>
@@ -97,12 +115,27 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
                       {...ssrAttrs(lean(part.trigger(s.id, { ssr: true }), { nav: true }))}
                       popovertarget={ids.content(s.id)}
                       data-ocx-section={s.id}
-                      aria-current={s.id === active ? 'page' : undefined}
+                      aria-current={s.id === shown ? 'page' : undefined}
                     >
                       {s.label}
                       <Icon name="chevron-down" />
                     </button>
                   )}
+                </li>
+              ))}
+              {/* D-139: the consumer's own links, plain entries beside the sections. */}
+              {extraNav.map(ext).map((l) => (
+                <li>
+                  <a
+                    href={l.href}
+                    title={l.title}
+                    data-ocx-section="extra"
+                    aria-current={l.href === extraCurrent ? 'page' : undefined}
+                    {...l.attrs}
+                  >
+                    {l.label}
+                    {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
+                  </a>
                 </li>
               ))}
             </ul>
@@ -114,7 +147,7 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
             class="ocx-header__install"
             href={install.href}
             data-ocx-section="install"
-            aria-current={active === 'install' ? 'page' : undefined}
+            aria-current={shown === 'install' ? 'page' : undefined}
           >
             {install.label}
           </a>
@@ -128,7 +161,7 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
         </a>
       )}
       <ThemeSelect />
-      {menu && (
+      {hasMenu && (
         <button
           class="ocx-header__tool ocx-header__menu"
           type="button"
@@ -140,23 +173,26 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
       )}
     </span>
   </div>
-  {menu && (
+  {hasMenu && (
     <nav id="ocx-header-menu" class="ocx-header__drawer" popover aria-label={brand ? 'Main' : 'ocx sections'}>
       <ul>
-        {drawer.map((l) => (
-          <li>
-            {l.href ? (
-              <a href={l.href} aria-current={l.current ? 'page' : undefined}>
-                {l.label}
-              </a>
-            ) : (
-              <button type="button" popovertarget="ocx-ecosystem-menu">
-                {l.label}
-                <Icon name="chevron-down" />
-              </button>
-            )}
-          </li>
-        ))}
+        {drawer
+          .map((l) => ({ ...l, ...(l.href ? externalLink(l.href) : {}) }))
+          .map((l) => (
+            <li>
+              {l.href ? (
+                <a href={l.href} aria-current={l.current ? 'page' : undefined} {...l.attrs}>
+                  {l.label}
+                  {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
+                </a>
+              ) : (
+                <button type="button" popovertarget="ocx-ecosystem-menu">
+                  {l.label}
+                  <Icon name="chevron-down" />
+                </button>
+              )}
+            </li>
+          ))}
       </ul>
     </nav>
   )}

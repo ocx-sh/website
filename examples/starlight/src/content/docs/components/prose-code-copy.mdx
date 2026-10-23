@@ -1,0 +1,40 @@
+---
+title: Prose code copy
+description: A "Copy code" button on every code block in prose, for content that arrives as plain HTML.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Place `ProseCodeCopy` once on a page that has prose, not in a layout every page shares: its script loads wherever it renders. It renders nothing itself: its script adds a **Copy code**
+button to every `pre` inside `.ocx-prose`, `.sl-markdown-content` or `.vp-doc`, and one delegated
+click copies that block's code and toasts **Copied — code block**. It is for prose that is plain
+HTML, such as a mirrored README or docs rendered without Expressive Code; Expressive Code frames bring
+their own button and are skipped.
+
+The buttons are inserted when the script runs, so a screen-reader user finds them without hovering;
+sighted pointer users see one fade in with the block, and touch users always see it. The clipboard and toast
+code (`copy.mjs`, `toast.mjs`) loads on the first hover over a block or the first click, and nothing is written inline: no handler attribute,
+and the only markup parsed is the two registry glyphs.
+
+For highlighted fences, import [`prose-code.css`](../../../../../../packages/theme/src/prose-code.css):
+it maps Shiki's `css-variables` theme (Astro's `markdown.shikiConfig.theme: 'css-variables'`, or
+`createCssVariablesTheme()` in Shiki itself) onto the code tokens, so the colours follow the theme scheme.
+
+## Stories
+
+<Stories of="prose-code-copy" />
+
+## Props
+
+No props.
+
+<PropsTable of="ProseCodeCopy.astro" rows={[]} />
+
+## Behaviour
+
+| Where | What |
+| --- | --- |
+| Button | `aria-label="Copy code"`, a real `button`, reads copied (a check) for 1.5 s; a second copy restarts that. |
+| Copied text | The block's `code` child, or the `pre` itself when it has none; one trailing newline dropped. |
+| `ocx:toast` | `{ title: "Copied — code block", duration: 2000, slot: "copy" }`, or "Copy failed" (danger). |

@@ -21,7 +21,7 @@ filter code loads on the first hover, focus or touch. For a static table, write 
   of="ui/DataTable.astro"
   rows={[
     { name: 'caption', type: 'string', required: true, description: 'What the table lists: the visually hidden caption and the scroll region name.' },
-    { name: 'columns', type: 'Column[]', required: true, description: '{ key, label, sortable? (default true), numeric? (end-aligned, tabular figures), mono? (identifiers) }.' },
+    { name: 'columns', type: 'Column[]', required: true, description: '{ key, label, sortable? (default true), numeric? (end-aligned, tabular figures), mono? (identifiers), align? ("center"), grow? (takes the spare width) }. Beside a grow column the others shrink to their content (data-ocx-fit on the table, nowrap); without one, cells wrap.' },
     { name: 'rows', type: 'Record<string, string | number>[]', required: true, description: 'One object per row, keyed by column key.' },
     { name: 'pageSize', type: 'number', description: 'Rows per page; without it every match shows and there is no pagination.' },
     { name: 'filter', type: 'boolean', default: 'true', description: 'Text filter above the table (case-insensitive, every cell).' },
@@ -32,9 +32,15 @@ filter code loads on the first hover, focus or touch. For a static table, write 
   ]}
 />
 
+## Filtering from code
+
+Set `data-ocx-require` on the table root to a comma-joined list of column keys: only rows with a
+value in every one stay. It is not a column key. After changing it, dispatch `ocx:data-table:require`
+on the root to re-arrange.
+
 ## Events
 
-The table fires none of its own; its pagination's event bubbles out of it.
+The table fires none of its own; its pagination's event bubbles out of it. It listens for `ocx:data-table:require`.
 
 | Event | Detail | When |
 | --- | --- | --- |

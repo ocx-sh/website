@@ -137,7 +137,9 @@ test('ShellSession: every command has a visible copy button inside its own entry
       expect(await pill.boundingBox()).toMatchObject({ y: box?.y, height: box?.height });
       const first = code?.split('\u007f').find((l) => l.trim()) ?? '';
       await expect(
-        page.locator('[data-zag-root="toast"] [data-part="title"]', { hasText: `Copied ${first}` }),
+        page.locator('[data-zag-root="toast"] [data-part="title"]', {
+          hasText: `Copied — ${first.length > 40 ? `${first.slice(0, 39)}…` : first}`,
+        }),
       ).toBeVisible();
     }
   }

@@ -219,8 +219,30 @@ import Shell from '@ocx-sh/theme/layouts/Shell.astro';
 ```
 
 Props: `title` (required), `description`, `canonical` (default: the path on
-`Astro.site`), `activeSection` (ocx mode), `brand`, `nav`, `footer`. Slots:
+`Astro.site`), `activeSection` (ocx mode), `brand`, `nav`, `footer`, `width`, `icon`, `extraNav`, `extraFooterLinks`, `skipTarget`. Slots:
 `head`, the default slot, `header-search` (empty means no search).
+
+`icon` is the page's own icon href: it replaces the default `favicon.svg` (ocx
+mode) or the empty `data:,` icon (neutral mode), leaving one `rel="icon"`. In ocx
+mode `extraNav` adds the page's own header links after the `nav.json` sections
+(the longest matching link is current, and then no section is) and
+`extraFooterLinks` appends footer links (a `title` is a tooltip); neutral mode
+takes `nav`/`footer` instead and throws on the extras. A neutral `nav` item
+with `match: 'prefix'` on a home href (`/` or the base) stays current under
+that prefix unless a longer link matches.
+
+`skipTarget` is the element id the skip link lands on (default `main`); a docs
+page whose sidebar comes first in `<main>` passes its prose column's id.
+
+`width` sizes the content column and the footer under it: `prose` (default,
+the prose width plus gutters), `wide` (`--ocx-page-max`, for a card grid or a
+docs page with sidebar, prose and outline) or `full` (no cap and no `<main>`
+gutter, the page lays itself out). The body is a sticky-footer frame (the
+footer sits at the viewport bottom on a short page; `<main>` grows), and
+Shell sets `box-sizing: border-box` everywhere, the 13px / 1.5 body
+defaults (`line-height: var(--ocx-lh-body)`), and a default link (accent ink, no underline) and
+`button { font: inherit }` inside `<main>`. These defaults sit in `@layer ocx` inside `:where()`, so
+they have zero specificity and any consumer rule wins. The footer's top rule runs edge to edge.
 
 - **ocx mode** (no `brand`): sections, ecosystem menu, install, GitHub and the
   theme toggle from `nav.json`, and the `nav.json` footer with the licence line.
@@ -230,11 +252,15 @@ Props: `title` (required), `description`, `canonical` (default: the path on
   brand (`logoSrc` renders an `<img>` with `logoAlt`, default empty, in a fixed
   square token-sized box with `object-fit: contain`: the layout is identical with
   images blocked; the wordmark text sits beside it; consumer SVG is never inlined), plain `nav` links with
-  `aria-current` when the path starts with the href (`/` and the base match
-  exactly, external hrefs never), the theme toggle and `footer={{ links, note? }}`.
+  `aria-current` on the one link with the longest href prefix of the path (`/` and the base match
+  exactly, external hrefs never; `currentHref` from `@ocx-sh/theme/nav` is the same rule),
+  the theme toggle and `footer={{ links, note? }}`.
   `logoSrc`, nav and footer hrefs are used as given and must include the base.
   Neutral mode emits an empty `<link rel="icon" href="data:,">` unless you fill the `head` slot
   (add your own icon there), so the browser never requests a 404 `/favicon.ico`.
+  An absolute `http(s)` nav or footer href opens in a new tab (`rel="noopener noreferrer"`) and
+  shows the external icon, in the header, the mobile drawer and the footer (`externalLink(href)` from
+  `@ocx-sh/theme/nav` is the same rule). A header with no `nav` renders no menu button.
   Without `footer` the footer is empty (no ocx links); without `note` there is no
   licence line. `nav` or `footer` without
   `brand` throws.
@@ -243,12 +269,15 @@ Props: `title` (required), `description`, `canonical` (default: the path on
 - **CSP**: `INLINE_SCRIPT_HASHES` from `@ocx-sh/theme/csp` is the frozen list of
   `sha256-<base64>` sources of every inline script Shell, `SiteHeader` and
   `SiteFooter` emit (theme and platform scripts); put each in `script-src` as
-  `'sha256-…'`. Shell's bundled module script is external: allow it by `'self'`
+  `'sha256-…'`. The theme script also sets `<html class="dark">` beside
+  `data-theme`, so a consumer's `.dark { --ocx-… }` block applies, and it moves a 0.5.x
+  visitor's `vitepress-theme-appearance` choice once into `starlight-theme` (and removes the old key). Shell's bundled module script is external: allow it by `'self'`
   (a build that inlines it needs `assetsInlineLimit: 0`, or that script's own hash).
   The module is Node-only: import it in config or build code, never client code.
 - **Highlight.js in prose**: `@import '@ocx-sh/theme/prose-code.css'` (opt-in,
   after base.css) colours `hljs-*` spans in a `<pre><code>` outside Expressive
-  Code from the `--ocx-color-code-*` tokens, in both schemes. The rules sit in
+  Code from the `--ocx-color-code-*` tokens, in both schemes. A Shiki theme whose
+  colours are `var(--ocx-color-code-*)` follows the scheme the same way. The rules sit in
   `@layer ocx`: never load an unlayered highlight.js theme beside it, it would win.
 - **Lazy widgets of your own**: `mount(root, { load, trigger?, replay? })` from
   `@ocx-sh/theme/lazy` is the trigger layer the theme's Zag components use, with

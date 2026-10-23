@@ -1,0 +1,17 @@
+---
+// ocx mode with the page's own header link, footer link and icon (extraNav, extraFooterLinks, icon).
+import Shell from '@ocx-sh/theme/layouts/Shell.astro';
+---
+
+<Shell
+  title="Shell, ocx extras"
+  description="The ocx.sh chrome plus the page's own header link, footer link and icon."
+  extraNav={[{ label: 'Extras', href: '/docs/shell/extras/', title: 'This page' }]}
+  extraFooterLinks={[
+    { label: 'extras json', href: '/docs/shell/extras/data.json', title: 'Not the index wire format' },
+  ]}
+  icon="/docs/shell/extras/icon.svg"
+>
+  <h1>Shell, ocx extras</h1>
+  <p>One header link, one footer link and one icon of the page's own.</p>
+</Shell>

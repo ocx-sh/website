@@ -20,6 +20,7 @@ Per scheme: every name below has a light and a dark value.
 | Interaction | `--ocx-color-hover` (neutral hover tint), `--ocx-color-hover-border` |
 | Status | `--ocx-color-success`, `--ocx-color-warning`, `--ocx-color-danger`, each with a `-tint` |
 | Keyword | `--ocx-color-keyword`, `--ocx-color-keyword-tint` (a category hue, not interactive) |
+| Monogram | `--ocx-color-monogram-0` to `-3`, each with `-tint` (LogoTile's four hash-picked hues; override in `:root` and `.dark` to rebrand) |
 | Code | `--ocx-color-code-bg`, `-fg`, `-comment`, `-punctuation`, `-keyword`, `-string`, `-number`, `-function`, `-variable`, `-deleted`, `-prompt` |
 | Overlay | `--ocx-color-overlay` (scrim), `--ocx-color-shadow` |
 | Scrollbars | `--ocx-color-scrollbar-thumb`, `-thumb-hover`, `-track` |
@@ -36,14 +37,14 @@ tint over every surface.
 | `--ocx-text-2xs` … `--ocx-text-2xl` | UI scale: chrome, nav, tables, cards. The only sizes below 15px |
 | `--ocx-prose-*` | Prose body, headings (`-h1` … `-h4` with margins), code, measure (`--ocx-prose-width`) |
 | `--ocx-display-*` | Landing display sizes |
-| `--ocx-lh-*`, `--ocx-tracking-*` | Line heights and letter spacing; `--ocx-tracking-caps` for every mono uppercase label |
+| `--ocx-lh-*`, `--ocx-tracking-*` | Line heights (`--ocx-lh-body` is UI body text outside prose) and letter spacing; `--ocx-tracking-caps` for every mono uppercase label |
 
 ## Space and layout
 
 `--ocx-space-1` (2px) … `--ocx-space-12` (112px) on a 4px base. Layout:
 `--ocx-header-height`, `--ocx-subbar-height`, `--ocx-sidebar-width`,
 `--ocx-outline-width`, `--ocx-page-max`, `--ocx-landing-max`,
-`--ocx-card-pad`. `--ocx-bp-outline` and `--ocx-bp-drawer` are reference
+`--ocx-card-pad`, `--ocx-window-width` (`100vw`, the window incl. scrollbar, for a fixed layer that must not shift when a scroll lock lifts), and the command palette card's `--ocx-palette-width`, `--ocx-palette-height`, `--ocx-palette-top`. `--ocx-bp-outline` and `--ocx-bp-drawer` are reference
 values only: media queries cannot read custom properties, so a query writes
 the number and cites the token in a comment.
 
@@ -69,11 +70,11 @@ Component geometry: `--ocx-dialog-width`, `--ocx-drawer-width`,
 
 ## Motion and stacking
 
-Durations `--ocx-duration-fast`, `-enter`, `-base`, `-moderate`, `-slow`
-(zeroed under reduced motion), easings `--ocx-ease-out` (enter),
+Durations `--ocx-duration-fast`, `-enter`, `-base`, `-moderate`, `-slow`,
+`-shimmer` (a loading skeleton's sweep), all zeroed under reduced motion, easings `--ocx-ease-out` (enter),
 `--ocx-ease-in-out` (move), `--ocx-scale-enter`.
 
 Stacking, low to high: `--ocx-z-header`, `--ocx-z-drawer-backdrop`,
-`--ocx-z-drawer`, `--ocx-z-popover`, `--ocx-z-modal-backdrop`,
+`--ocx-z-drawer`, `--ocx-z-drawer-close`, `--ocx-z-popover`, `--ocx-z-modal-backdrop`,
 `--ocx-z-modal`, `--ocx-z-tooltip`, `--ocx-z-toast`, `--ocx-z-skip-link`.
 Never write a bare z-index number.

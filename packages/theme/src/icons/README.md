@@ -3,7 +3,9 @@
 `icons.generated.mjs` is the registry data, written by
 `packages/theme/scripts/generate-icons.mjs` from its `NAME_MAP`. Never edit it by
 hand: change `NAME_MAP` and run `pnpm --filter @ocx-sh/theme icons`. A unit test
-fails when the checked-in file is stale. Every icon renders inline in
+fails when the checked-in file is stale. Glyphs a client script draws (toast, code-copy buttons, the tree
+chevron) sit in `icons.client.generated.mjs`, re-exported by the registry: a client chunk imports from
+there, never the registry, so it ships a few icons, not all. Every icon renders inline in
 `currentColor` through `components/ui/Icon.astro`; none carries a colour of its own.
 
 | Source | Icons | Licence |

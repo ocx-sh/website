@@ -37,11 +37,11 @@ const parse = (html: string) => {
   return document;
 };
 
-describe('C-180 / C-182 copy titles', () => {
+describe('D-143 C-180 / C-182 copy titles', () => {
   it.each([
-    ['short text verbatim', 'ocx.sh/pnpm/pnpm:11', 'Copied ocx.sh/pnpm/pnpm:11'],
-    ['exactly 40 characters verbatim', 'x'.repeat(40), `Copied ${'x'.repeat(40)}`],
-    ['longer text cut to 40 with an ellipsis', 'y'.repeat(41), `Copied ${'y'.repeat(39)}…`],
+    ['short text verbatim', 'ocx.sh/pnpm/pnpm:11', 'Copied — ocx.sh/pnpm/pnpm:11'],
+    ['exactly 40 characters verbatim', 'x'.repeat(40), `Copied — ${'x'.repeat(40)}`],
+    ['longer text cut to 40 with an ellipsis', 'y'.repeat(41), `Copied — ${'y'.repeat(39)}…`],
   ])('%s', (_, text, title) => {
     expect(copiedTitle(text)).toBe(title);
   });
@@ -163,10 +163,14 @@ describe('C-181 toaster SSR in the Footer override', () => {
     expect(source('../src/chrome.mjs')).toMatch(/installToaster\(doc\)/);
     expect(source('../src/starlight/Search.astro')).toMatch(/mountChrome\(document\)/);
     expect(source('../src/starlight/Footer.astro')).not.toMatch(/<script/);
-    // Its inline copy of the title helper matches toast.mjs.
-    expect(glue).toContain('`Copied ${text.length > 40 ? `${text.slice(0, 39)}…` : text}`');
-    expect(source('../src/components/toast.mjs')).toContain(
-      '`Copied ${text.length > 40 ? `${text.slice(0, 39)}…` : text}`',
+    // The Expressive Code copy toast is its own lazy chunk (the first click on an EC copy button loads it),
+    // built from toast.mjs's title helper, duration and slot rather than copies of them.
+    expect(glue).toMatch(/import\(['"]\.\/toaster-code-copy\.mjs['"]\)/);
+    const copy = source('../src/starlight/toaster-code-copy.mjs');
+    expect(copy).toMatch(/import \{[^}]*copiedTitle[^}]*\} from '\.\.\/components\/toast\.mjs'/);
+    expect(copy).toMatch(/duration: COPY_TOAST_MS, slot: COPY_TOAST_SLOT/);
+    expect(source('../src/components/toast.mjs')).toMatch(
+      /COPY_TOAST_MS = 2000;\s*export const COPY_TOAST_SLOT = 'copy'/,
     );
   });
 });

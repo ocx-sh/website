@@ -10,15 +10,17 @@ import Label from './Label.astro';
 import { nextUiId } from './ids.mjs';
 
 export interface Props extends Omit<HTMLAttributes<'input'>, 'type'> {
-  /** Accessible name; the clear button is named "Clear <label>". */
+  /** Accessible name; the clear button is named "Clear <label>" unless `clearLabel` says otherwise. */
   label: string;
+  /** The clear button's accessible name; default "Clear <label>". */
+  clearLabel?: string;
   /** Keep the label for assistive tech only (the placeholder and icon show the purpose). */
   hideLabel?: boolean;
   /** Defaults to `label`. Must be non-empty: the empty-state CSS keys off `:placeholder-shown`. */
   placeholder?: string;
 }
 
-const { label, hideLabel = true, placeholder, id: idProp, class: className, ...rest } = Astro.props;
+const { label, clearLabel, hideLabel = true, placeholder, id: idProp, class: className, ...rest } = Astro.props;
 const id = idProp ?? nextUiId('search');
 const disabled = Boolean(rest.disabled);
 ---
@@ -42,7 +44,7 @@ const disabled = Boolean(rest.disabled);
       variant="ghost"
       size="s"
       iconOnly
-      aria-label={`Clear ${label}`}
+      aria-label={clearLabel ?? `Clear ${label}`}
       disabled={disabled}
     >
       <Icon name="close" />

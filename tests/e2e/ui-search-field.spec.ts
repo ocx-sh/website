@@ -126,3 +126,10 @@ test('search-field: a readonly field keeps its value on Escape', async ({ page }
   await page.keyboard.press('Escape');
   await expect(input).toHaveValue('keep');
 });
+
+test('SearchField: clearLabel names the clear button (D-020)', async ({ page }) => {
+  await page.goto(STATES);
+  await expect(
+    page.locator('main .ocx-ui-search-field:has(input[value="cmake"]) .ocx-ui-search-field__clear'),
+  ).toHaveAccessibleName('Clear search');
+});

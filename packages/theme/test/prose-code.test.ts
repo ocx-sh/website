@@ -17,3 +17,16 @@ it('colours every mapped hljs class from a --ocx-color-code-* token, never a raw
 it('stays out of base.css', () => {
   expect(readFileSync(join(src, 'base.css'), 'utf8')).not.toContain('hljs');
 });
+
+// D-175 D-178: README fences (hljs-*) and docs fences (a Shiki theme written as var(--ocx-color-code-*))
+// follow the scheme only if every code token is defined for both light and dark.
+const tokens = readFileSync(join(src, 'tokens.css'), 'utf8');
+
+it('D-175 D-178 every --ocx-color-code-* token prose-code.css uses is defined in light and dark', () => {
+  const used = new Set([...css.matchAll(/var\((--ocx-color-code-[a-z]+)\)/g)].map((m) => m[1]!));
+  expect(used.size).toBeGreaterThan(5);
+  for (const t of used) {
+    const defs = tokens.split(`${t}:`).length - 1;
+    expect(defs, `${t} in light and dark`).toBeGreaterThanOrEqual(2);
+  }
+});

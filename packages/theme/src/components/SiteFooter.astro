@@ -2,19 +2,31 @@
 // Page footer shared by the Starlight `Footer` override and Shell (C-026): one mono line, links left,
 // note right, plus the toaster root. Without props it renders nav.json `footer` and the licence line.
 import ocx from '../nav.json';
+import { EXTERNAL_LABEL, externalLink } from '../nav.mjs';
+import Icon from './ui/Icon.astro';
 
 export interface Props {
-  links?: { label: string; href: string }[] | undefined;
+  /** `title` is a tooltip (D-135). */
+  links?: { label: string; href: string; title?: string }[] | undefined;
   note?: string | undefined;
 }
 
 const year = new Date().getFullYear();
 const { links = ocx.footer, note = `Apache-2.0 · © ${year} The OCX Authors` } = Astro.props;
+const item = (l: { label: string; href: string; title?: string }) => ({ ...l, ...externalLink(l.href) });
 ---
 
 <footer class="ocx-footer">
   <span class="ocx-footer__links">
-    {links.map((l, i) => (i > 0 ? ['·', <a href={l.href}>{l.label}</a>] : <a href={l.href}>{l.label}</a>))}
+    {links.map(item).map((l, i) => {
+      const a = (
+        <a href={l.href} title={l.title} {...l.attrs}>
+          {l.label}
+          {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
+        </a>
+      );
+      return i > 0 ? ['·', a] : a;
+    })}
   </span>
   {note && <span class="ocx-footer__license">{note}</span>}
 </footer>

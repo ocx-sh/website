@@ -55,7 +55,9 @@ page.
   script corrects content after load.
 - **Nothing loads before interaction.** Heavy code loads through a dynamic
   `import()` on first hover, focus or touch. Never add a top-level import of
-  a large library to a page script.
+  a large library to a page script. Accepted exception: `ProseCodeCopy` inserts its
+  "Copy code" buttons on load (about 1 KB, they must be visible); its clipboard and toast
+  code still load on first click.
 - **Reserved boxes.** Every image has `width` and `height` or an
   `aspect-ratio`; a `Terminal` plays a cast under `public/` (its header sizes
   the box) or has `cols` and `rows`; late content sits in a

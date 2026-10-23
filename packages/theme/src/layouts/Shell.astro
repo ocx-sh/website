@@ -26,12 +26,47 @@ export interface Props {
   activeSection?: string;
   /** Neutral mode: given means a mirror's own header; absent means the ocx.sh chrome. */
   brand?: { title: string; wordmark?: string; logoSrc?: string; logoAlt?: string };
-  nav?: { label: string; href: string }[];
-  footer?: { links: { label: string; href: string }[]; note?: string };
+  /** `match: 'prefix'` on a home link keeps it current under that prefix unless a longer link matches (D-138). */
+  nav?: { label: string; href: string; title?: string; match?: 'prefix' }[];
+  footer?: { links: { label: string; href: string; title?: string }[]; note?: string };
+  /** ocx mode (D-139): the consumer's own header links, after the nav.json sections. Neutral mode: use `nav`. */
+  extraNav?: { label: string; href: string; title?: string }[];
+  /** ocx mode (D-135): consumer footer links, appended after the nav.json footer links. Neutral mode: use `footer`. */
+  extraFooterLinks?: { label: string; href: string; title?: string }[];
+  /**
+   * The page's own icon href (D-158). Given, Shell links it instead of the default `favicon.svg` (ocx mode) or
+   * the empty `data:,` icon (neutral mode), so the page has one `rel="icon"`.
+   */
+  icon?: string;
+  /**
+   * The id the skip link lands on (D-114). Default `main`, the page's `<main>`. A docs page whose sidebar
+   * comes first in `<main>` passes the id of its prose column, so a keyboard user skips the sidebar too.
+   */
+  skipTarget?: string;
+  /**
+   * The content column (D-005, D-110): `prose` (default) is the prose width plus its gutters; `wide` is
+   * `--ocx-page-max` (a card grid, a docs page with sidebar, prose and outline); `full` has no cap and no
+   * side gutter in `<main>`, so the page lays itself out edge to edge. The footer follows (it keeps its gutter).
+   */
+  width?: 'prose' | 'wide' | 'full';
 }
 
-const { title, description, canonical, brand, nav: links, footer } = Astro.props;
+const {
+  title,
+  description,
+  canonical,
+  brand,
+  nav: links,
+  footer,
+  extraNav,
+  extraFooterLinks = [],
+  icon,
+  skipTarget = 'main',
+  width = 'prose',
+} = Astro.props;
 if (!brand && (links || footer)) throw new Error('Shell: nav/footer need brand (neutral mode)');
+if (brand && (extraNav || extraFooterLinks.length > 0))
+  throw new Error('Shell: extraNav/extraFooterLinks are for the ocx chrome; neutral mode takes nav/footer');
 const active = Astro.props.activeSection ?? activeSection(nav, Astro.url.pathname);
 const url = canonical ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefined);
 ---
@@ -46,28 +81,34 @@ const url = canonical ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) :
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     {url && <link rel="canonical" href={url.toString()} />}
-    {!brand && <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} />}
+    {icon && <link rel="icon" href={icon} />}
+    {!icon && !brand && <link rel="icon" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/favicon.svg`} />}
     {/* No icon of its own: an empty one keeps the browser from requesting /favicon.ico (a 404 console error). */}
-    {brand && !Astro.slots.has('head') && <link rel="icon" href="data:," />}
+    {!icon && brand && !Astro.slots.has('head') && <link rel="icon" href="data:," />}
     {[sans400, sans600, mono400, mono600].map((href) => (
       <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />
     ))}
     <slot name="head" />
   </head>
   <body>
-    <a class="ocx-skip" href="#main">
+    <a class="ocx-skip" href={`#${skipTarget}`}>
       Skip to content
     </a>
     <header class="ocx-shell__header">
-      <SiteHeader menu active={active} brand={brand} nav={links}>
+      <SiteHeader menu active={active} brand={brand} nav={links} extraNav={extraNav}>
         <slot name="header-search" slot="search" />
       </SiteHeader>
     </header>
-    <main id="main">
+    <main id="main" data-width={width}>
       <slot />
     </main>
-    <div class="ocx-shell__footer">
-      <SiteFooter links={brand ? (footer?.links ?? []) : undefined} note={brand ? (footer?.note ?? '') : undefined} />
+    <div class="ocx-shell__footer" data-width={width}>
+      <SiteFooter
+        links={
+          brand ? (footer?.links ?? []) : extraFooterLinks.length > 0 ? [...nav.footer, ...extraFooterLinks] : undefined
+        }
+        note={brand ? (footer?.note ?? '') : undefined}
+      />
     </div>
     <script>
       import { mountChrome } from '../chrome.mjs';
@@ -78,11 +119,42 @@ const url = canonical ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) :
 
 <style is:global>
   @layer ocx {
-    body {
+    /* D-163: the theme sets border-box per component; a consumer's own boxes get it here. */
+    :where(*, *::before, *::after) {
+      box-sizing: border-box;
+    }
+    /* D-128: sticky-footer frame, the footer sits at the viewport bottom on a short page.
+       D-168: body defaults (UI base size, line height, antialiasing, the 0.15s scheme fade). */
+    :where(body) {
       margin: 0;
+      min-block-size: 100svh;
+      display: flex;
+      flex-direction: column;
       font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-text-base);
+      line-height: var(--ocx-lh-body);
+      -webkit-font-smoothing: antialiased;
       color: var(--ocx-color-fg);
       background: var(--ocx-color-bg);
+      transition:
+        background-color var(--ocx-duration-base),
+        color var(--ocx-duration-base);
+    }
+    /* The view-transition crossfade owns the scheme switch (theme-toggle.mjs): no fade of its own. */
+    :root[data-ocx-theme-switch] body {
+      transition: none;
+    }
+    /* D-169: default link and button. Links inside <main> only (the chrome styles its own) and at
+       zero specificity, so any component or prose rule outranks them. */
+    :where(main a) {
+      color: var(--ocx-color-accent-fg);
+      text-decoration: none;
+    }
+    :where(main a:hover) {
+      color: var(--ocx-color-accent-hover);
+    }
+    :where(main button) {
+      font: inherit;
     }
     .ocx-shell__header {
       position: sticky;
@@ -92,9 +164,22 @@ const url = canonical ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) :
     main,
     .ocx-shell__footer {
       box-sizing: border-box;
+      inline-size: 100%;
       max-inline-size: calc(var(--ocx-prose-width) + var(--ocx-space-10));
       margin-inline: auto;
       padding-inline: var(--ocx-space-5);
+    }
+    main {
+      flex: 1 0 auto;
+    }
+    :is(main, .ocx-shell__footer)[data-width='wide'] {
+      max-inline-size: var(--ocx-page-max);
+    }
+    :is(main, .ocx-shell__footer)[data-width='full'] {
+      max-inline-size: none;
+    }
+    main[data-width='full'] {
+      padding-inline: 0;
     }
   }
 </style>

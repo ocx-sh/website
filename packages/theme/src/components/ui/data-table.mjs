@@ -11,6 +11,7 @@
  * @property {string} [query] case-insensitive substring over every cell
  * @property {number} [page] from 1, clamped into range
  * @property {number} [pageSize] rows per page; none shows every match
+ * @property {string[]} [require] column keys whose cell must be non-empty (an external filter, ANDed)
  */
 /**
  * @typedef {object} Arranged
@@ -30,10 +31,11 @@ const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
  * @param {View} view
  * @returns {Arranged}
  */
-export function arrange(rows, { key, direction = 'ascending', query = '', page = 1, pageSize }) {
+export function arrange(rows, { key, direction = 'ascending', query = '', page = 1, pageSize, require = [] }) {
   const q = query.trim().toLocaleLowerCase();
   const order = rows
     .map((_, index) => index)
+    .filter((index) => require.every((key) => rows[index]?.[key]?.trim()))
     .filter((index) => !q || Object.values(rows[index] ?? {}).some((text) => text.toLocaleLowerCase().includes(q)));
   if (key) {
     const sign = direction === 'descending' ? -1 : 1;
@@ -86,13 +88,19 @@ export function bind(root, pager) {
   const status = root.querySelector('[data-ocx-status]');
   const pagerBox = root.querySelector('[data-ocx-pager]');
 
+  const scroll = root.querySelector('.ocx-data-table__scroll');
   const apply = () => {
     const pageSize = Number(d['ocxPageSize']) || undefined;
+    // Paged: the region keeps the tallest page it has shown, so a short last page does not shrink the
+    // table (or the dialog around it); the rows stay at the top.
+    if (pageSize && scroll instanceof HTMLElement && scroll.offsetHeight > 0)
+      scroll.style.minBlockSize = `${Math.max(scroll.offsetHeight, parseFloat(scroll.style.minBlockSize) || 0)}px`;
     const view = arrange(rows, {
       ...(d['ocxSort'] && { key: d['ocxSort'] }),
       direction: d['ocxDirection'] === 'descending' ? 'descending' : 'ascending',
       query: input instanceof HTMLInputElement ? input.value : '',
       page: Number(d['ocxPage']) || 1,
+      require: (d['ocxRequire'] ?? '').split(',').filter(Boolean),
       ...(pageSize && { pageSize }),
     });
     // Matches in display order, then the rest; only the page slice is visible. Moves only the
@@ -150,6 +158,12 @@ export function bind(root, pager) {
     live();
     apply();
   });
-  // A query typed before this module loaded: arrange for it now.
-  if (input instanceof HTMLInputElement && input.value !== input.defaultValue) restart();
+  // `data-ocx-require` (column keys, comma-joined) is an external filter: whoever sets it dispatches
+  // `ocx:data-table:require` on the root, which also arms this module (see DataTable.astro).
+  root.addEventListener('ocx:data-table:require', () => {
+    live();
+    restart();
+  });
+  // A query typed or a require set before this module loaded: arrange for it now.
+  if ((input instanceof HTMLInputElement && input.value !== input.defaultValue) || d['ocxRequire']) restart();
 }

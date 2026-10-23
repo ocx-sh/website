@@ -127,6 +127,7 @@
   --ocx-tracking-heading: -0.01em;          /* h2–h4, symbol h1 */
   --ocx-tracking-caps: 0.08em;              /* EVERY mono uppercase label — one value */
   --ocx-lh-none: 1;                         /* single-line controls, brand mark */
+  --ocx-lh-body: 1.5;                       /* UI body text outside prose */
   --ocx-lh-heading: 1.25;
   --ocx-lh-display: 1.08;
   --ocx-lh-code: 1.75;
@@ -206,6 +207,7 @@
   --ocx-duration-base: 0.15s;
   --ocx-duration-moderate: 0.2s;
   --ocx-duration-slow: 0.3s;
+  --ocx-duration-shimmer: 1.6s;             /* one sweep of a loading skeleton */
 
   --ocx-ease-out: cubic-bezier(0.2, 0, 0, 1);       /* enter: overlays, drawer, toast, tab indicator */
   --ocx-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);  /* move: nav-menu indicator, viewport resize */
@@ -215,6 +217,7 @@
   --ocx-z-header: 30;
   --ocx-z-drawer-backdrop: 40;
   --ocx-z-drawer: 44;
+  --ocx-z-drawer-close: 45;                 /* the drawer's close control: above the drawer, below any popover */
   --ocx-z-popover: 100;
   --ocx-z-modal-backdrop: 110;
   --ocx-z-modal: 111;
@@ -234,6 +237,10 @@
   --ocx-toast-width: 320px;
   --ocx-toast-pad: 10px 14px;
   --ocx-dialog-width: 640px;                /* dialog and search dialog, max inline size */
+  --ocx-window-width: 100vw;                /* the full window incl. scrollbar: a scroll lock lifting must not shift a fixed layer */
+  --ocx-palette-width: min(90vw, 560px);    /* command palette card, max inline size */
+  --ocx-palette-height: 70vh;               /* command palette card, max block size */
+  --ocx-palette-top: 12vh;                  /* command palette card, offset from the window top */
   --ocx-drawer-width: min(85vw, 320px);     /* start/end drawer; bottom drawer is full width */
 
   color-scheme: light;
@@ -293,6 +300,33 @@
   color-scheme: dark;
 }
 
+/* Monogram hues (LogoTile): four ink/tint pairs, picked per package by a hash of its name (index 0-3
+ * = monogramHue()). Plain `--ocx-color-*` tokens, so a consumer rebrands a tile with one `:root` or
+ * `.dark` override. Each ink clears 4.5:1 on its own tint over `surface`. */
+:root,
+:root[data-theme='light'] {
+  --ocx-color-monogram-0: #c53a24;
+  --ocx-color-monogram-0-tint: rgba(255, 96, 71, 0.1);
+  --ocx-color-monogram-1: #0a7652;
+  --ocx-color-monogram-1-tint: rgba(14, 159, 110, 0.1);
+  --ocx-color-monogram-2: #5f49c4;
+  --ocx-color-monogram-2-tint: rgba(111, 91, 208, 0.1);
+  --ocx-color-monogram-3: #8f610f;
+  --ocx-color-monogram-3-tint: rgba(250, 184, 51, 0.16);
+}
+
+.dark,
+:root[data-theme='dark'] {
+  --ocx-color-monogram-0: #ff8570;
+  --ocx-color-monogram-0-tint: rgba(255, 96, 71, 0.14);
+  --ocx-color-monogram-1: #3edea6;
+  --ocx-color-monogram-1-tint: rgba(62, 222, 166, 0.12);
+  --ocx-color-monogram-2: #c0b3ff;
+  --ocx-color-monogram-2-tint: rgba(192, 179, 255, 0.12);
+  --ocx-color-monogram-3: #fab833;
+  --ocx-color-monogram-3-tint: rgba(250, 184, 51, 0.12);
+}
+
 /* Reduced motion: every theme transition reads a duration token, so zeroing
  * the tokens replaces a universal-selector override sweep. Keep this block last:
  * `:root[data-theme]` ties the scheme blocks on specificity and wins by order. */
@@ -304,6 +338,7 @@
     --ocx-duration-base: 0s;
     --ocx-duration-moderate: 0s;
     --ocx-duration-slow: 0s;
+    --ocx-duration-shimmer: 0s;
   }
 }
 

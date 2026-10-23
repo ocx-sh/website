@@ -1,6 +1,6 @@
 ---
 name: ocx-theme-components
-description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, accessibility contracts, events, lazy Zag loading (nothing loads before interaction, first paint is final). Use when writing or reviewing an .astro or .mdx page that imports from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, Choice, RadioGroup, Slider, Tag, TagGroup, TagsInput, Dialog, AlertDialog, ConfirmDialog, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, Skeleton, toast, Avatar, Terminal, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer or when a component fires no event, loads JavaScript early, shifts layout or fails an a11y check. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
+description: Component catalog of @ocx-sh/theme for Astro and Starlight pages on ocx.sh - import paths, props, a11y contracts, events, lazy Zag loading. Use when writing or reviewing an .astro or .mdx page importing from @ocx-sh/theme/components, when choosing between Button, Link, CopyButton, CopyMenu, CommandBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, TagsInput, Choice, RadioGroup, Slider, Tag, TagGroup, Dialog, AlertDialog, ConfirmDialog, CommandPalette, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, toast, Avatar, LogoTile, Terminal, ProseCodeCopy, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer, or when a component fires no event, loads JS early, shifts layout or fails a11y. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
 license: Apache-2.0
 metadata:
   summary: Which @ocx-sh/theme component to use, how to import it, the props and a11y contracts that matter, and the lazy-loading rules
@@ -45,9 +45,12 @@ Setup (the Starlight plugin) is `ocx-theme-setup` at
    listen to the component's DOM event instead.
 5. **Events are DOM events named `ocx:<component>:<event>`** and bubble, e.g.
    `ocx:select:change` with `detail.value`. Listen on the component or the
-   document.
+   document. To set a value from code, dispatch `ocx:toggle-group:set` or
+   `ocx:select:set` (`detail.value`) on the root; never write its attributes. A set is silent once:
+   it fires no `change`, but a later visitor change to the same value is announced.
 6. **Accent is reserved** for links, the current item, the one primary action
    per view and focus. `variant="primary"` once per view; status uses `tone`.
+7. **Sizes:** controls take `size` `s`/`m`/`l`, visuals `sm`/`md`/`lg`.
 
 ## Catalog
 
@@ -58,6 +61,8 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/Button.astro` | Any action; `href` renders a link styled as a button. `variant` primary, secondary, ghost; `size` s, m, l | [actions-forms](references/actions-forms.md) |
 | `ui/Link.astro` | A prose-style link outside prose; `tone`, `underline`, `external`, `newTab` | [actions-forms](references/actions-forms.md) |
 | `CopyButton.astro` | Copy one `value` to the clipboard, with a toast | [actions-forms](references/actions-forms.md) |
+| `CopyMenu.astro` | A menu of copy items, from a button or as a right-click menu over many hosts (tags, cards, rows) | [actions-forms](references/actions-forms.md) |
+| `ProseCodeCopy.astro` | A "Copy code" button on every code block in plain-HTML prose (README, docs without Expressive Code) | [actions-forms](references/actions-forms.md) |
 | `ui/CommandBar.astro` | A copyable shell command, optionally a picker of variants (platform, scope) | [actions-forms](references/actions-forms.md) |
 | `ui/ToggleButton.astro` | One on/off button (`aria-pressed`) | [actions-forms](references/actions-forms.md) |
 | `ui/CycleButton.astro` | A button stepping through 2+ states (theme, sort direction) | [actions-forms](references/actions-forms.md) |
@@ -78,6 +83,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/Dialog.astro` | Modal or non-modal dialog opened from a trigger | [overlays](references/overlays-disclosure.md) |
 | `ui/ConfirmDialog.astro` | Confirm / cancel question, opened by event | [overlays](references/overlays-disclosure.md) |
 | `ui/AlertDialog.astro` | One-button notice with a tone, opened by event | [overlays](references/overlays-disclosure.md) |
+| `ui/CommandPalette.astro` | Header search trigger plus a modal "Search" dialog: combobox over grouped link results from your own lazy `source` (needs `mountCommandPalette`) | [overlays](references/overlays-disclosure.md) |
 | `ui/Drawer.astro` | Side or bottom sheet | [overlays](references/overlays-disclosure.md) |
 | `ui/Popover.astro` | Rich non-modal panel from a trigger (`src`: fragment fetched on first open) | [overlays](references/overlays-disclosure.md) |
 | `ui/Menu.astro` | A trigger with a panel of navigation links | [overlays](references/overlays-disclosure.md) |
@@ -97,6 +103,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/Loader.astro` | Announced loading state of a region | [data-feedback](references/data-feedback.md) |
 | `ui/Skeleton.astro` | Placeholder bars reserving the final box | [data-feedback](references/data-feedback.md) |
 | `ui/Avatar.astro` + `ui/AvatarGroup.astro` | Person or org image with initials fallback | [data-feedback](references/data-feedback.md) |
+| `ui/LogoTile.astro` | Logo over a hash-hued monogram, bare when it loads | [data-feedback](references/data-feedback.md) |
 | `PlatformIcons.astro` | OS glyphs for `os/arch` platform strings | [data-feedback](references/data-feedback.md) |
 | `DependencyExplorer.astro` | SBOM viewer over a `dependencies.json` | [data-feedback](references/data-feedback.md) |
 | `Terminal.astro` | A recorded asciinema cast in terminal chrome | [content](references/content-navigation.md) |
@@ -109,7 +116,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `Toc.astro` | Scroll-spy table of contents inside a page | [content](references/content-navigation.md) |
 | `ui/Icon.astro` | One registry icon, inline | [content](references/content-navigation.md) |
 | `ui/Logo.astro` | The ocx mark, optionally with its wordmark or as a link | [content](references/content-navigation.md) |
-| `SiteHeader.astro`, `SiteFooter.astro` | The ocx.sh (or neutral) header and footer. Use them through `layouts/Shell.astro` (see `ocx-theme-setup`); they exist directly for the Starlight overrides | [content](references/content-navigation.md) |
+| `SiteHeader.astro`, `SiteFooter.astro` | The ocx.sh (or neutral) header and footer. Use them through `layouts/Shell.astro` (see `ocx-theme-setup`); they exist directly for the Starlight overrides. `.ocx-footer` is the SiteFooter root and a stable hook consumers select on: keep the class | [content](references/content-navigation.md) |
 | `EcosystemMenu.astro` | Header chrome only: the ecosystem mega-menu. Never place it in a page | [content](references/content-navigation.md) |
 
 `toast(title, options?)` from `@ocx-sh/theme/toast` shows a notification; see

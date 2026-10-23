@@ -71,7 +71,7 @@ To change what an icon means, change it in the registry so every use follows.
 1. Find it in Lucide or Simple Icons. Only for a brand neither has, copy a licensed upstream glyph verbatim and note its source URL and licence beside the entry; never draw one.
 2. Add a line to `NAME_MAP` in `packages/theme/scripts/generate-icons.mjs`: the source, a group and
    search keywords.
-3. Run `pnpm --filter @ocx-sh/theme icons` and commit `icons.generated.mjs` and `icons.d.ts`. Never
+3. Run `pnpm --filter @ocx-sh/theme icons` and commit `icons.generated.mjs`, `icons.client.generated.mjs` and `icons.d.ts`. Never
    edit them by hand; a test fails when they are stale.
 4. The [catalog](catalog/) lists it on the next build; the registry tests check its size and
    markup.

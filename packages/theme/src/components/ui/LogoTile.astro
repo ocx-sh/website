@@ -1,0 +1,158 @@
+---
+// LogoTile: a logo in a reserved box over a monogram (initials on one of four hash-picked
+// hues, `--ocx-color-monogram-*`). The monogram paints with the markup, the logo is a lazy `<img>`
+// stacked over it that cross-fades in once loaded, and a logo that fails (also one that failed
+// before the script ran) leaves the monogram standing. A logo shows bare: no box, background or
+// radius. No initials and no logo shows a cube. The tile is decorative (`aria-hidden`): the name
+// sits beside it. The box size is a token, never the logo's, so images blocked or slow never move
+// layout. Clone one rendered with no `name` and no `src` and fill it with `fillLogoTile` from
+// `@ocx-sh/theme/logo-tile`.
+import Icon from './Icon.astro';
+import { monogramHue, monogramInitials } from './logo-tile.mjs';
+
+export interface Props {
+  /** Bare name the initials derive from (`cmake` → `CM`). Empty: no monogram. */
+  name?: string | undefined;
+  /** Hue key, hashed to one of four colour pairs; defaults to `name`. Pass the full identity, e.g. `<namespace>/<name>`. */
+  seed?: string | undefined;
+  /** Logo URL, used as given. Omit to show the monogram alone. */
+  src?: string | undefined;
+  /** Tried once when `src` fails to load, before the monogram. Omit for none. */
+  fallback?: string | undefined;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | undefined;
+  class?: string | undefined;
+}
+
+const { name = '', seed = name, src, fallback, size = 'md', class: className } = Astro.props;
+const initials = monogramInitials(name);
+// The image's intrinsic size, matching the box tokens in the styles below.
+const px = { sm: 20, md: 30, lg: 38, xl: 56 }[size];
+const state = src ? 'loading' : initials ? 'fallback' : 'empty';
+---
+
+<span
+  class:list={['ocx-logo-tile', className]}
+  data-size={size}
+  data-hue={monogramHue(seed)}
+  data-state={state}
+  aria-hidden="true"
+>
+  <span class="ocx-logo-tile__initials">{initials}</span>
+  {state === 'empty' && (
+    <span class="ocx-logo-tile__cube">
+      <Icon name="box" />
+    </span>
+  )}
+  <img
+    class="ocx-logo-tile__image"
+    width={px}
+    height={px}
+    alt=""
+    loading="lazy"
+    decoding="async"
+    hidden={!src}
+    src={src}
+    data-fallback={src ? fallback : undefined}
+  />
+</span>
+
+<script>
+  import { install } from './logo-tile-install.mjs';
+  install();
+</script>
+
+<style>
+  @layer ocx {
+    .ocx-logo-tile {
+      --_size: var(--ocx-control-lg);
+      --_ink: var(--ocx-color-monogram-0);
+      --_tint: var(--ocx-color-monogram-0-tint);
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+      inline-size: var(--_size);
+      block-size: var(--_size);
+    }
+    .ocx-logo-tile[data-size='sm'] {
+      --_size: var(--ocx-control-sm);
+      font-size: var(--ocx-text-2xs);
+    }
+    .ocx-logo-tile[data-size='md'] {
+      font-size: var(--ocx-text-xs);
+    }
+    .ocx-logo-tile[data-size='lg'] {
+      --_size: var(--ocx-control-2xl);
+      font-size: var(--ocx-text-md);
+    }
+    .ocx-logo-tile[data-size='xl'] {
+      --_size: calc(var(--ocx-space-8) + var(--ocx-space-5));
+      font-size: var(--ocx-text-lg);
+    }
+    .ocx-logo-tile[data-hue='1'] {
+      --_ink: var(--ocx-color-monogram-1);
+      --_tint: var(--ocx-color-monogram-1-tint);
+    }
+    .ocx-logo-tile[data-hue='2'] {
+      --_ink: var(--ocx-color-monogram-2);
+      --_tint: var(--ocx-color-monogram-2-tint);
+    }
+    .ocx-logo-tile[data-hue='3'] {
+      --_ink: var(--ocx-color-monogram-3);
+      --_tint: var(--ocx-color-monogram-3-tint);
+    }
+    .ocx-logo-tile__initials,
+    .ocx-logo-tile__cube {
+      position: absolute;
+      inset: 0;
+      inline-size: 100%;
+      block-size: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--ocx-radius-lg);
+      transition: opacity var(--ocx-duration-moderate) var(--ocx-ease-out);
+    }
+    .ocx-logo-tile__initials {
+      background: var(--_tint);
+      color: var(--_ink);
+      font-family: var(--ocx-font-mono);
+      font-weight: var(--ocx-font-weight-semibold);
+      line-height: var(--ocx-lh-none);
+      user-select: none;
+    }
+    .ocx-logo-tile__cube {
+      display: none;
+      background: var(--ocx-color-surface-subtle);
+      color: var(--ocx-color-fg-subtle);
+    }
+    .ocx-logo-tile[data-state='empty'] .ocx-logo-tile__initials {
+      display: none;
+    }
+    .ocx-logo-tile[data-state='empty'] .ocx-logo-tile__cube {
+      display: flex;
+    }
+    /* The bare logo: no box, background or radius. It fades in over the monogram, which fades out so
+       a transparent logo has no tile behind it. */
+    .ocx-logo-tile__image {
+      position: absolute;
+      inset: 0;
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity var(--ocx-duration-moderate) var(--ocx-ease-out);
+    }
+    .ocx-logo-tile[data-state='ready'] .ocx-logo-tile__image {
+      opacity: 1;
+    }
+    .ocx-logo-tile[data-state='ready'] .ocx-logo-tile__initials {
+      opacity: 0;
+    }
+    /* Without script nothing reports the load: show the logo over the monogram, as a plain stack. */
+    @media (scripting: none) {
+      .ocx-logo-tile__image {
+        opacity: 1;
+      }
+    }
+  }
+</style>

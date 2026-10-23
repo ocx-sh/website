@@ -1,0 +1,240 @@
+/* CommandPalette (CommandPalette.astro): the palette layout of Dialog's machine. Imported from the
+   component's frontmatter, so the whole body sits in @layer ocx. The card sits --ocx-palette-top from the top at
+   --ocx-palette-width; the search bar is pinned and only `.ocx-cmdpalette__results` scrolls (D-105). */
+@layer ocx {
+  /* One flex item in the header row: the closed dialog adds no sibling gap. */
+  .ocx-cmdpalette {
+    display: inline-flex;
+    align-items: center;
+  }
+  /* The Command glyph is not in the mono face's design space (spindly, badly centred): the sans stack has
+     it (D-107). The modifier cap is one width on every platform, sized for "Ctrl". */
+  .ocx-cmdpalette__trigger .ocx-kbd-key:first-of-type {
+    min-inline-size: 4ch;
+  }
+  .ocx-cmdpalette__trigger .ocx-kbd-key [data-os='mac'] > [aria-hidden='true'] {
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-text-xs);
+    font-weight: var(--ocx-font-weight-regular);
+  }
+
+  /* Visually hidden, still read: the dialog's name and description. */
+  .ocx-cmdpalette__sr,
+  .ocx-cmdpalette__status[data-kind='count'] {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .ocx-cmdpalette__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--ocx-z-modal-backdrop);
+    background: var(--ocx-color-overlay);
+  }
+  .ocx-cmdpalette__positioner {
+    position: fixed;
+    inset: 0;
+    /* Full window, not the scrollbar-less viewport (as Dialog): the scroll lock lifting must not shift the card. */
+    inset-inline-end: auto;
+    inline-size: var(--ocx-window-width);
+    z-index: var(--ocx-z-modal);
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-block-start: var(--ocx-palette-top);
+  }
+  .ocx-cmdpalette__content {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    inline-size: var(--ocx-palette-width);
+    max-block-size: var(--ocx-palette-height);
+    overflow: hidden;
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-text-base);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+    box-shadow: var(--ocx-shadow-overlay);
+  }
+  .ocx-cmdpalette__content:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset-inset);
+  }
+
+  /* Enter and exit, as Dialog: fade and scale in, quicker fade out; live only, so an SSR state never animates. */
+  .ocx-cmdpalette__backdrop[hidden],
+  .ocx-cmdpalette__content[hidden] {
+    display: none; /* the author `display: flex` would beat the UA [hidden]; the transition holds it until the fade ends */
+    opacity: 0;
+  }
+  .ocx-cmdpalette[data-zag-state='live'] .ocx-cmdpalette__backdrop {
+    transition:
+      opacity var(--ocx-duration-moderate) var(--ocx-ease-out),
+      display var(--ocx-duration-moderate) allow-discrete;
+  }
+  .ocx-cmdpalette[data-zag-state='live'] .ocx-cmdpalette__content {
+    transition:
+      opacity var(--ocx-duration-moderate) var(--ocx-ease-out),
+      scale var(--ocx-duration-moderate) var(--ocx-ease-out),
+      display var(--ocx-duration-moderate) allow-discrete;
+  }
+  .ocx-cmdpalette[data-zag-state='live'] .ocx-cmdpalette__backdrop[hidden],
+  .ocx-cmdpalette[data-zag-state='live'] .ocx-cmdpalette__content[hidden] {
+    transition:
+      opacity var(--ocx-duration-base) var(--ocx-ease-in-out),
+      display var(--ocx-duration-base) allow-discrete;
+  }
+  .ocx-cmdpalette[data-zag-state='live'] .ocx-cmdpalette__backdrop:not([hidden]) {
+    @starting-style {
+      opacity: 0;
+    }
+  }
+  .ocx-cmdpalette[data-zag-state='live'] .ocx-cmdpalette__content:not([hidden]) {
+    @starting-style {
+      opacity: 0;
+      scale: var(--ocx-scale-enter);
+    }
+  }
+
+  /* The pinned search bar: icon, input, "Esc". Focus shows as the bar's bottom border (fields draw
+     focus as a border colour, not a ring). */
+  .ocx-cmdpalette__bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--ocx-space-4);
+    padding: 0 var(--ocx-space-5);
+    min-block-size: var(--ocx-control-3xl);
+    border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .ocx-cmdpalette__bar:focus-within {
+    border-block-end-color: var(--ocx-color-focus);
+  }
+  .ocx-cmdpalette__icon {
+    flex: none;
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-cmdpalette__input {
+    flex: 1;
+    min-inline-size: 0;
+    padding: 0;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-md);
+    color: var(--ocx-color-fg);
+    background: none;
+    border: 0;
+    outline: none;
+    appearance: none;
+  }
+  .ocx-cmdpalette__input::placeholder {
+    color: var(--ocx-color-fg-subtle);
+    opacity: 1;
+  }
+  .ocx-cmdpalette__close {
+    flex: none;
+    padding: 0;
+    font: inherit;
+    color: var(--ocx-color-fg-subtle);
+    background: none;
+    border: 0;
+    border-radius: var(--ocx-radius-sm);
+    cursor: pointer;
+  }
+  .ocx-cmdpalette__close:hover {
+    color: var(--ocx-color-fg);
+  }
+  .ocx-cmdpalette__close:focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+
+  /* Only this region scrolls. */
+  .ocx-cmdpalette__results {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--ocx-space-3);
+  }
+  .ocx-cmdpalette__hint,
+  .ocx-cmdpalette__status {
+    margin: 0;
+    padding: var(--ocx-space-5) var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-subtle);
+    text-align: center;
+  }
+  .ocx-cmdpalette__hint[hidden] {
+    display: none;
+  }
+  /* A live region stays laid out (display: none would drop its announcements); empty, it has no box. */
+  .ocx-cmdpalette__status:empty {
+    padding: 0;
+  }
+
+  .ocx-cmdpalette__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ocx-space-1);
+  }
+  .ocx-cmdpalette__list[hidden] {
+    display: none;
+  }
+  .ocx-cmdpalette__group-label {
+    margin: var(--ocx-space-4) var(--ocx-space-3) var(--ocx-space-2);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-2xs);
+    font-weight: var(--ocx-font-weight-semibold);
+    letter-spacing: var(--ocx-tracking-caps);
+    text-transform: uppercase;
+    color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-cmdpalette__group:first-child .ocx-cmdpalette__group-label {
+    margin-block-start: var(--ocx-space-2);
+  }
+  .ocx-cmdpalette__option {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ocx-space-1);
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    color: var(--ocx-color-fg);
+    text-decoration: none;
+    border-radius: var(--ocx-radius-md);
+  }
+  /* The highlight is the focus indicator (focus stays in the input). */
+  .ocx-cmdpalette__option[aria-selected='true'] {
+    background: var(--ocx-color-accent-tint);
+  }
+  .ocx-cmdpalette__option[aria-selected='true'] .ocx-cmdpalette__option-title {
+    color: var(--ocx-color-accent-fg);
+  }
+  .ocx-cmdpalette__option-title {
+    font-size: var(--ocx-text-base);
+  }
+  .ocx-cmdpalette__option-sub {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-subtle);
+  }
+
+  /* Forced colours drop backgrounds and border colours: the highlighted row and the focused bar need a system-colour outline. */
+  @media (forced-colors: active) {
+    .ocx-cmdpalette__option[aria-selected='true'] {
+      outline: var(--ocx-border-width) solid Highlight;
+    }
+    .ocx-cmdpalette__bar:focus-within {
+      outline: var(--ocx-border-width-strong) solid Highlight;
+      outline-offset: calc(-1 * var(--ocx-border-width-strong));
+    }
+  }
+}

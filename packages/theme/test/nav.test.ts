@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import nav from '../src/nav.json' with { type: 'json' };
 import * as navModule from '../src/nav.mjs';
-import { activeSection } from '../src/nav.mjs';
+import { activeSection, currentHref, externalLink, isExternal } from '../src/nav.mjs';
 
 describe('C-007 activeSection', () => {
   it.each([
@@ -32,5 +32,48 @@ describe('C-034 ./nav exports', () => {
 
   it('C-034: exports ROOT_DIRS', () => {
     expect(navModule.ROOT_DIRS).toEqual(['/_astro/', '/pagefind/']);
+  });
+});
+
+describe('currentHref', () => {
+  it('picks the longest matching prefix, so a parent and a child are not both current', () => {
+    expect(currentHref('/docs/reference/y/', ['/docs/', '/docs/reference/', '/'])).toBe('/docs/reference/');
+    expect(currentHref('/docs/x/', ['/', '/docs/'])).toBe('/docs/');
+  });
+
+  it('matches the home href exactly, and is undefined when nothing matches', () => {
+    expect(currentHref('/', ['/', '/docs/'])).toBe('/');
+    expect(currentHref('/other/', ['/', '/docs/'])).toBeUndefined();
+    expect(currentHref('/base/x/', ['/base/'], '/base/')).toBeUndefined();
+  });
+
+  it("match: 'prefix' keeps a home link current below it, and a longer link still wins", () => {
+    const home = { href: '/', match: 'prefix' as const };
+    expect(currentHref('/item/1/', [home, '/docs/'])).toBe('/');
+    expect(currentHref('/docs/a/', [home, '/docs/'])).toBe('/docs/');
+    expect(currentHref('/base/item/', [{ href: '/base/', match: 'prefix' as const }], '/base/')).toBe('/base/');
+    expect(currentHref('/item/1/', [{ href: '/docs/', match: 'prefix' as const }])).toBeUndefined();
+  });
+
+  it('never matches an external href', () => {
+    expect(currentHref('/docs/', ['https://e.com/docs/'])).toBeUndefined();
+  });
+});
+
+describe('isExternal / externalLink', () => {
+  it.each(['https://e.com/', 'http://e.com', '//e.com/x', 'HTTPS://E.COM'])('%s is external', (href) => {
+    expect(isExternal(href)).toBe(true);
+  });
+
+  it.each(['/docs/', 'mailto:a@e.com', '#top', 'docs/', ''])('%j is not external', (href) => {
+    expect(isExternal(href)).toBe(false);
+  });
+
+  it('externalLink gives a new tab with noopener noreferrer and the icon flag only for external links', () => {
+    expect(externalLink('https://e.com/')).toEqual({
+      out: true,
+      attrs: { target: '_blank', rel: 'noopener noreferrer' },
+    });
+    expect(externalLink('/docs/')).toEqual({ out: false, attrs: {} });
   });
 });

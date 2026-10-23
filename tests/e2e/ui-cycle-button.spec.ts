@@ -112,6 +112,7 @@ test('CycleButton: the theme switch in the header flips the theme and its glyph'
   const html = page.locator('html');
   const start = (await html.getAttribute('data-theme')) === 'dark' ? 'dark' : 'light';
   const other = start === 'dark' ? 'light' : 'dark';
+  // The glyph is the state (sun = light, moon = dark).
   const glyph = { light: 'sun', dark: 'moon' } as const;
   await expect(toggle.locator('svg:visible')).toHaveAttribute('data-icon', glyph[start]);
   const name = { light: 'Light mode (click for Dark mode)', dark: 'Dark mode (click for Light mode)' } as const;

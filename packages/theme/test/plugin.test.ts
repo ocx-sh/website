@@ -426,7 +426,10 @@ describe('C-031: package surface (declared)', () => {
         './icons',
         './toast',
         './toaster',
+        './copy',
         './cycle-button',
+        './logo-tile',
+        './command-palette',
         './prose-code.css',
         './lazy',
         './csp',
@@ -442,7 +445,10 @@ describe('C-031: package surface (declared)', () => {
       './icons',
       './toast',
       './toaster',
+      './copy',
       './cycle-button',
+      './logo-tile',
+      './command-palette',
       './lazy',
       './csp',
       './remark',
@@ -451,10 +457,10 @@ describe('C-031: package surface (declared)', () => {
       const names = Object.keys(cond);
       expect(names[0]).toBe('types');
       expect(names.at(-1)).toBe('default');
-      // A .d.mts is prepack's output (gitignored); a hand-written .d.ts sibling is committed.
+      // A .d.mts is prepack's output, a .d.ts is hand-written; both are committed, so a consumer's file: or git install has types.
       const types = cond.types ?? '';
       expect([cond.default?.replace(/\.mjs$/, '.d.mts'), cond.default?.replace(/\.mjs$/, '.d.ts')]).toContain(types);
-      expect(types.endsWith('.d.mts') || existsSync(join(pkgDir, types))).toBe(true);
+      expect(existsSync(join(pkgDir, types)), types).toBe(true);
     }
   });
 

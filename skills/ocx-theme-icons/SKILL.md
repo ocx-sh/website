@@ -81,7 +81,7 @@ inlines its own SVG.
    The shape is `name: [[source, upstreamName], group, keywords]`, where the
    keywords feed the catalog search.
 4. Regenerate: `pnpm --filter @ocx-sh/theme icons`. Commit
-   `icons.generated.mjs`, `icons.sources.generated.mjs` and `icons.d.ts`
+   `icons.generated.mjs`, `icons.client.generated.mjs`, `icons.sources.generated.mjs` and `icons.d.ts`
    with the `NAME_MAP` change. Never edit the generated files by hand; a unit
    test fails when they are stale.
 5. Keep each icon at 2 KB or less.

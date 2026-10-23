@@ -46,9 +46,10 @@ export async function activate(root: Locator, how: 'hover' | 'focus' | 'both' = 
 /**
  * Give a `manual` root its outside start signal (D-Z11): an `ocx:toast` for
  * the toaster, an `ocx:dialog:open` for a trigger-less dialog, a click on its
- * first button for search (a dialog root with a real trigger) and the mobile
- * toggle, then Escape to close whatever opened. Returns false for a root that is not
- * rendered at this viewport (the mobile toggle on desktop).
+ * first button for search and the command palette (a dialog root with a real trigger,
+ * `data-part="trigger"` or `data-cmdpalette-trigger`) and the mobile toggle, then Escape to
+ * close whatever opened; a context CopyMenu gets a focus on its first host. Returns false for
+ * a root that is not rendered at this viewport (the mobile toggle on desktop).
  */
 export async function startManual(page: Page, root: Locator): Promise<boolean> {
   await page.evaluate(() =>
@@ -58,13 +59,20 @@ export async function startManual(page: Page, root: Locator): Promise<boolean> {
   // Search is a dialog root too, but has a trigger part and ignores that event.
   if (
     (await root.getAttribute('data-zag-root')) === 'dialog' &&
-    (await root.locator('[data-part="trigger"]').count()) === 0
+    (await root.locator('[data-part="trigger"], [data-cmdpalette-trigger]').count()) === 0
   ) {
     await root.evaluate((el) =>
       document.dispatchEvent(new CustomEvent('ocx:dialog:open', { detail: { id: el.getAttribute('data-zag-id') } })),
     );
     await root.locator('[data-part="content"]').waitFor();
     await page.keyboard.press('Escape');
+    return true;
+  }
+  // A context CopyMenu starts on its first host (focus), with no button of its own.
+  if ((await root.getAttribute('data-zag-root')) === 'copy-menu') {
+    await root.evaluate((el) =>
+      el.querySelector('[data-copy]')?.dispatchEvent(new FocusEvent('focusin', { bubbles: true })),
+    );
     return true;
   }
   const button = root.locator('button').first();
