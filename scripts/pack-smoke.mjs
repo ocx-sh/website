@@ -52,6 +52,7 @@ const EXPORT_KEYS = [
   './components/*.astro',
   './layouts/*.astro',
   './chrome',
+  './markdown',
   './nav.json',
   './nav',
   './vitepress',
