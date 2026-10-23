@@ -168,11 +168,12 @@ describe('ocxTheme plugin', () => {
     const key = async (config: Partial<StarlightUserConfig>) => {
       const { hastPlugins } = await run(config);
       expect(hastPlugins.map((p) => p.name)).toEqual([
+        '@ocx-sh/theme/heading-ids',
         'starlight-heading-ids',
         '@ocx-sh/theme/task-labels',
         '@ocx-sh/theme/cache-key',
       ]);
-      return hastPlugins[2]?.ecKey;
+      return hastPlugins.at(-1)?.ecKey;
     };
     const base = await key({});
     expect(base).toMatch(/^[0-9a-f]{16}$/);
@@ -181,7 +182,7 @@ describe('ocxTheme plugin', () => {
   });
 
   it('the content cache key carries the theme version, so an upgrade re-renders cached Markdown', async () => {
-    expect((await run()).hastPlugins[2]?.version).toBe(pkg.version);
+    expect((await run()).hastPlugins.at(-1)?.version).toBe(pkg.version);
   });
 
   it("the Markdown widgets join Sätteri around Starlight's asides, which render the directives they make", async () => {

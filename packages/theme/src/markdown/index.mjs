@@ -15,6 +15,31 @@ import { taskLabels, widgets } from './widgets.mjs';
  * }} SatteriOptions
  */
 
+const ID_SUFFIX = /\s*\{#([^\s{}]+)\}\s*$/;
+
+/**
+ * Sätteri hast plugin: a heading ending in the escaped `\{#id\}` gets that id. MDX editors parse an
+ * unescaped `{#id}` as a JS expression and flag it, so `.mdx` pages write the escaped form, which Sätteri
+ * leaves as text.
+ * @type {import('satteri').HastPluginDefinition}
+ */
+export const headingIds = {
+  name: '@ocx-sh/theme/heading-ids',
+  element: {
+    filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    visit(heading, ctx) {
+      const last = heading.children.at(-1);
+      if (last?.type !== 'text') return;
+      const match = ID_SUFFIX.exec(last.value);
+      if (!match) return;
+      ctx.setProperty(heading, 'id', match[1]);
+      const rest = last.value.slice(0, match.index);
+      if (rest) ctx.setProperty(last, 'value', rest);
+      else ctx.removeNode(last);
+    },
+  },
+};
+
 /**
  * Adds the theme's plugins to a Sätteri processor's options, in place: replacing the processor
  * would drop the consumer's own options and every plugin Starlight already added.
@@ -33,5 +58,7 @@ export function addMarkdownPlugins(options, site) {
   // these go first; includes ahead of widgets so included text gets the widgets too.
   options.mdastPlugins.unshift(includes({ srcDir: site.srcDir }), widgets);
   options.mdastPlugins.push(mdLinks({ root: site.docsDir, base: site.base }), math);
+  // headingIds first: Starlight's heading anchors read the heading text.
+  options.hastPlugins.unshift(headingIds);
   options.hastPlugins.push(taskLabels);
 }

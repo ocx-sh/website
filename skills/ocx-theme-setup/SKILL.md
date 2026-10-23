@@ -164,8 +164,8 @@ Call `mountChrome(document)` from `@ocx-sh/theme/chrome` in your override's
   or set Starlight's `editLink.baseUrl` for hand-written ones. There is no theme option.
 - **VitePress-style sources** (`{#id}` headings, `./x.md#a` links, `<<< @/path{lang}` and
   `<!--@include: path-->` includes) work as written: the plugin handles them on Sätteri. `@/` names
-  `src/`; links resolve against `src/content/docs/` and the base. In `.mdx`, write `{#id}` unescaped:
-  the old `\{#id\}` escape now renders literally. `@ocx-sh/theme/remark` is gone (0.3.0): drop it,
+  `src/`; links resolve against `src/content/docs/` and the base. In `.mdx`, `{#id}` and the escaped
+  `\{#id\}` (which MDX editors accept) both set the id. `@ocx-sh/theme/remark` is gone (0.2.2): drop it,
   `@astrojs/markdown-remark` and the `markdown.processor` option.
 - **Heading ids**: Starlight slugs with github-slugger (an em dash becomes a double hyphen:
   `bootstrap-only--ocx_install_`), unlike MkDocs. A `{#id}` suffix sets the id explicitly. Otherwise rewrite

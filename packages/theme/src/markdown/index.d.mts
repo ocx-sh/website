@@ -1,11 +1,4 @@
 /**
- * @typedef {{
- *   features: import('satteri').Features,
- *   mdastPlugins: import('satteri').MdastPluginEntry[],
- *   hastPlugins: object[],
- * }} SatteriOptions
- */
-/**
  * Adds the theme's plugins to a Sätteri processor's options, in place: replacing the processor
  * would drop the consumer's own options and every plugin Starlight already added.
  * @param {SatteriOptions} options
@@ -20,6 +13,13 @@ export function addMarkdownPlugins(options: SatteriOptions, site: {
     math: boolean;
     smartypants: boolean;
 }): void;
+/**
+ * Sätteri hast plugin: a heading ending in the escaped `\{#id\}` gets that id. MDX editors parse an
+ * unescaped `{#id}` as a JS expression and flag it, so `.mdx` pages write the escaped form, which Sätteri
+ * leaves as text.
+ * @type {import('satteri').HastPluginDefinition}
+ */
+export const headingIds: import("satteri").HastPluginDefinition;
 export type SatteriOptions = {
     features: import("satteri").Features;
     mdastPlugins: import("satteri").MdastPluginEntry[];
