@@ -2,7 +2,8 @@
 // Tabs (C-150, design c-tabs "code selection"): Starlight-compatible <Tabs> on Zag `tabs`.
 // The panels come from the rendered <TabItem> slot; the tab list, the selection and the
 // underline are SSR, final at first paint (C-130c). A `syncKey` group restores the stored
-// choice with an inline script before paint and syncs its peers once live (C-151).
+// choice with an inline script before paint and syncs its peers once live (C-151). Slot `action`: trailing
+// content at the end of the tab row (a link).
 import type { Props as TabsMachineProps } from '@zag-js/tabs';
 import { tabPanels } from '../starlight/tab-icons.mjs';
 import type { TabIcon } from './TabItem.astro';
@@ -21,6 +22,8 @@ export interface Props {
 
 const { syncKey, zag } = Astro.props;
 const { items, html } = tabPanels(await Astro.slots.render('default'));
+// Rendered, not `has()`: a `slot="action"` element under a false `{cond && …}` still counts as a slot.
+const action = Astro.slots.has('action') ? (await Astro.slots.render('action')).trim() : '';
 // Values are id-safe slugs (Zag builds part ids from them); synced groups match on labels.
 const seen = new Map<string, number>();
 const values = items.map(({ label }) => {
@@ -64,6 +67,7 @@ const restore =
       ))}
     </div>
   )}
+  {action && <div class="ocx-tabs__action not-content" set:html={action} />}
   <Fragment set:html={panels} />
   {restore && <script is:inline set:html={restore} />}
 </div>
@@ -140,8 +144,27 @@ const restore =
       display: grid;
       grid-template-columns: minmax(0, 1fr);
     }
+    .ocx-tabs > [data-part='list'] {
+      grid-area: 1 / 1;
+    }
     .ocx-tabs > [data-part='content'] {
-      grid-area: 2 / 1;
+      grid-area: 2 / 1 / auto / -1;
+    }
+    /* Slot `action`: trailing content at the end of the tab row (a link), outside the tablist, on its rule.
+       The list keeps the free width and scrolls; the action never shrinks. */
+    .ocx-tabs:has(> .ocx-tabs__action) {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .ocx-tabs > .ocx-tabs__action {
+      grid-area: 1 / 2;
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      padding-inline: var(--ocx-space-4) 0;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      white-space: nowrap;
+      box-shadow: inset 0 calc(-1 * var(--ocx-border-width)) 0 var(--ocx-color-border);
     }
     .ocx-tabs > [data-part='content'][hidden] {
       display: block;
@@ -162,10 +185,13 @@ const restore =
         opacity var(--ocx-duration-enter) var(--ocx-ease-out),
         visibility var(--ocx-duration-enter) var(--ocx-ease-out);
     }
-    /* A panel that is a lone code frame switches instantly: the frame stays opaque and nothing
-       transitions, which removes the flicker (only the text differs between the stacked panels). */
+    /* A panel that is a lone code frame or command bar switches instantly: the frame stays opaque and nothing
+       transitions, which removes the flicker (only the text differs between the stacked panels). A bar may
+       have Astro's hoisted module script beside it, so `:only-child` cannot be used there. */
     .ocx-tabs > [data-part='content']:has(> .expressive-code:only-child),
-    .ocx-tabs[data-zag-state='live'] > [data-part='content']:has(> .expressive-code:only-child) {
+    .ocx-tabs[data-zag-state='live'] > [data-part='content']:has(> .expressive-code:only-child),
+    .ocx-tabs > [data-part='content']:has(> .ocx-cmdbar):not(:has(> :not(.ocx-cmdbar, script))),
+    .ocx-tabs[data-zag-state='live'] > [data-part='content']:has(> .ocx-cmdbar):not(:has(> :not(.ocx-cmdbar, script))) {
       opacity: 1;
       transition: none;
     }

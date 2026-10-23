@@ -59,7 +59,7 @@ parent's `color` (a token); an icon never carries a colour of its own.
 
 | Source | Covers | Licence |
 |---|---|---|
-| Lucide (`@iconify-json/lucide`) | Interface and action icons, the generic `shell`, `elvish` (Lucide `lambda`); stroked at `--ocx-icon-stroke` | ISC (MIT for Feather-derived) |
+| Lucide (`@iconify-json/lucide`) | Interface and action icons, the generic `shell`, `elvish` (Lucide `lambda`, in Elvish's green), `docs` (Lucide `book-open`, a link to a guide); stroked at `--ocx-icon-stroke` | ISC (MIT for Feather-derived) |
 | Simple Icons (`@iconify-json/simple-icons`) | `github`, `apple`, `windows`, `powershell`, `nushell`, `fish`; filled | CC0-1.0 |
 | Custom, verbatim upstream | `linux` (Material Design Icons, Apache-2.0; Simple Icons' Tux is over 2 KB), `cmd` (vscode-icons, MIT) | per entry, in THIRD_PARTY_NOTICES |
 

@@ -31,6 +31,7 @@ export const ICON_SOURCES = {
   copy: 'lucide',
   download: 'lucide',
   external: 'lucide',
+  docs: 'lucide',
   pin: 'lucide',
   edit: 'lucide',
   trash: 'lucide',

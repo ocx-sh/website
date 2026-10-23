@@ -182,6 +182,43 @@ describe('CommandBar SSR: field', () => {
   });
 });
 
+describe('CommandBar SSR: lang', () => {
+  const spans = (el: Element | null) => [...(el?.querySelectorAll('span') ?? [])].map((s) => s.getAttribute('style'));
+
+  it('highlights the shown command with the code tokens; the text and the copy stay the plain command', async () => {
+    const { doc } = await render({ choices: [install[0]], lang: 'sh' });
+    const text = doc.querySelector('.ocx-cmdbar__text');
+    expect(text?.textContent).toBe(install[0]!.command);
+    expect(spans(text)).toContain('color:var(--ocx-color-code-function)');
+    expect(spans(text).every((s) => /^color:var\(--ocx-color-code-[a-z]+\)$/.test(s ?? ''))).toBe(true);
+    const props = JSON.parse(doc.querySelector<HTMLElement>('[data-zag-root="clipboard"]')!.dataset['zagProps']!) as {
+      defaultValue: string;
+    };
+    expect(props.defaultValue).toBe(install[0]!.command);
+  });
+
+  it("data-choices carries each choice's highlighted html; a choice's own lang overrides the bar's", async () => {
+    // The bar's lang is unknown, so the render only succeeds when every choice's own lang wins.
+    const choices = [
+      { ...install[0]!, lang: 'sh' },
+      { ...install[2]!, lang: 'powershell' },
+    ];
+    const { doc } = await render({ choices, lang: 'no-such-lang' });
+    const data = JSON.parse(doc.querySelector<HTMLElement>('.ocx-cmdbar')!.dataset['choices']!) as { html?: string }[];
+    expect(data.map((c) => c.html?.includes('color:var(--ocx-color-code-function)'))).toEqual([true, true]);
+  });
+
+  it('no lang: plain text, no html in data-choices', async () => {
+    const { doc } = await render({ choices: install });
+    expect(doc.querySelector('.ocx-cmdbar__text span')).toBeNull();
+    expect(doc.querySelector<HTMLElement>('.ocx-cmdbar')!.dataset['choices']).not.toContain('html');
+  });
+
+  it('an unknown lang fails the render', async () => {
+    await expect(render({ choices: scope, lang: 'no-such-lang' })).rejects.toThrow(/no-such-lang/);
+  });
+});
+
 describe('CommandBar SSR: action slot and detect', () => {
   it('an icon-only action (Hint around an iconOnly Button) sits in the segment, named by aria-label', async () => {
     const action =

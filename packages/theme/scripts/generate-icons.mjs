@@ -58,6 +58,7 @@ export const NAME_MAP = {
   copy: [['lucide', 'copy'], 'action', 'clipboard duplicate'],
   download: [['lucide', 'download'], 'action', 'save install archive get'],
   external: [['lucide', 'external-link'], 'action', 'open new window tab outside link'],
+  docs: [['lucide', 'book-open'], 'action', 'guide documentation manual read'],
   pin: [['lucide', 'pin'], 'action', 'pushpin keep fix version'],
   edit: [['lucide', 'pencil'], 'action', 'pencil rename change write'],
   trash: [['lucide', 'trash'], 'action', 'delete remove bin'],

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import nav from '../src/nav.json' with { type: 'json' };
 import * as navModule from '../src/nav.mjs';
-import { activeSection, currentHref, externalLink, isExternal } from '../src/nav.mjs';
+import { activeSection, catalogHref, currentHref, externalLink, installHref, isExternal } from '../src/nav.mjs';
 
 describe('C-007 activeSection', () => {
   it.each([
@@ -75,5 +75,21 @@ describe('isExternal / externalLink', () => {
       attrs: { target: '_blank', rel: 'noopener noreferrer' },
     });
     expect(externalLink('/docs/')).toEqual({ out: false, attrs: {} });
+  });
+});
+
+describe('installHref / catalogHref', () => {
+  it('reads the install action and the catalog section from nav.json', () => {
+    expect(installHref(nav)).toBe('/install/');
+    expect(catalogHref(nav)).toBe('/catalog/');
+  });
+
+  it('a package page is the catalog root plus its namespace and name', () => {
+    expect(catalogHref(nav, 'nodejs/node')).toBe('/catalog/nodejs/node/');
+    expect(catalogHref(nav, 'astral-sh/uv')).toBe('/catalog/astral-sh/uv/');
+  });
+
+  it.each(['uv', 'nodejs/node:24', '/nodejs/node', 'nodejs//node', 'ocx.sh:443/nodejs/node'])('rejects %j', (pkg) => {
+    expect(() => catalogHref(nav, pkg)).toThrow(/not <namespace>\/<name>/);
   });
 });

@@ -1,61 +1,24 @@
-// C-306 / C-307 contract: one module exports the five install commands.
+// C-307: the landing carries the theme's InstallCommand, one bar per shell. The component owns the commands
+// (components-install-command.test.ts); this checks they reach the built page byte for byte, in order.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dist } from './build-site.ts';
 
-const SHELLS = ['sh', 'pwsh', 'nu', 'fish', 'elvish'];
-// The documented forms in the ocx-sh/www-setup README (nu and elvish take the script through `-c`).
-const COMMANDS: Record<string, string> = {
-  sh: 'curl -fsSL https://setup.ocx.sh/sh | sh',
-  pwsh: "Invoke-RestMethod 'https://setup.ocx.sh/pwsh' | Invoke-Expression",
-  nu: `nu -c "$(curl -fsSL https://setup.ocx.sh/nu || echo 'exit 3')"`,
-  fish: 'curl -fsSL https://setup.ocx.sh/fish | fish',
-  elvish: `elvish -c "$(curl -fsSL https://setup.ocx.sh/elvish || echo 'exit 3')"`,
-};
-const load = () => import('./install.mjs') as Promise<Record<string, unknown>>;
+const COMMANDS = [
+  'curl -fsSL https://setup.ocx.sh/sh | sh',
+  'irm https://setup.ocx.sh/pwsh | iex',
+  'nu -c (http get https://setup.ocx.sh/nu)',
+  'curl -fsSL https://setup.ocx.sh/fish | fish',
+  'elvish -c (e:curl -fsSL https://setup.ocx.sh/elvish | slurp)',
+];
 
-describe('install commands', () => {
-  it('exports exactly sh, pwsh, nu, fish, elvish', async () => {
-    expect(Object.keys(await load()).sort()).toEqual([...SHELLS].sort());
-  });
-
-  it('each command is one non-empty line that installs from setup.ocx.sh', async () => {
-    const mod = await load();
-    for (const shell of SHELLS) {
-      const cmd = mod[shell];
-      expect(typeof cmd, shell).toBe('string');
-      expect(cmd as string, shell).toMatch(/^[^\n]+$/);
-      expect(cmd as string, shell).toContain('setup.ocx.sh');
-    }
-  });
-
-  it('each command is the documented form from the www-setup README', async () => {
-    const mod = await load();
-    for (const shell of SHELLS) expect(mod[shell], shell).toBe(COMMANDS[shell]);
-  });
-});
-
-// Pages that carry the five commands: the landing (C-306). `/install/` moved to ocx-sh/www-setup.
-const PAGES = ['index.html'];
-
-const decode = (s: string) =>
-  s.replace(/&(#x([0-9a-f]+)|#(\d+)|amp|lt|gt|quot|apos);/gi, (m, name: string, hex?: string, dec?: string) =>
-    hex || dec
-      ? String.fromCodePoint(hex ? Number.parseInt(hex, 16) : Number(dec))
-      : (({ amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" } as Record<string, string>)[name.toLowerCase()] ?? m),
-  );
-/** The text of every code block on a page: the copy button's `data-code`, the exact string a reader copies. */
-const codeBlocks = (html: string) => [...html.matchAll(/ data-code="([^"]*)"/g)].map((m) => decode(m[1] ?? ''));
-
-describe('install commands on built pages (C-307)', () => {
-  const five = (page: string) => codeBlocks(readFileSync(`${dist}${page}`, 'utf8')).slice(0, SHELLS.length);
-
-  it.each(PAGES)('%s carries the five commands byte for byte, in order', (page) => {
-    expect(five(page)).toEqual(SHELLS.map((s) => COMMANDS[s]));
-  });
-
-  it('every page carries identical command strings', () => {
-    const [first, ...rest] = PAGES.map(five);
-    for (const other of rest) expect(other).toEqual(first);
+describe('install commands on the landing (C-307)', () => {
+  it('index.html carries the five commands as command bars, in order', () => {
+    const html = readFileSync(`${dist}index.html`, 'utf8');
+    // The text is highlighted: token spans inside the code element.
+    const bars = [...html.matchAll(/<code class="ocx-cmdbar__text"[^>]*>(.*?)<\/code>/g)].map((m) =>
+      m[1]?.replace(/<[^>]+>/g, '').trim(),
+    );
+    expect(bars).toEqual(COMMANDS);
   });
 });

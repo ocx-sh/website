@@ -104,3 +104,32 @@ export function sectionLinks(nav, pathname) {
       .map((a) => ({ label: a.label, href: a.href, current: active === a.id })),
   ];
 }
+
+/**
+ * The install guide's root-relative URL on ocx.sh (the header's install action), for any link a caller writes.
+ * @param {Nav} nav
+ * @returns {string}
+ */
+export function installHref(nav) {
+  const href = nav.actions.find((a) => a.id === 'install')?.href;
+  if (!href) throw new Error('nav.json has no "install" action');
+  return href;
+}
+
+/**
+ * The catalog's root-relative URL on ocx.sh, or with `pkg` (`<namespace>/<name>`, the part after `ocx.sh/` in
+ * `ocx install ocx.sh/nodejs/node:24`, no tag) that package's page: `catalogHref(nav, 'nodejs/node')` is
+ * `/catalog/nodejs/node/`.
+ * @param {Nav} nav
+ * @param {string} [pkg]
+ * @returns {string}
+ */
+export function catalogHref(nav, pkg) {
+  const section = nav.sections.find((s) => s.id === 'catalog');
+  if (!section || !('href' in section)) throw new Error('nav.json has no "catalog" link section');
+  if (pkg === undefined) return section.href;
+  const segments = pkg.split('/');
+  if (segments.length < 2 || segments.some((s) => !s || s.includes(':')))
+    throw new Error(`catalogHref: "${pkg}" is not <namespace>/<name> (no registry, no tag)`);
+  return `${section.href}${segments.map(encodeURIComponent).join('/')}/`;
+}

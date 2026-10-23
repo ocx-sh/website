@@ -28,6 +28,7 @@ export const ICON_SOURCES: {
     copy: string;
     download: string;
     external: string;
+    docs: string;
     pin: string;
     edit: string;
     trash: string;

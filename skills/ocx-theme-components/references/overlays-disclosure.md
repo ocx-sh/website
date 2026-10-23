@@ -139,12 +139,13 @@ Event `ocx:accordion:change`.
 Starlight's tabs. `Tabs` `syncKey`: groups sharing the key switch together
 and the choice persists across pages (restored before paint, no flash).
 `TabItem` `label` (required; synced groups match on it) and `icon`, one of
-`shell`, `powershell`, `nushell`, `fish`, `elvish`, `cmd`. Event
+`shell`, `powershell`, `nushell`, `fish`, `elvish`, `cmd`. Slot `action`:
+a control at the end of the tab row, outside the tablist (a `Link`). Event
 `ocx:tabs:change`. All panels share one grid cell: the area is as tall as
 the tallest panel from first paint, and a switch crossfades the two panels
 (the inactive one is `visibility: hidden`, so the height never changes). A
-panel that is a lone code frame switches instantly instead: no transition,
-the frame stays opaque.
+panel that is a lone code frame or command bar switches instantly instead: no
+transition, the frame stays opaque.
 
 ```mdx
 <Tabs syncKey="shell">

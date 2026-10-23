@@ -40,6 +40,8 @@ A claim is `{ "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "searc
 | `zoneName(repo)` | The Bunny storage zone: `ocx-sh/rules_ocx` → `sh-ocx-rules-ocx` |
 | `mergeTargets(nav, ownPath)` | The search bundles a section merges |
 | `activeSection(nav, pathname)` | The header section id for a URL |
+| `installHref(nav)` | The install guide's root-relative URL, `/install/` |
+| `catalogHref(nav, pkg?)` | The catalog's root-relative URL; with `pkg` (`nodejs/node`, no registry, no tag) that package's page, `/catalog/nodejs/node/` |
 | `externalLink(href)` | `{ out, attrs }`: `out` shows the external icon, `attrs` is `target="_blank"` and `rel="noopener noreferrer"` for an external `http(s)` href, `{}` for an internal or `mailto:` one |
 | `PAGEFIND_VERSION` | The Pagefind version the theme was built against |
 

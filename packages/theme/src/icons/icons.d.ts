@@ -31,6 +31,7 @@ export type IconName =
   | 'copy'
   | 'download'
   | 'external'
+  | 'docs'
   | 'pin'
   | 'edit'
   | 'trash'

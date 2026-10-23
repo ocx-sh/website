@@ -1,0 +1,32 @@
+---
+title: Install command
+description: The ocx installer one-liner for each shell, as synced tabs of copyable command bars.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+The install command shows how to install ocx in each supported shell: sh, PowerShell, Nushell, fish
+and Elvish. Each tab holds the one line you type in that shell, as a [command bar](../command-bar/)
+that copies on click. The tabs are [synced](../tabs/) on `shell`, so the page's other shell tabs
+switch along and the choice is remembered. The commands come from the theme, so a page that drops
+the component in never carries its own copy.
+
+`variant="bar"` is the short form: one command bar with a shell picker in front, for a page with
+little room. Pass `docs` to add a link to the install guide at `/install/`, the page the header's
+install button opens. The link is text at the end of the tab row; the bar ends with a docs icon button
+whose tooltip names it, so the command keeps its width on a phone.
+
+## Stories
+
+<Stories of="install-command" />
+
+## Props
+
+<PropsTable
+  of="InstallCommand.astro"
+  rows={[
+    { name: 'variant', type: "'tabs' | 'bar'", default: "'tabs'", description: 'tabs = a tab per shell holding its line; bar = one line with a shell picker.' },
+    { name: 'docs', type: 'boolean', default: 'false', description: 'Adds an "Install guide" link to /install/: text at the end of the tab row, a docs icon button with a tooltip at the end of the bar.' },
+  ]}
+/>

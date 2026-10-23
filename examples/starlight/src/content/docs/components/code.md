@@ -36,7 +36,9 @@ irm https://setup.ocx.sh/pwsh | iex
 
 One block per shell/language the site highlights, across every Expressive Code
 box: plain fence, titled frame and `frame="terminal"`. The blocks above cover
-sh, toml, ts and powershell. Tabs on Zag (with the
+sh, toml, ts and powershell. The fish, nushell and elvish blocks end with their install line
+from [InstallCommand](../install-command/), as the powershell terminal shows its own: command, flags and
+arguments take the colours sh gives them. Tabs on Zag (with the
 same shells) are on the [Tabs](/docs/components/tabs/) page; both routes
 share this one highlighter config (`ec.mjs`).
 
@@ -50,14 +52,17 @@ setopt EXTENDED_GLOB # zsh
 
 ```fish
 if test -f $OCX_HOME/bin; echo found; end # fish
+curl -fsSL https://setup.ocx.sh/fish | fish
 ```
 
 ```nushell
 let home = $env.OCX_HOME; print $"home is ($home)" # nushell
+nu -c (http get https://setup.ocx.sh/nu)
 ```
 
 ```elvish
 set-env OCX_HOME ~/.ocx; echo $E:OCX_HOME # elvish
+elvish -c (e:curl -fsSL https://setup.ocx.sh/elvish | slurp)
 ```
 
 ```pwsh

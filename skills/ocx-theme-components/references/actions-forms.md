@@ -65,12 +65,21 @@ assistive technology finds them.
 `{ value, label, command, icon? }[]`): none means an action-only bar, one
 means no picker, more renders a compact `Select` picker. `pickerLabel` names
 the picker ("Platform"); `pickerText` shows the choice label beside its icon;
-`noun` finishes the copy toast ("install command"); `prompt` is a decorative shell prompt (`$`) before the command, `icon` a decorative registry glyph before the prompt (neither is copied; `choice.icon` is the picker's); `detect` preselects the
+`noun` finishes the copy toast ("install command"); `lang` highlights the commands
+at build time in the code-block colours (a Shiki id such as `sh`, `powershell`;
+`choice.lang` overrides it per choice; an unknown id fails the build); `prompt` is a decorative shell prompt (`$`) before the command, `icon` a decorative registry glyph before the prompt (neither is copied; `choice.icon` is the picker's); `detect` preselects the
 visitor's OS before first paint (choice values `linux`, `macos`, `windows`).
 Slot `action` adds trailing controls: an icon-only link Button with an
 `aria-label`, wrapped in a `Hint`.
 To retarget the bar from code dispatch `ocx:command-bar:set` `{ command?, label?, choices?, value? }` on it: `choices` replaces the
 options, `value` picks one. Like the other set events it is silent once (no `change`; a later visitor pick of the same value is announced).
+
+**`InstallCommand.astro`**: how to install ocx, for any page that says so. One tab per
+shell (sh, PowerShell, Nushell, fish, Elvish), each a `CommandBar` with the line typed
+in that shell, highlighted in its grammar; the tabs sync on `shell`. The commands live in the theme: never copy them
+into a page. `variant="bar"` is the short form, one `CommandBar` with a shell
+picker. `docs` adds an "Install guide" link to `/install/`: at the end of the tab
+row (Tabs slot `action`), or a `docs` icon button with a Hint at the end of the bar.
 
 ## Toggles
 

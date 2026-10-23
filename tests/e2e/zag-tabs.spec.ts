@@ -246,6 +246,33 @@ test.describe('Tabs', () => {
     await cdp.detach();
   });
 
+  test('a switch on lone command bars is instant: no panel fades, every panel stays opaque', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/docs/stories/install-command/default/');
+    const root = demo(page);
+    await live(root);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Animation.enable');
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.1 });
+    const panels = root.locator(':scope > [data-part="content"]');
+    // There and back: the first panel also holds Astro's hoisted script beside its bar.
+    for (const label of ['PowerShell', 'Shell']) {
+      await tab(root, label).click();
+      const fading = await panels.evaluateAll(
+        (els) =>
+          els.filter((e) =>
+            e.getAnimations().some((a) => a instanceof CSSTransition && a.transitionProperty === 'opacity'),
+          ).length,
+      );
+      expect(fading, `no panel fades on the switch to ${label}`).toBe(0);
+      expect(await panels.evaluateAll((els) => els.map((e) => getComputedStyle(e).opacity))).toEqual(
+        Array(5).fill('1'),
+      );
+    }
+    await settle(page);
+    await cdp.detach();
+  });
+
   test('C-151 S-105 a choice switches every synced group, persists, and restores on load without JS', async ({
     page,
   }) => {

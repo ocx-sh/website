@@ -120,6 +120,16 @@ describe('apply()', () => {
     expect(trigger.getAttribute('aria-label')).toBe('Copy Linux install command');
   });
 
+  it("a choice's highlighted html replaces the text; one without html is plain text again", () => {
+    const { bar, text } = place();
+    const html = '<span style="color:var(--ocx-color-code-function)">irm</span> https://setup.ocx.sh/pwsh';
+    bar.dataset['choices'] = JSON.stringify(CHOICES.map((c) => (c.value === 'windows' ? { ...c, html } : c)));
+    apply(bar, 'windows');
+    expect(text.innerHTML).toBe(html);
+    apply(bar, 'linux');
+    expect(text.innerHTML).toBe(CHOICES[0]!.command);
+  });
+
   it('an unknown value changes nothing and returns undefined', () => {
     const { bar, text, root } = place();
     const before = document.body.innerHTML;
@@ -299,6 +309,18 @@ describe('install(): pick and copy', () => {
     await new Promise((r) => setTimeout(r, 0));
     trigger.click();
     await vi.waitFor(() => expect(write).toHaveBeenCalledWith('nix profile install ocx'));
+  });
+
+  it('ocx:command-bar:set keeps the highlighting of a picked choice, and drops html from choices it is given', async () => {
+    const { bar, text } = await live();
+    const html = '<span style="color:var(--ocx-color-code-function)">irm</span> https://setup.ocx.sh/pwsh | iex';
+    bar.dataset['choices'] = JSON.stringify(CHOICES.map((c) => (c.value === 'windows' ? { ...c, html } : c)));
+    bar.dispatchEvent(new CustomEvent('ocx:command-bar:set', { detail: { value: 'windows' } }));
+    expect(text.innerHTML).toBe(html);
+    const given = [{ value: 'x', label: 'X', command: 'x run', html: '<img src=x onerror=alert(1)>' }];
+    bar.dispatchEvent(new CustomEvent('ocx:command-bar:set', { detail: { choices: given, value: 'x' } }));
+    expect(bar.dataset['choices']).not.toContain('html');
+    expect(text.innerHTML).toBe('x run');
   });
 
   it('ocx:command-bar:set with only a command and label retargets the shown command', async () => {

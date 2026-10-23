@@ -327,6 +327,24 @@
   --ocx-color-monogram-3-tint: rgba(250, 184, 51, 0.12);
 }
 
+/* Shell logo colours (Icon.astro paints them): Simple Icons' brand hex, and for Elvish the λ fill of its upstream
+ * logo (elves/elvish branding/logo.svg). The same in both schemes, restated for the parity gate; `shell` (sh) has none. */
+:root,
+:root[data-theme='light'] {
+  --ocx-color-shell-powershell: #5391fe;
+  --ocx-color-shell-nushell: #4e9a06;
+  --ocx-color-shell-fish: #34c534;
+  --ocx-color-shell-elvish: #55bb55;
+}
+
+.dark,
+:root[data-theme='dark'] {
+  --ocx-color-shell-powershell: #5391fe;
+  --ocx-color-shell-nushell: #4e9a06;
+  --ocx-color-shell-fish: #34c534;
+  --ocx-color-shell-elvish: #55bb55;
+}
+
 /* Reduced motion: every theme transition reads a duration token, so zeroing
  * the tokens replaces a universal-selector override sweep. Keep this block last:
  * `:root[data-theme]` ties the scheme blocks on specificity and wins by order. */

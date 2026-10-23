@@ -38,6 +38,7 @@ export default defineConfig({
                 { label: 'Command bar', link: '/components/command-bar/' },
                 { label: 'Copy button', link: '/components/copy-button/' },
                 { label: 'Copy menu', link: '/components/copy-menu/' },
+                { label: 'Install command', link: '/components/install-command/' },
                 { label: 'Link', link: '/components/link/' },
                 { label: 'Prose code copy', link: '/components/prose-code-copy/' },
               ],

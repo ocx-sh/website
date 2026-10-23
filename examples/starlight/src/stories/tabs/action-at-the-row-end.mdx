@@ -1,0 +1,17 @@
+---
+title: Action at the row end
+description: Slot `action` puts a link at the end of the tab row, outside the tablist; the tabs scroll, the link stays.
+height: 130
+order: 5
+prose: true
+---
+
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+import Link from '@ocx-sh/theme/components/ui/Link.astro';
+
+<Tabs>
+  <TabItem label="macOS · Linux">The installer writes to `~/.ocx`.</TabItem>
+  <TabItem label="Windows">The installer writes to `%LOCALAPPDATA%\ocx`.</TabItem>
+  <Link slot="action" href="/install/" underline="hover">Install guide</Link>
+</Tabs>

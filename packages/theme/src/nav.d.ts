@@ -25,3 +25,7 @@ export function currentHref(
 ): string | undefined;
 /** Whether a link leaves the site: an absolute http(s) or protocol-relative URL. */
 export function isExternal(href: string): boolean;
+/** The install guide's root-relative URL on ocx.sh (the header's install action). */
+export function installHref(nav: Nav): string;
+/** The catalog's root-relative URL, or with `pkg` (`<namespace>/<name>`, no registry, no tag) that package's page. */
+export function catalogHref(nav: Nav, pkg?: string): string;

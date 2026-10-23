@@ -37,12 +37,43 @@ const pwshCommands = {
   ],
 };
 
+// fish, PowerShell and Elvish leave most of a command line unscoped, so a URL or path read as plain text
+// (PowerShell: as `/` operators). A bare word no grammar rule claims is an argument, a string as in sh.
+// `R:`: a grammar rule matching at the same position wins, so keywords, builtins and variables keep theirs.
+// ponytail: a bare word after whitespace is an argument; a real lexer per shell if a case needs it.
+const ARGUMENT = `(?<=\\s)(?!=)[^\\s|;&(){}\\[\\]<>'"\`$#,]+`;
+/** @param {string} lang */
+const bareArguments = (lang) => ({
+  name: `ocx-${lang}-arguments`,
+  scopeName: `ocx.injection.${lang}.arguments`,
+  injectTo: [`source.${lang}`],
+  injectionSelector: `R:source.${lang} -string -comment`,
+  patterns: [{ match: ARGUMENT, name: `string.unquoted.argument.${lang}` }],
+});
+// The vendored Elvish grammar scopes builtins only, so an external command (`elvish`, `e:curl`) and its flags
+// have no scope. A command is the first word of a line, pipeline stage, `(` or `{`; one space at most, since a
+// lookbehind is fixed-width.
+const elvishCommands = {
+  ...bareArguments('elvish'),
+  patterns: [
+    { match: '(?<=^|[|;({]|[|;({]\\s)[\\w:.~/-]+', name: 'entity.name.command.elvish' },
+    { match: '(?<=\\s)--?[\\w-]+', name: 'constant.other.option.elvish' },
+    { match: ARGUMENT, name: 'string.unquoted.argument.elvish' },
+  ],
+};
+
 /** @type {import('@astrojs/starlight/expressive-code').StarlightExpressiveCodeOptions} */
 export const EXPRESSIVE_CODE = {
   // Adds grammars on top of Shiki's full bundle (never a subset): Elvish has none upstream.
   // Starlark (Bazel BUILD and .bzl files) is a Python dialect with no grammar in Shiki: Python's highlights it.
   shiki: {
-    langs: [{ ...elvish, name: 'elvish', aliases: ['elv'] }, pwshCommands],
+    langs: [
+      { ...elvish, name: 'elvish', aliases: ['elv'] },
+      pwshCommands,
+      elvishCommands,
+      bareArguments('fish'),
+      bareArguments('powershell'),
+    ],
     langAlias: { starlark: 'python', bzl: 'python', bazel: 'python' },
   },
   themes: [
@@ -63,6 +94,8 @@ export const EXPRESSIVE_CODE = {
             'storage',
             'constant.language',
             'constant.other.option',
+            'source.option.fish',
+            'meta.command.nushell variable.parameter.nushell',
             'keyword.operator.comparison',
             'keyword.operator.logical',
             'keyword.operator.word',
@@ -74,13 +107,22 @@ export const EXPRESSIVE_CODE = {
         rule(['string', 'markup.inline.raw', 'punctuation.definition.string'], 'string'),
         rule(['constant.numeric', 'constant.character'], 'number'),
         rule(
-          ['entity.name.function', 'entity.name.command', 'support.function', 'meta.function-call.generic'],
+          [
+            'entity.name.function',
+            'entity.name.command',
+            'support.function',
+            'meta.function-call.generic',
+            // Nushell: an external command, and builtins such as `http get`.
+            'entity.name.type.external.nushell',
+            'keyword.other.builtin.nushell',
+          ],
           'function',
         ),
         rule(
           [
             'variable',
             'support.variable',
+            'support.constant.variable',
             'punctuation.definition.variable',
             'entity.name',
             'support.type',

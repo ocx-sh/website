@@ -21,6 +21,7 @@ Per scheme: every name below has a light and a dark value.
 | Status | `--ocx-color-success`, `--ocx-color-warning`, `--ocx-color-danger`, each with a `-tint` |
 | Keyword | `--ocx-color-keyword`, `--ocx-color-keyword-tint` (a category hue, not interactive) |
 | Monogram | `--ocx-color-monogram-0` to `-3`, each with `-tint` (LogoTile's four hash-picked hues; override in `:root` and `.dark` to rebrand) |
+| Shell logos | `--ocx-color-shell-powershell`, `-nushell`, `-fish` (Simple Icons' brand hex), `-elvish` (the λ green of Elvish's upstream logo); the `powershell`, `nushell`, `fish` and `elvish` icons wear them everywhere |
 | Code | `--ocx-color-code-bg`, `-fg`, `-comment`, `-punctuation`, `-keyword`, `-string`, `-number`, `-function`, `-variable`, `-deleted`, `-prompt` |
 | Overlay | `--ocx-color-overlay` (scrim), `--ocx-color-shadow` |
 | Scrollbars | `--ocx-color-scrollbar-thumb`, `-thumb-hover`, `-track` |

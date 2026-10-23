@@ -63,6 +63,21 @@ export function sectionLinks(nav: Nav, pathname: string): {
     href?: string;
     current?: boolean;
 }[];
+/**
+ * The install guide's root-relative URL on ocx.sh (the header's install action), for any link a caller writes.
+ * @param {Nav} nav
+ * @returns {string}
+ */
+export function installHref(nav: Nav): string;
+/**
+ * The catalog's root-relative URL on ocx.sh, or with `pkg` (`<namespace>/<name>`, the part after `ocx.sh/` in
+ * `ocx install ocx.sh/nodejs/node:24`, no tag) that package's page: `catalogHref(nav, 'nodejs/node')` is
+ * `/catalog/nodejs/node/`.
+ * @param {Nav} nav
+ * @param {string} [pkg]
+ * @returns {string}
+ */
+export function catalogHref(nav: Nav, pkg?: string): string;
 export * from "./registry.mjs";
 export { PAGEFIND_VERSION } from "./check/pagefind.mjs";
 /** The accessible label of the external-link icon, shared by the header, drawer and footer. */

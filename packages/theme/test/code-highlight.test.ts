@@ -170,6 +170,43 @@ describe('S-001 distinct colours per role', () => {
       'var home = $E:HOME\nset-env OCX "x" # c',
       { var: 'keyword', '$E:HOME': 'variable', 'set-env': 'function', '"x"': 'string', '# c': 'comment' },
     ],
+    // A command line reads as in sh: command and pipeline stage function, flag keyword, bare argument (a URL)
+    // string. fish, PowerShell and Elvish leave most of it unscoped; ec.mjs's injections fill the gaps.
+    [
+      'sh',
+      'curl -fsSL https://setup.ocx.sh/sh | sh',
+      { curl: 'function', '-fsSL': 'keyword', 'https://setup.ocx.sh/sh': 'string', sh: 'function' },
+    ],
+    [
+      'fish',
+      'curl -fsSL https://setup.ocx.sh/fish | fish',
+      { curl: 'function', '-fsSL': 'keyword', 'https://setup.ocx.sh/fish': 'string', fish: 'function' },
+    ],
+    [
+      'powershell',
+      'irm https://setup.ocx.sh/pwsh | iex\nJoin-Path $HOME .ocx -Resolve',
+      { 'https://setup.ocx.sh/pwsh': 'string', $HOME: 'variable', '.ocx': 'string', '-Resolve': 'keyword' },
+    ],
+    [
+      'nushell',
+      'nu -c (http get https://setup.ocx.sh/nu)',
+      { nu: 'function', '-c': 'keyword', 'http get': 'function', 'https://setup.ocx.sh/nu': 'string' },
+    ],
+    [
+      'elvish',
+      'elvish -c (e:curl -fsSL https://setup.ocx.sh/elvish | slurp)\nvar home = (get-env HOME)',
+      {
+        elvish: 'function',
+        '-c': 'keyword',
+        'e:curl': 'function',
+        '-fsSL': 'keyword',
+        'https://setup.ocx.sh/elvish': 'string',
+        slurp: 'function',
+        '=': 'fg',
+        'get-env': 'function',
+        HOME: 'string',
+      },
+    ],
   ] as const)('S-001: %s maps each role to its own token', async (language, code, expected) => {
     const roles = await roleOf(language, code);
     for (const [text, token] of Object.entries(expected)) expect(roles.get(text), `${language} ${text}`).toBe(token);

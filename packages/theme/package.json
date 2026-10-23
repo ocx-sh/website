@@ -136,6 +136,7 @@
     "@zag-js/vanilla": "1.44.0",
     "asciinema-player": "3.15.1",
     "gemoji": "8.1.0",
+    "shiki": "^4.0.2",
     "temml": "0.14.0"
   },
   "peerDependencies": {

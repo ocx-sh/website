@@ -16,14 +16,16 @@ import { mount } from './zag.mjs';
 export function apply(bar, value) {
   /** @type {unknown} */
   const parsed = JSON.parse(bar.dataset['choices'] ?? '[]');
-  const choice = /** @type {{ value: string, label: string, command: string }[]} */ (parsed).find(
+  const choice = /** @type {{ value: string, label: string, command: string, html?: string }[]} */ (parsed).find(
     (c) => c.value === value,
   );
   const root = /** @type {HTMLElement | null} */ (bar.querySelector('[data-zag-root="clipboard"]'));
   if (!choice || !root) return undefined;
   const name = `${choice.label} ${bar.dataset['noun']}`;
   const text = bar.querySelector('.ocx-cmdbar__text');
-  if (text) text.textContent = choice.command;
+  // `html` is the bar's own SSR highlighting; choices a consumer sets carry none (setChoices drops it).
+  if (text && choice.html) text.innerHTML = choice.html;
+  else if (text) text.textContent = choice.command;
   root.dataset['label'] = name;
   root.querySelector('[data-part="trigger"]')?.setAttribute('aria-label', `Copy ${name}`);
   // A machine that starts later begins from this value (`defaultValue`, so `setValue` can move it).
@@ -85,7 +87,7 @@ export const PRE_PAINT = `(()=>{try{const apply=${String(apply)},host=${String(h
  * @param {Choice[]} choices
  */
 function setChoices(bar, choices) {
-  bar.dataset['choices'] = JSON.stringify(choices);
+  bar.dataset['choices'] = JSON.stringify(choices.map(({ value, label, command }) => ({ value, label, command })));
   bar.style.setProperty('--ocx-cmdbar-ch', String(Math.max(0, ...choices.map((c) => c.label.length))));
   const select = bar.querySelector('select');
   const icons = new Map([...(select?.options ?? [])].map((o) => [o.text, o.dataset['icon']]));
@@ -142,14 +144,16 @@ export function install(doc = document) {
       const known = choices ?? /** @type {Choice[]} */ (stored);
       if (value !== undefined && !known.some((c) => c.value === value)) return;
       if (choices) setChoices(bar, choices);
-      const command = (value === undefined ? undefined : apply(bar, value)) ?? given;
+      const picked = value === undefined ? undefined : apply(bar, value);
+      const command = picked ?? given;
       if (value !== undefined)
         bar
           .querySelector('[data-zag-root="select"]')
           ?.dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value } }));
       if (command === undefined) return;
       const text = bar.querySelector('.ocx-cmdbar__text');
-      if (text) text.textContent = command;
+      // A pick has drawn its text already, highlighting included.
+      if (text && picked === undefined) text.textContent = command;
       if (label) root.dataset['label'] = `${label} ${bar.dataset['noun']}`;
       /** @type {unknown} */
       const props = JSON.parse(root.dataset['zagProps'] ?? '{}');

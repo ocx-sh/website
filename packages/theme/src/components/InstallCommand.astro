@@ -1,0 +1,72 @@
+---
+// InstallCommand: the ocx installer one-liner per shell, each the line you type in that shell: a tab per
+// shell synced on `shell` (a page's other shell tabs switch along), or one CommandBar with a shell picker.
+// The commands are the ocx-sh/www-setup README's; nu and elvish fetch the script themselves, since neither
+// runs one from a pipe. Both run it in a child shell: an in-place eval would let the installer's `exit`
+// close the visitor's shell.
+import nav from '../nav.json';
+import { installHref } from '../nav.mjs';
+import TabItem, { type TabIcon } from './TabItem.astro';
+import Tabs from './Tabs.astro';
+import Button from './ui/Button.astro';
+import CommandBar from './ui/CommandBar.astro';
+import Hint from './ui/Hint.astro';
+import Icon from './ui/Icon.astro';
+import Link from './ui/Link.astro';
+
+export interface Props {
+  /** tabs = a tab per shell, each holding its line · bar = one line with a shell picker. */
+  variant?: 'tabs' | 'bar';
+  /** Adds an "Install guide" link to `/install/` on ocx.sh: text at the end of the tab row, or a docs icon
+   * button (tooltip "Install guide") at the end of the bar. */
+  docs?: boolean;
+}
+
+// `lang` highlights each line in the grammar of the shell it is typed into.
+const SHELLS: { label: string; icon: TabIcon; lang: string; command: string }[] = [
+  { label: 'Shell', icon: 'shell', lang: 'sh', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+  { label: 'PowerShell', icon: 'powershell', lang: 'powershell', command: 'irm https://setup.ocx.sh/pwsh | iex' },
+  { label: 'Nushell', icon: 'nushell', lang: 'nushell', command: 'nu -c (http get https://setup.ocx.sh/nu)' },
+  { label: 'fish', icon: 'fish', lang: 'fish', command: 'curl -fsSL https://setup.ocx.sh/fish | fish' },
+  {
+    label: 'Elvish',
+    icon: 'elvish',
+    lang: 'elvish',
+    command: 'elvish -c (e:curl -fsSL https://setup.ocx.sh/elvish | slurp)',
+  },
+];
+
+const { variant = 'tabs', docs = false } = Astro.props;
+const href = installHref(nav);
+const noun = 'install command';
+---
+
+{variant === 'bar' ? (
+  <CommandBar
+    choices={SHELLS.map(({ label, icon, lang, command }) => ({ value: icon, label, command, icon, lang }))}
+    pickerLabel="Shell"
+    noun={noun}
+  >
+    {/* Icon-only, as every bar action: a text button would take the width the command needs on a phone. */}
+    {docs && (
+      <Hint slot="action" label="Install guide">
+        <Button iconOnly aria-label="Install guide" href={href}>
+          <Icon name="docs" />
+        </Button>
+      </Hint>
+    )}
+  </CommandBar>
+) : (
+  <Tabs syncKey="shell">
+    {SHELLS.map(({ label, icon, lang, command }) => (
+      <TabItem label={label} icon={icon}>
+        <CommandBar choices={[{ value: icon, label, command, lang }]} noun={noun} />
+      </TabItem>
+    ))}
+    {docs && (
+      <Link slot="action" href={href} underline="hover">
+        Install guide
+      </Link>
+    )}
+  </Tabs>
+)}

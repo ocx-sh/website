@@ -245,7 +245,7 @@ export namespace external {
     let keywords_20: string;
     export { keywords_20 as keywords };
 }
-export namespace pin {
+export namespace docs {
     let viewBox_21: string;
     export { viewBox_21 as viewBox };
     let body_21: string;
@@ -257,7 +257,7 @@ export namespace pin {
     let keywords_21: string;
     export { keywords_21 as keywords };
 }
-export namespace edit {
+export namespace pin {
     let viewBox_22: string;
     export { viewBox_22 as viewBox };
     let body_22: string;
@@ -269,7 +269,7 @@ export namespace edit {
     let keywords_22: string;
     export { keywords_22 as keywords };
 }
-export namespace trash {
+export namespace edit {
     let viewBox_23: string;
     export { viewBox_23 as viewBox };
     let body_23: string;
@@ -281,7 +281,7 @@ export namespace trash {
     let keywords_23: string;
     export { keywords_23 as keywords };
 }
-export namespace play {
+export namespace trash {
     let viewBox_24: string;
     export { viewBox_24 as viewBox };
     let body_24: string;
@@ -293,7 +293,7 @@ export namespace play {
     let keywords_24: string;
     export { keywords_24 as keywords };
 }
-export namespace pause {
+export namespace play {
     let viewBox_25: string;
     export { viewBox_25 as viewBox };
     let body_25: string;
@@ -305,19 +305,19 @@ export namespace pause {
     let keywords_25: string;
     export { keywords_25 as keywords };
 }
-export namespace fullscreen {
+export namespace pause {
     let viewBox_26: string;
     export { viewBox_26 as viewBox };
     let body_26: string;
     export { body_26 as body };
     let stroke_26: number;
     export { stroke_26 as stroke };
-    let group_26: "interface";
+    let group_26: "action";
     export { group_26 as group };
     let keywords_26: string;
     export { keywords_26 as keywords };
 }
-export namespace fullscreenExit {
+export namespace fullscreen {
     let viewBox_27: string;
     export { viewBox_27 as viewBox };
     let body_27: string;
@@ -329,7 +329,7 @@ export namespace fullscreenExit {
     let keywords_27: string;
     export { keywords_27 as keywords };
 }
-export namespace globe {
+export namespace fullscreenExit {
     let viewBox_28: string;
     export { viewBox_28 as viewBox };
     let body_28: string;
@@ -341,7 +341,7 @@ export namespace globe {
     let keywords_28: string;
     export { keywords_28 as keywords };
 }
-export namespace folder {
+export namespace globe {
     let viewBox_29: string;
     export { viewBox_29 as viewBox };
     let body_29: string;
@@ -353,7 +353,7 @@ export namespace folder {
     let keywords_29: string;
     export { keywords_29 as keywords };
 }
-export namespace box {
+export namespace folder {
     let viewBox_30: string;
     export { viewBox_30 as viewBox };
     let body_30: string;
@@ -365,7 +365,7 @@ export namespace box {
     let keywords_30: string;
     export { keywords_30 as keywords };
 }
-export namespace layers {
+export namespace box {
     let viewBox_31: string;
     export { viewBox_31 as viewBox };
     let body_31: string;
@@ -377,7 +377,7 @@ export namespace layers {
     let keywords_31: string;
     export { keywords_31 as keywords };
 }
-export namespace lock {
+export namespace layers {
     let viewBox_32: string;
     export { viewBox_32 as viewBox };
     let body_32: string;
@@ -389,7 +389,7 @@ export namespace lock {
     let keywords_32: string;
     export { keywords_32 as keywords };
 }
-export namespace workflow {
+export namespace lock {
     let viewBox_33: string;
     export { viewBox_33 as viewBox };
     let body_33: string;
@@ -401,7 +401,7 @@ export namespace workflow {
     let keywords_33: string;
     export { keywords_33 as keywords };
 }
-export namespace blocks {
+export namespace workflow {
     let viewBox_34: string;
     export { viewBox_34 as viewBox };
     let body_34: string;
@@ -413,7 +413,7 @@ export namespace blocks {
     let keywords_34: string;
     export { keywords_34 as keywords };
 }
-export namespace hardDrive {
+export namespace blocks {
     let viewBox_35: string;
     export { viewBox_35 as viewBox };
     let body_35: string;
@@ -425,27 +425,29 @@ export namespace hardDrive {
     let keywords_35: string;
     export { keywords_35 as keywords };
 }
-export namespace github {
+export namespace hardDrive {
     let viewBox_36: string;
     export { viewBox_36 as viewBox };
     let body_36: string;
     export { body_36 as body };
-    let group_36: "brand";
+    let stroke_36: number;
+    export { stroke_36 as stroke };
+    let group_36: "interface";
     export { group_36 as group };
     let keywords_36: string;
     export { keywords_36 as keywords };
 }
-export namespace linux {
+export namespace github {
     let viewBox_37: string;
     export { viewBox_37 as viewBox };
     let body_37: string;
     export { body_37 as body };
-    let group_37: "os";
+    let group_37: "brand";
     export { group_37 as group };
     let keywords_37: string;
     export { keywords_37 as keywords };
 }
-export namespace apple {
+export namespace linux {
     let viewBox_38: string;
     export { viewBox_38 as viewBox };
     let body_38: string;
@@ -455,7 +457,7 @@ export namespace apple {
     let keywords_38: string;
     export { keywords_38 as keywords };
 }
-export namespace windows {
+export namespace apple {
     let viewBox_39: string;
     export { viewBox_39 as viewBox };
     let body_39: string;
@@ -465,29 +467,29 @@ export namespace windows {
     let keywords_39: string;
     export { keywords_39 as keywords };
 }
-export namespace shell {
+export namespace windows {
     let viewBox_40: string;
     export { viewBox_40 as viewBox };
     let body_40: string;
     export { body_40 as body };
-    let stroke_36: number;
-    export { stroke_36 as stroke };
-    let group_40: "shell";
+    let group_40: "os";
     export { group_40 as group };
     let keywords_40: string;
     export { keywords_40 as keywords };
 }
-export namespace powershell {
+export namespace shell {
     let viewBox_41: string;
     export { viewBox_41 as viewBox };
     let body_41: string;
     export { body_41 as body };
+    let stroke_37: number;
+    export { stroke_37 as stroke };
     let group_41: "shell";
     export { group_41 as group };
     let keywords_41: string;
     export { keywords_41 as keywords };
 }
-export namespace nushell {
+export namespace powershell {
     let viewBox_42: string;
     export { viewBox_42 as viewBox };
     let body_42: string;
@@ -497,7 +499,7 @@ export namespace nushell {
     let keywords_42: string;
     export { keywords_42 as keywords };
 }
-export namespace fish {
+export namespace nushell {
     let viewBox_43: string;
     export { viewBox_43 as viewBox };
     let body_43: string;
@@ -507,27 +509,37 @@ export namespace fish {
     let keywords_43: string;
     export { keywords_43 as keywords };
 }
-export namespace elvish {
+export namespace fish {
     let viewBox_44: string;
     export { viewBox_44 as viewBox };
     let body_44: string;
     export { body_44 as body };
-    let stroke_37: number;
-    export { stroke_37 as stroke };
     let group_44: "shell";
     export { group_44 as group };
     let keywords_44: string;
     export { keywords_44 as keywords };
 }
-export namespace cmd {
+export namespace elvish {
     let viewBox_45: string;
     export { viewBox_45 as viewBox };
     let body_45: string;
     export { body_45 as body };
+    let stroke_38: number;
+    export { stroke_38 as stroke };
     let group_45: "shell";
     export { group_45 as group };
     let keywords_45: string;
     export { keywords_45 as keywords };
+}
+export namespace cmd {
+    let viewBox_46: string;
+    export { viewBox_46 as viewBox };
+    let body_46: string;
+    export { body_46 as body };
+    let group_46: "shell";
+    export { group_46 as group };
+    let keywords_46: string;
+    export { keywords_46 as keywords };
 }
 export const ICONS: {
     'chevron-down': {
@@ -727,6 +739,13 @@ export const ICONS: {
         keywords: string;
     };
     external: {
+        viewBox: string;
+        body: string;
+        stroke: number;
+        group: "action";
+        keywords: string;
+    };
+    docs: {
         viewBox: string;
         body: string;
         stroke: number;

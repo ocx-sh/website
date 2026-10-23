@@ -1,0 +1,17 @@
+---
+title: Highlighted
+description: lang highlights each command at build time in the code-block colours; choice.lang sets one per choice.
+height: 180
+order: 2
+block: true
+toaster: true
+---
+
+import CommandBar from '@ocx-sh/theme/components/ui/CommandBar.astro';
+
+export const install = [
+  { value: 'linux', label: 'Linux', icon: 'linux', lang: 'sh', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+  { value: 'windows', label: 'Windows', icon: 'windows', lang: 'powershell', command: 'irm https://setup.ocx.sh/pwsh | iex' },
+];
+
+<CommandBar choices={install} pickerLabel="Platform" noun="install command" />

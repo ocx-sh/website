@@ -20,13 +20,11 @@ hero:
 {/* doc_type: landing */}
 {/* doc_tier: first-steps */}
 
-import { Aside, Code } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
 import FeatureCards from '../../components/FeatureCards.astro';
 import FeatureIcon from '../../components/FeatureIcon.astro';
 import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
-import Tabs from '@ocx-sh/theme/components/Tabs.astro';
-import TabItem from '@ocx-sh/theme/components/TabItem.astro';
-import { elvish, fish, nu, pwsh, sh } from '../../install.mjs';
+import InstallCommand from '@ocx-sh/theme/components/InstallCommand.astro';
 
 <Aside type="caution" title="Early Development">
   ocx is in early development. The CLI is functional but APIs may change.
@@ -38,23 +36,7 @@ import { elvish, fish, nu, pwsh, sh } from '../../install.mjs';
 
 One command. Any platform. No root required.
 
-<Tabs syncKey="shell">
-  <TabItem label="Shell" icon="shell">
-    <Code code={sh} lang="sh" />
-  </TabItem>
-  <TabItem label="PowerShell" icon="powershell">
-    <Code code={pwsh} lang="powershell" />
-  </TabItem>
-  <TabItem label="Nushell" icon="nushell">
-    <Code code={nu} lang="sh" />
-  </TabItem>
-  <TabItem label="fish" icon="fish">
-    <Code code={fish} lang="sh" />
-  </TabItem>
-  <TabItem label="Elvish" icon="elvish">
-    <Code code={elvish} lang="sh" />
-  </TabItem>
-</Tabs>
+<InstallCommand />
 
 See [Installation](/docs/installation) for pinned versions, manual downloads, and CI setup.
 

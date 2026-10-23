@@ -21,11 +21,12 @@ Copying is the [copy button](../copy-button/)'s, the picker a compact [select](.
 <PropsTable
   of="ui/CommandBar.astro"
   rows={[
-    { name: 'choices', type: '{ value, label, command, icon? }[]', required: true, description: 'Commands on offer: none is the action alone, one has no picker. With detect, linux, macos and windows match the visitor.' },
+    { name: 'choices', type: '{ value, label, command, icon?, lang? }[]', required: true, description: 'Commands on offer: none is the action alone, one has no picker. With detect, linux, macos and windows match the visitor. choice.lang overrides lang.' },
     { name: 'pickerLabel', type: 'string', default: '"Command"', description: 'Accessible name of the picker.' },
     { name: 'pickerText', type: 'boolean', default: 'false', description: 'Label next to the picker icon; default icon only.' },
     { name: 'noun', type: 'string', default: '"command"', description: 'Name of the copy after the choice label: "Linux install command".' },
     { name: 'detect', type: 'boolean', default: 'false', description: 'Preselect the visitor OS before first paint.' },
+    { name: 'lang', type: 'string', description: "Highlights the commands at build time like a code block: a Shiki language id, e.g. 'sh', 'powershell', 'nushell'. An unknown id fails the build." },
     { name: 'prompt', type: 'string', description: 'Decorative shell prompt drawn before the command, e.g. "$"; never copied.' },
     { name: 'icon', type: 'IconName', description: 'Decorative registry glyph before the prompt; never copied. Not the picker icon: that is choice.icon.' },
     { name: 'zag', type: 'ZagProps<clipboard.Props>', default: '{}', description: 'Zag clipboard machine props.' },
