@@ -1951,3 +1951,11 @@ rule is gated and first paint must be final.
    image arrival, nav `aria-current` underline) fine?
 5. CopyButton: reserve the wider "copied" width (no jump on copy, slightly wider button), or
    keep today's width and crossfade without stacking?
+
+### Spec Deltas (0.2.0 hardening)
+
+- MODIFIED **C-104**: `manual` triggers gain the command palette (mounted by `mountCommandPalette`)
+  and CopyMenu context mode (host lookup is eager, the machine starts on the first focus, touch
+  press or context request).
+- ADDED: `value-set.mjs` splits idle from live: `ocx:*:set` rewrites the DOM an idle (not started,
+  or still loading) machine reads on start; a live machine handles the event through its own api.
