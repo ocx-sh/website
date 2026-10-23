@@ -190,7 +190,7 @@ export async function main({ argv, env, out, err, fetch, baseUrl, legacy }) {
     zoneSpec(zone);
   } catch (e) {
     err(
-      `${e instanceof Error ? e.message : String(e)}\nusage: apply.mjs --zone <dev|prod|preview:<slug>> [--dry-run]\n`,
+      `${e instanceof Error ? e.message : String(e)}\nusage: apply.mjs --zone <dev|prod|index|preview:<slug>> [--dry-run]\n`,
     );
     return EXIT.usage;
   }

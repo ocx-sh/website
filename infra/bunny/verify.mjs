@@ -1,6 +1,7 @@
 // `task bunny:verify -- --zone <z> [--host <h>]`: probes one host of a zone (default its `b-cdn.net` host) with the
 // paths its planned rules claim; every host but `ocx.sh` must answer `noindex`, `ocx.sh` must not. No
-// credentials, so no refusal on CI. Every probe is derived from `planRules`, never from a second list.
+// credentials, so no refusal on CI. Zone `index` (the wire zone) has its own probes: what the ocx CLI fetches.
+// Every probe is derived from `planRules`, never from a second list.
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
@@ -147,15 +148,98 @@ function failures(probe, { status, headers, body }, noindex) {
 /**
  * @param {typeof globalThis.fetch} doFetch
  * @param {string} url
+ * @param {Record<string, string>} [reqHeaders] request headers
  * @returns {Promise<{ status: number, headers: Record<string, string | string[]>, body: string }>}
  */
-async function get(doFetch, url) {
-  const res = await doFetch(url, { redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS) });
+async function get(doFetch, url, reqHeaders = {}) {
+  const res = await doFetch(url, { headers: reqHeaders, redirect: 'manual', signal: AbortSignal.timeout(TIMEOUT_MS) });
   /** @type {Record<string, string | string[]>} */
   const headers = Object.fromEntries([...res.headers].filter(([k]) => k !== 'set-cookie'));
   const cookies = res.headers.getSetCookie();
   if (cookies.length > 0) headers['set-cookie'] = cookies;
   return { status: res.status, headers, body: await res.text() };
+}
+
+const DEFAULT_PACKAGE = 'sharkdp/bat';
+
+/**
+ * The wire zone's probes: what the ocx CLI fetches. `/config.json` must be cacheable (ETag, then 304 on a
+ * conditional request) and CORS-open; a package page must carry the sandbox header.
+ * @param {typeof globalThis.fetch} doFetch
+ * @param {string} base
+ * @param {string} pkg `<ns>/<pkg>`
+ * @param {(text: string) => void} err
+ * @returns {Promise<{ total: number, failed: number }>}
+ */
+async function wireProbes(doFetch, base, pkg, err) {
+  /** @type {{ name: string, run: () => Promise<string[]> }[]} */
+  const probes = [
+    {
+      name: '/config.json',
+      run: async () => {
+        const url = `${base}/config.json`;
+        const res = await get(doFetch, url, { origin: 'https://example.com' });
+        const etag = res.headers.etag;
+        const bad = [];
+        if (res.status !== 200) bad.push(`status ${res.status}, expected 200`);
+        if (!/^application\/json\b/i.test(String(res.headers['content-type'] ?? '')))
+          bad.push(`Content-Type is ${JSON.stringify(res.headers['content-type'] ?? null)}, expected application/json`);
+        if (res.headers['access-control-allow-origin'] !== '*')
+          bad.push(
+            `Access-Control-Allow-Origin is ${JSON.stringify(res.headers['access-control-allow-origin'] ?? null)}, expected *`,
+          );
+        if (typeof etag !== 'string' || etag === '') bad.push('no ETag');
+        else {
+          const cond = await get(doFetch, url, { 'if-none-match': etag });
+          if (cond.status !== 304) bad.push(`If-None-Match answered ${cond.status}, expected 304`);
+        }
+        return bad;
+      },
+    },
+    {
+      name: '/c/index.json',
+      run: async () => {
+        const res = await get(doFetch, `${base}/c/index.json`);
+        return res.status === 200 ? [] : [`status ${res.status}, expected 200`];
+      },
+    },
+    {
+      name: '/ redirects to the catalog',
+      run: async () => {
+        const res = await get(doFetch, `${base}/`);
+        const bad = [];
+        if (res.status !== 301) bad.push(`status ${res.status}, expected 301`);
+        if (res.headers.location !== 'https://ocx.sh/catalog/')
+          bad.push(`Location is ${JSON.stringify(res.headers.location ?? null)}, expected https://ocx.sh/catalog/`);
+        return bad;
+      },
+    },
+    {
+      name: `/p/${pkg}.json`,
+      run: async () => {
+        const res = await get(doFetch, `${base}/p/${pkg}.json`);
+        const bad = [];
+        if (res.status !== 200) bad.push(`status ${res.status}, expected 200`);
+        if (String(res.headers['content-security-policy'] ?? '') !== 'sandbox')
+          bad.push(
+            `Content-Security-Policy is ${JSON.stringify(res.headers['content-security-policy'] ?? null)}, expected sandbox`,
+          );
+        return bad;
+      },
+    },
+  ];
+  let failed = 0;
+  for (const p of probes) {
+    let reasons;
+    try {
+      reasons = await p.run();
+    } catch (e) {
+      reasons = [`request failed: ${e instanceof Error ? e.message : String(e)}`];
+    }
+    if (reasons.length > 0) err(`FAIL wire ${p.name}: ${reasons.join('; ')}\n`);
+    if (reasons.length > 0) failed++;
+  }
+  return { total: probes.length, failed };
 }
 
 /**
@@ -169,15 +253,22 @@ export async function main({ argv, out, err, fetch, baseUrl, plan }) {
   let zone;
   /** @type {string} */
   let host;
+  /** @type {string} */
+  let pkg;
   try {
-    const { values } = parseArgs({ args: argv, options: { zone: { type: 'string' }, host: { type: 'string' } } });
+    const { values } = parseArgs({
+      args: argv,
+      options: { zone: { type: 'string' }, host: { type: 'string' }, package: { type: 'string' } },
+    });
+    pkg = values.package ?? DEFAULT_PACKAGE;
+    if (!/^\w[\w.-]*\/\w[\w.-]*$/.test(pkg)) throw new Error(`--package ${pkg} is not <ns>/<pkg>`);
     zone = values.zone ?? '';
     const { hosts } = zoneSpec(zone);
     host = values.host ?? hosts.at(-1) ?? '';
     if (!hosts.includes(host)) throw new Error(`--host ${host} is not a host of zone ${zone}: ${hosts.join(', ')}`);
   } catch (e) {
     err(
-      `${e instanceof Error ? e.message : String(e)}\nusage: verify.mjs --zone <dev|prod|preview:<slug>> [--host <zone host>]\n`,
+      `${e instanceof Error ? e.message : String(e)}\nusage: verify.mjs --zone <dev|prod|index|preview:<slug>> [--host <zone host>] [--package <ns>/<pkg>]\n`,
     );
     return EXIT.usage;
   }
@@ -185,6 +276,11 @@ export async function main({ argv, out, err, fetch, baseUrl, plan }) {
   try {
     const base = baseUrl ?? `https://${host}`;
     const doFetch = fetch ?? globalThis.fetch;
+    if (zone === 'index') {
+      const { total, failed } = await wireProbes(doFetch, base, pkg, err);
+      out(`${host}: ${total} probes, ${failed} failed\n`);
+      return failed === 0 ? EXIT.ok : EXIT.failed;
+    }
     const probes = probesFor(zone, plan);
     let failed = 0;
     for (const probe of probes) {

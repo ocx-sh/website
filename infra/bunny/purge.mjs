@@ -52,7 +52,9 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
     if (positionals.length > 1) throw new Error('give at most one path');
     if (positionals[0] !== undefined) prefix = prefixOf(positionals[0]);
   } catch (e) {
-    err(`${e instanceof Error ? e.message : String(e)}\nusage: purge.mjs --zone <dev|prod|preview:<slug>> [<path>]\n`);
+    err(
+      `${e instanceof Error ? e.message : String(e)}\nusage: purge.mjs --zone <dev|prod|index|preview:<slug>> [<path>]\n`,
+    );
     return EXIT.usage;
   }
 

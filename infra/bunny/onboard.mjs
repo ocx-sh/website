@@ -7,9 +7,10 @@ import { fileURLToPath } from 'node:url';
 import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import { secretName, previewZone, findSite } from '../../scripts/previews/sites.mjs';
 import { EXIT, RefusalError, createClient, findByName } from './api.mjs';
-import { REGION, ROOT_REPO, storageZoneName } from './zones.mjs';
+import { EDGE_REGION, REGION, ROOT_REPO, WIRE_REPO, WIRE_STORAGE_ZONE, storageZoneName } from './zones.mjs';
 
 const SECRET = 'BUNNY_STORAGE_KEY';
+const EDGE_SECRET = 'BUNNY_EDGE_STORAGE_KEY';
 const GH_TIMEOUT_MS = 30_000;
 // The field exists and reads null on a new zone (fixtures/p1-storagezone.json), and a null path still served
 // `bunnycdn_errors/404.html` with 404 (M0 P1 (3)). ponytail: the leading slash of the value is unrecorded; the
@@ -80,14 +81,30 @@ function hasBranchPolicy(body) {
 
 /**
  * @param {string[]} argv
- * @returns {{ repo: string, zone: string, secret: string, environment: string, secretRepo: string, preview: boolean }}
+ * @returns {{ repo: string, zone: string, secret: string, environment: string, secretRepo: string, preview: boolean, edge: boolean }}
  */
 function target(argv) {
   const { values, positionals } = parseArgs({
     args: argv,
-    options: { preview: { type: 'string' } },
+    options: { preview: { type: 'string' }, edge: { type: 'boolean' } },
     allowPositionals: true,
   });
+  if (values.edge) {
+    if (values.preview !== undefined) throw new Error('give --edge or --preview, not both');
+    if (positionals.length > 1) throw new Error('give one repo');
+    const given = positionals[0] ?? WIRE_REPO;
+    const repo = given.includes('/') ? given : `ocx-sh/${given}`;
+    if (repo !== WIRE_REPO) throw new Error(`--edge onboards ${WIRE_REPO}, not ${repo}`);
+    return {
+      repo,
+      zone: WIRE_STORAGE_ZONE,
+      secret: EDGE_SECRET,
+      environment: 'ocx.sh',
+      secretRepo: repo,
+      preview: false,
+      edge: true,
+    };
+  }
   if (values.preview !== undefined) {
     if (positionals.length > 0) throw new Error('give a repo or --preview <site>, not both');
     const site = findSite(values.preview);
@@ -98,12 +115,21 @@ function target(argv) {
       environment: 'previews',
       secretRepo: ROOT_REPO,
       preview: true,
+      edge: false,
     };
   }
   if (positionals.length > 1) throw new Error('give one repo');
   const given = positionals[0] ?? ROOT_REPO;
   const repo = given.includes('/') ? given : `ocx-sh/${given}`;
-  return { repo, zone: storageZoneName(repo), secret: SECRET, environment: 'ocx.sh', secretRepo: repo, preview: false };
+  return {
+    repo,
+    zone: storageZoneName(repo),
+    secret: SECRET,
+    environment: 'ocx.sh',
+    secretRepo: repo,
+    preview: false,
+    edge: false,
+  };
 }
 
 /**
@@ -119,7 +145,9 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
   try {
     t = target(argv);
   } catch (e) {
-    err(`${e instanceof Error ? e.message : String(e)}\nusage: onboard.mjs [<repo>] | --preview <site>\n`);
+    err(
+      `${e instanceof Error ? e.message : String(e)}\nusage: onboard.mjs [<repo>] | --edge [ocx-sh/index] | --preview <site>\n`,
+    );
     return EXIT.usage;
   }
 
@@ -128,7 +156,7 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
   /** @param {string} text */
   const masked = (text) => (password ? text.split(password).join('***') : text);
   try {
-    if (!t.preview && !nav.claims.some((c) => c.repo === t.repo)) {
+    if (!t.preview && !t.edge && !nav.claims.some((c) => c.repo === t.repo)) {
       throw new RefusalError(`${t.repo} owns no claim in nav.json: add its claim first`);
     }
     const client = createClient(env, { ...(fetch ? { fetch } : {}), ...(baseUrl ? { baseUrl } : {}) });
@@ -149,16 +177,42 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
       );
     }
 
+    const region = t.edge ? EDGE_REGION : REGION;
     let zone = findByName(await client.get('/storagezone'), t.zone);
     if (!zone) {
       zone = /** @type {Record<string, unknown>} */ (
         await client.post('/storagezone', {
           Name: t.zone,
-          Region: REGION.primary,
-          ReplicationRegions: REGION.replication,
+          Region: region.primary,
+          ReplicationRegions: region.replication,
+          ...(t.edge ? { ZoneTier: EDGE_REGION.tier } : {}),
         })
       );
       out(`created storage zone ${t.zone}\n`);
+    }
+    // Tier and replication regions cannot be changed on a live zone: a zone that differs is refused, never edited.
+    if (t.edge) {
+      const live = /** @type {Record<string, unknown>} */ (
+        typeof zone.Id === 'number' ? await client.get(`/storagezone/${String(zone.Id)}`) : zone
+      );
+      const regions = Array.isArray(live.ReplicationRegions) ? live.ReplicationRegions.map(String).sort() : [];
+      const wantRegions = [...region.replication].sort();
+      const wrong = [
+        ...(live.ZoneTier === EDGE_REGION.tier
+          ? []
+          : [`ZoneTier is ${JSON.stringify(live.ZoneTier)}, wanted ${String(EDGE_REGION.tier)}`]),
+        ...(live.Region === region.primary
+          ? []
+          : [`Region is ${JSON.stringify(live.Region)}, wanted ${region.primary}`]),
+        ...(JSON.stringify(regions) === JSON.stringify(wantRegions)
+          ? []
+          : [`ReplicationRegions are ${JSON.stringify(regions)}, wanted ${JSON.stringify(wantRegions)}`]),
+      ];
+      if (wrong.length > 0)
+        throw new RefusalError(
+          `${t.zone}: ${wrong.join('; ')}. Tier and regions cannot be changed on a live zone: recreate it (infra/bunny/README.md, "Recreate the edge storage zone"): delete the zone, re-run onboard, redeploy the wire tree`,
+        );
+      zone = { ...zone, ...live, Password: zone.Password ?? live.Password };
     }
     if (typeof zone.Id !== 'number') throw new Error(`storage zone ${t.zone} response has no Id`);
     const id = String(zone.Id);

@@ -294,3 +294,56 @@ describe('against the recorded pull zone (M0, sh-ocx-dev)', () => {
     });
   });
 });
+
+describe('index zone', () => {
+  const indexStorage = { Id: 9, Name: 'sh-ocx-index-edge', Password: 'pw' }; // the SSD wire zone
+
+  it('adds CORS for the wire file types and defaults to the sh-ocx-index-edge storage zone', () => {
+    expect(zoneSettings('index')).toMatchObject({
+      EnableAccessControlOriginHeader: true,
+      AccessControlOriginHeaderExtensions: [
+        'json',
+        'svg',
+        'png',
+        'jpg',
+        'webp',
+        'md',
+        'txt',
+        'html',
+        'css',
+        'js',
+        'xml',
+      ],
+    });
+    expect(zoneSettings('dev')).not.toHaveProperty('EnableAccessControlOriginHeader');
+  });
+
+  it('creates sh-ocx-index-edge over its storage zone, reads the CORS array back and reports the pending host', async () => {
+    const { code, fake, out } = await run({ zone: 'index', storageZones: [indexStorage] });
+    expect(code).toBe(0);
+    expect(live(fake)).toMatchObject({ Name: 'sh-ocx-index-edge', StorageZoneId: 9, ...zoneSettings('index') });
+    expect(out).toContain('PENDING: index.ocx.sh hostname not on the zone');
+  });
+
+  it('accepts a reordered CORS list from the API', async () => {
+    const { code } = await run({
+      zone: 'index',
+      storageZones: [indexStorage],
+      pullZones: [
+        zoneOf('sh-ocx-index-edge', 'index', {
+          StorageZoneId: 9,
+          AccessControlOriginHeaderExtensions: [
+            ...(zoneSettings('index').AccessControlOriginHeaderExtensions as string[]),
+          ].reverse(),
+        }),
+      ],
+    });
+    expect(code).toBe(0);
+  });
+
+  it('refuses without the sh-ocx-index-edge storage zone', async () => {
+    const { code, err } = await run({ zone: 'index' });
+    expect(code).toBe(1);
+    expect(err).toContain('no storage zone named sh-ocx-index-edge');
+  });
+});

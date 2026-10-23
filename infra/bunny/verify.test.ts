@@ -292,3 +292,76 @@ describe('arguments', () => {
     },
   );
 });
+
+describe('index (wire) zone probes', () => {
+  async function wire(over: Record<string, Reply> = {}, argv: string[] = []) {
+    const etag = '"abc"';
+    server = createServer((req, res) => {
+      const path = req.url!;
+      let reply: Reply = { status: 404 };
+      if (path === '/config.json')
+        reply =
+          req.headers['if-none-match'] === etag
+            ? { status: 304 }
+            : {
+                status: 200,
+                headers: { 'content-type': 'application/json', etag, 'access-control-allow-origin': '*' },
+              };
+      else if (path === '/c/index.json') reply = { status: 200 };
+      else if (path === '/') reply = { status: 301, headers: { location: 'https://ocx.sh/catalog/' } };
+      else if (path.startsWith('/p/')) reply = { status: 200, headers: { 'content-security-policy': 'sandbox' } };
+      reply = { ...reply, ...over[path] };
+      res.writeHead(reply.status ?? 200, reply.headers);
+      res.end(reply.body ?? '{}');
+    });
+    await new Promise<void>((r) => server!.listen(0, '127.0.0.1', r));
+    const out: string[] = [];
+    const err: string[] = [];
+    const code = await main({
+      argv: ['--zone', 'index', ...argv],
+      out: (t) => out.push(t),
+      err: (t) => err.push(t),
+      baseUrl: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    });
+    return { code, out: out.join(''), err: err.join('') };
+  }
+
+  it('passes on a correct host and probes sharkdp/bat by default', async () => {
+    const r = await wire();
+    expect([r.code, r.out]).toEqual([0, 'sh-ocx-index-edge.b-cdn.net: 4 probes, 0 failed\n']);
+  });
+
+  it('takes the sample package by flag', async () => {
+    const r = await wire({ '/p/a/b.json': { status: 404 } }, ['--package', 'a/b']);
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('FAIL wire /p/a/b.json: status 404');
+  });
+
+  it.each([
+    [
+      'no CORS',
+      '/config.json',
+      { status: 200, headers: { 'content-type': 'application/json', etag: '"abc"' } },
+      'Access-Control-Allow-Origin',
+    ],
+    [
+      'no ETag',
+      '/config.json',
+      { status: 200, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } },
+      'no ETag',
+    ],
+    ['no sandbox', '/p/sharkdp/bat.json', { status: 200, headers: {} }, 'Content-Security-Policy'],
+    ['no catalog redirect', '/', { status: 200, headers: {} }, 'expected 301'],
+    ['wrong Location', '/', { status: 301, headers: { location: 'https://ocx.sh/' } }, 'Location is'],
+    ['index 500', '/c/index.json', { status: 500 }, 'status 500'],
+  ])('fails on %s', async (_n, path, reply, msg) => {
+    const r = await wire({ [path]: reply });
+    expect(r.code).toBe(1);
+    expect(r.err).toContain(msg);
+  });
+
+  it('rejects a malformed --package', async () => {
+    const r = await wire({}, ['--package', '../x']);
+    expect(r.code).toBe(2);
+  });
+});

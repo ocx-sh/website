@@ -1,0 +1,115 @@
+{
+  "zone": "index",
+  "pullZone": "sh-ocx-index-edge",
+  "hosts": [
+    "index.ocx.sh",
+    "sh-ocx-index-edge.b-cdn.net"
+  ],
+  "rules": [
+    {
+      "ActionType": 5,
+      "ActionParameter1": "Strict-Transport-Security",
+      "ActionParameter2": "max-age=31536000; includeSubDomains; preload",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:hsts",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://index.ocx.sh/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Frame-Options",
+      "ActionParameter2": "SAMEORIGIN",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:frame",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://index.ocx.sh/*",
+            "https://sh-ocx-index-edge.b-cdn.net/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "Content-Security-Policy",
+      "ActionParameter2": "sandbox",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:catalog-sandbox",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://index.ocx.sh/p/*",
+            "https://sh-ocx-index-edge.b-cdn.net/p/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 5,
+      "ActionParameter1": "X-Content-Type-Options",
+      "ActionParameter2": "nosniff",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:catalog-nosniff",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://index.ocx.sh/p/*",
+            "https://sh-ocx-index-edge.b-cdn.net/p/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 1,
+      "ActionParameter1": "https://ocx.sh/catalog/%{Path.0-}",
+      "ActionParameter2": "301",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:catalog-redirect",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 2,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://index.ocx.sh/config.json",
+            "https://index.ocx.sh/c/*",
+            "https://index.ocx.sh/p/*",
+            "https://sh-ocx-index-edge.b-cdn.net/config.json",
+            "https://sh-ocx-index-edge.b-cdn.net/c/*"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 2,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-index-edge.b-cdn.net/p/*"
+          ]
+        }
+      ]
+    }
+  ]
+}

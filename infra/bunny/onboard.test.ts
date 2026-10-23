@@ -68,7 +68,7 @@ interface Setup {
   ghFail?: boolean;
   /** the environments exist but have no deployment branch policy (`deployment_branch_policy: null`) */
   noPolicy?: boolean;
-  storageZones?: (typeof STORED)[];
+  storageZones?: (typeof STORED & Record<string, unknown>)[];
   fail?: Parameters<FakeApi['fail']>;
 }
 
@@ -274,5 +274,67 @@ describe('bunny:onboard', () => {
       expect(r.code, argv.join(' ')).toBe(2);
       expect(r.requests).toEqual([]);
     }
+  });
+});
+
+describe('bunny:onboard --edge (the SSD wire zone)', () => {
+  const WANT = { Region: 'DE', ReplicationRegions: ['UK', 'SE', 'NY', 'LA', 'SG', 'SYD', 'BR'], ZoneTier: 1 };
+  const EDGE = {
+    Id: 8,
+    Name: 'sh-ocx-index-edge',
+    Password: 'edge-pw',
+    Custom404FilePath: '/bunnycdn_errors/404.html',
+  };
+  const argv = ['ocx-sh/index', '--edge'];
+
+  it('creates sh-ocx-index-edge with the SSD tier and replication and sets BUNNY_EDGE_STORAGE_KEY in ocx-sh/index', async () => {
+    const r = await run({ argv });
+    expect(r.code).toBe(0);
+    expect(r.requests.find((q) => q.method === 'POST' && q.path === '/storagezone')?.body).toMatchObject({
+      Name: 'sh-ocx-index-edge',
+      ...WANT,
+    });
+    expect(secretSets(r.calls)[0]?.argv).toEqual([
+      'secret',
+      'set',
+      'BUNNY_EDGE_STORAGE_KEY',
+      '--env',
+      'ocx.sh',
+      '--repo',
+      'ocx-sh/index',
+    ]);
+  });
+
+  it('adopts a zone whose tier and regions match, in any region order', async () => {
+    const r = await run({
+      argv,
+      storageZones: [{ ...EDGE, ...WANT, ReplicationRegions: [...WANT.ReplicationRegions].reverse() }],
+    });
+    expect(r.code).toBe(0);
+    expect(r.requests.map((q) => `${q.method} ${q.path}`)).toEqual(['GET /storagezone', 'GET /storagezone/8']);
+  });
+
+  it.each([
+    ['tier', { ...WANT, ZoneTier: 0 }, 'ZoneTier is 0, wanted 1'],
+    ['regions', { ...WANT, ReplicationRegions: [] }, 'ReplicationRegions are []'],
+  ])(
+    'refuses an existing zone whose %s differs, naming the recreate procedure, with no secret set',
+    async (_n, live, msg) => {
+      const r = await run({ argv, storageZones: [{ ...EDGE, ...live }] });
+      expect(r.code).toBe(1);
+      expect(r.err).toContain(msg);
+      expect(r.err).toContain('Recreate the edge storage zone');
+      expect(secretSets(r.calls)).toEqual([]);
+      expect(r.requests.every((q) => q.method === 'GET')).toBe(true);
+    },
+  );
+
+  it('plain ocx-sh/index stays a standard zone with BUNNY_STORAGE_KEY, and --edge takes no other repo', async () => {
+    const plain = await run({ argv: ['ocx-sh/index'] });
+    const body = plain.requests.find((q) => q.method === 'POST' && q.path === '/storagezone')?.body;
+    expect(body).toMatchObject({ Name: 'sh-ocx-index', Region: 'DE', ReplicationRegions: [] });
+    expect(body).not.toHaveProperty('ZoneTier');
+    expect(secretSets(plain.calls)[0]?.argv[2]).toBe('BUNNY_STORAGE_KEY');
+    expect((await run({ argv: ['ocx-sh/website', '--edge'] })).code).toBe(2);
   });
 });

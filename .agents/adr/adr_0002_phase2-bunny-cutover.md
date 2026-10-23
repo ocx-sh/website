@@ -644,3 +644,7 @@ disagree, this amendment wins.
 Still open: whether `/v2/` leaves hetzner1 nginx before the end-of-2026 apex flip. The owner has
 not decided. The answer decides whether OG-N is dropped for a direct apex flip. AM1's OG-N and OG-C
 rows stand until the owner answers.
+
+## Amendment 3 (2026-10-24): index.ocx.sh moves to Bunny
+
+Owner decision: `index.ocx.sh` moves from Cloudflare Pages to Bunny, superseding "`index.ocx.sh` unchanged / CF Pages". The zone key is `index`: pull zone `sh-ocx-index-edge` over its own storage zone `sh-ocx-index-edge`, SSD (`ZoneTier` 1) with replication DE, UK, SE, NY, LA, SG, SYD, BR, holding only the wire tree (`config.json`, `c/**`, `p/**`). This supersedes amendment 2's DE-only rule for that one zone; `sh-ocx-index` stays a standard zone behind `ocx.sh/catalog/`. Every other path on `index.ocx.sh` is a 301 to `https://ocx.sh/catalog/<path>`. OW2 still holds: the JSON paths and their semantics are unchanged.

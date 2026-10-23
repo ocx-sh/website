@@ -5,7 +5,15 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import legacyData from './legacy.json' with { type: 'json' };
-import { PUBLIC_HOST, REHEARSAL_HOST, ROOT_REPO, redirectTemplate, storageZoneName, zoneSpec } from './zones.mjs';
+import {
+  PUBLIC_HOST,
+  REHEARSAL_HOST,
+  WIRE_HOST,
+  ROOT_REPO,
+  redirectTemplate,
+  storageZoneName,
+  zoneSpec,
+} from './zones.mjs';
 
 // Enum values read back from live rules (fixtures/p*-pullzone.json, M0 2026-10-05); 17 and the trigger types are
 // verified by request behaviour, the rest by the owner's hand-made `sh-ocx-setup` rules.
@@ -30,9 +38,15 @@ const IMMUTABLE = '31536000';
 const ASSET_PATTERN = 'https://*/_astro/*';
 const REDIRECT_STATUS = '302';
 /** A host of one of our zones; an OriginUrl or prod Redirect pointing at one loops or leaks it. */
-const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
+const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|index\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
 /** Catalog pages that render untrusted package content: `/catalog/p/<pkg>` and `/catalog/index/<registry>/p/<pkg>`. */
 const SANDBOX_PATHS = ['/catalog/p/*', '/catalog/index/*/p/*'];
+/** The wire tree (`config.json`, `c/**`, `p/**`); `p/**` carries package content. */
+const WIRE_PATHS = ['/config.json', '/c/*', '/p/*'];
+const WIRE_SANDBOX_PATHS = ['/p/*'];
+/** Every other path of the wire host is the catalog: `<host>/<path>` lands on `ocx.sh/catalog/<path>`. */
+const CATALOG_REDIRECT = 'https://ocx.sh/catalog/%{Path.0-}';
+const WIRE_REDIRECT_STATUS = '301';
 
 /**
  * @typedef {object} Trigger
@@ -204,6 +218,23 @@ function repoRules(entries, claims, hosts) {
   });
 }
 
+/**
+ * The wire zone's redirect: a URL matching none of the wire paths goes to the catalog. A trigger holds 5 patterns
+ * and `None` negates within one trigger, so the chunks must all hold (`MATCH.All`): a URL has to match none of them.
+ * ponytail: `PatternMatchingType` None and `%{Path.0-}` (the whole path, no trailing slash) are not on a recording
+ * yet; `bunny:verify` proves the redirect live.
+ * @param {string[]} hosts
+ * @returns {BunnyRule}
+ */
+function wireRedirect(hosts) {
+  const patterns = onHosts(hosts, WIRE_PATHS);
+  return {
+    ...rule('catalog-redirect', patterns, ACTION.Redirect, CATALOG_REDIRECT, WIRE_REDIRECT_STATUS),
+    TriggerMatchingType: MATCH.All,
+    Triggers: urlTriggers(patterns).map((t) => ({ ...t, PatternMatchingType: MATCH.None })),
+  };
+}
+
 /** @param {string} pattern a Bunny URL pattern: `*` is greedy across `/`, everything else literal, anchored */
 export const patternRegExp = (pattern) =>
   new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*')}$`);
@@ -303,7 +334,7 @@ function problemsOf(rules, origins, { hosts, prod }) {
  * `X-Frame-Options`, the catalog sandbox headers (not on previews), then the origin rules longest claimed path first. A preview zone gets `noindex`
  * and `X-Frame-Options` only. Throws a {@link PlanError} when a rule would loop, leak a zone host,
  * or make the winner of a request ambiguous.
- * @param {string} zone `dev`, `prod` or `preview:<slug>`
+ * @param {string} zone `dev`, `prod`, `index` or `preview:<slug>`
  * @param {PlanInput} [input]
  * @returns {BunnyRule[]}
  */
@@ -311,6 +342,7 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
   const { hosts } = zoneSpec(zone);
   const preview = zone.startsWith('preview:');
   const prod = zone === 'prod';
+  const wire = zone === 'index';
   const header = (
     /** @type {string} */ id,
     /** @type {string[]} */ on,
@@ -318,25 +350,29 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
     /** @type {string} */ value,
   ) => rule(id, onHosts(on, ['/*']), ACTION.SetResponseHeader, name, value);
   const sandbox = (/** @type {string} */ id, /** @type {string} */ name, /** @type {string} */ value) =>
-    rule(id, onHosts(hosts, SANDBOX_PATHS), ACTION.SetResponseHeader, name, value);
+    rule(id, onHosts(hosts, wire ? WIRE_SANDBOX_PATHS : SANDBOX_PATHS), ACTION.SetResponseHeader, name, value);
   const headers = [
-    ...(preview
+    ...(preview || wire
       ? []
       : [
           assetRule('assets-edge', ACTION.OverrideCacheTime),
           assetRule('assets-browser', ACTION.OverrideBrowserCacheTime),
         ]),
-    header(
-      'noindex',
-      hosts.filter((h) => h !== PUBLIC_HOST),
-      'X-Robots-Tag',
-      'noindex, nofollow',
-    ),
-    ...(prod
+    ...(wire
+      ? []
+      : [
+          header(
+            'noindex',
+            hosts.filter((h) => h !== PUBLIC_HOST),
+            'X-Robots-Tag',
+            'noindex, nofollow',
+          ),
+        ]),
+    ...(prod || wire
       ? [
           header(
             'hsts',
-            [PUBLIC_HOST, REHEARSAL_HOST],
+            wire ? [WIRE_HOST] : [PUBLIC_HOST, REHEARSAL_HOST],
             'Strict-Transport-Security',
             'max-age=31536000; includeSubDomains; preload',
           ),
@@ -351,12 +387,14 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
           sandbox('catalog-sandbox', 'Content-Security-Policy', 'sandbox'),
           sandbox('catalog-nosniff', 'X-Content-Type-Options', 'nosniff'),
         ]),
+    ...(wire ? [wireRedirect(hosts)] : []),
   ];
-  const origins = preview
-    ? []
-    : [...legacy.entries.map((e) => legacyRule(e, hosts)), ...repoRules(legacy.entries, claims, hosts)].sort(
-        (a, b) => b.order - a.order,
-      );
+  const origins =
+    preview || wire
+      ? []
+      : [...legacy.entries.map((e) => legacyRule(e, hosts)), ...repoRules(legacy.entries, claims, hosts)].sort(
+          (a, b) => b.order - a.order,
+        );
   const rules = [...headers, ...origins.map((o) => o.rule)];
   const problems = problemsOf(rules, origins, { hosts, prod });
   if (problems.length > 0) throw new PlanError(problems);
@@ -388,7 +426,7 @@ function run(argv) {
     return {
       code: EXIT.usage,
       stdout: '',
-      stderr: `${reason}\nusage: rules.mjs --zone <dev|prod|preview:<slug>> [--legacy <file>]\n`,
+      stderr: `${reason}\nusage: rules.mjs --zone <dev|prod|index|preview:<slug>> [--legacy <file>]\n`,
     };
   }
   try {

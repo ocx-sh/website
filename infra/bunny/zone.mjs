@@ -4,10 +4,20 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { EXIT, RefusalError, createClient, findByName } from './api.mjs';
-import { PUBLIC_HOST, zoneSpec } from './zones.mjs';
+import { PUBLIC_HOST, WIRE_HOST, zoneSpec } from './zones.mjs';
 
 // `OriginType` 2 = storage zone, as recorded on `sh-ocx-dev` (fixtures/p1-pullzone.json, `OriginLinkValue` names the zone).
 const ORIGIN_TYPE_STORAGE = 2;
+
+/** File extensions the wire zone answers `Access-Control-Allow-Origin: *` for (the CLI and browser pages read them). */
+const WIRE_CORS_EXTENSIONS = ['json', 'svg', 'png', 'jpg', 'webp', 'md', 'txt', 'html', 'css', 'js', 'xml'];
+
+/** Equality for settings: arrays compare as sets of strings, the API may reorder them. */
+const same = (/** @type {unknown} */ a, /** @type {unknown} */ b) =>
+  Array.isArray(a) && Array.isArray(b)
+    ? JSON.stringify(a.map(String).sort((x, y) => x.localeCompare(y))) ===
+      JSON.stringify(b.map(String).sort((x, y) => x.localeCompare(y)))
+    : a === b;
 
 /**
  * The settings every zone gets. `AddHostHeader` is off so a legacy proxy reaches Pages with
@@ -18,7 +28,7 @@ const ORIGIN_TYPE_STORAGE = 2;
  * `CacheControlPublicMaxAgeOverride` browser seconds, a fresh zone reads -1, `RequestLimit` 0 = unlimited).
  * Browser `0` is recorded (2026-10-10, `sh-ocx`): every response carries `Cache-Control: public, max-age=0`.
  * @param {string} zone `dev`, `prod` or `preview:<slug>`
- * @returns {Record<string, string | number | boolean>}
+ * @returns {Record<string, string | number | boolean | string[]>}
  */
 export function zoneSettings(zone) {
   return {
@@ -36,6 +46,9 @@ export function zoneSettings(zone) {
     EnableRequestCoalescing: false,
     AddHostHeader: false,
     ...(zone === 'prod' ? { RequestLimit: 0 } : {}),
+    ...(zone === 'index'
+      ? { EnableAccessControlOriginHeader: true, AccessControlOriginHeaderExtensions: WIRE_CORS_EXTENSIONS }
+      : {}),
   };
 }
 
@@ -75,7 +88,7 @@ function problems(zone, want) {
     ...Object.entries(want).flatMap(([k, v]) =>
       !(k in zone)
         ? [`${k}: missing from the pull zone response`]
-        : zone[k] === v
+        : same(zone[k], v)
           ? []
           : [`${k}: is ${JSON.stringify(zone[k])}, wanted ${JSON.stringify(v)}`],
     ),
@@ -101,7 +114,7 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
     zone = values.zone ?? '';
     zoneSpec(zone);
   } catch (e) {
-    err(`${e instanceof Error ? e.message : String(e)}\nusage: zone.mjs --zone <dev|prod|preview:<slug>>\n`);
+    err(`${e instanceof Error ? e.message : String(e)}\nusage: zone.mjs --zone <dev|prod|index|preview:<slug>>\n`);
     return EXIT.usage;
   }
 
@@ -123,7 +136,7 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
     const missing = Object.keys(want).filter((k) => !(k in live));
     if (missing.length > 0)
       throw new RefusalError(`${pull}: pull zone has no such field(s): ${missing.join(', ')}; no write sent`);
-    const changes = Object.entries(want).filter(([k, v]) => live[k] !== v);
+    const changes = Object.entries(want).filter(([k, v]) => !same(live[k], v));
     for (const [k, v] of changes) out(`${k}: ${JSON.stringify(live[k])} -> ${JSON.stringify(v)}\n`);
     if (changes.length > 0) await client.post(`/pullzone/${live.Id}`, Object.fromEntries(changes));
 
@@ -141,6 +154,8 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
     // Exit stays 0: the owner adds `ocx.sh` at the cutover. The line lets a script or reader tell it from done.
     if (zone === 'prod' && !back.Hostnames.some((h) => h.Value === PUBLIC_HOST))
       out(`PENDING: ${PUBLIC_HOST} hostname not on the zone (OG-P)\n`);
+    if (zone === 'index' && !back.Hostnames.some((h) => h.Value === WIRE_HOST))
+      out(`PENDING: ${WIRE_HOST} hostname not on the zone (the owner adds it, then Force SSL on the next run)\n`);
     const left = problems(back, want);
     if (left.length > 0) throw new RefusalError(`read-back differs:\n${left.join('\n')}`);
     out(`${pull}: ${Object.keys(want).length} fields, ${changes.length} changed, read back equal\n`);

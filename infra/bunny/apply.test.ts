@@ -129,6 +129,12 @@ describe('apply to an empty zone', () => {
     expect(writes(api)).toHaveLength(before);
   });
 
+  it('applies the index zone: header rules and the catalog redirect, read back equal', async () => {
+    const { code, api } = await run({ zone: 'index', name: 'sh-ocx-index-edge' });
+    expect(code).toBe(0);
+    expect(names(live(api))).toEqual(planRules('index').map((r) => r.Description));
+  });
+
   it('finds a preview zone by its own name', async () => {
     const { code, api } = await run({ zone: 'preview:ocx', name: 'sh-ocx-preview-ocx' });
     expect(code).toBe(0);

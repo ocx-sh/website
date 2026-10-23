@@ -280,3 +280,52 @@ task bunny:apply -- --zone preview:<slug>
 Verify: both tasks end with `read back equal`. The zone answers on `https://sh-ocx-preview-<slug>.b-cdn.net/` after the cutover runbook's preview deploy, and `task bunny:verify -- --zone preview:<slug>` ends with `0 failed`.
 
 Rollback: check out the previous commit and rerun both tasks. Delete a preview zone in the dashboard only.
+
+## index.ocx.sh wire zone
+
+Goal: `index.ocx.sh`, the host the ocx CLI dials (`/config.json`, `/c/index.json`, `/p/<ns>/<pkg>.json`, CAS objects), is served from Bunny. It has its own storage zone and pull zone, both named `sh-ocx-index-edge` (zone key `index`). The storage zone is SSD (Bunny "Edge", `ZoneTier` 1) with replication `DE` plus `UK`, `SE`, `NY`, `LA`, `SG`, `SYD`, `BR`, because CLI latency matters. It holds only the wire tree (`config.json`, `c/**`, `p/**`). The standard-tier zone `sh-ocx-index` is untouched and keeps serving `ocx.sh/catalog/`. The names and regions are in `zones.mjs` (`WIRE_*`, `EDGE_REGION`).
+
+### Step 1: onboard the edge storage zone
+
+```bash
+task bunny:onboard -- ocx-sh/index --edge
+```
+
+This creates the SSD zone with replication, or adopts it, and sets `BUNNY_EDGE_STORAGE_KEY` in the `ocx.sh` environment of `ocx-sh/index`. It reads the zone back and refuses, with no secret set, when the tier or a region differs: neither can be changed on a live zone. Plain `task bunny:onboard -- ocx-sh/index` still handles `sh-ocx-index` and `BUNNY_STORAGE_KEY`.
+
+Verify: `gh secret list --env ocx.sh --repo ocx-sh/index` names `BUNNY_EDGE_STORAGE_KEY`; the dashboard shows tier Edge (SSD) and the eight regions.
+
+Rollback: `gh secret delete BUNNY_EDGE_STORAGE_KEY --env ocx.sh --repo ocx-sh/index`. The storage zone stays.
+
+### Recreate the edge storage zone
+
+Onboard refuses a zone with the wrong tier or regions. To fix one: delete the storage zone `sh-ocx-index-edge` in the dashboard (or `DELETE /storagezone/<id>`), re-run step 1, then redeploy the wire tree from `ocx-sh/index`. Nothing deletes a zone automatically.
+
+Verify: `task bunny:onboard -- ocx-sh/index --edge` ends without a refusal.
+
+Rollback: none for the delete; the wire tree is rebuilt from the repo, so a redeploy restores it.
+
+### Step 2: bring the pull zone up
+
+```bash
+task bunny:zone:apply -- --zone index
+task bunny:apply -- --zone index
+```
+
+`zone:apply` sets the same settings as prod, plus CORS (`Access-Control-Allow-Origin: *` for json, svg, png, jpg, webp, md, txt, html, css, js and xml). Its default origin is the storage zone `sh-ocx-index-edge`. Without the `index.ocx.sh` hostname on the zone it prints `PENDING: index.ocx.sh hostname not on the zone` and exits 0; the owner adds the hostname in the dashboard, then reruns it to turn Force SSL on. `apply` plans header rules and one redirect, no origin or legacy rules and no `noindex`: `ocx:hsts`, `ocx:frame`, the sandbox pair `ocx:catalog-sandbox` and `ocx:catalog-nosniff` on `/p/*`, and `ocx:catalog-redirect`. The redirect sends every path that matches none of `/config.json`, `/c/*` and `/p/*` with a 301 to `https://ocx.sh/catalog/<path>`, so `index.ocx.sh/<ns>/<pkg>/` lands on `ocx.sh/catalog/<ns>/<pkg>`. The edge drops a trailing slash there, and the catalog serves the page either way. The rule negates its patterns (`PatternMatchingType` None, all chunks required) and uses `%{Path.0-}`; neither is on a recording yet, and `verify` proves both.
+
+Verify: both tasks end with `read back equal`.
+
+Rollback: check out the previous commit and rerun both tasks. Delete the pull zone in the dashboard only.
+
+### Step 3: verify the wire
+
+```bash
+task bunny:verify -- --zone index [--host index.ocx.sh] [--package sharkdp/bat]
+```
+
+This needs no key. It checks `/config.json` (200, `application/json`, an `ETag`, `If-None-Match` answers 304, `Access-Control-Allow-Origin: *`), `/c/index.json` (200), `/` (301 to `https://ocx.sh/catalog/`) and `/p/<ns>/<pkg>.json` (200 with `Content-Security-Policy: sandbox`). The default host is the `b-cdn.net` one; pass `--host index.ocx.sh` after the hostname and DNS exist.
+
+Verify: the output says `0 failed`.
+
+Rollback: none, the task only reads. `task bunny:purge -- --zone index` empties the cache after a bad deploy.

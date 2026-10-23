@@ -17,7 +17,7 @@ type Entry = (typeof committed.entries)[number];
 type Legacy = { entries: Entry[] };
 
 const RULES = new URL('./rules.mjs', import.meta.url).pathname;
-const ZONES = ['dev', 'prod', 'preview:ocx'] as const;
+const ZONES = ['dev', 'prod', 'index', 'preview:ocx'] as const;
 const PLAN_CEILING = 40;
 
 /** Runs the CLI with no credentials in its environment, optionally against a fixture `legacy.json`. */
@@ -432,5 +432,47 @@ describe('against the recorded edge rules', () => {
     const planned = planRules('prod').find((r) => r.ActionType === ACTION.Redirect)!;
     expect(planned.ActionParameter2).toBe('302');
     expect(Object.keys(planned).filter((k) => !(k in redirect))).toEqual([]);
+  });
+});
+
+describe('index (wire) zone plan', () => {
+  it('has header rules and the catalog redirect only: no origin, legacy, asset, noindex rule', () => {
+    expect(ids('index')).toEqual([
+      'ocx:hsts',
+      'ocx:frame',
+      'ocx:catalog-sandbox',
+      'ocx:catalog-nosniff',
+      'ocx:catalog-redirect',
+    ]);
+    expect(planRules('index').every((r) => r.Description.startsWith('ocx:'))).toBe(true);
+  });
+
+  it('sandboxes the wire package tree /p/* on both hosts', () => {
+    const patterns = (id: string) =>
+      planRules('index')
+        .find((r) => r.Description === `ocx:${id}`)!
+        .Triggers.flatMap((t) => t.PatternMatches);
+    for (const id of ['catalog-sandbox', 'catalog-nosniff'])
+      expect(patterns(id)).toEqual(['https://index.ocx.sh/p/*', 'https://sh-ocx-index-edge.b-cdn.net/p/*']);
+    expect(patterns('hsts')).toEqual(['https://index.ocx.sh/*']);
+  });
+
+  it('301-redirects every non-wire path to ocx.sh/catalog/, the negated chunks all required', () => {
+    const redirect = planRules('index').at(-1)!;
+    expect(redirect).toMatchObject({
+      ActionType: 1,
+      ActionParameter1: 'https://ocx.sh/catalog/%{Path.0-}',
+      ActionParameter2: '301',
+      TriggerMatchingType: 1,
+    });
+    expect(redirect.Triggers.every((t) => t.PatternMatchingType === 2 && t.PatternMatches.length <= 5)).toBe(true);
+    expect(redirect.Triggers.flatMap((t) => t.PatternMatches)).toEqual([
+      'https://index.ocx.sh/config.json',
+      'https://index.ocx.sh/c/*',
+      'https://index.ocx.sh/p/*',
+      'https://sh-ocx-index-edge.b-cdn.net/config.json',
+      'https://sh-ocx-index-edge.b-cdn.net/c/*',
+      'https://sh-ocx-index-edge.b-cdn.net/p/*',
+    ]);
   });
 });

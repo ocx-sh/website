@@ -19,7 +19,7 @@ tasks:
     cmds: [pnpm exec vitest run infra/bunny]
 
   plan:
-    desc: "Print a zone's planned edge rules as JSON: task bunny:plan -- --zone <dev|prod|preview:<slug>>"
+    desc: "Print a zone's planned edge rules as JSON: task bunny:plan -- --zone <dev|prod|index|preview:<slug>>"
     cmds: ['node infra/bunny/rules.mjs {{.CLI_ARGS}}']
 
   apply:
