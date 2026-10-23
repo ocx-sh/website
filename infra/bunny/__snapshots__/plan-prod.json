@@ -298,39 +298,6 @@
       ]
     },
     {
-      "ActionType": 1,
-      "ActionParameter1": "https://index.ocx.sh/%{Path.1-}",
-      "ActionParameter2": "302",
-      "TriggerMatchingType": 0,
-      "Enabled": true,
-      "Description": "ocx:legacy-index",
-      "Triggers": [
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://ocx.sh/catalog",
-            "https://ocx.sh/catalog/*",
-            "https://ocx.sh/catalog.html",
-            "https://next.ocx.sh/catalog",
-            "https://next.ocx.sh/catalog/*"
-          ]
-        },
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://next.ocx.sh/catalog.html",
-            "https://sh-ocx.b-cdn.net/catalog",
-            "https://sh-ocx.b-cdn.net/catalog/*",
-            "https://sh-ocx.b-cdn.net/catalog.html"
-          ]
-        }
-      ]
-    },
-    {
       "ActionType": 17,
       "ActionParameter1": "",
       "ActionParameter2": "sh-ocx-www-setup",
@@ -399,6 +366,36 @@
           "PatternMatches": [
             "https://sh-ocx.b-cdn.net/schemas",
             "https://sh-ocx.b-cdn.net/schemas/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-index",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:repo-index",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/catalog",
+            "https://ocx.sh/catalog/*",
+            "https://next.ocx.sh/catalog",
+            "https://next.ocx.sh/catalog/*",
+            "https://sh-ocx.b-cdn.net/catalog"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx.b-cdn.net/catalog/*"
           ]
         }
       ]

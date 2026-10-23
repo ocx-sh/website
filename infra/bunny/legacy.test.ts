@@ -28,7 +28,7 @@ function shapeErrors(doc: Record<string, unknown>): string[] {
 describe('legacy.json', () => {
   it('holds the ADR 0002 D6.4 rules 6-11, each { id, repo, mode, origin, paths[] }', () => {
     expect(shapeErrors(legacy)).toEqual([]);
-    expect(legacy.entries.map((e) => e.id)).toEqual(['legacy-catalog', 'legacy-index']);
+    expect(legacy.entries.map((e) => e.id)).toEqual(['legacy-catalog']);
   });
 
   it('a planted registry key fails the shape check and the schema forbids it', () => {
@@ -129,7 +129,6 @@ describe('legacy.json against nav.json and the redirect mapping (C-314)', () => 
     const template = (id: string) =>
       redirectTemplate(legacy.entries.find((e) => e.id === id) as (typeof legacy.entries)[number]);
     expect(template('legacy-catalog')).toBe('https://ocx-sh.github.io/catalog/%{Path.2-}');
-    expect(template('legacy-index')).toBe('https://index.ocx.sh/%{Path.1-}');
   });
 
   it('refuses a proxy entry, which has no redirect target', () => {
@@ -148,9 +147,9 @@ describe('matchProbe', () => {
   const prod = planRules('prod');
   const at = (host: string, path: string, status = 200) => matchProbe(prod, { host, path, status });
 
-  it('/apps/catalog/x/ wins legacy-catalog, never legacy-index', () => {
+  it('/apps/catalog/x/ wins legacy-catalog, /catalog/x/ is the repo-index storage rule', () => {
     expect(at('ocx.sh', '/apps/catalog/x/').origin).toBe('legacy-catalog');
-    expect(at('ocx.sh', '/catalog/x/').origin).toBe('legacy-index');
+    expect(at('ocx.sh', '/catalog/x/').origin).toBe('repo-index');
   });
 
   it('a path no origin rule claims wins none', () => {

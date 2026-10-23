@@ -7,13 +7,6 @@
       "mode": "redirect",
       "origin": "https://ocx-sh.github.io/catalog/",
       "paths": ["/apps/catalog/"]
-    },
-    {
-      "id": "legacy-index",
-      "repo": "ocx-sh/index",
-      "mode": "redirect",
-      "origin": "https://index.ocx.sh/",
-      "paths": ["/catalog/", "/catalog.html"]
     }
   ]
 }

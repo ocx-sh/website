@@ -145,17 +145,16 @@ describe('OrderIndex stays unique on every write (Bunny rejects a duplicate)', (
     paths: [path],
   });
   const FLIPPED = ['legacy-rules-ocx', 'legacy-find-ocx', 'legacy-ocx-sdk-python'];
-  /** The zone before the consumers flipped: the three redirect entries sit between `legacy-catalog` and `legacy-index`. */
+  /** The zone before the consumers flipped: the three redirect entries follow `legacy-catalog`. */
   const before: Legacy = {
     entries: committed.entries
       .filter((e) => !FLIPPED.includes(e.id))
       .flatMap((e) =>
-        e.id === 'legacy-index'
+        e.id === 'legacy-catalog'
           ? [
               redirect('legacy-rules-ocx', 'ocx-sh/rules_ocx', 'rules_ocx', '/integrations/bazel/'),
               redirect('legacy-find-ocx', 'ocx-sh/find_ocx', 'find_ocx', '/integrations/cmake/'),
               redirect('legacy-ocx-sdk-python', 'ocx-sh/ocx-sdk-python', 'ocx-sdk-python', '/integrations/python/'),
-              e,
             ]
           : [e],
       ),
