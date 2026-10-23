@@ -41,6 +41,20 @@ test('C-190 ecosystem menu opens on click; a second click closes it', async ({ p
   await expect(trigger(page)).toHaveAttribute('aria-expanded', 'false');
 });
 
+test('C-190 a click on a menu the hover already opened keeps it open; the next click closes it', async ({ page }) => {
+  await page.goto('/docs/');
+  await navEl(page).hover();
+  await expect(root(page)).toHaveAttribute('data-zag-state', 'live');
+  await trigger(page).hover();
+  await expect.poll(() => isOpen(page)).toBe(true);
+  await trigger(page).click();
+  await page.evaluate(() => new Promise(requestAnimationFrame)); // a toggle shuts it within the click's frame
+  expect(await isOpen(page)).toBe(true);
+  await expect(trigger(page)).toHaveAttribute('aria-expanded', 'true');
+  await trigger(page).click();
+  await expect.poll(() => isOpen(page)).toBe(false);
+});
+
 test('C-190 ecosystem menu opens via keyboard (Enter/Space on the trigger)', async ({ page }) => {
   await page.goto('/docs/');
   await trigger(page).focus();

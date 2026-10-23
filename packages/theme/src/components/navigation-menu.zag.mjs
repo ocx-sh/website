@@ -68,6 +68,9 @@ export const lean = (attrs, { nav = false } = {}) =>
 /** @type {WeakMap<Element, boolean>} whether the machine had each Content open at its last paint */
 const opened = new WeakMap();
 
+/** Triggers whose open panel has seen a click on them. */
+const clicked = new WeakSet();
+
 /** Roots whose rail machine runs (reset by `readDom` when a new machine starts). */
 const rails = new WeakSet();
 
@@ -93,10 +96,22 @@ export function render(api, root, spread, spawn) {
       spread(el, p.link(v, el.getAttribute('aria-current') === 'page'));
       continue;
     }
-    spread(el, p.trigger(v));
+    const open = api.value === v;
+    const trigger = /** @type {Record<string, unknown>} */ (p.trigger(v));
+    const toggle = /** @type {(e: MouseEvent) => void} */ (trigger['onclick']);
+    spread(el, {
+      ...trigger,
+      // A click on a panel the hover already opened keeps it open (the pointer got there first, the
+      // click still meant "open"); the click after that closes it. Passed through, it shuts the panel.
+      onclick: (/** @type {MouseEvent} */ e) => {
+        const hoverOpened = open && !clicked.has(el);
+        clicked.add(el);
+        if (!hoverOpened) toggle(e);
+      },
+    });
+    if (!open) clicked.delete(el);
     const content = root.ownerDocument.getElementById(ids.content(v));
     if (!content) continue;
-    const open = api.value === v;
     spread(content, {
       ...p.content(v),
       // A native toggle (the mobile menu's own popovertarget) tells the machine.
