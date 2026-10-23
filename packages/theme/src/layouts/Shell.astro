@@ -119,8 +119,11 @@ const url = canonical ?? (Astro.site ? new URL(Astro.url.pathname, Astro.site) :
 
 <style is:global>
   @layer ocx {
-    /* D-163: the theme sets border-box per component; a consumer's own boxes get it here. */
-    :where(*, *::before, *::after) {
+    /* D-163: the theme sets border-box per component; a consumer's own boxes get it here. A
+       pseudo-element is invalid inside :where(), so it sits outside: the same zero-weight selector. */
+    :where(*),
+    :where(*)::before,
+    :where(*)::after {
       box-sizing: border-box;
     }
     /* D-128: sticky-footer frame, the footer sits at the viewport bottom on a short page.

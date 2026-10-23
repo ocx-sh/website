@@ -75,7 +75,7 @@ describe('Shell frame and defaults', () => {
   });
 
   it('D-163: every box is border-box', () => {
-    expect(block(shellStyle, ':where(*, *::before')).toContain('box-sizing: border-box');
+    expect(block(shellStyle, ':where(*)::after {')).toContain('box-sizing: border-box');
   });
 
   it('D-168: body keeps the 13px UI base, 1.5 line height, antialiasing and the 0.15s scheme fade, held off during a switch', () => {

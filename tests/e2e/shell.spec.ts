@@ -35,6 +35,15 @@ test.describe('ocx mode', () => {
     expect(errors).toEqual([]);
   });
 
+  test('D-163: boxes and their ::before/::after are border-box', async ({ page }) => {
+    await open(page, OCX);
+    const sizing = await page.evaluate(() => {
+      const el = document.body.appendChild(document.createElement('div'));
+      return ['', '::before', '::after'].map((p) => getComputedStyle(el, p || null).boxSizing);
+    });
+    expect(sizing).toEqual(['border-box', 'border-box', 'border-box']);
+  });
+
   test('the theme toggle flips data-theme and persists starlight-theme', async ({ page }) => {
     await open(page, OCX);
     const before = await page.evaluate(() => document.documentElement.dataset['theme']);
