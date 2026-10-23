@@ -116,9 +116,9 @@ describe('rule set and limits', () => {
         'repo-rules-ocx',
         'repo-find-ocx',
         'legacy-catalog',
-        'legacy-index',
         'repo-www-setup',
         'repo-ocx',
+        'repo-index',
       ].map((id) => `ocx:${id}`),
     );
     expect(originIds('dev')).toEqual(originIds('prod'));
@@ -230,7 +230,7 @@ describe('rule set and limits', () => {
       ['/docs/getting-started', 'repo-ocx'],
       ['/schemas/config/v1.json', 'repo-ocx'],
       ['/apps/catalog/x', 'legacy-catalog'],
-      ['/catalog', 'legacy-index'],
+      ['/catalog', 'repo-index'],
     ] as const) {
       expect(hit('next.ocx.sh', path).origin, path).toBe(hit('ocx.sh', path).origin);
       expect(hit('next.ocx.sh', path).origin, path).toBe(origin);
@@ -249,17 +249,13 @@ describe('rule set and limits', () => {
       ActionParameter1: 'https://ocx-sh.github.io/catalog/%{Path.2-}',
       ActionParameter2: '302',
     });
-    expect(rule('legacy-index')).toMatchObject({ ActionParameter1: 'https://index.ocx.sh/%{Path.1-}' });
-    expect(rule('legacy-index')?.Triggers.flatMap((t) => t.PatternMatches)).toEqual([
-      'https://ocx.sh/catalog',
-      'https://ocx.sh/catalog/*',
-      'https://ocx.sh/catalog.html',
-      'https://next.ocx.sh/catalog',
-      'https://next.ocx.sh/catalog/*',
-      'https://next.ocx.sh/catalog.html',
-      'https://sh-ocx.b-cdn.net/catalog',
-      'https://sh-ocx.b-cdn.net/catalog/*',
-      'https://sh-ocx.b-cdn.net/catalog.html',
+    expect(rule('legacy-catalog')?.Triggers.flatMap((t) => t.PatternMatches)).toEqual([
+      'https://ocx.sh/apps/catalog',
+      'https://ocx.sh/apps/catalog/*',
+      'https://next.ocx.sh/apps/catalog',
+      'https://next.ocx.sh/apps/catalog/*',
+      'https://sh-ocx.b-cdn.net/apps/catalog',
+      'https://sh-ocx.b-cdn.net/apps/catalog/*',
     ]);
   });
 });
@@ -346,19 +342,19 @@ describe('refusals (exit 1, naming the rule)', () => {
 describe('deleting a legacy entry (single legacy.json edit, then plan the diff)', () => {
   const sameRule = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
-  it.each([
-    ['legacy-catalog', 'catalog', 'ocx-sh/catalog'],
-    ['legacy-index', 'index', 'ocx-sh/index'],
-  ])('removing %s removes exactly its rule and adds repo-%s', (id, name, repo) => {
-    const before = planRules('prod');
-    const after = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
-    const removed = before.filter((r) => !after.some((a) => sameRule(a, r)));
-    const added = after.filter((a) => !before.some((r) => sameRule(a, r)));
-    expect(removed.map((r) => r.Description)).toEqual([`ocx:${id}`]);
-    expect(added.map((r) => r.Description)).toEqual([`ocx:repo-${name}`]);
-    expect(added[0]).toMatchObject({ ActionType: 17, ActionParameter1: '', ActionParameter2: storageZoneName(repo) });
-    expect(after.length).toBe(before.length);
-  });
+  it.each([['legacy-catalog', 'catalog', 'ocx-sh/catalog']])(
+    'removing %s removes exactly its rule and adds repo-%s',
+    (id, name, repo) => {
+      const before = planRules('prod');
+      const after = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
+      const removed = before.filter((r) => !after.some((a) => sameRule(a, r)));
+      const added = after.filter((a) => !before.some((r) => sameRule(a, r)));
+      expect(removed.map((r) => r.Description)).toEqual([`ocx:${id}`]);
+      expect(added.map((r) => r.Description)).toEqual([`ocx:repo-${name}`]);
+      expect(added[0]).toMatchObject({ ActionType: 17, ActionParameter1: '', ActionParameter2: storageZoneName(repo) });
+      expect(after.length).toBe(before.length);
+    },
+  );
 
   it('a repo with legacy entries left gets no repo rule', () => {
     const after = ids(
@@ -382,14 +378,14 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
 });
 
 describe('S-120: the bare directory path stays routed when a legacy entry is deleted', () => {
-  it.each([
-    ['legacy-catalog', '/apps/catalog', 'repo-catalog'],
-    ['legacy-index', '/catalog', 'repo-index'],
-  ])('removing %s: %s goes to %s on every host', (id, path, winner) => {
-    const rules = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
-    for (const host of ['ocx.sh', 'sh-ocx.b-cdn.net'])
-      expect(matchProbe(rules, { host, path, status: 200 }).origin, `${host}${path}`).toBe(winner);
-  });
+  it.each([['legacy-catalog', '/apps/catalog', 'repo-catalog']])(
+    'removing %s: %s goes to %s on every host',
+    (id, path, winner) => {
+      const rules = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
+      for (const host of ['ocx.sh', 'sh-ocx.b-cdn.net'])
+        expect(matchProbe(rules, { host, path, status: 200 }).origin, `${host}${path}`).toBe(winner);
+    },
+  );
 });
 
 describe('storageZoneName', () => {

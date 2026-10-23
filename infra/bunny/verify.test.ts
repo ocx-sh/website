@@ -100,9 +100,9 @@ describe('probesFor', () => {
     });
     expect(probes).toContainEqual({
       kind: 'redirect',
-      path: '/catalog/a/b/',
+      path: '/apps/catalog/a/b/',
       status: 302,
-      location: 'https://index.ocx.sh/a/b',
+      location: 'https://ocx-sh.github.io/catalog/a/b',
     });
     expect(probes.some((p) => p.kind === 'storage')).toBe(true);
   });
@@ -186,13 +186,13 @@ describe('each break fails exactly its probe, exit 1', () => {
     ['a proxy that answers 404', { [DOCS]: { status: 404 } }, `FAIL proxy ${DOCS}: status 404, expected 200`],
     [
       'a redirect that answers 301',
-      { '/catalog/a/b/': { status: 301 } },
-      'FAIL redirect /catalog/a/b/: status 301, expected 302',
+      { '/apps/catalog/a/b/': { status: 301 } },
+      'FAIL redirect /apps/catalog/a/b/: status 301, expected 302',
     ],
     [
       'a redirect with the wrong Location',
-      { '/catalog/a/b/': { headers: { ...noindex, location: 'https://index.ocx.sh/' } } },
-      'FAIL redirect /catalog/a/b/: Location is "https://index.ocx.sh/", expected "https://index.ocx.sh/a/b"',
+      { '/apps/catalog/a/b/': { headers: { ...noindex, location: 'https://ocx-sh.github.io/catalog/' } } },
+      'FAIL redirect /apps/catalog/a/b/: Location is "https://ocx-sh.github.io/catalog/", expected "https://ocx-sh.github.io/catalog/a/b"',
     ],
     [
       'a response without noindex',
@@ -239,7 +239,7 @@ describe('each break fails exactly its probe, exit 1', () => {
   it('lists every failed probe, not just the first', async () => {
     const { code, err, out } = await run('dev', {
       plan: PROXY_PLAN,
-      patch: { [DOCS]: { status: 500 }, '/catalog/a/b/': { status: 404 } },
+      patch: { [DOCS]: { status: 500 }, '/apps/catalog/a/b/': { status: 404 } },
     });
     expect(code).toBe(1);
     expect(err.trim().split('\n')).toHaveLength(2);

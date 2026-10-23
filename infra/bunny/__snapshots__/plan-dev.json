@@ -208,26 +208,6 @@
       ]
     },
     {
-      "ActionType": 1,
-      "ActionParameter1": "https://index.ocx.sh/%{Path.1-}",
-      "ActionParameter2": "302",
-      "TriggerMatchingType": 0,
-      "Enabled": true,
-      "Description": "ocx:legacy-index",
-      "Triggers": [
-        {
-          "Type": 0,
-          "PatternMatchingType": 0,
-          "Parameter1": "",
-          "PatternMatches": [
-            "https://sh-ocx-dev.b-cdn.net/catalog",
-            "https://sh-ocx-dev.b-cdn.net/catalog/*",
-            "https://sh-ocx-dev.b-cdn.net/catalog.html"
-          ]
-        }
-      ]
-    },
-    {
       "ActionType": 17,
       "ActionParameter1": "",
       "ActionParameter2": "sh-ocx-www-setup",
@@ -263,6 +243,25 @@
             "https://sh-ocx-dev.b-cdn.net/docs/*",
             "https://sh-ocx-dev.b-cdn.net/schemas",
             "https://sh-ocx-dev.b-cdn.net/schemas/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-index",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:repo-index",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/catalog",
+            "https://sh-ocx-dev.b-cdn.net/catalog/*"
           ]
         }
       ]

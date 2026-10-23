@@ -77,9 +77,9 @@ describe('first-match golden (prod and dev plans)', () => {
 });
 
 describe('first-match outcomes the table must keep', () => {
-  it('the longer claim wins: /apps/catalog/x/ is legacy-catalog, /catalog/x/ legacy-index', () => {
+  it('the longer claim wins: /apps/catalog/x/ is legacy-catalog, /catalog/x/ repo-index', () => {
     expect(at('/apps/catalog/x/').origin).toBe('legacy-catalog');
-    expect(at('/catalog/x/').origin).toBe('legacy-index');
+    expect(at('/catalog/x/').origin).toBe('repo-index');
   });
 
   it('/docs/ and /schemas/ are the ocx repo storage zone, bare and nested, on every host', () => {
