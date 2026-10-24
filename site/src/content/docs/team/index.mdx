@@ -1,12 +1,13 @@
 ---
 title: Team
-description: The people who build and maintain ocx.
+description: The people who build and maintain ocx, and how to reach them.
 ---
 
 {/* doc_type: reference */}
 {/* doc_tier: integration */}
 
 import { getImage } from 'astro:assets';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import Avatar from '@ocx-sh/theme/components/ui/Avatar.astro';
 import kate from '../../../assets/team/kate.jpg';
 
@@ -16,14 +17,25 @@ export const kateImage = await getImage({ src: kate, format: 'avif', width: 38, 
 
 The people who build, maintain and promote ocx.
 
-## Michael Herwig
+<CardGrid>
+  <div class="ocx-card">
+    <Avatar name="Michael Herwig" size="lg" />
+    <strong>Michael Herwig</strong>
+    <span>Creator and maintainer</span>
+    <span>[GitHub](https://github.com/michael-herwig) · [GitLab](https://gitlab.com/michael-herwig) · [LinkedIn](https://www.linkedin.com/in/herwigm)</span>
+  </div>
+  <div class="ocx-card">
+    <Avatar name="Katherine Draheim" src={kateImage.src} srcset={kateImage.srcSet.attribute} size="lg" />
+    <strong>Katherine Draheim</strong>
+    <span>Marketing and community lead</span>
+    <span>[GitHub](https://github.com/kathescode) · [LinkedIn](https://www.linkedin.com/in/katherine-draheim/)</span>
+  </div>
+</CardGrid>
 
-<Avatar name="Michael Herwig" size="lg" />
+## Get in touch
 
-Creator and maintainer. Find him on [GitHub](https://www.github.com/michael-herwig), [GitLab](https://gitlab.com/michael-herwig) and [LinkedIn](https://www.linkedin.com/in/herwigm).
-
-## Katherine Draheim
-
-<Avatar name="Katherine Draheim" src={kateImage.src} srcset={kateImage.srcSet.attribute} size="lg" />
-
-Marketing and community lead. Find her on [GitHub](https://www.github.com/kathescode) and [LinkedIn](https://www.linkedin.com/in/katherine-draheim/).
+<CardGrid>
+  <LinkCard title="Discord" href="https://discord.gg/mT2UCF8CVe" description="Questions, ideas and release news." />
+  <LinkCard title="GitHub" href="https://github.com/ocx-sh" description="Every ocx repository, issues and pull requests." />
+  <LinkCard title="Security" href="/docs/security/" description="How to report a vulnerability." />
+</CardGrid>
