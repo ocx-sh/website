@@ -1,9 +1,12 @@
 // First-match golden: the winning origin rule and the stacked header rules of every probe, over the real plans.
 import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import { describe, expect, it } from 'vitest';
-import legacy from './legacy.json' with { type: 'json' };
+import legacyJson from './legacy.json' with { type: 'json' };
 import { matchProbe } from './match.mjs';
 import { planRules } from './rules.mjs';
+
+// legacy.json holds no entry since the last repo flipped, so the JSON type is never[]: give it its shape.
+const legacy = legacyJson as { entries: { id: string; repo: string; mode: string; origin: string; paths: string[] }[] };
 
 type Probe = { zone: 'dev' | 'prod'; host: string; path: string; status: number };
 
@@ -77,8 +80,8 @@ describe('first-match golden (prod and dev plans)', () => {
 });
 
 describe('first-match outcomes the table must keep', () => {
-  it('the longer claim wins: /apps/catalog/x/ is legacy-catalog, /catalog/x/ repo-index', () => {
-    expect(at('/apps/catalog/x/').origin).toBe('legacy-catalog');
+  it('the longer claim wins: /apps/catalog/x/ is repo-catalog, /catalog/x/ repo-index', () => {
+    expect(at('/apps/catalog/x/').origin).toBe('repo-catalog');
     expect(at('/catalog/x/').origin).toBe('repo-index');
   });
 
@@ -92,8 +95,8 @@ describe('first-match outcomes the table must keep', () => {
     for (const path of ['/assets/x.js', '/logo.svg']) expect(at(path).origin, path).toBeNull();
   });
 
-  it('a deep link under a redirect claim wins that redirect', () => {
-    expect(at('/apps/catalog/x/').origin).toBe('legacy-catalog');
+  it('a deep link under a storage claim wins that claim', () => {
+    expect(at('/apps/catalog/x/').origin).toBe('repo-catalog');
   });
 
   it("/install/ is www-setup's claim: its own repo origin, deep links included", () => {

@@ -3,7 +3,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import { mergeTargets } from '@ocx-sh/theme/nav';
-import legacy from '../../infra/bunny/legacy.json' with { type: 'json' };
+import legacyJson from '../../infra/bunny/legacy.json' with { type: 'json' };
+
+// legacy.json holds no entry since the last repo flipped, so the JSON type is never[]: give it its shape.
+const legacy = legacyJson as { entries: { id: string; repo: string; mode: string; origin: string; paths: string[] }[] };
 
 const QUERY = 'install';
 const search = (page: Page) => page.locator('#starlight__search');

@@ -2,10 +2,13 @@
 // `site/dist` or won by a legacy or repo rule of the prod plan, so none 404s after the DNS flip.
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import legacy from '../../infra/bunny/legacy.json' with { type: 'json' };
+import legacyJson from '../../infra/bunny/legacy.json' with { type: 'json' };
 import { matchProbe } from '../../infra/bunny/match.mjs';
 import { ACTION, planRules } from '../../infra/bunny/rules.mjs';
 import { dist, root } from '../../site/src/build-site.ts';
+
+// legacy.json holds no entry since the last repo flipped, so the JSON type is never[]: give it its shape.
+const legacy = legacyJson as { entries: { id: string; repo: string; mode: string; origin: string; paths: string[] }[] };
 
 /** Every nginx request carries host `ocx.sh`, so the prod plan is probed with it. */
 const HOST = 'ocx.sh';

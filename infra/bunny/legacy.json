@@ -1,12 +1,4 @@
 {
   "$schema": "./legacy.schema.json",
-  "entries": [
-    {
-      "id": "legacy-catalog",
-      "repo": "ocx-sh/catalog",
-      "mode": "redirect",
-      "origin": "https://ocx-sh.github.io/catalog/",
-      "paths": ["/apps/catalog/"]
-    }
-  ]
+  "entries": []
 }

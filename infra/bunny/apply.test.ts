@@ -9,7 +9,14 @@ import { planRules, type BunnyRule } from './rules.mjs';
 
 const KEY = 'fake-key-0123456789';
 const ENV = { BUNNY_API_KEY: KEY };
-type Legacy = { entries: (typeof committed.entries)[number][] };
+interface Entry {
+  id: string;
+  repo: string;
+  mode: 'proxy' | 'redirect';
+  origin: string;
+  paths: string[];
+}
+type Legacy = { entries: Entry[] };
 type Live = BunnyRule & { Guid: string; OrderIndex: number };
 
 /** A zone's planned rules as a previous apply left them. */
@@ -30,7 +37,18 @@ const hand = (i: number): Live => ({
   Guid: `h-${i}`,
 });
 
-const without = (id: string): Legacy => ({ entries: committed.entries.filter((e) => e.id !== id) });
+// legacy.json is empty since ocx-sh/catalog flipped: the delete-a-redirect tests keep their coverage through this zone.
+const WITH_CATALOG: Legacy = {
+  entries: [
+    {
+      id: 'legacy-catalog',
+      repo: 'ocx-sh/catalog',
+      mode: 'redirect',
+      origin: 'https://ocx-sh.github.io/catalog/',
+      paths: ['/apps/catalog/'],
+    },
+  ],
+};
 /** The edge's view of a zone's live rules: enabled ones, by OrderIndex. */
 const edgeRules = (rules: EdgeRule[]) => evaluationOrder(rules) as unknown as BunnyRule[];
 
@@ -143,29 +161,22 @@ describe('apply to an empty zone', () => {
 });
 
 describe('OrderIndex stays unique on every write (Bunny rejects a duplicate)', () => {
-  const redirect = (id: string, repo: string, name: string, path: string): Legacy['entries'][number] => ({
+  const redirect = (id: string, repo: string, name: string, path: string): Entry => ({
     id,
     repo,
     mode: 'redirect',
     origin: `https://ocx-sh.github.io/${name}/`,
     paths: [path],
   });
-  const FLIPPED = ['legacy-rules-ocx', 'legacy-find-ocx', 'legacy-ocx-sdk-python'];
-  /** The zone before the consumers flipped: the three redirect entries follow `legacy-catalog`. */
+  /** The zone before the consumers flipped: the three redirect entries. */
   const before: Legacy = {
-    entries: committed.entries
-      .filter((e) => !FLIPPED.includes(e.id))
-      .flatMap((e) =>
-        e.id === 'legacy-catalog'
-          ? [
-              redirect('legacy-rules-ocx', 'ocx-sh/rules_ocx', 'rules_ocx', '/integrations/bazel/'),
-              redirect('legacy-find-ocx', 'ocx-sh/find_ocx', 'find_ocx', '/integrations/cmake/'),
-              redirect('legacy-ocx-sdk-python', 'ocx-sh/ocx-sdk-python', 'ocx-sdk-python', '/integrations/python/'),
-            ]
-          : [e],
-      ),
+    entries: [
+      redirect('legacy-rules-ocx', 'ocx-sh/rules_ocx', 'rules_ocx', '/integrations/bazel/'),
+      redirect('legacy-find-ocx', 'ocx-sh/find_ocx', 'find_ocx', '/integrations/cmake/'),
+      redirect('legacy-ocx-sdk-python', 'ocx-sh/ocx-sdk-python', 'ocx-sdk-python', '/integrations/python/'),
+    ],
   };
-  const after: Legacy = { entries: committed.entries.filter((e) => !FLIPPED.includes(e.id)) };
+  const after: Legacy = { entries: [] };
   /** The live dev zone at the flip: the pre-flip plan minus the two catalog sandbox rules it never received. */
   const seed = () =>
     planned('dev', before)
@@ -200,8 +211,8 @@ describe('upsert before delete, never unrouted', () => {
 
   it('S-120: deleting a legacy entry swaps redirect for repo-catalog with no unrouted moment', async () => {
     const violations: string[] = [];
-    const before = planned('dev');
-    const next = without('legacy-catalog');
+    const before = planned('dev', WITH_CATALOG);
+    const next = committed;
     const { code, api } = await run({
       rules: before,
       legacy: next,
@@ -279,11 +290,11 @@ describe('upsert before delete, never unrouted', () => {
 
   it('the invariant goes red on a delete-first sequence (the detector can fail)', async () => {
     const violations: string[] = [];
-    const before = planned('dev');
+    const before = planned('dev', WITH_CATALOG);
     const fake = await fakeApi({
       key: KEY,
       pullZones: [{ Id: 1, Name: 'sh-ocx-dev', Hostnames: [], EdgeRules: before }],
-      afterRequest: neverUnrouted(before, planRules('dev', { legacy: without('legacy-catalog') }), CATALOG, violations),
+      afterRequest: neverUnrouted(before, planRules('dev', { legacy: committed }), CATALOG, violations),
     });
     api = fake;
     const gone = before.find((r) => r.Description === 'ocx:legacy-catalog')!;
@@ -349,7 +360,7 @@ describe('an OriginStorage rule names a storage zone that exists', () => {
       pullZones: [{ Id: 1, Name: 'sh-ocx-dev', Hostnames: [], EdgeRules: [] }],
       storageZones: [],
     });
-    const { code, err } = await go(api, { legacy: without('legacy-catalog') });
+    const { code, err } = await go(api, { legacy: committed });
     expect(code).toBe(1);
     expect(err).toContain('ocx:repo-ocx-sdk-python: no storage zone named sh-ocx-ocx-sdk-python');
     expect(writes(api)).toEqual([]);

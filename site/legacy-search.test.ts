@@ -2,8 +2,11 @@
 import { describe, expect, it } from 'vitest';
 import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import { mergeTargets } from '@ocx-sh/theme/nav';
-import legacy from '../infra/bunny/legacy.json' with { type: 'json' };
+import legacyJson from '../infra/bunny/legacy.json' with { type: 'json' };
 import { liveMergeIndex } from './legacy-search.mjs';
+
+// legacy.json holds no entry since the last repo flipped, so the JSON type is never[]: give it its shape.
+const legacy = legacyJson as { entries: { id: string; repo: string; mode: string; origin: string; paths: string[] }[] };
 
 const bundles = mergeTargets(nav, '/').map((t) => ({ bundlePath: `${t.path}pagefind/` }));
 const legacyPaths = legacy.entries.flatMap((e) => e.paths);

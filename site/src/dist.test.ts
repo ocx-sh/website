@@ -28,12 +28,11 @@ describe('site dist', () => {
     expect(dirs.toSorted()).toEqual(['_astro', 'apps', 'integrations', 'pagefind', 'team']);
   });
 
-  it('names no legacy section bundle: the search chunk and every page leave out /apps/catalog/pagefind/ and kin', () => {
+  it('names no legacy section bundle: the search chunk and every page leave out the bundle of any path legacy.json lists', () => {
     const legacy = JSON.parse(readFileSync(`${root}infra/bunny/legacy.json`, 'utf8')) as {
       entries: { paths: string[] }[];
     };
     const bundles = legacy.entries.flatMap((e) => e.paths.map((p) => `${p.replace(/\/?$/, '/')}pagefind/`));
-    expect(bundles).toContain('/apps/catalog/pagefind/');
     const built = [
       ...readdirSync(`${dist}_astro`)
         .filter((f) => f.endsWith('.js'))
@@ -43,9 +42,13 @@ describe('site dist', () => {
     for (const f of built) for (const b of bundles) expect(read(f), `${f}: ${b}`).not.toContain(b);
   });
 
-  it('merges the docs bundle into the search chunk: /docs/ is a repo claim, no longer a legacy section', () => {
+  it('merges the docs and catalog bundles into the search chunk: both are repo claims, no longer legacy sections', () => {
     const chunks = readdirSync(`${dist}_astro`).filter((f) => f.endsWith('.js'));
-    expect(chunks.some((f) => read(`_astro/${f}`).includes('/docs/pagefind/'))).toBe(true);
+    for (const b of ['/docs/pagefind/', '/apps/catalog/pagefind/'])
+      expect(
+        chunks.some((f) => read(`_astro/${f}`).includes(b)),
+        b,
+      ).toBe(true);
   });
 
   it('renders the header and search on the 404 page', () => {

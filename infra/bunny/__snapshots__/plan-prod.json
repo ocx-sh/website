@@ -268,12 +268,12 @@
       ]
     },
     {
-      "ActionType": 1,
-      "ActionParameter1": "https://ocx-sh.github.io/catalog/%{Path.2-}",
-      "ActionParameter2": "302",
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-catalog",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:legacy-catalog",
+      "Description": "ocx:repo-catalog",
       "Triggers": [
         {
           "Type": 0,

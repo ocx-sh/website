@@ -9,7 +9,7 @@ prod ocx.sh               200 /catalog/               -> repo-index          | h
 prod ocx.sh               200 /integrations/bazel/    -> repo-rules-ocx      | hsts frame
 prod ocx.sh               200 /integrations/python/   -> repo-ocx-sdk-python | hsts frame
 prod ocx.sh               200 /integrations/cmake/    -> repo-find-ocx       | hsts frame
-prod ocx.sh               200 /apps/catalog/          -> legacy-catalog      | hsts frame
+prod ocx.sh               200 /apps/catalog/          -> repo-catalog        | hsts frame
 prod ocx.sh               200 /x/                     -> (default origin)    | hsts frame
 prod ocx.sh               200 /integrations/x/        -> (default origin)    | hsts frame
 prod ocx.sh               200 /apps/x/                -> (default origin)    | hsts frame
@@ -21,7 +21,7 @@ prod ocx.sh               200 /catalog/x/             -> repo-index          | h
 prod ocx.sh               200 /integrations/bazel/x/  -> repo-rules-ocx      | hsts frame
 prod ocx.sh               200 /integrations/python/x/ -> repo-ocx-sdk-python | hsts frame
 prod ocx.sh               200 /integrations/cmake/x/  -> repo-find-ocx       | hsts frame
-prod ocx.sh               200 /apps/catalog/x/        -> legacy-catalog      | hsts frame
+prod ocx.sh               200 /apps/catalog/x/        -> repo-catalog        | hsts frame
 prod ocx.sh               200 /docs/v2/               -> repo-ocx            | hsts frame
 prod ocx.sh               200 /v2/                    -> (default origin)    | hsts frame
 prod ocx.sh               200 /unknown/               -> (default origin)    | hsts frame

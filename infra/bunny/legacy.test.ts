@@ -1,12 +1,15 @@
 // C-314 data shape and the matcher contract, over the real planned rules.
 import { describe, expect, it } from 'vitest';
-import legacy from './legacy.json' with { type: 'json' };
+import legacyJson from './legacy.json' with { type: 'json' };
 import schema from './legacy.schema.json' with { type: 'json' };
 import nav from '@ocx-sh/theme/nav.json' with { type: 'json' };
 import { SITES, previewZone, slug } from '../../scripts/previews/sites.mjs';
 import { matchProbe } from './match.mjs';
 import { planRules } from './rules.mjs';
 import { claimDepth, redirectTemplate, zoneSpec } from './zones.mjs';
+
+// legacy.json holds no entry since the last repo flipped, so the JSON type is never[]: give it its shape.
+const legacy = legacyJson as { entries: { id: string; repo: string; mode: string; origin: string; paths: string[] }[] };
 
 const ENTRY_KEYS = ['id', 'mode', 'origin', 'paths', 'repo'];
 
@@ -28,7 +31,7 @@ function shapeErrors(doc: Record<string, unknown>): string[] {
 describe('legacy.json', () => {
   it('holds the ADR 0002 D6.4 rules 6-11, each { id, repo, mode, origin, paths[] }', () => {
     expect(shapeErrors(legacy)).toEqual([]);
-    expect(legacy.entries.map((e) => e.id)).toEqual(['legacy-catalog']);
+    expect(legacy.entries.map((e) => e.id)).toEqual([]);
   });
 
   it('a planted registry key fails the shape check and the schema forbids it', () => {
@@ -126,9 +129,15 @@ describe('legacy.json against nav.json and the redirect mapping (C-314)', () => 
   });
 
   it('maps <claim>...rest to <origin><rest> with %{Path.N-}, N = claim depth', () => {
-    const template = (id: string) =>
-      redirectTemplate(legacy.entries.find((e) => e.id === id) as (typeof legacy.entries)[number]);
-    expect(template('legacy-catalog')).toBe('https://ocx-sh.github.io/catalog/%{Path.2-}');
+    // legacy.json is empty since ocx-sh/catalog flipped: this sample keeps the mapping covered.
+    const catalog = {
+      id: 'legacy-catalog',
+      repo: 'ocx-sh/catalog',
+      mode: 'redirect',
+      origin: 'https://ocx-sh.github.io/catalog/',
+      paths: ['/apps/catalog/'],
+    };
+    expect(redirectTemplate(catalog)).toBe('https://ocx-sh.github.io/catalog/%{Path.2-}');
   });
 
   it('refuses a proxy entry, which has no redirect target', () => {
@@ -147,8 +156,8 @@ describe('matchProbe', () => {
   const prod = planRules('prod');
   const at = (host: string, path: string, status = 200) => matchProbe(prod, { host, path, status });
 
-  it('/apps/catalog/x/ wins legacy-catalog, /catalog/x/ is the repo-index storage rule', () => {
-    expect(at('ocx.sh', '/apps/catalog/x/').origin).toBe('legacy-catalog');
+  it('/apps/catalog/x/ is the repo-catalog storage rule, /catalog/x/ the repo-index one', () => {
+    expect(at('ocx.sh', '/apps/catalog/x/').origin).toBe('repo-catalog');
     expect(at('ocx.sh', '/catalog/x/').origin).toBe('repo-index');
   });
 

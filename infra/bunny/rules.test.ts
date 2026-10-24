@@ -13,7 +13,13 @@ import p8 from './fixtures/p8-pullzone.json' with { type: 'json' };
 import pStatus from './fixtures/p-statuscode-pullzone.json' with { type: 'json' };
 import { storageZoneName } from './zones.mjs';
 
-type Entry = (typeof committed.entries)[number];
+interface Entry {
+  id: string;
+  repo: string;
+  mode: 'proxy' | 'redirect';
+  origin: string;
+  paths: string[];
+}
 type Legacy = { entries: Entry[] };
 
 const RULES = new URL('./rules.mjs', import.meta.url).pathname;
@@ -34,7 +40,7 @@ function cli(zone: string, legacy?: Legacy) {
 
 const ids = (zone: string, legacy: Legacy = committed) => planRules(zone, { legacy }).map((r) => r.Description);
 const withEntries = (...edit: ((entries: Entry[]) => Entry[])[]): Legacy => ({
-  entries: edit.reduce((entries, fn) => fn(entries), structuredClone(committed.entries)),
+  entries: edit.reduce((entries, fn) => fn(entries), structuredClone(committed.entries as Entry[])),
 });
 const patch = (id: string, change: Partial<Entry>) => (entries: Entry[]) =>
   entries.map((e) => (e.id === id ? { ...e, ...change } : e));
@@ -47,6 +53,15 @@ const PROXY: Entry = {
   paths: ['/old/', '/older/'],
 };
 const addProxy = (entries: Entry[]) => [PROXY, ...entries];
+// legacy.json is empty since ocx-sh/catalog flipped to its own zone: the redirect mode keeps its coverage through this sample.
+const CATALOG: Entry = {
+  id: 'legacy-catalog',
+  repo: 'ocx-sh/catalog',
+  mode: 'redirect',
+  origin: 'https://ocx-sh.github.io/catalog/',
+  paths: ['/apps/catalog/'],
+};
+const addCatalog = (entries: Entry[]) => [CATALOG, ...entries];
 
 describe('bunny:plan output (offline, byte-stable)', () => {
   it.each(ZONES)('%s: two runs are byte-identical and match the committed snapshot', async (zone) => {
@@ -115,7 +130,7 @@ describe('rule set and limits', () => {
         'repo-ocx-sdk-python',
         'repo-rules-ocx',
         'repo-find-ocx',
-        'legacy-catalog',
+        'repo-catalog',
         'repo-www-setup',
         'repo-ocx',
         'repo-index',
@@ -229,7 +244,7 @@ describe('rule set and limits', () => {
     for (const [path, origin] of [
       ['/docs/getting-started', 'repo-ocx'],
       ['/schemas/config/v1.json', 'repo-ocx'],
-      ['/apps/catalog/x', 'legacy-catalog'],
+      ['/apps/catalog/x', 'repo-catalog'],
       ['/catalog', 'repo-index'],
     ] as const) {
       expect(hit('next.ocx.sh', path).origin, path).toBe(hit('ocx.sh', path).origin);
@@ -242,7 +257,7 @@ describe('rule set and limits', () => {
 
   it('proxy entries become OriginUrl rules, redirect entries 302 rules with the %{Path.N-} tail', () => {
     const rule = (id: string) =>
-      planRules('prod', { legacy: withEntries(addProxy) }).find((r) => r.Description === `ocx:${id}`);
+      planRules('prod', { legacy: withEntries(addProxy, addCatalog) }).find((r) => r.Description === `ocx:${id}`);
     expect(rule('legacy-proxy')).toMatchObject({ ActionType: 2, ActionParameter1: 'https://ocx-website.pages.dev' });
     expect(rule('legacy-catalog')).toMatchObject({
       ActionType: 1,
@@ -289,7 +304,7 @@ describe('refusals (exit 1, naming the rule)', () => {
   it.each(['https://SH-OCX.B-CDN.NET/catalog/', 'https://sh-ocx.b-cdn.net:443/catalog/'])(
     'a prod Redirect to a b-cdn.net host is refused however it is spelled (%s)',
     (origin) => {
-      refuses('prod', withEntries(patch('legacy-catalog', { origin })), 'legacy-catalog');
+      refuses('prod', withEntries(addCatalog, patch('legacy-catalog', { origin })), 'legacy-catalog');
     },
   );
 
@@ -329,11 +344,11 @@ describe('refusals (exit 1, naming the rule)', () => {
   });
 
   it('a relative Redirect target is refused', () => {
-    refuses('prod', withEntries(patch('legacy-catalog', { origin: '/catalog/' })), 'legacy-catalog');
+    refuses('prod', withEntries(addCatalog, patch('legacy-catalog', { origin: '/catalog/' })), 'legacy-catalog');
   });
 
   it('a prod Redirect to a b-cdn.net host is refused; dev accepts it', () => {
-    const legacy = withEntries(patch('legacy-catalog', { origin: 'https://sh-ocx.b-cdn.net/catalog/' }));
+    const legacy = withEntries(addCatalog, patch('legacy-catalog', { origin: 'https://sh-ocx.b-cdn.net/catalog/' }));
     refuses('prod', legacy, 'legacy-catalog');
     expect(cli('dev', legacy).status).toBe(0);
   });
@@ -345,8 +360,10 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
   it.each([['legacy-catalog', 'catalog', 'ocx-sh/catalog']])(
     'removing %s removes exactly its rule and adds repo-%s',
     (id, name, repo) => {
-      const before = planRules('prod');
-      const after = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
+      const before = planRules('prod', { legacy: withEntries(addCatalog) });
+      const after = planRules('prod', {
+        legacy: withEntries(addCatalog, (entries) => entries.filter((e) => e.id !== id)),
+      });
       const removed = before.filter((r) => !after.some((a) => sameRule(a, r)));
       const added = after.filter((a) => !before.some((r) => sameRule(a, r)));
       expect(removed.map((r) => r.Description)).toEqual([`ocx:${id}`]);
@@ -367,7 +384,7 @@ describe('deleting a legacy entry (single legacy.json edit, then plan the diff)'
 
   it('the repo rule claims its path', () => {
     const after = planRules('dev', {
-      legacy: withEntries((entries) => entries.filter((e) => e.id !== 'legacy-catalog')),
+      legacy: withEntries(),
     });
     const repoRule = after.find((r) => r.Description === 'ocx:repo-catalog');
     expect(repoRule?.Triggers.flatMap((t) => t.PatternMatches)).toEqual([
@@ -381,7 +398,9 @@ describe('S-120: the bare directory path stays routed when a legacy entry is del
   it.each([['legacy-catalog', '/apps/catalog', 'repo-catalog']])(
     'removing %s: %s goes to %s on every host',
     (id, path, winner) => {
-      const rules = planRules('prod', { legacy: withEntries((entries) => entries.filter((e) => e.id !== id)) });
+      const rules = planRules('prod', {
+        legacy: withEntries(addCatalog, (entries) => entries.filter((e) => e.id !== id)),
+      });
       for (const host of ['ocx.sh', 'sh-ocx.b-cdn.net'])
         expect(matchProbe(rules, { host, path, status: 200 }).origin, `${host}${path}`).toBe(winner);
     },
@@ -429,7 +448,9 @@ describe('against the recorded edge rules', () => {
 
   it('plans the redirect status in parameter 2, where the recorded rule keeps it', () => {
     expect(redirect.ActionParameter2).toMatch(/^30[12]$/);
-    const planned = planRules('prod').find((r) => r.ActionType === ACTION.Redirect)!;
+    const planned = planRules('prod', { legacy: withEntries(addCatalog) }).find(
+      (r) => r.ActionType === ACTION.Redirect,
+    )!;
     expect(planned.ActionParameter2).toBe('302');
     expect(Object.keys(planned).filter((k) => !(k in redirect))).toEqual([]);
   });

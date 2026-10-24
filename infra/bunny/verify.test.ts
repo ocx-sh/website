@@ -5,7 +5,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 import committed from './legacy.json' with { type: 'json' };
 import { main, probesFor, type Probe } from './verify.mjs';
 
-type Legacy = { entries: (typeof committed.entries)[number][] };
+interface Entry {
+  id: string;
+  repo: string;
+  mode: string;
+  origin: string;
+  paths: string[];
+}
+type Legacy = { entries: Entry[] };
 type Plan = { legacy: Legacy };
 interface Reply {
   status?: number;
@@ -25,7 +32,15 @@ const PROXY_ENTRY = {
   origin: 'https://ocx-website.pages.dev',
   paths: ['/docs/authoring/'],
 };
-const PROXY_PLAN: Plan = { legacy: { entries: [...committed.entries, PROXY_ENTRY] } };
+// ...and the redirect probes through this one (legacy.json is empty since ocx-sh/catalog flipped).
+const CATALOG_ENTRY = {
+  id: 'legacy-catalog',
+  repo: 'ocx-sh/catalog',
+  mode: 'redirect',
+  origin: 'https://ocx-sh.github.io/catalog/',
+  paths: ['/apps/catalog/'],
+};
+const PROXY_PLAN: Plan = { legacy: { entries: [...committed.entries, PROXY_ENTRY, CATALOG_ENTRY] } };
 
 // ponytail: the replies are hand-written, not recorded from a b-cdn.net host. M0 recorded the redirect status,
 // `Location` and the storage 200/404 bodies (plan, M0 Result); the header set (`x-robots-tag`, canonical) is not.
@@ -172,9 +187,9 @@ describe('a correct zone', () => {
   });
 
   it('a redirect to a github.io Location is the golden one, not a leak', async () => {
-    const { code } = await run('dev');
+    const { code } = await run('dev', { plan: PROXY_PLAN });
     expect(code).toBe(0);
-    expect(probesFor('dev').some((p) => p.location?.includes('github.io'))).toBe(true);
+    expect(probesFor('dev', PROXY_PLAN).some((p) => p.location?.includes('github.io'))).toBe(true);
   });
 });
 
