@@ -148,7 +148,8 @@ const action = Astro.slots.has('action') ? (await Astro.slots.render('action')).
           )}
           {/* Straight after the text: no parser yield (a paint) can fall between the SSR text and its swap. */}
           {picker && detect && <script is:inline set:html={PRE_PAINT} />}
-          <span class="ocx-cmdbar__icons" aria-hidden="true">
+          {/* not-content: Starlight's `* + *` content rhythm would push the check below the copy icon. */}
+          <span class="ocx-cmdbar__icons not-content" aria-hidden="true">
             <Icon name="copy" class="ocx-cmdbar__idle" />
             <Icon name="check" class="ocx-cmdbar__done" />
           </span>
