@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-10-24
+
+### Changed
+
+- The ecosystem menu reads "solutions"; catalog is a publish tool and the public index docs get an entry *(nav)*
+
+### Fixed
+
+- The command bar's copied check sits level with the copy icon inside Starlight content *(theme)*
+
 ## [0.2.2] - 2026-10-23
 
 ### Added
@@ -133,6 +143,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Theme code fences on story pages *(showcase)*
+[0.2.3]: https://github.com/ocx-sh/website/compare/v0.2.2..v0.2.3
 [0.2.2]: https://github.com/ocx-sh/website/compare/v0.2.1..v0.2.2
 [0.2.1]: https://github.com/ocx-sh/website/compare/v0.2.0..v0.2.1
 [0.2.0]: https://github.com/ocx-sh/website/compare/v0.1.1..v0.2.0
