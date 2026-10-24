@@ -156,9 +156,9 @@ describe('matchProbe', () => {
   const prod = planRules('prod');
   const at = (host: string, path: string, status = 200) => matchProbe(prod, { host, path, status });
 
-  it('/apps/catalog/x/ is the repo-catalog storage rule, /catalog/x/ the repo-index one', () => {
+  it('/apps/catalog/x/ is the repo-catalog storage rule, /catalog/x/ the repo-index-catalog one', () => {
     expect(at('ocx.sh', '/apps/catalog/x/').origin).toBe('repo-catalog');
-    expect(at('ocx.sh', '/catalog/x/').origin).toBe('repo-index');
+    expect(at('ocx.sh', '/catalog/x/').origin).toBe('repo-index-catalog');
   });
 
   it('a path no origin rule claims wins none', () => {

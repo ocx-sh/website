@@ -29,7 +29,7 @@ const ROOT_STORAGE = storageZoneName(ROOT_REPO);
 
 /**
  * The package-index wire zone (`index.ocx.sh`, the host the ocx CLI dials) has its own storage zone and pull zone;
- * `sh-ocx-index` (standard tier) keeps serving `ocx.sh/catalog/`. Names live here once: a rename is a one-line change.
+ * `sh-ocx-index-catalog` (standard tier) keeps serving `ocx.sh/catalog/`. Names live here once: a rename is a one-line change.
  */
 export const WIRE_REPO = 'ocx-sh/index';
 export const WIRE_STORAGE_ZONE = 'sh-ocx-index-edge';

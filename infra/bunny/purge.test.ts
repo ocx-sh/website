@@ -100,7 +100,7 @@ describe('bunny:purge', () => {
 describe('bunny:purge --zone index', () => {
   it('purges the index pull zone', async () => {
     const r = await run(['--zone', 'index']);
-    expect(r.code).toBe(1); // the fixture holds no sh-ocx-index pull zone
+    expect(r.code).toBe(1); // the fixture holds no sh-ocx-index-catalog pull zone
     expect(r.err).toContain('no pull zone named sh-ocx-index-edge');
   });
 });

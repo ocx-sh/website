@@ -5,7 +5,7 @@ prod ocx.sh               200 /install/               -> repo-www-setup      | h
 prod ocx.sh               200 /team/                  -> (default origin)    | hsts frame
 prod ocx.sh               200 /docs/                  -> repo-ocx            | hsts frame
 prod ocx.sh               200 /schemas/               -> repo-ocx            | hsts frame
-prod ocx.sh               200 /catalog/               -> repo-index          | hsts frame
+prod ocx.sh               200 /catalog/               -> repo-index-catalog  | hsts frame
 prod ocx.sh               200 /integrations/bazel/    -> repo-rules-ocx      | hsts frame
 prod ocx.sh               200 /integrations/python/   -> repo-ocx-sdk-python | hsts frame
 prod ocx.sh               200 /integrations/cmake/    -> repo-find-ocx       | hsts frame
@@ -17,7 +17,7 @@ prod ocx.sh               200 /install/x/             -> repo-www-setup      | h
 prod ocx.sh               200 /team/x/                -> (default origin)    | hsts frame
 prod ocx.sh               200 /docs/x/                -> repo-ocx            | hsts frame
 prod ocx.sh               200 /schemas/x/             -> repo-ocx            | hsts frame
-prod ocx.sh               200 /catalog/x/             -> repo-index          | hsts frame
+prod ocx.sh               200 /catalog/x/             -> repo-index-catalog  | hsts frame
 prod ocx.sh               200 /integrations/bazel/x/  -> repo-rules-ocx      | hsts frame
 prod ocx.sh               200 /integrations/python/x/ -> repo-ocx-sdk-python | hsts frame
 prod ocx.sh               200 /integrations/cmake/x/  -> repo-find-ocx       | hsts frame

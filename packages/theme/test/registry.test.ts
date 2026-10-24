@@ -167,6 +167,7 @@ describe('C-005 repos and zones', () => {
     ['ocx-sh/rules_ocx', 'sh-ocx-rules-ocx'],
     ['ocx-sh/ocx-sdk.python', 'sh-ocx-ocx-sdk-python'],
     ['ocx-sh/Website', 'sh-ocx-website'],
+    ['ocx-sh/index', 'sh-ocx-index-catalog'],
     ['ocx-sh/ocx', 'sh-ocx-ocx'],
   ])('C-005: zoneName(%s) = %s', (repo, zone) => {
     expect(zoneName(repo)).toBe(zone);

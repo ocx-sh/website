@@ -373,10 +373,10 @@
     {
       "ActionType": 17,
       "ActionParameter1": "",
-      "ActionParameter2": "sh-ocx-index",
+      "ActionParameter2": "sh-ocx-index-catalog",
       "TriggerMatchingType": 0,
       "Enabled": true,
-      "Description": "ocx:repo-index",
+      "Description": "ocx:repo-index-catalog",
       "Triggers": [
         {
           "Type": 0,

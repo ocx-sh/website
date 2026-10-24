@@ -332,7 +332,7 @@ describe('bunny:onboard --edge (the SSD wire zone)', () => {
   it('plain ocx-sh/index stays a standard zone with BUNNY_STORAGE_KEY, and --edge takes no other repo', async () => {
     const plain = await run({ argv: ['ocx-sh/index'] });
     const body = plain.requests.find((q) => q.method === 'POST' && q.path === '/storagezone')?.body;
-    expect(body).toMatchObject({ Name: 'sh-ocx-index', Region: 'DE', ReplicationRegions: [] });
+    expect(body).toMatchObject({ Name: 'sh-ocx-index-catalog', Region: 'DE', ReplicationRegions: [] });
     expect(body).not.toHaveProperty('ZoneTier');
     expect(secretSets(plain.calls)[0]?.argv[2]).toBe('BUNNY_STORAGE_KEY');
     expect((await run({ argv: ['ocx-sh/website', '--edge'] })).code).toBe(2);

@@ -133,7 +133,7 @@ describe('rule set and limits', () => {
         'repo-catalog',
         'repo-www-setup',
         'repo-ocx',
-        'repo-index',
+        'repo-index-catalog',
       ].map((id) => `ocx:${id}`),
     );
     expect(originIds('dev')).toEqual(originIds('prod'));
@@ -245,7 +245,7 @@ describe('rule set and limits', () => {
       ['/docs/getting-started', 'repo-ocx'],
       ['/schemas/config/v1.json', 'repo-ocx'],
       ['/apps/catalog/x', 'repo-catalog'],
-      ['/catalog', 'repo-index'],
+      ['/catalog', 'repo-index-catalog'],
     ] as const) {
       expect(hit('next.ocx.sh', path).origin, path).toBe(hit('ocx.sh', path).origin);
       expect(hit('next.ocx.sh', path).origin, path).toBe(origin);

@@ -205,16 +205,22 @@ export function claimsOf(nav, repo) {
   return nav.claims.filter((c) => c.repo === repo);
 }
 
+/** Zones whose derived name is unusable. Bunny keeps a deleted zone's name taken. */
+const ZONE_OVERRIDES = new Map([['ocx-sh/index', 'sh-ocx-index-catalog']]);
+
 /**
  * The Bunny storage zone of `repo` (R7): `ocx-sh/rules_ocx` → `sh-ocx-rules-ocx`.
  * @param {string} repo
  * @returns {string}
  */
 export function zoneName(repo) {
-  return `sh-ocx-${repo
-    .replace(/^ocx-sh\//, '')
-    .toLowerCase()
-    .replace(/[._]/g, '-')}`;
+  return (
+    ZONE_OVERRIDES.get(repo) ??
+    `sh-ocx-${repo
+      .replace(/^ocx-sh\//, '')
+      .toLowerCase()
+      .replace(/[._]/g, '-')}`
+  );
 }
 
 /**

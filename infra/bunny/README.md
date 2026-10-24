@@ -291,7 +291,7 @@ Goal: `index.ocx.sh`, the host the ocx CLI dials (`/config.json`, `/c/index.json
 task bunny:onboard -- ocx-sh/index --edge
 ```
 
-This creates the SSD zone with replication, or adopts it, and sets `BUNNY_EDGE_STORAGE_KEY` in the `ocx.sh` environment of `ocx-sh/index`. It reads the zone back and refuses, with no secret set, when the tier or a region differs: neither can be changed on a live zone. Plain `task bunny:onboard -- ocx-sh/index` still handles `sh-ocx-index` and `BUNNY_STORAGE_KEY`.
+This creates the SSD zone with replication, or adopts it, and sets `BUNNY_EDGE_STORAGE_KEY` in the `ocx.sh` environment of `ocx-sh/index`. It reads the zone back and refuses, with no secret set, when the tier or a region differs: neither can be changed on a live zone. Plain `task bunny:onboard -- ocx-sh/index` still handles `sh-ocx-index-catalog` and `BUNNY_STORAGE_KEY`.
 
 Verify: `gh secret list --env ocx.sh --repo ocx-sh/index` names `BUNNY_EDGE_STORAGE_KEY`; the dashboard shows tier Edge (SSD) and the eight regions.
 
