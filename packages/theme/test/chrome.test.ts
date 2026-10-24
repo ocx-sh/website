@@ -164,7 +164,7 @@ describe('C-023 mobile menu sections', () => {
   it('C-023: MobileMenuFooter carries its own ecosystem menu trigger (the header one is hidden at ≤ 640px)', async () => {
     const doc = await render('MobileMenuFooter', '/docs/');
     const triggers = doc.querySelectorAll('nav.ocx-mobile-sections button[popovertarget]');
-    expect([...triggers].map((b) => [b.getAttribute('type'), b.textContent.trim()])).toEqual([['button', 'ecosystem']]);
+    expect([...triggers].map((b) => [b.getAttribute('type'), b.textContent.trim()])).toEqual([['button', 'solutions']]);
     // C-192: it names the panel the Header renders (outside the nav root, so `mount` keeps it).
     const panel = (await render('Header', '/docs/')).querySelector('.ocx-mega[popover]');
     expect(panel?.id).toBeTruthy();

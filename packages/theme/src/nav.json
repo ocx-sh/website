@@ -8,7 +8,7 @@
   "sections": [
     { "id": "docs", "label": "docs", "href": "/docs/" },
     { "id": "catalog", "label": "catalog", "href": "/catalog/" },
-    { "id": "ecosystem", "label": "ecosystem", "hubs": ["integrations", "apps"] }
+    { "id": "ecosystem", "label": "solutions", "hubs": ["integrations", "apps"] }
   ],
   "hubs": [
     {
@@ -32,7 +32,6 @@
       "all": "all apps →",
       "categories": [
         { "id": "publish", "label": "publish" },
-        { "id": "browse", "label": "browse" },
         { "id": "agents", "label": "agents" }
       ]
     }
@@ -152,12 +151,21 @@
       "planned": true
     },
     {
+      "id": "index",
+      "hub": "apps",
+      "category": "publish",
+      "label": "public index",
+      "meta": "docs",
+      "desc": "Announce packages and claim namespaces on index.ocx.sh.",
+      "href": "https://ocx.sh/catalog/docs/"
+    },
+    {
       "id": "catalog",
       "hub": "apps",
-      "category": "browse",
+      "category": "publish",
       "label": "catalog",
-      "meta": "web",
-      "desc": "Browse and search any index.",
+      "meta": "cli",
+      "desc": "Render any index into a static, searchable catalog site.",
       "href": "/apps/catalog/"
     },
     {
