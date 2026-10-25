@@ -149,7 +149,8 @@ describe('C-027 TableOfContents', () => {
 
 describe('C-023 mobile menu sections', () => {
   it('C-023: MobileMenuFooter lists docs, each ecosystem hub and install, aria-current per C-007', async () => {
-    const hubs = nav.hubs.map((h) => [h.label, h.href]);
+    // a hub whose `all` text extends its label shows the rest as screen-reader text ("more" + " to learn")
+    const hubs = nav.hubs.map((h) => [h.all.startsWith(h.label) ? h.all.replace(/\s*→$/, '') : h.label, h.href]);
     const doc = await render('MobileMenuFooter', '/integrations/bazel/x/');
     const links = [...doc.querySelectorAll('nav.ocx-mobile-sections a')].map((a) => [
       a.textContent.trim(),
