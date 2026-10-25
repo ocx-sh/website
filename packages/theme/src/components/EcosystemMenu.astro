@@ -46,32 +46,29 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
     {hubs.map((h) => (
       <div class="ocx-mega__panel" data-ocx-hub={h.id} {...ssrAttrs(lean(rail.getContentProps({ value: h.id })))}>
         {h.categories.map((c) => (
-          <div class="ocx-mega__category" data-ocx-category={c.id}>
+          <div class="ocx-mega__category">
             <p class="ocx-mega__category-label">{c.label}</p>
             <ul class="ocx-mega__items">
               {c.items.map((e) => (
-                <li class="ocx-mega__item">
+                <li>
                   {e.href ? (
-                    <a class="ocx-mega__link" href={e.href} aria-describedby={`ocx-mega-desc-${e.id}`}>
+                    <a class="ocx-mega__link" href={e.href} aria-describedby={`d${nav.entries.indexOf(e)}`}>
                       {e.label}
                       <Icon name="arrow-right" />
                     </a>
                   ) : (
                     <span class="ocx-mega__link">{e.label}</span>
                   )}
-                  <span class="ocx-mega__preview">
-                    <span class="ocx-mega__preview-head" aria-hidden="true">
-                      {e.label}
-                      <span class="ocx-mega__meta">{e.meta}</span>
-                    </span>
-                    <span class="ocx-mega__desc" id={`ocx-mega-desc-${e.id}`}>
+                  <span class="ocx-mega__preview" data-meta={e.meta} aria-hidden="true">
+                    {e.label}
+                    <span class="ocx-mega__desc" id={e.href ? `d${nav.entries.indexOf(e)}` : undefined}>
                       {e.desc}
                     </span>
                   </span>
                 </li>
               ))}
               {c.more > 0 && (
-                <li class="ocx-mega__item">
+                <li>
                   <a class="ocx-mega__more" href={h.href}>{`${c.more} more →`}</a>
                 </li>
               )}
@@ -83,7 +80,7 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
     <p class="ocx-mega__strip">
       {hubs.map((h) => (
         <span class="ocx-mega__blurb" data-ocx-hub={h.id}>
-          <span class="ocx-mega__name">{h.label}</span>
+          {h.label}
           <span class="ocx-mega__desc-line">{h.blurb}</span>
         </span>
       ))}
