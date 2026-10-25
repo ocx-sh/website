@@ -39,9 +39,9 @@ const ASSET_PATTERN = 'https://*/_astro/*';
 const REDIRECT_STATUS = '302';
 /** A host of one of our zones; an OriginUrl or prod Redirect pointing at one loops or leaks it. */
 const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|index\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
-/** Catalog pages that render untrusted package content: `/catalog/p/<pkg>` and `/catalog/index/<registry>/p/<pkg>`. */
 /** Pages other origins may frame: the embeds of ocx-sh/marketing's `/learn/` claim. */
 const EMBED_PATHS = ['/learn/*/embed/*'];
+/** Catalog pages that render untrusted package content: `/catalog/p/<pkg>` and `/catalog/index/<registry>/p/<pkg>`. */
 const SANDBOX_PATHS = ['/catalog/p/*', '/catalog/index/*/p/*'];
 /** The wire tree (`config.json`, `c/**`, `p/**`); `p/**` carries package content. */
 const WIRE_PATHS = ['/config.json', '/c/*', '/p/*'];
