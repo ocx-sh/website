@@ -60,6 +60,118 @@
       ]
     },
     {
+      "ActionType": 3,
+      "ActionParameter1": "60",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:shell-current-edge",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/_shell/v1/current.json",
+            "https://next.ocx.sh/_shell/v1/current.json",
+            "https://sh-ocx.b-cdn.net/_shell/v1/current.json"
+          ]
+        },
+        {
+          "Type": 8,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "200"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 16,
+      "ActionParameter1": "60",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:shell-current-browser",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/_shell/v1/current.json",
+            "https://next.ocx.sh/_shell/v1/current.json",
+            "https://sh-ocx.b-cdn.net/_shell/v1/current.json"
+          ]
+        },
+        {
+          "Type": 8,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "200"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 3,
+      "ActionParameter1": "31536000",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:shell-rev-edge",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/_shell/v1/*/nav.html",
+            "https://next.ocx.sh/_shell/v1/*/nav.html",
+            "https://sh-ocx.b-cdn.net/_shell/v1/*/nav.html"
+          ]
+        },
+        {
+          "Type": 8,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "200"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 16,
+      "ActionParameter1": "31536000",
+      "ActionParameter2": "",
+      "TriggerMatchingType": 1,
+      "Enabled": true,
+      "Description": "ocx:shell-rev-browser",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://ocx.sh/_shell/v1/*/nav.html",
+            "https://next.ocx.sh/_shell/v1/*/nav.html",
+            "https://sh-ocx.b-cdn.net/_shell/v1/*/nav.html"
+          ]
+        },
+        {
+          "Type": 8,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "200"
+          ]
+        }
+      ]
+    },
+    {
       "ActionType": 5,
       "ActionParameter1": "X-Robots-Tag",
       "ActionParameter2": "noindex, nofollow",

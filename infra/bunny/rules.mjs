@@ -36,6 +36,10 @@ const MAX_TRIGGERS = 5;
 const PLAN_CEILING = 40;
 const IMMUTABLE = '31536000';
 const ASSET_PATTERN = 'https://*/_astro/*';
+/** The shared header published by the root site: a mutable pointer and its content-addressed fragments. */
+const SHELL_POINTER = '/_shell/v1/current.json';
+const SHELL_FRAGMENT = '/_shell/v1/*/nav.html';
+const SHELL_POINTER_TTL = '60';
 const REDIRECT_STATUS = '302';
 /** A host of one of our zones; an OriginUrl or prod Redirect pointing at one loops or leaks it. */
 const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|index\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
@@ -134,21 +138,39 @@ function rule(id, patterns, action, p1, p2 = '') {
 }
 
 /**
- * A cache rule for every `/_astro/` URL that answered 200: a transient 404 on a hashed URL must never
- * be pinned for a year.
+ * A cache rule for URLs that answered 200: a transient 404 on a content-addressed URL must never be pinned.
  * @param {string} id
  * @param {number} action
+ * @param {string[]} patterns
+ * @param {string} seconds
  * @returns {BunnyRule}
  */
-function assetRule(id, action) {
+function cacheRule(id, action, patterns, seconds) {
   return {
-    ...rule(id, [ASSET_PATTERN], action, IMMUTABLE),
+    ...rule(id, patterns, action, seconds),
     TriggerMatchingType: MATCH.All,
     Triggers: [
-      ...urlTriggers([ASSET_PATTERN]),
+      ...urlTriggers(patterns),
       { Type: TRIGGER.StatusCode, PatternMatchingType: MATCH.Any, Parameter1: '', PatternMatches: ['200'] },
     ],
   };
+}
+
+/**
+ * The shared-header fragment (`/_shell/v1/`): the pointer lives a minute so a nav change reaches every site fast,
+ * a `<rev>/nav.html` is content-addressed and lives a year. Browser and edge TTLs are separate rules.
+ * @param {string[]} hosts
+ * @returns {BunnyRule[]}
+ */
+function shellRules(hosts) {
+  const pointer = onHosts(hosts, [SHELL_POINTER]);
+  const fragment = onHosts(hosts, [SHELL_FRAGMENT]);
+  return [
+    cacheRule('shell-current-edge', ACTION.OverrideCacheTime, pointer, SHELL_POINTER_TTL),
+    cacheRule('shell-current-browser', ACTION.OverrideBrowserCacheTime, pointer, SHELL_POINTER_TTL),
+    cacheRule('shell-rev-edge', ACTION.OverrideCacheTime, fragment, IMMUTABLE),
+    cacheRule('shell-rev-browser', ACTION.OverrideBrowserCacheTime, fragment, IMMUTABLE),
+  ];
 }
 
 /**
@@ -346,7 +368,7 @@ function problemsOf(rules, origins, { hosts, prod }) {
 }
 
 /**
- * The rules of one zone, in apply order: asset cache (not on previews), `noindex`, `hsts` (prod),
+ * The rules of one zone, in apply order: asset and `/_shell/` cache (not on previews), `noindex`, `hsts` (prod),
  * `X-Frame-Options`, the catalog sandbox headers (not on previews), then the origin rules longest claimed path first. A preview zone gets `noindex`
  * and `X-Frame-Options` only. Throws a {@link PlanError} when a rule would loop, leak a zone host,
  * or make the winner of a request ambiguous.
@@ -371,8 +393,9 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
     ...(preview || wire
       ? []
       : [
-          assetRule('assets-edge', ACTION.OverrideCacheTime),
-          assetRule('assets-browser', ACTION.OverrideBrowserCacheTime),
+          cacheRule('assets-edge', ACTION.OverrideCacheTime, [ASSET_PATTERN], IMMUTABLE),
+          cacheRule('assets-browser', ACTION.OverrideBrowserCacheTime, [ASSET_PATTERN], IMMUTABLE),
+          ...shellRules(hosts),
         ]),
     ...(wire
       ? []
