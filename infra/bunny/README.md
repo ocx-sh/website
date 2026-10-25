@@ -30,6 +30,8 @@ Verify: `gh secret list --env ocx.sh --repo ocx-sh/website` names `BUNNY_STORAGE
 
 Rollback: `gh secret delete BUNNY_STORAGE_KEY --env ocx.sh --repo ocx-sh/website`. The storage zone stays. Delete it in the dashboard only when no deploy uses it.
 
+With `--local` it creates or adopts the storage zone and its 404 path only: no `gh` call, no GitHub environment needed, no secret written. Use it for a repo whose environment does not exist yet, then onboard it again without `--local` once it does.
+
 ### Reconcile a pull zone
 
 ```bash

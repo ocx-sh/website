@@ -153,6 +153,15 @@ describe('bunny:onboard', () => {
     expect(r.calls.every((c) => !c.accountKeyInEnv)).toBe(true);
   });
 
+  it('--local ensures the zone and its 404 path, never calls gh or sets a secret', async () => {
+    const r = await run({ argv: ['--local', 'ocx-sh/marketing'], gh: false, ghEnvs: [] });
+    expect(r.code).toBe(0);
+    expect(r.calls).toEqual([]);
+    const zone = r.fake.state.storageZones.find((z) => z.Name === 'sh-ocx-marketing');
+    expect(zone?.Custom404FilePath).toBe('/bunnycdn_errors/404.html');
+    expect(r.out + r.err).not.toContain(zone!.Password);
+  });
+
   it('is idempotent: a re-run creates nothing, writes nothing to Bunny and sets the same secret', async () => {
     const first = await run();
     const second = await run();

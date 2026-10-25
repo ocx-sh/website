@@ -79,7 +79,7 @@
       "ActionType": 5,
       "ActionParameter1": "X-Frame-Options",
       "ActionParameter2": "SAMEORIGIN",
-      "TriggerMatchingType": 0,
+      "TriggerMatchingType": 1,
       "Enabled": true,
       "Description": "ocx:frame",
       "Triggers": [
@@ -89,6 +89,14 @@
           "Parameter1": "",
           "PatternMatches": [
             "https://sh-ocx-dev.b-cdn.net/*"
+          ]
+        },
+        {
+          "Type": 0,
+          "PatternMatchingType": 2,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/learn/*/embed/*"
           ]
         }
       ]
@@ -262,6 +270,25 @@
           "PatternMatches": [
             "https://sh-ocx-dev.b-cdn.net/catalog",
             "https://sh-ocx-dev.b-cdn.net/catalog/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 17,
+      "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-marketing",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:repo-marketing",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/learn",
+            "https://sh-ocx-dev.b-cdn.net/learn/*"
           ]
         }
       ]

@@ -81,12 +81,12 @@ function hasBranchPolicy(body) {
 
 /**
  * @param {string[]} argv
- * @returns {{ repo: string, zone: string, secret: string, environment: string, secretRepo: string, preview: boolean, edge: boolean }}
+ * @returns {{ repo: string, zone: string, secret: string, environment: string, secretRepo: string, preview: boolean, edge: boolean, local: boolean }}
  */
 function target(argv) {
   const { values, positionals } = parseArgs({
     args: argv,
-    options: { preview: { type: 'string' }, edge: { type: 'boolean' } },
+    options: { preview: { type: 'string' }, edge: { type: 'boolean' }, local: { type: 'boolean' } },
     allowPositionals: true,
   });
   if (values.edge) {
@@ -103,6 +103,7 @@ function target(argv) {
       secretRepo: repo,
       preview: false,
       edge: true,
+      local: Boolean(values.local),
     };
   }
   if (values.preview !== undefined) {
@@ -116,6 +117,7 @@ function target(argv) {
       secretRepo: ROOT_REPO,
       preview: true,
       edge: false,
+      local: Boolean(values.local),
     };
   }
   if (positionals.length > 1) throw new Error('give one repo');
@@ -129,6 +131,7 @@ function target(argv) {
     secretRepo: repo,
     preview: false,
     edge: false,
+    local: Boolean(values.local),
   };
 }
 
@@ -146,7 +149,7 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
     t = target(argv);
   } catch (e) {
     err(
-      `${e instanceof Error ? e.message : String(e)}\nusage: onboard.mjs [<repo>] | --edge [ocx-sh/index] | --preview <site>\n`,
+      `${e instanceof Error ? e.message : String(e)}\nusage: onboard.mjs [--local] [<repo>] | --edge [ocx-sh/index] | --preview <site>\n`,
     );
     return EXIT.usage;
   }
@@ -164,14 +167,15 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
     // gh never sees the account key.
     const ghEnv = { ...env, BUNNY_API_KEY: undefined };
     const base = `repos/${t.secretRepo}/environments/${t.environment}`;
-    const probe = await gh(['api', base], ghEnv).catch(() => undefined);
-    if (probe?.code !== 0) {
+    // --local: the zone only, for a repo with no GitHub environment yet; no `gh` call at all.
+    const probe = t.local ? undefined : await gh(['api', base], ghEnv).catch(() => undefined);
+    if (!t.local && probe?.code !== 0) {
       throw new RefusalError(
         `environment "${t.environment}" of ${t.secretRepo} is not reachable through gh (installed and logged in?); ${CREATE_HINT(base)}`,
       );
     }
     // The deploy key goes into this environment: without a branch policy any branch's workflow could read it.
-    if (!hasBranchPolicy(probe.stdout)) {
+    if (probe && !hasBranchPolicy(probe.stdout)) {
       throw new RefusalError(
         `environment "${t.environment}" of ${t.secretRepo} has no deployment branch policy, so any branch could read the key; ${CREATE_HINT(base)}`,
       );
@@ -228,6 +232,10 @@ export async function main({ argv, env, out, err, fetch, baseUrl }) {
       out(`${t.zone}: 404 path set\n`);
     }
 
+    if (t.local) {
+      out(`${t.zone}: --local, secret ${t.secret} not set\n`);
+      return EXIT.ok;
+    }
     const set = await gh(['secret', 'set', t.secret, '--env', t.environment, '--repo', t.secretRepo], ghEnv, password);
     if (set.code !== 0) throw new RefusalError(`gh secret set ${t.secret} failed: ${set.stderr.trim()}`);
     out(`${t.zone}: secret ${t.secret} set in ${t.secretRepo} environment ${t.environment}\n`);

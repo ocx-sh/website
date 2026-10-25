@@ -30,7 +30,7 @@ Current claims: `/`, `/integrations/`, `/apps/`, `/team/` (ocx-sh/website),
 `/install/` (ocx-sh/www-setup), `/docs/`, `/schemas/` (ocx-sh/ocx), `/catalog/` (ocx-sh/index),
 `/integrations/bazel/` (ocx-sh/rules_ocx), `/integrations/python/`
 (ocx-sh/ocx-sdk-python), `/integrations/cmake/` (ocx-sh/find_ocx),
-`/apps/catalog/` (ocx-sh/catalog). `nav.json` in the
+`/apps/catalog/` (ocx-sh/catalog), `/learn/` (ocx-sh/marketing). `nav.json` in the
 installed theme is the live list.
 
 A new section is a pull request to `ocx-sh/website` adding a claim

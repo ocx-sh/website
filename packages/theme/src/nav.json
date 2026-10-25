@@ -48,7 +48,8 @@
     { "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "search": true },
     { "path": "/integrations/python/", "repo": "ocx-sh/ocx-sdk-python", "search": true },
     { "path": "/integrations/cmake/", "repo": "ocx-sh/find_ocx", "search": true },
-    { "path": "/apps/catalog/", "repo": "ocx-sh/catalog", "search": true }
+    { "path": "/apps/catalog/", "repo": "ocx-sh/catalog", "search": true },
+    { "path": "/learn/", "repo": "ocx-sh/marketing", "search": false }
   ],
   "entries": [
     {
