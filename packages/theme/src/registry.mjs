@@ -3,7 +3,8 @@
 
 /** @typedef {{ wordmark: string, href: string }} Brand */
 /** @typedef {{ id: string, label: string, href: string }} LinkSection */
-/** @typedef {{ id: string, label: string, hubs: string[] }} MenuSection */
+/** @typedef {{ label: string, links: { label: string, href: string }[] }} MoreGroup */
+/** @typedef {{ id: string, label: string, hubs: string[], more?: { label: string, groups: MoreGroup[] } }} MenuSection */
 /** @typedef {LinkSection | MenuSection} Section */
 /** @typedef {{ id: string, label: string }} Category */
 /**
@@ -140,6 +141,12 @@ export function validate(nav) {
   const hubUses = new Map();
   nav.sections.forEach((s, i) => {
     if ('href' in s) return internal(`sections[${i}].href`, s.href);
+    s.more?.groups.forEach((g, j) =>
+      g.links.forEach((l, k) => {
+        if (l.href.startsWith('/') && (claimFor(nav, l.href)?.path ?? '/') === '/' && !claimed.has(l.href))
+          add(`sections[${i}].more.groups[${j}].links[${k}].href`, `C-006: href "${l.href}" is under no claim`);
+      }),
+    );
     s.hubs.forEach((h, j) => {
       if (!hubIds.has(h)) add(`sections[${i}].hubs[${j}]`, `C-006: unknown hub "${h}"`);
       hubUses.set(h, (hubUses.get(h) ?? 0) + 1);

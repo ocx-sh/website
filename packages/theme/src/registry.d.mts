@@ -35,7 +35,8 @@ export function zoneName(repo: string): string;
 export function mergeTargets(nav: Nav, ownPath: string): MergeTarget[];
 /** @typedef {{ wordmark: string, href: string }} Brand */
 /** @typedef {{ id: string, label: string, href: string }} LinkSection */
-/** @typedef {{ id: string, label: string, hubs: string[] }} MenuSection */
+/** @typedef {{ label: string, links: { label: string, href: string }[] }} MoreGroup */
+/** @typedef {{ id: string, label: string, hubs: string[], more?: { label: string, groups: MoreGroup[] } }} MenuSection */
 /** @typedef {LinkSection | MenuSection} Section */
 /** @typedef {{ id: string, label: string }} Category */
 /**
@@ -97,10 +98,21 @@ export type LinkSection = {
     label: string;
     href: string;
 };
+export type MoreGroup = {
+    label: string;
+    links: {
+        label: string;
+        href: string;
+    }[];
+};
 export type MenuSection = {
     id: string;
     label: string;
     hubs: string[];
+    more?: {
+        label: string;
+        groups: MoreGroup[];
+    };
 };
 export type Section = LinkSection | MenuSection;
 export type Category = {

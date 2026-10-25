@@ -6,7 +6,7 @@ reading the registry from code.
 ## Shape
 
 `@ocx-sh/theme/nav.json` (schema `nav.schema.json` in the theme repo) holds
-`brand`, `sections`, `hubs`, `claims`, `entries`, `actions` and `footer`.
+`brand`, `sections` (a link, or a menu over `hubs` with an optional `more`), `hubs`, `claims`, `entries`, `actions` and `footer`.
 The header, the footer, the breadcrumb trail, the search merge, `ocx-site
 check` and the deploy action all read this one file, so a nav change is a
 theme release that reaches each site through its Dependabot update.
@@ -44,6 +44,14 @@ A claim is `{ "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "searc
 | `catalogHref(nav, pkg?)` | The catalog's root-relative URL; with `pkg` (`nodejs/node`, no registry, no tag) that package's page, `/catalog/nodejs/node/` |
 | `externalLink(href)` | `{ out, attrs }`: `out` shows the external icon, `attrs` is `target="_blank"` and `rel="noopener noreferrer"` for an external `http(s)` href, `{}` for an internal or `mailto:` one |
 | `PAGEFIND_VERSION` | The Pagefind version the theme was built against |
+
+## The menu's "More" group
+
+A menu section (`solutions`) may carry `more`: `{ "label": "More", "groups": [{ "label": "Learn",
+"links": [{ "label": "Shorts", "href": "/learn/videos/" }] }] }`. The header's menu
+(and the mobile menu's, which opens the same panel) pins it to the bottom of the rail, below the hubs.
+Each link's `href` is a claim path or lies under a claim other than `/`; `validate` reports anything
+else. It is not a top-nav category: a path that needs only a menu link takes a `more` link, not a section.
 
 ## Adding a section
 

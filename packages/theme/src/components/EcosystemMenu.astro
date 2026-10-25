@@ -19,7 +19,9 @@ const hubs = nav.hubs.map((h) => ({
     return { ...c, items: items.slice(0, MAX_ITEMS), more: Math.max(0, items.length - MAX_ITEMS) };
   }),
 }));
-const section = nav.sections.find((s) => !('href' in s))?.id ?? 'ecosystem';
+const menu = nav.sections.find((s) => !('href' in s));
+const section = menu?.id ?? 'ecosystem';
+const more = menu && 'more' in menu ? menu.more : undefined;
 const content = parts(ssrApi(machine, connect, { id: NAV_ID, ids })).content(section);
 const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'vertical', defaultValue: hubs[0]?.id });
 ---
@@ -42,6 +44,25 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
           </a>
         ))}
       </div>
+      {more && (
+        <div class="ocx-mega__more-group">
+          <p class="ocx-mega__category-label">{more.label}</p>
+          {more.groups.map((g) => (
+            <>
+              <p class="ocx-mega__group-label">{g.label}</p>
+              <ul class="ocx-mega__items">
+                {g.links.map((l) => (
+                  <li class="ocx-mega__item">
+                    <a class="ocx-mega__link" href={l.href}>
+                      {l.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ))}
+        </div>
+      )}
     </div>
     {hubs.map((h) => (
       <div class="ocx-mega__panel" data-ocx-hub={h.id} {...ssrAttrs(lean(rail.getContentProps({ value: h.id })))}>
