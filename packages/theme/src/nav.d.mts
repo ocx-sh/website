@@ -53,13 +53,15 @@ export function externalLink(href: string): {
 export function activeSection(nav: Nav, pathname: string): string;
 /**
  * The header's section links as one flat list for the mobile menu: link sections, a label-only entry
- * for the ecosystem menu followed by its hubs, then the install action.
+ * for the ecosystem menu followed by its hubs (`hint`: the rest of a hub's "all …" text when it extends the label, so a bare "more" is no link text),
+ * then the install action.
  * @param {Nav} nav
  * @param {string} pathname
- * @returns {{ label: string, href?: string, current?: boolean }[]}
+ * @returns {{ label: string, hint?: string, href?: string, current?: boolean }[]}
  */
 export function sectionLinks(nav: Nav, pathname: string): {
     label: string;
+    hint?: string;
     href?: string;
     current?: boolean;
 }[];
