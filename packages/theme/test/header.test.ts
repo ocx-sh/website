@@ -35,7 +35,7 @@ async function render(component: Component, pathname = '/docs/x/'): Promise<Docu
 /** Attributes Zag owns on an element: ours (class, Astro scoping, section hooks, the JS-off
  * popover wiring, the wrapper's data-zag-*) are left out. */
 const OWN =
-  /^(class|data-astro-.*|data-ocx-.*|data-pin|data-zag-(root|state|props|id)|aria-label|href|popover(target)?)$/;
+  /^(class|data-astro-.*|data-ocx-.*|data-nav-rev|data-pin|data-zag-(root|state|props|id)|aria-label|href|popover(target)?)$/;
 const zagAttrs = (el: Element | null | undefined) =>
   Object.fromEntries([...(el?.attributes ?? [])].filter((a) => !OWN.test(a.name)).map((a) => [a.name, a.value]));
 
@@ -196,8 +196,7 @@ describe('C-023 Header sections', () => {
     expect(search.split('<script>').slice(1).join('')).toMatch(/mountChrome\(document\)/);
     const script = readFileSync(new URL('../src/chrome.mjs', import.meta.url), 'utf8');
     expect(script).toMatch(/querySelector\('\.ocx-header \[data-zag-root="navigation-menu"\]'\)/);
-    expect(script).toMatch(/load: \(\) => import\('\.\/components\/navigation-menu\.zag\.mjs'\)/);
-    expect(script).toMatch(/mount\(nav, spec\)/);
+    expect(script).toMatch(/mount\(nav, \{ load: \(\) => import\('\.\/components\/navigation-menu\.zag\.mjs'\) \}\)/);
   });
 
   it('D-Z21: no Hint (Zag tooltip) on header buttons', async () => {

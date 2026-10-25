@@ -8,7 +8,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import nav from '../src/nav.json' with { type: 'json' };
 import { renderShell } from '../src/shell-render.mjs';
 import { shellRev } from '../src/shell-rev.mjs';
-import { swapShell, type Mounts } from '../src/shell-swap.mjs';
+import { swapShell } from '../src/shell-swap.mjs';
 import { syncShell } from '../src/shell-sync.mjs';
 import { SHELL_DIR, SHELL_HOST, SHELL_PARTS, SHELL_REV } from '../src/shell.mjs';
 
@@ -38,8 +38,7 @@ async function baked(props: Record<string, unknown> = {}, path = '/docs/x/', ori
   const doc = win.document;
   const root = doc.querySelector<HTMLElement>('.ocx-header')!;
   const zag = root.querySelector<HTMLElement>('[data-zag-root="navigation-menu"]')!;
-  const mounts = { release: vi.fn(), rearm: vi.fn() } satisfies Mounts;
-  return { win, doc, root, zag, mounts };
+  return { win, doc, root, zag };
 }
 
 /** The live fragment: the baked one with the ecosystem section renamed, and its rev. */
@@ -117,36 +116,37 @@ describe('the fragment', () => {
 
 describe('data-nav-rev', () => {
   it('every ocx header carries the rev of the fragment, in the Starlight header and in Shell alike', async () => {
-    expect((await baked()).root.dataset['navRev']).toBe(shellRev(fragment));
+    expect((await baked()).zag.dataset['navRev']).toBe(shellRev(fragment));
     const html = await container.renderToString(Shell, {
       request: new Request('https://ocx.sh/x/'),
       props: { title: 'T' },
     });
-    expect(new JSDOM(html).window.document.querySelector('.ocx-header')?.getAttribute('data-nav-rev')).toBe(
+    expect(new JSDOM(html).window.document.querySelector('[data-nav-rev]')?.getAttribute('data-nav-rev')).toBe(
       shellRev(fragment),
     );
   });
 
   it('a neutral (brand) header has no ocx nav to swap and carries none', async () => {
-    const { root } = await baked({ brand: { title: 'Mirror' }, nav: [{ label: 'A', href: '/a/' }] });
-    expect(root.hasAttribute('data-nav-rev')).toBe(false);
+    const { doc } = await baked({ brand: { title: 'Mirror' }, nav: [{ label: 'A', href: '/a/' }] });
+    expect(doc.querySelector('[data-nav-rev]')).toBeNull();
   });
 });
 
 describe('swapShell', () => {
   it("swaps the live sections, panel and drawer in, keeps the page's own, and re-applies what is current", async () => {
-    const { win, doc, root, zag, mounts } = await baked({ extraNav: [{ label: 'Blog', href: '/blog/' }] });
+    const { win, doc, root, zag } = await baked({ extraNav: [{ label: 'Blog', href: '/blog/' }] });
     const { html, rev } = live();
     const before = text(trigger(root));
     const fetch = serve(rev, html);
-    expect(await swapShell(doc, root, zag, rev, mounts)).toBe(true);
+    expect(await swapShell(doc, zag, rev)).toBe(true);
 
     expect(fetch).toHaveBeenCalledWith(`/_shell/v1/${rev}/nav.html`);
     expect(before).toBe(label);
     expect(text(trigger(root))).toBe('platform');
-    expect(root.dataset['navRev']).toBe(rev);
-    expect(mounts.release).toHaveBeenCalledOnce();
-    expect(mounts.rearm).toHaveBeenCalledOnce();
+    expect(zag.dataset['navRev']).toBe(rev);
+    // The nav's machine is armed again: the next pointer entry starts loading it.
+    zag.dispatchEvent(new win.Event('pointerenter'));
+    expect(zag.dataset['zagState']).toBe('loading');
     // The page's own state survives: the search slot, the extra link, the active section's mark.
     expect(doc.getElementById('own-search')).not.toBeNull();
     expect(text(root.querySelector('[data-ocx-section="extra"]'))).toBe('Blog');
@@ -167,19 +167,19 @@ describe('swapShell', () => {
   });
 
   it('keeps the active mark on the trigger when the active section is the menu', async () => {
-    const { doc, root, zag, mounts } = await baked({ active: 'ecosystem' }, '/apps/');
+    const { doc, root, zag } = await baked({ active: 'ecosystem' }, '/apps/');
     const { html, rev } = live();
     serve(rev, html);
-    expect(await swapShell(doc, root, zag, rev, mounts)).toBe(true);
+    expect(await swapShell(doc, zag, rev)).toBe(true);
     expect(trigger(root)?.getAttribute('aria-current')).toBe('page');
     expect(root.querySelector('#ocx-header-menu a[aria-current="page"]')?.getAttribute('href')).toBe('/apps/');
   });
 
   it('works on a header without a drawer (the Starlight header)', async () => {
-    const { doc, root, zag, mounts } = await baked({ menu: false });
+    const { doc, root, zag } = await baked({ menu: false });
     const { html, rev } = live();
     serve(rev, html);
-    expect(await swapShell(doc, root, zag, rev, mounts)).toBe(true);
+    expect(await swapShell(doc, zag, rev)).toBe(true);
     expect(text(trigger(root))).toBe('platform');
   });
 
@@ -189,9 +189,8 @@ describe('swapShell', () => {
     const rev = shellRev(html);
     serve(rev, html, status);
     const snapshot = page.root.outerHTML;
-    expect(await swapShell(page.doc, page.root, page.zag, rev, page.mounts)).toBe(false);
+    expect(await swapShell(page.doc, page.zag, rev)).toBe(false);
     expect(page.root.outerHTML).toBe(snapshot);
-    expect(page.mounts.release).not.toHaveBeenCalled();
     return page;
   };
   const without = (part: string) =>
@@ -245,7 +244,7 @@ describe('swapShell', () => {
   });
 
   it('puts the baked nav back when the swap would change the header box', async () => {
-    const { doc, root, zag, mounts } = await baked();
+    const { doc, root, zag } = await baked();
     const { html, rev } = live();
     serve(rev, html);
     const snapshot = root.outerHTML;
@@ -253,9 +252,10 @@ describe('swapShell', () => {
     vi.spyOn(root, 'getBoundingClientRect').mockImplementation(
       () => ({ height: heights.shift() ?? 96 }) as unknown as DOMRect,
     );
-    expect(await swapShell(doc, root, zag, rev, mounts)).toBe(false);
+    expect(await swapShell(doc, zag, rev)).toBe(false);
     expect(root.outerHTML).toBe(snapshot);
-    expect(mounts.rearm).toHaveBeenCalledOnce();
+    zag.dispatchEvent(new (doc.defaultView as Win).Event('pointerenter'));
+    expect(zag.dataset['zagState']).toBe('loading');
   });
 });
 
@@ -281,7 +281,7 @@ describe('syncShell', () => {
     );
     Object.assign(page.win, { requestIdleCallback: (f: () => void) => f() });
     Object.defineProperty(page.doc, 'readyState', { value: 'complete' });
-    syncShell(page.doc, page.root, page.zag, page.mounts);
+    syncShell(page.doc, page.zag);
     await new Promise((r) => setTimeout(r, 100));
     return { ...page, requested, swapped };
   }
@@ -291,14 +291,14 @@ describe('syncShell', () => {
     const r = await run({ current: () => pointer({ v: 1, rev: swapped.rev }) });
     expect(r.requested).toEqual([`${SHELL_DIR}current.json`, `${SHELL_DIR}${swapped.rev}/nav.html`]);
     expect(vi.mocked(fetch).mock.calls[0]?.[1]).toEqual({ cache: 'no-cache' });
-    expect(r.root.dataset['navRev']).toBe(swapped.rev);
+    expect(r.zag.dataset['navRev']).toBe(swapped.rev);
     expect(text(trigger(r.root))).toBe('platform');
   });
 
   it('stops at the pointer when the baked rev is current', async () => {
     const r = await run({ current: () => pointer({ v: 1, rev: shellRev(fragment) }) });
     expect(r.requested).toEqual([`${SHELL_DIR}current.json`]);
-    expect(r.mounts.release).not.toHaveBeenCalled();
+    expect(r.zag.dataset['navRev']).toBe(shellRev(fragment));
   });
 
   it.each([

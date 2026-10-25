@@ -18,6 +18,7 @@ const liveHtml = readFileSync(new URL(`${published.rev}/nav.html`, shell), 'utf8
 test.use({ launchOptions: { args: ['--host-resolver-rules=MAP ocx.sh 127.0.0.1'] }, reducedMotion: 'reduce' });
 
 const header = (page: Page) => page.locator('.ocx-header');
+const navRoot = (page: Page) => page.locator('[data-nav-rev]');
 const trigger = (page: Page) => page.locator('.ocx-header__nav button[data-ocx-section="ecosystem"]');
 const menu = (page: Page) => page.locator('#ocx-ecosystem-menu');
 const isOpen = (page: Page) => menu(page).evaluate((el) => el.matches(':popover-open'));
@@ -42,7 +43,7 @@ async function open(page: Page, { stale = true, path = '/' } = {}) {
     );
   }
   await page.goto(`${home}${path.slice(1)}`, { waitUntil: 'load' });
-  await expect(header(page)).toHaveAttribute('data-nav-rev', published.rev);
+  await expect(navRoot(page)).toHaveAttribute('data-nav-rev', published.rev);
   return { errors, requests, release };
 }
 
@@ -51,7 +52,7 @@ test('a page that is up to date asks the pointer and stops there', async ({ page
   await expect.poll(() => requests).toEqual(['/_shell/v1/current.json']);
   await page.waitForTimeout(300);
   expect(requests).toEqual(['/_shell/v1/current.json']);
-  await expect(header(page)).toHaveAttribute('data-nav-rev', published.rev);
+  await expect(navRoot(page)).toHaveAttribute('data-nav-rev', published.rev);
   expect(errors).toEqual([]);
 });
 
@@ -62,7 +63,7 @@ test('a stale page swaps in the live nav without moving the header, and the menu
   const before = await header(page).boundingBox();
   await expect(trigger(page)).toHaveText('solutions');
   release();
-  await expect(header(page)).toHaveAttribute('data-nav-rev', LIVE);
+  await expect(navRoot(page)).toHaveAttribute('data-nav-rev', LIVE);
   await expect(trigger(page)).toHaveText('platform');
   expect(await header(page).boundingBox()).toEqual(before);
   await expect(page.locator('#own-search, site-search').first()).toBeAttached();
@@ -83,7 +84,7 @@ test('a stale page swaps in the live nav without moving the header, and the menu
 test('the swapped menu works by keyboard, down to the pinned hub, and Esc returns to the trigger', async ({ page }) => {
   const { errors, release } = await open(page);
   release();
-  await expect(header(page)).toHaveAttribute('data-nav-rev', LIVE);
+  await expect(navRoot(page)).toHaveAttribute('data-nav-rev', LIVE);
   await page.locator('.ocx-header [data-ocx-section="catalog"]').focus();
   await page.keyboard.press('ArrowRight');
   await expect(trigger(page)).toBeFocused();
@@ -110,7 +111,7 @@ test('nothing is swapped while a panel is open', async ({ page }) => {
   release();
   await expect.poll(() => requests).toContain(`/_shell/v1/${LIVE}/nav.html`); // the fragment was fetched and refused
   await page.waitForTimeout(300);
-  await expect(header(page)).toHaveAttribute('data-nav-rev', published.rev);
+  await expect(navRoot(page)).toHaveAttribute('data-nav-rev', published.rev);
   await expect(trigger(page)).toHaveText('solutions');
   expect(await isOpen(page)).toBe(true);
   await page.keyboard.press('ArrowDown');
@@ -121,7 +122,7 @@ test('nothing is swapped while a panel is open', async ({ page }) => {
 test('the Starlight header of a docs page swaps too, keeping its active section', async ({ page }) => {
   const { errors, release } = await open(page, { path: '/docs/' });
   release();
-  await expect(header(page)).toHaveAttribute('data-nav-rev', LIVE);
+  await expect(navRoot(page)).toHaveAttribute('data-nav-rev', LIVE);
   await expect(trigger(page)).toHaveText('platform');
   await expect(page.locator('.ocx-header [data-ocx-section="docs"]')).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.ocx-header site-search')).toBeAttached();

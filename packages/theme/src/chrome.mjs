@@ -19,13 +19,9 @@ export function mountChrome(doc) {
   // The header section nav (C-192) loads on the first pointerenter/focusin on the nav (C-113).
   const nav = doc.querySelector('.ocx-header [data-zag-root="navigation-menu"]');
   if (nav instanceof HTMLElement) {
-    const spec = { load: () => import('./components/navigation-menu.zag.mjs') };
-    mount(nav, spec);
+    mount(nav, { load: () => import('./components/navigation-menu.zag.mjs') });
     // The live header (r10): after load, swap in the root site's current nav when this page's baked one is older.
-    // `mount` returns the nav's existing handle, so releasing and re-arming it needs no variable.
-    const header = nav.closest('.ocx-header[data-nav-rev]');
-    if (header instanceof HTMLElement)
-      syncShell(doc, header, nav, { release: () => mount(nav, spec).destroy(), rearm: () => void mount(nav, spec) });
+    syncShell(doc, nav);
   }
 
   // The sidebar and the mobile menu mount here too (C-230, C-231). The mark tells the sidebar's

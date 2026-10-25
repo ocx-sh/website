@@ -2,12 +2,11 @@
 // fetch the rev's fragment, check it fits the header it is about to replace, and swap its parts in,
 // keeping what is the page's own (active section, current link, the consumer's links, the search slot).
 // Refuses, leaving the baked header untouched, on anything unexpected or while the nav is in use.
-import { SHELL_DIR, SHELL_PARTS } from './shell.mjs';
+import { mount } from './components/ui/zag.mjs';
+import { SHELL_DIR, SHELL_PARTS, SHELL_REV } from './shell.mjs';
 
-/**
- * How the swap stops and re-arms the nav's lazy Zag machine (chrome.mjs owns its `mount`).
- * @typedef {{ release: () => void, rearm: () => void }} Mounts
- */
+/** The nav's lazy machine, as chrome.mjs mounts it: `mount` returns the live handle, so this only builds a new one after `destroy()`. */
+const spec = { load: () => import('./components/navigation-menu.zag.mjs') };
 
 /** Elements a nav fragment never holds, and the only hrefs it may link to (this site, https). */
 const FOREIGN = 'script,iframe,object,embed,style,link,base,form';
@@ -59,13 +58,13 @@ function fit(parts) {
 /**
  * Swaps the live nav into `header` when it fits and the nav is idle.
  * @param {Document} doc
- * @param {HTMLElement} header the `.ocx-header` root, `data-nav-rev` its baked rev
- * @param {HTMLElement} nav the header's `navigation-menu` Zag root
- * @param {string} rev the current rev, `SHELL_REV`-shaped
- * @param {Mounts} mounts
+ * @param {HTMLElement} nav the header's `navigation-menu` Zag root, `data-nav-rev` its baked rev
+ * @param {unknown} rev the current rev from the pointer, untrusted
  * @returns {Promise<boolean>} whether the header now shows the live nav
  */
-export async function swapShell(doc, header, nav, rev, { release, rearm }) {
+export async function swapShell(doc, nav, rev) {
+  const header = /** @type {HTMLElement | null} */ (nav.closest('.ocx-header'));
+  if (typeof rev !== 'string' || !SHELL_REV.test(rev) || !header) return false;
   const res = await fetch(`${SHELL_DIR}${rev}/nav.html`);
   if (!res.ok) return false;
   const live = new DOMParser().parseFromString(await res.text(), 'text/html');
@@ -117,7 +116,7 @@ export async function swapShell(doc, header, nav, rev, { release, rearm }) {
   };
   const height = header.getBoundingClientRect().height;
 
-  release();
+  mount(nav, spec).destroy();
   const items = fresh(parts.sections);
   const drawerItems = fresh(parts.drawer);
   const undo = [swap(oldItems, items), swap([panel], fresh(parts.mega))];
@@ -129,8 +128,8 @@ export async function swapShell(doc, header, nav, rev, { release, rearm }) {
 
   // The header's box is the page's: a swap that would move it (a wrapped nav, a taller row) is not made.
   const fitted = header.getBoundingClientRect().height === height;
-  if (fitted) header.dataset['navRev'] = rev;
+  if (fitted) nav.dataset['navRev'] = rev;
   else for (const back of undo.reverse()) back();
-  rearm();
+  mount(nav, spec);
   return fitted;
 }
