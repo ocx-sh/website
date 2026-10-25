@@ -76,13 +76,9 @@ const boot = `(()=>{const d=document.documentElement,q=new URLSearchParams(locat
         { weight: 600, style: 'normal' },
       ]}
     />
-    <Font
-      cssVariable="--ocx-font-mono"
-      preload={[
-        { weight: 400, style: 'normal' },
-        { weight: 600, style: 'normal' },
-      ]}
-    />
+    {/* Mono 600 is not preloaded: stories seldom show it above the fold, and a fourth font held a fourth of
+    Lighthouse's six simulated connections, queueing the 3+ stylesheets of install-command/short a round trip (0.99). */}
+    <Font cssVariable="--ocx-font-mono" preload={[{ weight: 400, style: 'normal' }]} />
     <Fragment set:html={links} />
   </head>
   <body>
