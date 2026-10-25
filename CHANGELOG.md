@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-25
+
+### Added
+
+- Ocx-sh/marketing claims /learn/, its embeds are frameable, onboard gains --local *(infra)*
+- The Solutions menu pins a "More" group (Learn: Shorts, Podcasts) to its bottom instead of a top-nav entry *(theme)*
+- "more" is a pinned rail hub of the Solutions menu, with a Learn category, instead of a special group *(theme)*
+- Cache the /_shell/ header fragment at the Bunny edge *(infra)*
+- Daily drift alarm for the shared header baked into each site *(ci)*
+- Live header fragment and loader (/_shell/v1/, theme 0.3.0) *(theme)*
+
+### Changed
+
+- The pinned hub fits the page-weight and DOM budgets: preview and blurb lose their wrapper spans, Icon drops default attributes, desc ids shorten *(theme)*
+- Keep Icon attributes as they were; the menu trims alone *(theme)*
+- Live-header trigger sheds bytes; data-nav-rev sits on the nav root to fit the HTML budget *(theme)*
+
+### Documentation
+
+- Nav data reaches adopted sites at runtime through /_shell/ *(skills)*
+
+### Fixed
+
+- Every page sheds the bytes that pushed the largest pages past the first round trip *(theme)*
+- Story pages preload three fonts, not four, so install-command/short keeps its first-paint round trip *(examples)*
+- The mobile menu's "more" link reads "more to learn" to assistive tech so Lighthouse's link-text audit passes *(theme)*
+- Regenerate nav.d.mts for the mobile hint *(theme)*
+- The Shell mobile menu's pinned hub reads "more to learn" to assistive tech *(theme)*
+
 ## [0.2.3] - 2026-10-24
 
 ### Changed
