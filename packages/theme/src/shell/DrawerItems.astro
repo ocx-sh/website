@@ -1,0 +1,28 @@
+---
+// The mobile drawer's items (`li` per link), shared by SiteHeader and the live-header fragment.
+import { EXTERNAL_LABEL, externalLink } from '../nav.mjs';
+import Icon from '../components/ui/Icon.astro';
+
+export interface Props {
+  links: { label: string; hint?: string | undefined; href?: string | undefined; current?: boolean | undefined }[];
+}
+
+const links = Astro.props.links.map((l) => ({ ...l, ...(l.href ? externalLink(l.href) : {}) }));
+---
+
+{links.map((l) => (
+  <li>
+    {l.href ? (
+      <a href={l.href} aria-current={l.current ? 'page' : undefined} {...l.attrs}>
+        {l.label}
+        {l.hint && <span class="ocx-hint">{l.hint}</span>}
+        {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
+      </a>
+    ) : (
+      <button type="button" popovertarget="ocx-ecosystem-menu">
+        {l.label}
+        <Icon name="chevron-down" />
+      </button>
+    )}
+  </li>
+))}

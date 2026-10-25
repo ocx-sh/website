@@ -88,7 +88,7 @@ export function mergeTargets(nav: Nav, ownPath: string): MergeTarget[];
  * @typedef {{ path: string, label: string }} MergeTarget
  */
 /** Directories the root claim `/` owns besides `/` itself and top-level files (R5). */
-export const ROOT_DIRS: readonly ["/_astro/", "/pagefind/"];
+export const ROOT_DIRS: readonly ["/_astro/", "/_shell/", "/pagefind/"];
 export type Brand = {
     wordmark: string;
     href: string;

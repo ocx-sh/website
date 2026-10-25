@@ -25,7 +25,7 @@ describe('site dist', () => {
     const dirs = readdirSync(dist, { withFileTypes: true })
       .filter((e) => e.isDirectory())
       .map((e) => e.name);
-    expect(dirs.toSorted()).toEqual(['_astro', 'apps', 'integrations', 'pagefind', 'team']);
+    expect(dirs.toSorted()).toEqual(['_astro', '_shell', 'apps', 'integrations', 'pagefind', 'team']);
   });
 
   it('names no legacy section bundle: the search chunk and every page leave out the bundle of any path legacy.json lists', () => {

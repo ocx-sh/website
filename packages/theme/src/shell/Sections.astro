@@ -1,0 +1,37 @@
+---
+// The ocx.sh section items of the header nav (`li` per nav.json section), shared by SiteHeader and the
+// live-header fragment so the two cannot drift. `shown` is the active section id; the fragment passes none.
+import ocx from '../nav.json';
+import { ids, lean, parts } from '../components/navigation-menu.zag.mjs';
+import Icon from '../components/ui/Icon.astro';
+import { ssrAttrs } from '../components/ui/zag-runtime.mjs';
+
+export interface Props {
+  /** The Zag parts of the nav machine (`parts(ssrApi(...))`). */
+  part: ReturnType<typeof parts>;
+  shown?: string;
+}
+
+const { part, shown = '' } = Astro.props;
+---
+
+{ocx.sections.map((s) => (
+  <li {...ssrAttrs(lean(part.item(s.id), { nav: true }))}>
+    {'href' in s ? (
+      <a href={s.href} data-ocx-section={s.id} {...ssrAttrs(lean(part.link(s.id, s.id === shown), { nav: true }))}>
+        {s.label}
+      </a>
+    ) : (
+      /* C-192: `popovertarget` is the JS-off fallback; `mount` removes it on start. */
+      <button
+        {...ssrAttrs(lean(part.trigger(s.id, { ssr: true }), { nav: true }))}
+        popovertarget={ids.content(s.id)}
+        data-ocx-section={s.id}
+        aria-current={s.id === shown ? 'page' : undefined}
+      >
+        {s.label}
+        <Icon name="chevron-down" />
+      </button>
+    )}
+  </li>
+))}

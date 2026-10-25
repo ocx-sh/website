@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 import ocxTheme from '@ocx-sh/theme/starlight';
 import { defineConfig } from 'astro/config';
 import { withoutLegacyBundles } from './legacy-search.mjs';
+import shellFragment from './shell-fragment.mjs';
 
 export default defineConfig({
   site: 'https://ocx.sh',
@@ -12,6 +13,8 @@ export default defineConfig({
   trailingSlash: 'always',
   devToolbar: { enabled: false },
   integrations: [
+    // Before starlight(): its Pagefind hook must not index the temporary fragment file.
+    shellFragment(),
     starlight({
       title: 'ocx',
       // Pagefind's UI dies on a merged bundle that 404s: sections still on a legacy origin are not merged.

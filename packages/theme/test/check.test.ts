@@ -124,7 +124,7 @@ describe('C-013 linkTargets', () => {
 });
 
 describe('C-013 linkProblem', () => {
-  it.each(['/robots.txt', '/_astro/x.css', '/pagefind/pagefind.js', '/_astro', '/', '/foo'])(
+  it.each(['/robots.txt', '/_astro/x.css', '/_shell/v1/current.json', '/pagefind/pagefind.js', '/_astro', '/', '/foo'])(
     'C-013: %s under the root claim is allowed',
     (t) => {
       expect(linkProblem(nav, BAZEL, '/integrations/bazel/', t, never())).toBeUndefined();
@@ -355,8 +355,9 @@ describe('C-013/C-014/C-070 check() on a failing website dist', () => {
     expect(of('foo/index.html')).toHaveLength(1);
   });
 
-  it('C-014: _astro/ and pagefind/ in website dist pass the layout check', () => {
+  it('C-014: _astro/, _shell/ and pagefind/ in website dist pass the layout check', () => {
     expect(of('_astro/x.css')).toEqual([]);
+    expect(of('_shell/v1/0123456789ab/nav.html')).toEqual([]);
   });
 
   it('C-013: every bad link in index.html is reported once, naming its URL, and no good link is', () => {
