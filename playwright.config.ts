@@ -11,7 +11,7 @@ import { defineConfig, devices } from '@playwright/test';
 const port = process.env['E2E_PORT'] ?? '4322';
 const sitePort = process.env['E2E_SITE_PORT'] ?? '4323';
 const reuseExistingServer = process.env['E2E_REUSE'] === '1';
-const siteSpecs = /\/(?:site|search)\.spec\.ts$/;
+const siteSpecs = /\/(?:site|search|shell-live)\.spec\.ts$/;
 
 export default defineConfig({
   testDir: 'tests/e2e',

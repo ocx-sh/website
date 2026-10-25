@@ -196,7 +196,8 @@ describe('C-023 Header sections', () => {
     expect(search.split('<script>').slice(1).join('')).toMatch(/mountChrome\(document\)/);
     const script = readFileSync(new URL('../src/chrome.mjs', import.meta.url), 'utf8');
     expect(script).toMatch(/querySelector\('\.ocx-header \[data-zag-root="navigation-menu"\]'\)/);
-    expect(script).toMatch(/mount\(nav, \{ load: \(\) => import\('\.\/components\/navigation-menu\.zag\.mjs'\) \}\)/);
+    expect(script).toMatch(/load: \(\) => import\('\.\/components\/navigation-menu\.zag\.mjs'\)/);
+    expect(script).toMatch(/mount\(nav, spec\)/);
   });
 
   it('D-Z21: no Hint (Zag tooltip) on header buttons', async () => {

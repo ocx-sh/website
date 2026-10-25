@@ -72,6 +72,12 @@ adopted site keeps its baked header and swaps in the live one after load when th
   `<template data-shell-part="<name>">`; the names are the `SHELL_PARTS` constant (`sections`, `mega`, `drawer`), the one source for the
   build step and the loader. Links are root-relative.
 - `SiteHeader` carries `data-nav-rev`, the rev of the nav baked into that page.
+- Exports: `@ocx-sh/theme/shell` (browser-safe: `SHELL_PARTS`, `SHELL_DIR`, `SHELL_HOST`, `SHELL_REV`),
+  `@ocx-sh/theme/shell-rev` (`shellRev(html)`, Node only) and `@ocx-sh/theme/shell-render`
+  (`renderShell()` renders the fragment from the header's own components; server-side only). The loader
+  runs on `ocx.sh` hosts only (`SHELL_HOST`), so a preview or localhost build never requests `/_shell/`.
+- The root site's build writes the fragment itself: an endpoint renders it, and the `shell-fragment`
+  integration in `site/` files it under its rev and writes `current.json` last, only for a valid nav.
 - `mountChrome(document)` fetches `current.json` once the page is idle. Equal revs: nothing more.
   Different revs: it fetches the fragment, checks its parts and swaps them while the nav menu is
   still idle. The loader then re-applies the active section and the current page, and leaves the

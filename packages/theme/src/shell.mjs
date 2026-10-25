@@ -3,7 +3,7 @@
 // is shell-rev.mjs. A future incompatible markup change goes to `/_shell/v2/` with a theme release.
 
 /** The swappable parts of the header, each a `<template data-shell-part="<name>">` of the fragment. */
-export const SHELL_PARTS = Object.freeze(/** @type {const} */ (['sections', 'mega', 'drawer']));
+export const SHELL_PARTS = /** @type {const} */ (['sections', 'mega', 'drawer']);
 
 /** Where the root site publishes the pointer (`current.json`) and the rev-addressed fragments (`<rev>/nav.html`). */
 export const SHELL_DIR = '/_shell/v1/';
