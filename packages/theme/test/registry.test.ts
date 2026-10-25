@@ -214,6 +214,7 @@ describe('C-008 pure registry functions', () => {
     ['ocx-sh/website', ['/', '/integrations/', '/apps/', '/team/']],
     ['ocx-sh/www-setup', ['/install/']],
     ['ocx-sh/ocx', ['/docs/', '/schemas/']],
+    ['ocx-sh/marketing', ['/learn/']],
     ['ocx-sh/none', []],
   ])('C-008: claimsOf(%s)', (repo, paths) => {
     expect(claimsOf(nav, repo).map((c) => c.path)).toEqual(paths);

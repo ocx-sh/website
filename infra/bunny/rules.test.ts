@@ -134,14 +134,15 @@ describe('rule set and limits', () => {
         'repo-www-setup',
         'repo-ocx',
         'repo-index-catalog',
+        'repo-marketing',
       ].map((id) => `ocx:${id}`),
     );
     expect(originIds('dev')).toEqual(originIds('prod'));
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
-  it('commits 14 prod and 13 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([14, 13]);
+  it('commits 15 prod and 14 dev rules, prod within the plan ceiling', () => {
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([15, 14]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 
@@ -195,6 +196,9 @@ describe('rule set and limits', () => {
       'https://ocx.sh/*',
       'https://next.ocx.sh/*',
       'https://sh-ocx.b-cdn.net/*',
+      'https://ocx.sh/learn/*/embed/*',
+      'https://next.ocx.sh/learn/*/embed/*',
+      'https://sh-ocx.b-cdn.net/learn/*/embed/*',
     ]);
   });
 
@@ -253,6 +257,18 @@ describe('rule set and limits', () => {
     expect(hit('next.ocx.sh', '/').headers).toEqual(['noindex', 'hsts', 'frame']);
     expect(hit('ocx.sh', '/').headers).toEqual(['hsts', 'frame']);
     expect(hit('sh-ocx.b-cdn.net', '/').headers).toEqual(['noindex', 'frame']);
+  });
+
+  it('the /learn/ embeds are frameable by other origins; every other /learn/ page is not', () => {
+    const rules = planRules('prod');
+    for (const host of ['ocx.sh', 'next.ocx.sh', 'sh-ocx.b-cdn.net'])
+      for (const path of ['/learn/videos/x/embed/', '/learn/videos/x/dino/embed/', '/learn/podcast/x/embed/']) {
+        const r = matchProbe(rules, { host, path, status: 200 });
+        expect(r.origin, path).toBe('repo-marketing');
+        expect(r.headers, `${host}${path}`).not.toContain('frame');
+      }
+    for (const path of ['/learn/', '/learn/videos/x/'])
+      expect(matchProbe(rules, { host: 'ocx.sh', path, status: 200 }).headers, path).toContain('frame');
   });
 
   it('proxy entries become OriginUrl rules, redirect entries 302 rules with the %{Path.N-} tail', () => {
@@ -336,10 +352,8 @@ describe('refusals (exit 1, naming the rule)', () => {
     });
 
     it('is accepted when the nested claim ranks first', () => {
-      expect(ids('prod', { entries: [proxy('wide', ['/a/']), proxy('nested', ['/a/b/c/'])] }).slice(-2)).toEqual([
-        'ocx:nested',
-        'ocx:wide',
-      ]);
+      const order = ids('prod', { entries: [proxy('wide', ['/a/']), proxy('nested', ['/a/b/c/'])] });
+      expect(order.filter((id) => id === 'ocx:nested' || id === 'ocx:wide')).toEqual(['ocx:nested', 'ocx:wide']);
     });
   });
 

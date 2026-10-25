@@ -40,6 +40,8 @@ const REDIRECT_STATUS = '302';
 /** A host of one of our zones; an OriginUrl or prod Redirect pointing at one loops or leaks it. */
 const ZONE_HOST = /^(?:ocx\.sh|next\.ocx\.sh|index\.ocx\.sh|sh-ocx[a-z0-9-]*\.b-cdn\.net)$/;
 /** Catalog pages that render untrusted package content: `/catalog/p/<pkg>` and `/catalog/index/<registry>/p/<pkg>`. */
+/** Pages other origins may frame: the embeds of ocx-sh/marketing's `/learn/` claim. */
+const EMBED_PATHS = ['/learn/*/embed/*'];
 const SANDBOX_PATHS = ['/catalog/p/*', '/catalog/index/*/p/*'];
 /** The wire tree (`config.json`, `c/**`, `p/**`); `p/**` carries package content. */
 const WIRE_PATHS = ['/config.json', '/c/*', '/p/*'];
@@ -235,6 +237,20 @@ function wireRedirect(hosts) {
   };
 }
 
+/**
+ * `X-Frame-Options: SAMEORIGIN` on every page except the embeds under `/learn/<section>/.../embed/`, which other origins frame.
+ * ponytail: `PatternMatchingType` None on a live pull zone is not on a recording yet; `bunny:verify` proves it live.
+ * @param {string[]} hosts
+ * @param {boolean} plain no embed carve-out (preview and wire zones serve no `/learn/`)
+ * @returns {BunnyRule}
+ */
+function frameRule(hosts, plain) {
+  const base = rule('frame', onHosts(hosts, ['/*']), ACTION.SetResponseHeader, 'X-Frame-Options', 'SAMEORIGIN');
+  if (plain) return base;
+  const embeds = urlTriggers(onHosts(hosts, EMBED_PATHS)).map((t) => ({ ...t, PatternMatchingType: MATCH.None }));
+  return { ...base, TriggerMatchingType: MATCH.All, Triggers: [...base.Triggers, ...embeds] };
+}
+
 /** @param {string} pattern a Bunny URL pattern: `*` is greedy across `/`, everything else literal, anchored */
 export const patternRegExp = (pattern) =>
   new RegExp(`^${pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replaceAll('*', '.*')}$`);
@@ -378,7 +394,7 @@ export function planRules(zone, { legacy = legacyData, claims = nav.claims } = {
           ),
         ]
       : []),
-    header('frame', hosts, 'X-Frame-Options', 'SAMEORIGIN'),
+    frameRule(hosts, preview || wire),
     // One rule sets one header: the sandbox pair is two rules. Both sit with the header rules, ahead of
     // every origin and redirect rule (the `/catalog/` legacy redirect), so no later rule shadows them.
     ...(preview
