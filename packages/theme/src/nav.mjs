@@ -97,14 +97,15 @@ export function sectionLinks(nav, pathname) {
             { label: s.label },
             ...nav.hubs
               .filter((h) => s.hubs.includes(h.id))
-              .map((h) => ({
-                label: h.label,
-                hint: h.all.replace(/\s*→$/, '').startsWith(h.label)
-                  ? h.all.replace(/\s*→$/, '').slice(h.label.length)
-                  : undefined,
-                href: h.href,
-                current: s.id === active && pathname.startsWith(h.href),
-              })),
+              .map((h) => {
+                const all = h.all.replace(/\s*→$/, '');
+                return {
+                  label: h.label,
+                  hint: all.startsWith(h.label) ? all.slice(h.label.length) : undefined,
+                  href: h.href,
+                  current: s.id === active && pathname.startsWith(h.href),
+                };
+              }),
           ],
     ),
     ...nav.actions

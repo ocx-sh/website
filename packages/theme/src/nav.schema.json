@@ -57,7 +57,11 @@
           "label": { "type": "string", "minLength": 1 },
           "href": { "type": "string", "minLength": 1 },
           "blurb": { "type": "string", "minLength": 1 },
-          "all": { "type": "string", "minLength": 1 },
+          "all": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The hub link's text, with a trailing \"→\" shown only on screen. Without the arrow it is the link's accessible name; when it starts with the label, the rest reads as the mobile menu's hidden suffix (\"more\" + \" to learn\")."
+          },
           "pinned": {
             "type": "boolean",
             "description": "Pins the hub's rail entry to the bottom of the menu; the last hub of its section."

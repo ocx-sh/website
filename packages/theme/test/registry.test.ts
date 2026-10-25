@@ -189,6 +189,21 @@ describe('C-005 repos and zones', () => {
 
 describe('C-006 entries, hubs and links', () => {
   fixtureCases('C-006');
+
+  // An entry href may be deeper than a claim path, but only under a claim other than `/`.
+  it.each([
+    ['/learn/videos/', false],
+    ['/learn/', false],
+    ['/learnx/', true],
+    ['/unclaimed/', true],
+  ])('C-006: entry href %s is under no claim: %s', (href, bad) => {
+    const n = clone();
+    const entry = n.entries.find((e) => e.href !== undefined);
+    if (!entry) throw new Error('nav.json has no linked entry');
+    entry.href = href;
+    const problems = validate(n).filter((p) => p.message.includes('is under no claim'));
+    expect(problems.length > 0).toBe(bad);
+  });
 });
 
 describe('C-008 pure registry functions', () => {
