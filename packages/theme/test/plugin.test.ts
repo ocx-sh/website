@@ -499,6 +499,9 @@ describe('C-031: package surface (declared)', () => {
         './prose-code.css',
         './lazy',
         './csp',
+        './shell',
+        './shell-rev',
+        './shell-render',
         './markdown',
       ].sort(),
     );
@@ -517,6 +520,9 @@ describe('C-031: package surface (declared)', () => {
       './command-palette',
       './lazy',
       './csp',
+      './shell',
+      './shell-rev',
+      './shell-render',
       './markdown',
     ]) {
       const cond = exportsMap[key] as Record<string, string>;

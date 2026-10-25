@@ -31,7 +31,7 @@ describe('C-034 ./nav exports', () => {
   );
 
   it('C-034: exports ROOT_DIRS', () => {
-    expect(navModule.ROOT_DIRS).toEqual(['/_astro/', '/pagefind/']);
+    expect(navModule.ROOT_DIRS).toEqual(['/_astro/', '/_shell/', '/pagefind/']);
   });
 });
 
