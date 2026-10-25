@@ -153,7 +153,8 @@ overriding any of these; it lists merge rules and the exact override set.
 also mounts the header nav menu, the mobile menu drawer, the sidebar
 collapsibles and the toaster (including copy toasts). The plugin logs a warning.
 Call `mountChrome(document)` from `@ocx-sh/theme/chrome` in your override's
-`<script>`, or do not override `Search`.
+`<script>`, or do not override `Search`. That call also runs the `/_shell/` header sync, so a
+site that skips it keeps its baked header for good.
 
 ## Content porting notes
 
@@ -305,8 +306,11 @@ they have zero specificity and any consumer rule wins. The footer's top rule run
 
 ## Keep the theme current
 
-Add a Dependabot entry grouping `@ocx-sh/theme` in each consumer; a nav change
-is a theme release, so it only reaches a site through that update:
+Add a Dependabot entry grouping `@ocx-sh/theme` in each consumer. Nav data (links, hubs,
+labels) reaches a site on theme 0.3.0 or later at runtime through `/_shell/`
+(`references/nav-registry.md`), so a nav edit needs no bump. New markup, CSS and behaviour
+still arrive only through that update, and a site on an older theme keeps a stale header
+until it takes one:
 
 ```yaml
 # .github/dependabot.yml

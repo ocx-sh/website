@@ -46,9 +46,11 @@ the owner on 2026-09-27 and amended on 2026-09-30. The reasoning trail is in
   catalog stays on `@ocx-sh/catalog` (VitePress) wearing the shared tokens; its
   Astro port (Vue components as islands) comes later.
 - **Header is rendered at build time** — an Astro component overriding
-  Starlight's `Header`, fed by `nav.json`. No header JS, no layout shift.
-- **`nav.json` ships inside the library.** A nav change is a library release;
-  Dependabot carries it to every consumer. Its v4 shape is `sections`, `hubs`,
+  Starlight's `Header`, fed by `nav.json`. The baked header works without JS; with JS
+  a site swaps in the live nav from `/_shell/` when its baked rev differs. No layout shift.
+- **`nav.json` ships inside the library.** Markup and CSS changes are a library
+  release that Dependabot carries to every consumer; nav data itself follows the
+  root site at runtime through `/_shell/` (theme 0.3.0 and later). Its v4 shape is `sections`, `hubs`,
   `claims`, `entries`, `actions` and `footer`. `claims` is the path registry,
   including `/schemas/` (owned by `ocx-sh/ocx`).
 - **Search**: each section builds its own Pagefind bundle at
@@ -149,8 +151,8 @@ updates:
     cooldown: { default-days: 7 }
 ```
 
-Open: auto-merge theme PRs on green CI, so a nav change lands in hours, not
-whenever someone merges.
+Open: auto-merge theme PRs on green CI, so a markup or CSS change lands in hours,
+not whenever someone merges. Nav data no longer waits for this (`/_shell/`).
 
 ## CI and Bunny
 
