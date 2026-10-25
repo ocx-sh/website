@@ -34,7 +34,8 @@ async function render(component: Component, pathname = '/docs/x/'): Promise<Docu
 
 /** Attributes Zag owns on an element: ours (class, Astro scoping, section hooks, the JS-off
  * popover wiring, the wrapper's data-zag-*) are left out. */
-const OWN = /^(class|data-astro-.*|data-ocx-.*|data-zag-(root|state|props|id)|aria-label|href|popover(target)?)$/;
+const OWN =
+  /^(class|data-astro-.*|data-ocx-.*|data-pin|data-zag-(root|state|props|id)|aria-label|href|popover(target)?)$/;
 const zagAttrs = (el: Element | null | undefined) =>
   Object.fromEntries([...(el?.attributes ?? [])].filter((a) => !OWN.test(a.name)).map((a) => [a.name, a.value]));
 
