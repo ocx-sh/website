@@ -52,7 +52,8 @@ A hub may carry `"pinned": true`: its rail entry sits at the bottom of the menu'
 entries), so `solutions` shows `more` with category `learn` and the Shorts and Podcasts entries.
 It must be the only pinned hub, and the last one of its section. An entry `href` is a claim path or
 lies under a claim other than `/`; `validate` reports anything else. A path that needs only a menu
-link takes an entry in a hub, not a section.
+link takes an entry in a hub, not a section. A hub whose `all` text starts with its label (`more` / `more to learn →`)
+shows the rest as screen-reader text in the mobile menu, so a bare "more" never fails Lighthouse's link-text audit.
 
 ## Adding a section
 

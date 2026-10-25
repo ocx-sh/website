@@ -24,6 +24,8 @@ test('C-023 390px: ecosystem menu works with the mobile menu (sl-sidebar-pane) o
   const sections = page.locator(`${SIDEBAR} .ocx-mobile-sections`);
   await expect(sections.getByRole('link', { name: 'integrations' })).toBeVisible();
   await expect(sections.getByRole('link', { name: 'apps' })).toBeVisible();
+  // The pinned hub is listed like its siblings; "more" alone is no descriptive link text (Lighthouse).
+  await expect(sections.getByRole('link', { name: 'more to learn' })).toHaveAttribute('href', '/learn/');
 
   // The header's trigger is hidden at ≤ 640px; the pane carries its own. An
   // invoker inside the open pane nests the menu under it, so opening the menu

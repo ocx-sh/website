@@ -81,10 +81,11 @@ export function activeSection(nav, pathname) {
 
 /**
  * The header's section links as one flat list for the mobile menu: link sections, a label-only entry
- * for the ecosystem menu followed by its hubs, then the install action.
+ * for the ecosystem menu followed by its hubs (`hint`: the rest of a hub's "all …" text when it extends the label, so a bare "more" is no link text),
+ * then the install action.
  * @param {Nav} nav
  * @param {string} pathname
- * @returns {{ label: string, href?: string, current?: boolean }[]}
+ * @returns {{ label: string, hint?: string, href?: string, current?: boolean }[]}
  */
 export function sectionLinks(nav, pathname) {
   const active = activeSection(nav, pathname);
@@ -96,7 +97,14 @@ export function sectionLinks(nav, pathname) {
             { label: s.label },
             ...nav.hubs
               .filter((h) => s.hubs.includes(h.id))
-              .map((h) => ({ label: h.label, href: h.href, current: s.id === active && pathname.startsWith(h.href) })),
+              .map((h) => ({
+                label: h.label,
+                hint: h.all.replace(/\s*→$/, '').startsWith(h.label)
+                  ? h.all.replace(/\s*→$/, '').slice(h.label.length)
+                  : undefined,
+                href: h.href,
+                current: s.id === active && pathname.startsWith(h.href),
+              })),
           ],
     ),
     ...nav.actions
