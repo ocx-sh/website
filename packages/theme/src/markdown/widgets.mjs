@@ -35,7 +35,7 @@ const SUMMARY_CLOSE = /<\/summary>/gi;
 // The chevron Collapsible renders through Icon.astro, attribute for attribute, so summary and trigger match.
 const CHEVRON = (() => {
   const { viewBox, body } = ICONS['chevron-down'];
-  return `<svg class="ocx-icon ocx-collapsible__chevron" data-icon="chevron-down" viewBox="${viewBox}" fill="none" stroke="currentColor" aria-hidden="true">${body}</svg>`;
+  return `<svg class="ocx-icon ocx-collapsible__chevron" data-icon="chevron-down" data-size="md" viewBox="${viewBox}" fill="none" stroke="currentColor" aria-hidden="true" focusable="false">${body}</svg>`;
 })();
 
 /**
