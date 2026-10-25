@@ -860,10 +860,10 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     height: var(--ocx-space-4);
   }
   /* Hover/focus previews only: a subtle row, never coral. */
-  .ocx-mega__item:is(:hover, :focus-within) :is(.ocx-mega__link, .ocx-mega__more) {
+  .ocx-mega__items > li:is(:hover, :focus-within) :is(.ocx-mega__link, .ocx-mega__more) {
     background: var(--ocx-color-surface-subtle);
   }
-  .ocx-mega__item:is(:hover, :focus-within) .ocx-mega__link svg {
+  .ocx-mega__items > li:is(:hover, :focus-within) .ocx-mega__link svg {
     display: block;
   }
   .ocx-mega :is(a, .ocx-mega__link):focus-visible {
@@ -897,7 +897,7 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     height: calc(var(--_strip) - var(--ocx-border-width));
     background: var(--ocx-color-surface-subtle);
   }
-  .ocx-mega__item:is(:hover, :focus-within) .ocx-mega__preview {
+  .ocx-mega__items > li:is(:hover, :focus-within) .ocx-mega__preview {
     display: grid;
   }
   /* The strip's blurb (hub switch, panel open) and an item's preview fade in as they appear. */
@@ -907,29 +907,35 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
       opacity: 0;
     }
   }
-  .ocx-mega__preview-head {
-    display: flex;
+  /* The preview's own text is the item's name and its `data-meta` the mono tag after it (no spans: htmlGz
+     and the DOM budget); the desc spans the row below. */
+  .ocx-mega__preview {
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: baseline;
-    gap: var(--ocx-space-3);
-    min-width: 0;
+    column-gap: var(--ocx-space-3);
     white-space: nowrap;
-    overflow: hidden;
   }
-  /* The preview head's own text is the item's name (no span: htmlGz). */
-  .ocx-mega__preview-head,
-  .ocx-mega__name {
+  .ocx-mega__preview,
+  .ocx-mega__blurb {
     font-size: var(--ocx-text-base);
     font-weight: var(--ocx-font-weight-semibold);
     color: var(--ocx-color-fg);
   }
-  .ocx-mega__meta {
+  .ocx-mega__preview::after {
+    content: attr(data-meta);
+    grid-area: 1 / 2;
     font-family: var(--ocx-font-mono);
     font-size: var(--ocx-text-xs);
+    font-weight: var(--ocx-font-weight-regular);
     color: var(--ocx-color-fg-subtle);
+  }
+  .ocx-mega__preview .ocx-mega__desc {
+    grid-area: 2 / 1 / auto / -1;
   }
   .ocx-mega__desc,
   .ocx-mega__desc-line {
     font-size: var(--ocx-text-sm);
+    font-weight: var(--ocx-font-weight-regular);
     line-height: 1.4; /* no line-height token yet (WP3) */
     color: var(--ocx-color-fg-muted);
     white-space: nowrap;

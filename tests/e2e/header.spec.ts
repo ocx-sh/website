@@ -170,7 +170,7 @@ test('C-191 clicking a rail tab switches the hub panel and the strip blurb', asy
 
 test('C-191 hover/focus on an item shows its desc in the strip', async ({ page }) => {
   await openMenu(page);
-  const item = page.locator('.ocx-mega__panel[data-ocx-hub="integrations"] .ocx-mega__item').first();
+  const item = page.locator('.ocx-mega__panel[data-ocx-hub="integrations"] .ocx-mega__items > li').first();
   const preview = item.locator('.ocx-mega__preview');
   const desc = item.locator('.ocx-mega__desc');
   await expect(preview).toBeHidden();

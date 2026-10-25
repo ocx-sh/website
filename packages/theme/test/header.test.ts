@@ -283,7 +283,9 @@ describe('C-023 EcosystemMenu markup', () => {
       expect(categories).toHaveLength(Math.min(4, hub.categories.length));
       for (const [i, cat] of categories.entries()) {
         const entries = nav.entries.filter((e) => e.hub === hub.id && e.category === hub.categories[i]?.id);
-        const items = [...cat.querySelectorAll('.ocx-mega__item')].filter((li) => !li.querySelector('.ocx-mega__more'));
+        const items = [...cat.querySelectorAll('.ocx-mega__items > li')].filter(
+          (li) => !li.querySelector('.ocx-mega__more'),
+        );
         expect(items.length).toBeLessThanOrEqual(5);
         expect(items).toHaveLength(Math.min(5, entries.length));
         expect(items.map((li) => li.querySelector('.ocx-mega__desc')?.textContent.trim())).toEqual(
