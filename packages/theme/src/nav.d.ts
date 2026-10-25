@@ -14,7 +14,10 @@ export type Nav = import('./registry.mjs').Nav;
  * The header's section links as one flat list for the mobile menu: link sections, a label-only entry
  * for the ecosystem menu followed by its hubs, then the install action.
  */
-export function sectionLinks(nav: Nav, pathname: string): { label: string; hint?: string; href?: string; current?: boolean }[];
+export function sectionLinks(
+  nav: Nav,
+  pathname: string,
+): { label: string; hint?: string; href?: string; current?: boolean }[];
 /**
  * The one current link among a neutral-mode header's hrefs: the longest matching prefix, else `undefined`.
  */
