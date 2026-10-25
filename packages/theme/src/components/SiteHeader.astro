@@ -57,14 +57,14 @@ const drawerExtra = brand
 // D-141: a neutral header with no links has nothing to open, so it renders no menu button.
 const hasMenu = menu && drawerMain.length + drawerExtra.length > 0;
 const ext = (l: { label: string; href: string; title?: string }) => ({ ...l, ...externalLink(l.href) });
-// r10: the rev of the nav baked here, named by the same hash as the root site's fragment (shell/Fragment.astro);
+// r10: the rev of the nav baked here (on the nav root below), named by the same hash as the root site's fragment (shell/Fragment.astro);
 // the loader in chrome.mjs swaps in the live nav when the site publishes another.
 const navRev = brand ? undefined : shellRev(await renderShell());
 ---
 
 {/* The nav's `mount` runs in chrome.mjs, the page's one early script: a script of its own was one more
 early request, which cost Lighthouse performance (0.99) on pages whose LCP waits on a body stylesheet. */}
-<div class="ocx-header" data-ocx-active={brand ? undefined : shown} data-nav-rev={navRev}>
+<div class="ocx-header" data-ocx-active={brand ? undefined : shown}>
   {brand ? (
     <a class="ocx-header__brand" href={import.meta.env.BASE_URL} aria-label={`${brand.title} home`}>
       {brand.logoSrc && (
@@ -109,6 +109,7 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
           data-zag-id={NAV_ID}
           data-zag-props={JSON.stringify(zag)}
           {...ssrAttrs(lean(part.root, { nav: true }))}
+          data-nav-rev={navRev}
         >
           <nav class="ocx-header__nav" aria-label="ocx sections">
             <ul {...ssrAttrs(lean(part.list, { nav: true }))}>
