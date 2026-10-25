@@ -36,7 +36,11 @@ async function run(
   sidebar: Sidebar,
   { path = '/docs/guides/b/', template = 'doc' } = {},
 ) {
-  const starlightRoute = { sidebar, entry: { data: { title: 'B', template } } } as unknown as OcxRouteData;
+  const head = [
+    { tag: 'meta', attrs: { name: 'generator', content: 'Astro' }, content: '' },
+    { tag: 'meta', attrs: { name: 'description', content: 'd' }, content: '' },
+  ];
+  const starlightRoute = { sidebar, head, entry: { data: { title: 'B', template } } } as unknown as OcxRouteData;
   let settled = false;
   const next = vi.fn(() => new Promise<void>((resolve) => setTimeout(() => ((settled = true), resolve()), 1)));
   await handler({ locals: { starlightRoute }, url: new URL(`https://ocx.sh${path}`) } as unknown as APIContext, next);
@@ -97,6 +101,11 @@ describe('createOnRequest', () => {
   ];
 
   const labels = (route: OcxRouteData) => route.ocxTrail?.map((c) => c.label);
+
+  it('drops the generator meta tags (htmlGz) and keeps the rest of the head', async () => {
+    const { starlightRoute } = await run(createOnRequest(), sidebar());
+    expect(starlightRoute.head.map((h) => h.attrs?.['name'])).toEqual(['description']);
+  });
 
   it('C-025: default sets starlightRoute.ocxTrail with no root crumb and leaves sidebar untouched', async () => {
     const original = sidebar();

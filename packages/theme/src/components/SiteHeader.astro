@@ -70,7 +70,12 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
     /* D-R3 fallback: an inline copy, not <Logo>. Logo's global CSS would inline into every page
     and push the HTML past the first-RTT window (plan_zag-adoption.md, Refinement D-R3). */
     <a class="ocx-header__brand" href={ocx.brand.href} aria-label="ocx home">
-      <Fragment set:html={logo.replace('<svg ', '<svg width="20" height="20" aria-hidden="true" ')} />
+      <Fragment
+        set:html={logo.replace(
+          '<svg xmlns="http://www.w3.org/2000/svg" ',
+          '<svg width="20" height="20" aria-hidden="true" ',
+        )}
+      />
       <span>{ocx.brand.wordmark}</span>
     </a>
   )}

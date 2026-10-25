@@ -49,16 +49,12 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
           <p class="ocx-mega__category-label">{more.label}</p>
           {more.groups.map((g) => (
             <>
-              <p class="ocx-mega__group-label">{g.label}</p>
-              <ul class="ocx-mega__items">
-                {g.links.map((l) => (
-                  <li class="ocx-mega__item">
-                    <a class="ocx-mega__link" href={l.href}>
-                      {l.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <p>{g.label}</p>
+              {g.links.map((l) => (
+                <a class="ocx-mega__link" href={l.href}>
+                  {l.label}
+                </a>
+              ))}
             </>
           ))}
         </div>
@@ -82,7 +78,7 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
                   )}
                   <span class="ocx-mega__preview">
                     <span class="ocx-mega__preview-head" aria-hidden="true">
-                      <span class="ocx-mega__name">{e.label}</span>
+                      {e.label}
                       <span class="ocx-mega__meta">{e.meta}</span>
                     </span>
                     <span class="ocx-mega__desc" id={`ocx-mega-desc-${e.id}`}>

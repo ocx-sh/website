@@ -41,19 +41,6 @@ if (!icon) throw new Error(`Icon: no icon named "${String(name)}"`);
       block-size: var(--ocx-icon-md);
       vertical-align: middle;
     }
-    /* A shell logo wears its brand colour wherever it appears; a rule that colours the icon itself still wins. */
-    :where(.ocx-icon[data-icon='powershell']) {
-      color: var(--ocx-color-shell-powershell);
-    }
-    :where(.ocx-icon[data-icon='nushell']) {
-      color: var(--ocx-color-shell-nushell);
-    }
-    :where(.ocx-icon[data-icon='fish']) {
-      color: var(--ocx-color-shell-fish);
-    }
-    :where(.ocx-icon[data-icon='elvish']) {
-      color: var(--ocx-color-shell-elvish);
-    }
     :where(.ocx-icon[data-size='xs']) {
       inline-size: var(--ocx-icon-xs);
       block-size: var(--ocx-icon-xs);
