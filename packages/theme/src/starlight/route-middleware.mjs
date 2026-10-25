@@ -81,6 +81,9 @@ export function createOnRequest({ flatten = false, breadcrumbs = {} } = {}) {
           })
         : [];
     if (flatten) route.sidebar = flattenSidebar(route.sidebar);
+    // Astro's and Starlight's `<meta name=generator>` tags are ~30 gzip bytes on every page, paid against
+    // HTML_GZ_MAX; nothing reads them.
+    route.head = route.head.filter((h) => !(h.tag === 'meta' && h.attrs?.['name'] === 'generator'));
     await next();
   });
 }

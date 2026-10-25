@@ -168,7 +168,7 @@ describe('C-023 Header sections', () => {
     const doc = await render(Header);
     const group = doc.querySelector('.ocx-mega__rail > .ocx-mega__more-group');
     expect(group?.querySelector('.ocx-mega__category-label')?.textContent).toBe('More');
-    expect(group?.querySelector('.ocx-mega__group-label')?.textContent).toBe('Learn');
+    expect(group?.querySelectorAll('p')[1]?.textContent).toBe('Learn');
     expect([...(group?.querySelectorAll('a') ?? [])].map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
       ['Shorts', '/learn/videos/'],
       ['Podcasts', '/learn/podcast/'],
