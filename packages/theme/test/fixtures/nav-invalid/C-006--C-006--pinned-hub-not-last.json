@@ -1,5 +1,5 @@
 {
-  "$schema": "../../../src/nav.schema.json",
+  "$schema": "./nav.schema.json",
   "version": 4,
   "brand": {
     "wordmark": "ocx",
@@ -18,25 +18,12 @@
     },
     {
       "id": "ecosystem",
-      "label": "ecosystem",
+      "label": "solutions",
       "hubs": [
+        "more",
         "integrations",
         "apps"
-      ],
-      "more": {
-        "label": "More",
-        "groups": [
-          {
-            "label": "Learn",
-            "links": [
-              {
-                "label": "Shorts",
-                "href": "/nowhere/"
-              }
-            ]
-          }
-        ]
-      }
+      ]
     }
   ],
   "hubs": [
@@ -45,7 +32,7 @@
       "label": "integrations",
       "href": "/integrations/",
       "blurb": "ocx inside your build system, CI and editor.",
-      "all": "all integrations \u2192",
+      "all": "all integrations →",
       "categories": [
         {
           "id": "build",
@@ -70,19 +57,29 @@
       "label": "apps",
       "href": "/apps/",
       "blurb": "Standalone tools built on ocx.",
-      "all": "all apps \u2192",
+      "all": "all apps →",
       "categories": [
         {
           "id": "publish",
           "label": "publish"
         },
         {
-          "id": "browse",
-          "label": "browse"
-        },
-        {
           "id": "agents",
           "label": "agents"
+        }
+      ]
+    },
+    {
+      "id": "more",
+      "label": "more",
+      "href": "/learn/",
+      "blurb": "Short videos and podcasts about ocx.",
+      "all": "all learning →",
+      "pinned": true,
+      "categories": [
+        {
+          "id": "learn",
+          "label": "learn"
         }
       ]
     }
@@ -105,6 +102,11 @@
     },
     {
       "path": "/install/",
+      "repo": "ocx-sh/www-setup",
+      "search": true
+    },
+    {
+      "path": "/team/",
       "repo": "ocx-sh/website",
       "search": false
     },
@@ -134,9 +136,19 @@
       "search": true
     },
     {
+      "path": "/integrations/cmake/",
+      "repo": "ocx-sh/find_ocx",
+      "search": true
+    },
+    {
       "path": "/apps/catalog/",
       "repo": "ocx-sh/catalog",
       "search": true
+    },
+    {
+      "path": "/learn/",
+      "repo": "ocx-sh/marketing",
+      "search": false
     }
   ],
   "entries": [
@@ -156,7 +168,7 @@
       "label": "CMake",
       "meta": "find_ocx",
       "desc": "find_package() for ocx-managed tools.",
-      "planned": true
+      "href": "/integrations/cmake/"
     },
     {
       "id": "gradle",
@@ -174,7 +186,7 @@
       "label": "GitHub Actions",
       "meta": "setup-ocx",
       "desc": "Install and cache ocx tools in one step.",
-      "planned": true
+      "href": "https://github.com/ocx-sh/setup-ocx"
     },
     {
       "id": "gitlab-ci",
@@ -240,12 +252,21 @@
       "planned": true
     },
     {
+      "id": "index",
+      "hub": "apps",
+      "category": "publish",
+      "label": "public index",
+      "meta": "docs",
+      "desc": "Announce packages and claim namespaces on index.ocx.sh.",
+      "href": "https://ocx.sh/catalog/docs/"
+    },
+    {
       "id": "catalog",
       "hub": "apps",
-      "category": "browse",
+      "category": "publish",
       "label": "catalog",
-      "meta": "web",
-      "desc": "Browse and search any index.",
+      "meta": "cli",
+      "desc": "Render any index into a static, searchable catalog site.",
       "href": "/apps/catalog/"
     },
     {
@@ -265,6 +286,24 @@
       "meta": "skills",
       "desc": "Agent skills that teach ocx workflows.",
       "href": "https://lore.ocx.sh/"
+    },
+    {
+      "id": "shorts",
+      "hub": "more",
+      "category": "learn",
+      "label": "Shorts",
+      "meta": "video",
+      "desc": "Short videos about ocx.",
+      "href": "/learn/videos/"
+    },
+    {
+      "id": "podcasts",
+      "hub": "more",
+      "category": "learn",
+      "label": "Podcasts",
+      "meta": "audio",
+      "desc": "Podcasts about ocx.",
+      "href": "/learn/podcast/"
     }
   ],
   "actions": [

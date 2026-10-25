@@ -162,19 +162,32 @@ describe('C-023 Header sections', () => {
     expect(content?.hasAttribute('popover')).toBe(true);
   });
 
-  it('C-190: the menu pins its "More" group below the hubs, in the rail, as nav.json lists it', async () => {
-    const more = ecosystem && 'more' in ecosystem ? ecosystem.more : undefined;
-    expect(more?.label).toBe('More');
-    const doc = await render(Header);
-    const group = doc.querySelector('.ocx-mega__rail > .ocx-mega__more-group');
-    expect(group?.querySelector('.ocx-mega__category-label')?.textContent).toBe('More');
-    expect(group?.querySelectorAll('p')[1]?.textContent).toBe('Learn');
-    expect([...(group?.querySelectorAll('a') ?? [])].map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+  it('C-190: a pinned hub is a rail entry like its siblings, last in the rail, with its categories in the panel', async () => {
+    const pinned = nav.hubs.filter((h) => h.pinned);
+    expect(pinned.map((h) => h.id)).toEqual(['more']);
+    expect(ecosystem && 'hubs' in ecosystem ? ecosystem.hubs.at(-1) : undefined).toBe('more');
+    const doc = await render(EcosystemMenu);
+    const tabs = [...doc.querySelectorAll('.ocx-mega__rail [role="tab"]')];
+    expect(tabs.map((t) => [t.textContent.trim(), t.hasAttribute('data-pin')])).toEqual([
+      ['integrations', false],
+      ['apps', false],
+      ['more', true],
+    ]);
+    expect(doc.querySelectorAll('.ocx-mega__rail .ocx-mega__hub-link')[2]?.hasAttribute('data-pin')).toBe(true);
+    const panel = doc.querySelector('.ocx-mega__panel[data-ocx-hub="more"]');
+    expect(panel?.querySelector('.ocx-mega__category-label')?.textContent).toBe('learn');
+    expect(
+      [...(panel?.querySelectorAll('a.ocx-mega__link') ?? [])].map((a) => [
+        a.textContent.trim(),
+        a.getAttribute('href'),
+      ]),
+    ).toEqual([
       ['Shorts', '/learn/videos/'],
       ['Podcasts', '/learn/podcast/'],
     ]);
-    // the rail's last child: the CSS pins it to the bottom row
-    expect(group?.parentElement?.lastElementChild).toBe(group);
+    expect(doc.querySelector('.ocx-mega__blurb[data-ocx-hub="more"]')?.textContent).toContain(
+      'Short videos and podcasts',
+    );
   });
 
   it("C-192: Search.astro, the header's one early script, mounts the navigation-menu root", () => {

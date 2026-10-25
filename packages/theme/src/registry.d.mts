@@ -35,8 +35,7 @@ export function zoneName(repo: string): string;
 export function mergeTargets(nav: Nav, ownPath: string): MergeTarget[];
 /** @typedef {{ wordmark: string, href: string }} Brand */
 /** @typedef {{ id: string, label: string, href: string }} LinkSection */
-/** @typedef {{ label: string, links: { label: string, href: string }[] }} MoreGroup */
-/** @typedef {{ id: string, label: string, hubs: string[], more?: { label: string, groups: MoreGroup[] } }} MenuSection */
+/** @typedef {{ id: string, label: string, hubs: string[] }} MenuSection */
 /** @typedef {LinkSection | MenuSection} Section */
 /** @typedef {{ id: string, label: string }} Category */
 /**
@@ -46,6 +45,7 @@ export function mergeTargets(nav: Nav, ownPath: string): MergeTarget[];
  * @property {string} href mount point, a claim path
  * @property {string} blurb default text of the menu detail strip
  * @property {string} all label of the "see all" link
+ * @property {boolean} [pinned] rail entry pinned to the menu's bottom; the last hub of its section
  * @property {Category[]} categories at most 4
  */
 /**
@@ -62,7 +62,7 @@ export function mergeTargets(nav: Nav, ownPath: string): MergeTarget[];
  * @property {string} label
  * @property {string} meta short mono tag
  * @property {string} desc at most 60 chars
- * @property {string} [href] a claim path or an `https:` URL; absent iff planned
+ * @property {string} [href] a claim path, a path under a claim other than `/`, or an `https:` URL; absent iff planned
  * @property {boolean} [planned]
  */
 /** @typedef {{ id: string, label: string, href: string, kind: string }} Action */
@@ -98,21 +98,10 @@ export type LinkSection = {
     label: string;
     href: string;
 };
-export type MoreGroup = {
-    label: string;
-    links: {
-        label: string;
-        href: string;
-    }[];
-};
 export type MenuSection = {
     id: string;
     label: string;
     hubs: string[];
-    more?: {
-        label: string;
-        groups: MoreGroup[];
-    };
 };
 export type Section = LinkSection | MenuSection;
 export type Category = {
@@ -134,6 +123,10 @@ export type Hub = {
      * label of the "see all" link
      */
     all: string;
+    /**
+     * rail entry pinned to the menu's bottom; the last hub of its section
+     */
+    pinned?: boolean;
     /**
      * at most 4
      */
@@ -170,7 +163,7 @@ export type Entry = {
      */
     desc: string;
     /**
-     * a claim path or an `https:` URL; absent iff planned
+     * a claim path, a path under a claim other than `/`, or an `https:` URL; absent iff planned
      */
     href?: string;
     planned?: boolean;
