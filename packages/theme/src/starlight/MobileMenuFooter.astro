@@ -21,6 +21,7 @@ const links = sectionLinks(nav, Astro.url.pathname);
         {l.href ? (
           <a href={l.href} aria-current={l.current ? 'page' : undefined}>
             {l.label}
+            {l.hint && <span class="sr-only">{l.hint}</span>}
           </a>
         ) : (
           <button type="button" popovertarget="ocx-ecosystem-menu">

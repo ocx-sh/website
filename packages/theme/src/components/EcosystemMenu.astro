@@ -30,14 +30,14 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
     <div class="ocx-mega__rail">
       <div {...ssrAttrs(lean(rail.getListProps()))}>
         {hubs.map((h) => (
-          <button class="ocx-mega__tab" data-pin={h.pinned} {...ssrAttrs(lean(rail.getTriggerProps({ value: h.id })))}>
+          <button class="ocx-mega__tab" data-pin={h.pinned ? '' : undefined} {...ssrAttrs(lean(rail.getTriggerProps({ value: h.id })))}>
             {h.label}
           </button>
         ))}
       </div>
       <div class="ocx-mega__hub-links">
         {hubs.map((h) => (
-          <a class="ocx-mega__hub-link" data-pin={h.pinned} href={h.href} aria-label={h.all.replace(/\s*→$/, '')}>
+          <a class="ocx-mega__hub-link" data-pin={h.pinned ? '' : undefined} href={h.href} aria-label={h.all.replace(/\s*→$/, '')}>
             <Icon name="arrow-right" />
           </a>
         ))}

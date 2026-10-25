@@ -44,7 +44,7 @@
       "label": "more",
       "href": "/learn/",
       "blurb": "Short videos and podcasts about ocx.",
-      "all": "all learning →",
+      "all": "more to learn →",
       "pinned": true,
       "categories": [{ "id": "learn", "label": "learn" }]
     }

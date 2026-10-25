@@ -10,7 +10,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import * as nm from '../src/components/navigation-menu.zag.mjs';
 import { ssrApi } from '../src/components/ui/zag-runtime.mjs';
 import nav from '../src/nav.json' with { type: 'json' };
-import { activeSection } from '../src/nav.mjs';
+import { activeSection, sectionLinks } from '../src/nav.mjs';
 import { domAttrs } from './zag-helpers.ts';
 
 type Component = Parameters<AstroContainer['renderToString']>[0];
@@ -213,6 +213,17 @@ describe('C-023 Header sections', () => {
       expect(css.match(/var\(--(?!ocx-|_|sl-)[\w-]+/g) ?? [], file).toEqual([]);
       expect(css.match(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(/gi) ?? [], file).toEqual([]);
     }
+  });
+});
+
+describe('C-023 mobile section links', () => {
+  it('C-190: the pinned hub is a mobile link like its siblings; only it extends its label for assistive tech', () => {
+    const hubs = sectionLinks(nav, '/docs/').filter((l) => ['integrations', 'apps', 'more'].includes(l.label));
+    expect(hubs.map((l) => [l.label, l.href, l.hint])).toEqual([
+      ['integrations', '/integrations/', undefined],
+      ['apps', '/apps/', undefined],
+      ['more', '/learn/', ' to learn'],
+    ]);
   });
 });
 
