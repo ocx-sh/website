@@ -126,7 +126,12 @@ describe('shared header (/_shell/v1/) cache rules', () => {
       ['shell-rev-browser', 16, '31536000', '/_shell/v1/*/nav.html'],
     ] as const) {
       const rule = byId.get(`ocx:${id}`);
-      expect(rule, id).toMatchObject({ ActionType: action, ActionParameter1: ttl, TriggerMatchingType: 1, Enabled: true });
+      expect(rule, id).toMatchObject({
+        ActionType: action,
+        ActionParameter1: ttl,
+        TriggerMatchingType: 1,
+        Enabled: true,
+      });
       expect(rule?.Triggers.map((t) => [t.Type, t.PatternMatches])).toEqual([
         [0, hosts.map((h) => `https://${h}${path}`)],
         [8, ['200']],
@@ -143,7 +148,10 @@ describe('rule set and limits', () => {
   const originIds = (zone: string) => ids(zone).slice(zone === 'prod' ? 11 : 10);
 
   it.each([
-    ['prod', ['assets-edge', 'assets-browser', ...SHELL, 'noindex', 'hsts', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
+    [
+      'prod',
+      ['assets-edge', 'assets-browser', ...SHELL, 'noindex', 'hsts', 'frame', 'catalog-sandbox', 'catalog-nosniff'],
+    ],
     ['dev', ['assets-edge', 'assets-browser', ...SHELL, 'noindex', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
     ['preview:ocx', ['noindex', 'frame']],
   ])('%s: header rules come first, in order', (zone, head) => {
