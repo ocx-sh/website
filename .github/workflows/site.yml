@@ -3,7 +3,8 @@ name: Site
 # Builds the root site (`site/`: /, /integrations/, /apps/, /team/) and deploys it to ocx.sh. The deploy job is
 # skipped, never failed, until the repository variable BUNNY_DEPLOY is `true` and the run is on main; the
 # `ocx.sh` environment admits only main and holds the one zone key, BUNNY_STORAGE_KEY. The
-# account-wide Bunny API key never goes into CI, so no cache purge runs here.
+# account-wide Bunny API key never goes into CI, so no cache purge runs here. The daily run also
+# checks the shared header (`drift`): it reads live pages and files one issue, nothing else.
 on:
   push:
     branches: [main]
@@ -83,3 +84,25 @@ jobs:
         with:
           dist: dist
           storage-key: ${{ secrets.BUNNY_STORAGE_KEY }}
+
+  # Shared-header drift alarm (scripts/shell-drift.mjs): every claimed site must bake the rev in
+  # /_shell/v1/current.json. Reads public pages; the only write is the one drift issue.
+  drift:
+    name: Header drift
+    if: ${{ github.event_name != 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Compare baked headers with the live one
+        run: node scripts/shell-drift.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
