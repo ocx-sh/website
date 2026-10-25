@@ -701,7 +701,23 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     background: var(--ocx-color-surface-subtle);
     border-inline-end: var(--ocx-border-width) solid var(--ocx-color-border);
   }
-  .ocx-mega__rail > * {
+  /* The `more` group sits in the rail's last row, pinned to the bottom of the menu. */
+  .ocx-mega__rail {
+    grid-template-rows: 1fr auto;
+  }
+  .ocx-mega__more-group {
+    grid-row: 2;
+    min-width: 0;
+    padding-top: var(--ocx-space-4);
+    border-top: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .ocx-mega__group-label {
+    margin: 0;
+    padding: 0 var(--ocx-space-3) var(--ocx-space-1);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-muted);
+  }
+  .ocx-mega__rail > :not(.ocx-mega__more-group) {
     grid-area: 1 / 1;
     display: flex;
     flex-direction: column;

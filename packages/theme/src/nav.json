@@ -8,7 +8,23 @@
   "sections": [
     { "id": "docs", "label": "docs", "href": "/docs/" },
     { "id": "catalog", "label": "catalog", "href": "/catalog/" },
-    { "id": "ecosystem", "label": "solutions", "hubs": ["integrations", "apps"] }
+    {
+      "id": "ecosystem",
+      "label": "solutions",
+      "hubs": ["integrations", "apps"],
+      "more": {
+        "label": "More",
+        "groups": [
+          {
+            "label": "Learn",
+            "links": [
+              { "label": "Shorts", "href": "/learn/videos/" },
+              { "label": "Podcasts", "href": "/learn/podcast/" }
+            ]
+          }
+        ]
+      }
+    }
   ],
   "hubs": [
     {

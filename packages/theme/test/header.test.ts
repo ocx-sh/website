@@ -162,6 +162,21 @@ describe('C-023 Header sections', () => {
     expect(content?.hasAttribute('popover')).toBe(true);
   });
 
+  it('C-190: the menu pins its "More" group below the hubs, in the rail, as nav.json lists it', async () => {
+    const more = ecosystem && 'more' in ecosystem ? ecosystem.more : undefined;
+    expect(more?.label).toBe('More');
+    const doc = await render(Header);
+    const group = doc.querySelector('.ocx-mega__rail > .ocx-mega__more-group');
+    expect(group?.querySelector('.ocx-mega__category-label')?.textContent).toBe('More');
+    expect(group?.querySelector('.ocx-mega__group-label')?.textContent).toBe('Learn');
+    expect([...(group?.querySelectorAll('a') ?? [])].map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      ['Shorts', '/learn/videos/'],
+      ['Podcasts', '/learn/podcast/'],
+    ]);
+    // the rail's last child: the CSS pins it to the bottom row
+    expect(group?.parentElement?.lastElementChild).toBe(group);
+  });
+
   it("C-192: Search.astro, the header's one early script, mounts the navigation-menu root", () => {
     const search = readFileSync(new URL('../src/starlight/Search.astro', import.meta.url), 'utf8');
     expect(search.split('<script>').slice(1).join('')).toMatch(/mountChrome\(document\)/);
