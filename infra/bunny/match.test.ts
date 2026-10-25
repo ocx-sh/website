@@ -115,6 +115,15 @@ describe('first-match outcomes the table must keep', () => {
     }
   });
 
+  it('the shell pointer and fragment cache rules need a 200 and match their own path only', () => {
+    const shell = (path: string, status = 200) => at(path, status).headers.filter((h) => h.startsWith('shell-'));
+    expect(shell('/_shell/v1/current.json')).toEqual(['shell-current-edge', 'shell-current-browser']);
+    expect(shell('/_shell/v1/0123456789ab/nav.html')).toEqual(['shell-rev-edge', 'shell-rev-browser']);
+    expect(shell('/_shell/v1/current.json', 404)).toEqual([]);
+    expect(shell('/_shell/v1/0123456789ab/nav.html', 404)).toEqual([]);
+    expect(shell('/_shell/v1/')).toEqual([]);
+  });
+
   it('the _astro cache rules need a 200', () => {
     expect(at('/_astro/x.js', 200).headers).toEqual(expect.arrayContaining(['assets-edge', 'assets-browser']));
     const missing = at('/_astro/x.js', 404).headers;

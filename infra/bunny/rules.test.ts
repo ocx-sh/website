@@ -113,12 +113,38 @@ describe('asset cache rules', () => {
   });
 });
 
+const SHELL = ['shell-current-edge', 'shell-current-browser', 'shell-rev-edge', 'shell-rev-browser'];
+
+describe('shared header (/_shell/v1/) cache rules', () => {
+  it.each(['dev', 'prod'])('%s: the pointer lives 60 s, a rev fragment a year, both on status 200 only', (zone) => {
+    const hosts = zone === 'prod' ? ['ocx.sh', 'next.ocx.sh', 'sh-ocx.b-cdn.net'] : ['sh-ocx-dev.b-cdn.net'];
+    const byId = new Map(planRules(zone).map((r) => [r.Description, r]));
+    for (const [id, action, ttl, path] of [
+      ['shell-current-edge', 3, '60', '/_shell/v1/current.json'],
+      ['shell-current-browser', 16, '60', '/_shell/v1/current.json'],
+      ['shell-rev-edge', 3, '31536000', '/_shell/v1/*/nav.html'],
+      ['shell-rev-browser', 16, '31536000', '/_shell/v1/*/nav.html'],
+    ] as const) {
+      const rule = byId.get(`ocx:${id}`);
+      expect(rule, id).toMatchObject({ ActionType: action, ActionParameter1: ttl, TriggerMatchingType: 1, Enabled: true });
+      expect(rule?.Triggers.map((t) => [t.Type, t.PatternMatches])).toEqual([
+        [0, hosts.map((h) => `https://${h}${path}`)],
+        [8, ['200']],
+      ]);
+    }
+  });
+
+  it('the preview zone has no shell rule', () => {
+    expect(JSON.stringify(planRules('preview:ocx'))).not.toMatch(/_shell|shell-/);
+  });
+});
+
 describe('rule set and limits', () => {
-  const originIds = (zone: string) => ids(zone).slice(zone === 'prod' ? 7 : 6);
+  const originIds = (zone: string) => ids(zone).slice(zone === 'prod' ? 11 : 10);
 
   it.each([
-    ['prod', ['assets-edge', 'assets-browser', 'noindex', 'hsts', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
-    ['dev', ['assets-edge', 'assets-browser', 'noindex', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
+    ['prod', ['assets-edge', 'assets-browser', ...SHELL, 'noindex', 'hsts', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
+    ['dev', ['assets-edge', 'assets-browser', ...SHELL, 'noindex', 'frame', 'catalog-sandbox', 'catalog-nosniff']],
     ['preview:ocx', ['noindex', 'frame']],
   ])('%s: header rules come first, in order', (zone, head) => {
     expect(ids(zone).slice(0, head.length)).toEqual(head.map((id) => `ocx:${id}`));
@@ -141,8 +167,8 @@ describe('rule set and limits', () => {
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
-  it('commits 15 prod and 14 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([15, 14]);
+  it('commits 19 prod and 18 dev rules, prod within the plan ceiling', () => {
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([19, 18]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 
@@ -174,7 +200,7 @@ describe('rule set and limits', () => {
     ['preview:ocx', ['sh-ocx-preview-ocx.b-cdn.net']],
   ])('%s: every pattern outside the asset rules starts with a literal zone host', (zone, hosts) => {
     for (const rule of planRules(zone).filter((r) => !r.Description.startsWith('ocx:assets-'))) {
-      for (const t of rule.Triggers)
+      for (const t of rule.Triggers.filter((x) => x.Type === 0))
         for (const p of t.PatternMatches)
           expect(
             hosts.some((h) => p.startsWith(`https://${h}/`)),
