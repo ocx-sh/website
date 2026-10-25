@@ -3,8 +3,7 @@
 
 /** @typedef {{ wordmark: string, href: string }} Brand */
 /** @typedef {{ id: string, label: string, href: string }} LinkSection */
-/** @typedef {{ label: string, links: { label: string, href: string }[] }} MoreGroup */
-/** @typedef {{ id: string, label: string, hubs: string[], more?: { label: string, groups: MoreGroup[] } }} MenuSection */
+/** @typedef {{ id: string, label: string, hubs: string[] }} MenuSection */
 /** @typedef {LinkSection | MenuSection} Section */
 /** @typedef {{ id: string, label: string }} Category */
 /**
@@ -14,6 +13,7 @@
  * @property {string} href mount point, a claim path
  * @property {string} blurb default text of the menu detail strip
  * @property {string} all label of the "see all" link
+ * @property {boolean} [pinned] rail entry pinned to the menu's bottom; the last hub of its section
  * @property {Category[]} categories at most 4
  */
 /**
@@ -30,7 +30,7 @@
  * @property {string} label
  * @property {string} meta short mono tag
  * @property {string} desc at most 60 chars
- * @property {string} [href] a claim path or an `https:` URL; absent iff planned
+ * @property {string} [href] a claim path, a path under a claim other than `/`, or an `https:` URL; absent iff planned
  * @property {boolean} [planned]
  */
 // ponytail: `version` and `kind` are widened to what a JSON import infers (number, string)
@@ -141,16 +141,13 @@ export function validate(nav) {
   const hubUses = new Map();
   nav.sections.forEach((s, i) => {
     if ('href' in s) return internal(`sections[${i}].href`, s.href);
-    s.more?.groups.forEach((g, j) =>
-      g.links.forEach((l, k) => {
-        if (l.href.startsWith('/') && (claimFor(nav, l.href)?.path ?? '/') === '/' && !claimed.has(l.href))
-          add(`sections[${i}].more.groups[${j}].links[${k}].href`, `C-006: href "${l.href}" is under no claim`);
-      }),
-    );
     s.hubs.forEach((h, j) => {
       if (!hubIds.has(h)) add(`sections[${i}].hubs[${j}]`, `C-006: unknown hub "${h}"`);
       hubUses.set(h, (hubUses.get(h) ?? 0) + 1);
     });
+    const pinned = s.hubs.filter((h) => nav.hubs.find((x) => x.id === h)?.pinned);
+    if (pinned.length > 1 || (pinned[0] !== undefined && pinned[0] !== s.hubs.at(-1)))
+      add(`sections[${i}].hubs`, 'C-006: a pinned hub is the only one, and the last, of its section');
   });
   nav.hubs.forEach((h, i) => {
     internal(`hubs[${i}].href`, h.href);
@@ -170,7 +167,8 @@ export function validate(nav) {
     ids.add(key);
     if ((e.planned === true) === (e.href !== undefined)) add(at, 'C-006: an entry has an href iff it is not planned');
     if (e.href !== undefined) {
-      internal(`${at}.href`, e.href);
+      if (e.href.startsWith('/') && !claimed.has(e.href) && (claimFor(nav, e.href)?.path ?? '/') === '/')
+        add(`${at}.href`, `C-006: internal href "${e.href}" is under no claim`);
       if (!e.href.startsWith('/') && !e.href.startsWith('https://'))
         add(`${at}.href`, `C-006: external href "${e.href}" must be https:`);
     }

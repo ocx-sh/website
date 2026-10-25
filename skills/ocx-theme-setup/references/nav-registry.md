@@ -6,7 +6,7 @@ reading the registry from code.
 ## Shape
 
 `@ocx-sh/theme/nav.json` (schema `nav.schema.json` in the theme repo) holds
-`brand`, `sections` (a link, or a menu over `hubs` with an optional `more`), `hubs`, `claims`, `entries`, `actions` and `footer`.
+`brand`, `sections` (a link, or a menu over `hubs`), `hubs`, `claims`, `entries`, `actions` and `footer`.
 The header, the footer, the breadcrumb trail, the search merge, `ocx-site
 check` and the deploy action all read this one file, so a nav change is a
 theme release that reaches each site through its Dependabot update.
@@ -45,13 +45,14 @@ A claim is `{ "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "searc
 | `externalLink(href)` | `{ out, attrs }`: `out` shows the external icon, `attrs` is `target="_blank"` and `rel="noopener noreferrer"` for an external `http(s)` href, `{}` for an internal or `mailto:` one |
 | `PAGEFIND_VERSION` | The Pagefind version the theme was built against |
 
-## The menu's "More" group
+## A pinned hub
 
-A menu section (`solutions`) may carry `more`: `{ "label": "More", "groups": [{ "label": "Learn",
-"links": [{ "label": "Shorts", "href": "/learn/videos/" }] }] }`. The header's menu
-(and the mobile menu's, which opens the same panel) pins it to the bottom of the rail, below the hubs.
-Each link's `href` is a claim path or lies under a claim other than `/`; `validate` reports anything
-else. It is not a top-nav category: a path that needs only a menu link takes a `more` link, not a section.
+A hub may carry `"pinned": true`: its rail entry sits at the bottom of the menu's rail
+(the mobile menu lists it like any hub). It is an ordinary hub (`href`, `blurb`, `all`, categories,
+entries), so `solutions` shows `more` with category `learn` and the Shorts and Podcasts entries.
+It must be the only pinned hub, and the last one of its section. An entry `href` is a claim path or
+lies under a claim other than `/`; `validate` reports anything else. A path that needs only a menu
+link takes an entry in a hub, not a section.
 
 ## Adding a section
 

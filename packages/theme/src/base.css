@@ -710,23 +710,7 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     background: var(--ocx-color-surface-subtle);
     border-inline-end: var(--ocx-border-width) solid var(--ocx-color-border);
   }
-  /* The `more` group sits in the rail's last row, pinned to the bottom of the menu. */
-  .ocx-mega__rail {
-    grid-template-rows: 1fr auto;
-  }
-  .ocx-mega__more-group {
-    grid-row: 2;
-    min-width: 0;
-    padding-top: var(--ocx-space-4);
-    border-top: var(--ocx-border-width) solid var(--ocx-color-border);
-  }
-  .ocx-mega__more-group > p + p {
-    margin: 0;
-    padding: 0 var(--ocx-space-3) var(--ocx-space-1);
-    font-size: var(--ocx-text-xs);
-    color: var(--ocx-color-fg-muted);
-  }
-  .ocx-mega__rail > :not(.ocx-mega__more-group) {
+  .ocx-mega__rail > * {
     grid-area: 1 / 1;
     display: flex;
     flex-direction: column;
@@ -735,6 +719,10 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
   }
   .ocx-mega__hub-links {
     justify-self: end;
+  }
+  /* A pinned hub's tab and arrow sit at the bottom of the rail; the rail columns are as tall as the menu. */
+  .ocx-mega [data-pin] {
+    margin-top: auto;
   }
   .ocx-mega__tab {
     box-sizing: border-box;
@@ -872,8 +860,7 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     height: var(--ocx-space-4);
   }
   /* Hover/focus previews only: a subtle row, never coral. */
-  .ocx-mega__item:is(:hover, :focus-within) :is(.ocx-mega__link, .ocx-mega__more),
-  .ocx-mega__more-group .ocx-mega__link:is(:hover, :focus-visible) {
+  .ocx-mega__item:is(:hover, :focus-within) :is(.ocx-mega__link, .ocx-mega__more) {
     background: var(--ocx-color-surface-subtle);
   }
   .ocx-mega__item:is(:hover, :focus-within) .ocx-mega__link svg {

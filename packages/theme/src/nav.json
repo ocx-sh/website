@@ -11,19 +11,7 @@
     {
       "id": "ecosystem",
       "label": "solutions",
-      "hubs": ["integrations", "apps"],
-      "more": {
-        "label": "More",
-        "groups": [
-          {
-            "label": "Learn",
-            "links": [
-              { "label": "Shorts", "href": "/learn/videos/" },
-              { "label": "Podcasts", "href": "/learn/podcast/" }
-            ]
-          }
-        ]
-      }
+      "hubs": ["integrations", "apps", "more"]
     }
   ],
   "hubs": [
@@ -50,6 +38,15 @@
         { "id": "publish", "label": "publish" },
         { "id": "agents", "label": "agents" }
       ]
+    },
+    {
+      "id": "more",
+      "label": "more",
+      "href": "/learn/",
+      "blurb": "Short videos and podcasts about ocx.",
+      "all": "all learning →",
+      "pinned": true,
+      "categories": [{ "id": "learn", "label": "learn" }]
     }
   ],
   "claims": [
@@ -202,6 +199,24 @@
       "meta": "skills",
       "desc": "Agent skills that teach ocx workflows.",
       "href": "https://lore.ocx.sh/"
+    },
+    {
+      "id": "shorts",
+      "hub": "more",
+      "category": "learn",
+      "label": "Shorts",
+      "meta": "video",
+      "desc": "Short videos about ocx.",
+      "href": "/learn/videos/"
+    },
+    {
+      "id": "podcasts",
+      "hub": "more",
+      "category": "learn",
+      "label": "Podcasts",
+      "meta": "audio",
+      "desc": "Podcasts about ocx.",
+      "href": "/learn/podcast/"
     }
   ],
   "actions": [
