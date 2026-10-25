@@ -29,6 +29,9 @@ const pkg = () => ({
     './prose-code.css': './src/prose-code.css',
     './lazy': { types: './src/components/ui/lazy.d.mts', default: './src/components/ui/lazy.mjs' },
     './csp': { types: './src/csp.d.mts', default: './src/csp.mjs' },
+    './shell': { types: './src/shell.d.mts', default: './src/shell.mjs' },
+    './shell-rev': { types: './src/shell-rev.d.mts', default: './src/shell-rev.mjs' },
+    './shell-render': { types: './src/shell-render.d.mts', default: './src/shell-render.mjs' },
     './copy': { types: './src/components/copy.d.mts', default: './src/components/copy.mjs' },
     './logo-tile': { types: './src/components/ui/logo-tile.d.mts', default: './src/components/ui/logo-tile.mjs' },
     './command-palette': {
@@ -78,6 +81,12 @@ const FILES = [
   'src/components/ui/lazy.d.mts',
   'src/csp.mjs',
   'src/csp.d.mts',
+  'src/shell.mjs',
+  'src/shell.d.mts',
+  'src/shell-rev.mjs',
+  'src/shell-rev.d.mts',
+  'src/shell-render.mjs',
+  'src/shell-render.d.mts',
 ];
 
 test('C-031 exactly the §4.1 export key set passes with no problems', () => {

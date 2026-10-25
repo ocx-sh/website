@@ -4,7 +4,7 @@
  *
  * Contract C-031 — the tarball's `exports` keys are exactly the design §4.1
  * list, each key resolves to a file inside the installed tarball, every JS
- * export (`./starlight`, `./nav`, `./icons`, `./toast`, `./toaster`, `./lazy`, `./csp`) carries a `types` condition whose
+ * export (`./starlight`, `./nav`, `./icons`, `./toast`, `./toaster`, `./lazy`, `./csp`, `./shell`) carries a `types` condition whose
  * `.d.mts` (committed; prepack re-emits them) or committed hand-written `.d.ts`
  * sibling (`./nav`, `./icons`) is in the tarball, and no `.ts` source ships.
  *
@@ -64,6 +64,9 @@ const EXPORT_KEYS = [
   './prose-code.css',
   './lazy',
   './csp',
+  './shell',
+  './shell-rev',
+  './shell-render',
   './copy',
   './logo-tile',
   './command-palette',
