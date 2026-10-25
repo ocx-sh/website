@@ -6,6 +6,10 @@
 import ocx from '../nav.json';
 import logo from '../logo.svg?raw';
 import { currentHref, EXTERNAL_LABEL, externalLink, sectionLinks } from '../nav.mjs';
+import { renderShell } from '../shell-render.mjs';
+import { shellRev } from '../shell-rev.mjs';
+import DrawerItems from '../shell/DrawerItems.astro';
+import Sections from '../shell/Sections.astro';
 import EcosystemMenu from './EcosystemMenu.astro';
 import { NAV_ID, connect, ids, lean, machine, parts } from './navigation-menu.zag.mjs';
 import Icon from './ui/Icon.astro';
@@ -43,20 +47,24 @@ const current = currentHref(path, nav, base);
 // so it alone is current.
 const extraCurrent = brand ? undefined : currentHref(path, extraNav, base);
 const shown = extraCurrent === undefined ? active : '';
-const drawer = brand
+// The drawer's items: the nav.json ones (the live header swaps these), then the consumer's own.
+const drawerMain = brand
   ? nav.map((l) => ({ label: l.label, href: l.href, current: l.href === current }))
-  : [
-      ...sectionLinks(ocx, path).map((l) => ({ ...l, current: l.current && extraCurrent === undefined })),
-      ...extraNav.map((l) => ({ label: l.label, href: l.href, current: l.href === extraCurrent })),
-    ];
+  : sectionLinks(ocx, path).map((l) => ({ ...l, current: l.current && extraCurrent === undefined }));
+const drawerExtra = brand
+  ? []
+  : extraNav.map((l) => ({ label: l.label, href: l.href, current: l.href === extraCurrent }));
 // D-141: a neutral header with no links has nothing to open, so it renders no menu button.
-const hasMenu = menu && drawer.length > 0;
+const hasMenu = menu && drawerMain.length + drawerExtra.length > 0;
 const ext = (l: { label: string; href: string; title?: string }) => ({ ...l, ...externalLink(l.href) });
+// r10: the rev of the nav baked here, named by the same hash as the root site's fragment (shell/Fragment.astro);
+// the loader in chrome.mjs swaps in the live nav when the site publishes another.
+const navRev = brand ? undefined : shellRev(await renderShell());
 ---
 
 {/* The nav's `mount` runs in chrome.mjs, the page's one early script: a script of its own was one more
 early request, which cost Lighthouse performance (0.99) on pages whose LCP waits on a body stylesheet. */}
-<div class="ocx-header" data-ocx-active={brand ? undefined : shown}>
+<div class="ocx-header" data-ocx-active={brand ? undefined : shown} data-nav-rev={navRev}>
   {brand ? (
     <a class="ocx-header__brand" href={import.meta.env.BASE_URL} aria-label={`${brand.title} home`}>
       {brand.logoSrc && (
@@ -104,30 +112,7 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
         >
           <nav class="ocx-header__nav" aria-label="ocx sections">
             <ul {...ssrAttrs(lean(part.list, { nav: true }))}>
-              {ocx.sections.map((s) => (
-                <li {...ssrAttrs(lean(part.item(s.id), { nav: true }))}>
-                  {'href' in s ? (
-                    <a
-                      href={s.href}
-                      data-ocx-section={s.id}
-                      {...ssrAttrs(lean(part.link(s.id, s.id === shown), { nav: true }))}
-                    >
-                      {s.label}
-                    </a>
-                  ) : (
-                    /* C-192: `popovertarget` is the JS-off fallback; `mount` removes it on start. */
-                    <button
-                      {...ssrAttrs(lean(part.trigger(s.id, { ssr: true }), { nav: true }))}
-                      popovertarget={ids.content(s.id)}
-                      data-ocx-section={s.id}
-                      aria-current={s.id === shown ? 'page' : undefined}
-                    >
-                      {s.label}
-                      <Icon name="chevron-down" />
-                    </button>
-                  )}
-                </li>
-              ))}
+              <Sections part={part} shown={shown} />
               {/* D-139: the consumer's own links, plain entries beside the sections. */}
               {extraNav.map(ext).map((l) => (
                 <li>
@@ -181,24 +166,8 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
   {hasMenu && (
     <nav id="ocx-header-menu" class="ocx-header__drawer" popover aria-label={brand ? 'Main' : 'ocx sections'}>
       <ul>
-        {drawer
-          .map((l) => ({ ...l, ...(l.href ? externalLink(l.href) : {}) }))
-          .map((l) => (
-            <li>
-              {l.href ? (
-                <a href={l.href} aria-current={l.current ? 'page' : undefined} {...l.attrs}>
-                  {l.label}
-                  {'hint' in l && l.hint && <span class="ocx-hint">{l.hint}</span>}
-                  {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
-                </a>
-              ) : (
-                <button type="button" popovertarget="ocx-ecosystem-menu">
-                  {l.label}
-                  <Icon name="chevron-down" />
-                </button>
-              )}
-            </li>
-          ))}
+        <DrawerItems links={drawerMain} />
+        <DrawerItems links={drawerExtra} />
       </ul>
     </nav>
   )}

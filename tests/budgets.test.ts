@@ -87,12 +87,20 @@ describe('C-110 budgets module', () => {
 describe('C-309 site page classes', () => {
   const dist = mkdtempSync(join(tmpdir(), 'budgets-site-'));
   afterAll(() => rmSync(dist, { recursive: true, force: true }));
-  for (const f of ['index.html', '404.html', 'apps/index.html', 'team/index.html', 'pagefind/x.js', '_astro/a.css']) {
+  for (const f of [
+    'index.html',
+    '404.html',
+    'apps/index.html',
+    'team/index.html',
+    'pagefind/x.js',
+    '_astro/a.css',
+    '_shell/v1/0123456789ab/nav.html',
+  ]) {
     mkdirSync(dirname(join(dist, f)), { recursive: true });
     writeFileSync(join(dist, f), '');
   }
 
-  it('lists the HTML pages of a dist as routes', () => {
+  it("lists the HTML pages of a dist as routes, without the live header's fragments", () => {
     expect(sitePages(dist)).toEqual(['/', '/404.html', '/apps/', '/team/']);
   });
 

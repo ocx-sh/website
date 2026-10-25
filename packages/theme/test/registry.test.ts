@@ -101,7 +101,17 @@ describe('C-002 path grammar', () => {
 });
 
 describe('C-003 reserved segments', () => {
-  const RESERVED = ['_astro', 'pagefind', 'artifactory', 'bunnycdn_errors', '.well-known', 'api', 'lore', 'preview'];
+  const RESERVED = [
+    '_astro',
+    '_shell',
+    'pagefind',
+    'artifactory',
+    'bunnycdn_errors',
+    '.well-known',
+    'api',
+    'lore',
+    'preview',
+  ];
   const VERSIONS = ['v2', 'v1.3', 'v10'];
   it.each([...RESERVED, ...VERSIONS])('C-003: rejects %s as top', (seg) => {
     const [n, i] = withClaim(`/${seg}/`);
@@ -139,17 +149,21 @@ describe('C-004 claim uniqueness and nesting', () => {
     expect(withPrefix(at(validate(n), i), 'R4')).not.toEqual([]);
   });
 
-  it('C-004: ROOT_DIRS is exactly /_astro/ and /pagefind/, frozen', () => {
-    expect(ROOT_DIRS).toEqual(['/_astro/', '/pagefind/']);
+  it('C-004: ROOT_DIRS is exactly /_astro/, /_shell/ and /pagefind/, frozen', () => {
+    expect(ROOT_DIRS).toEqual(['/_astro/', '/_shell/', '/pagefind/']);
     expect(Object.isFrozen(ROOT_DIRS)).toBe(true);
   });
 
-  it.each(['/_astro/app.js', '/pagefind/pagefind.js', '/favicon.ico', '/404.html'])(
-    'C-004: root claim owns %s',
-    (path) => {
-      expect(claimFor(nav, path)?.path).toBe('/');
-    },
-  );
+  it.each([
+    '/_astro/app.js',
+    '/_shell/v1/current.json',
+    '/_shell/v1/0123456789ab/nav.html',
+    '/pagefind/pagefind.js',
+    '/favicon.ico',
+    '/404.html',
+  ])('C-004: root claim owns %s', (path) => {
+    expect(claimFor(nav, path)?.path).toBe('/');
+  });
 
   fixtureCases('C-004');
 });

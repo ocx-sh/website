@@ -1,6 +1,6 @@
 {
   "name": "@ocx-sh/theme",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Shared tokens, base styles, navigation and Starlight plugin for the ocx.sh sites",
   "keywords": [
     "astro-component",
@@ -84,6 +84,18 @@
     "./csp": {
       "types": "./src/csp.d.mts",
       "default": "./src/csp.mjs"
+    },
+    "./shell": {
+      "types": "./src/shell.d.mts",
+      "default": "./src/shell.mjs"
+    },
+    "./shell-rev": {
+      "types": "./src/shell-rev.d.mts",
+      "default": "./src/shell-rev.mjs"
+    },
+    "./shell-render": {
+      "types": "./src/shell-render.d.mts",
+      "default": "./src/shell-render.mjs"
     }
   },
   "bin": {

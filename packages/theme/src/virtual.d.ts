@@ -46,3 +46,9 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+// The live header's fragment component (shell-render.mjs renders it with the Astro container).
+declare module '*/shell/Fragment.astro' {
+  const Fragment: import('astro/runtime/server/index.js').AstroComponentFactory;
+  export default Fragment;
+}

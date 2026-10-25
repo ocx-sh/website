@@ -190,7 +190,7 @@ export function sitePages(distDir = SITE_DIST) {
   if (!existsSync(distDir)) throw new Error('missing dist: site/dist');
   return readdirSync(distDir, { recursive: true, encoding: 'utf8' })
     .map((f) => f.split('\\').join('/'))
-    .filter((f) => f.endsWith('.html'))
+    .filter((f) => f.endsWith('.html') && !f.startsWith('_shell/')) // the live header's fragments are not pages
     .map((f) => (f === 'index.html' ? '/' : `/${f.replace(/index\.html$/, '')}`))
     .sort();
 }
