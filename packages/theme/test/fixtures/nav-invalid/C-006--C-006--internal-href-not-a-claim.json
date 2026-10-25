@@ -142,7 +142,7 @@
       "label": "CMake",
       "meta": "find_ocx",
       "desc": "find_package() for ocx-managed tools.",
-      "href": "/integrations/cmake/"
+      "href": "/elsewhere/cmake/"
     },
     {
       "id": "gradle",
