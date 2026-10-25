@@ -5,7 +5,6 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 // @ts-expect-error jsdom ships no types and @types/jsdom is not a dependency
 import * as jsdom from 'jsdom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import SiteHeader from '../src/components/SiteHeader.astro';
 import nav from '../src/nav.json' with { type: 'json' };
 import { renderShell } from '../src/shell-render.mjs';
 import { shellRev } from '../src/shell-rev.mjs';
@@ -21,9 +20,12 @@ const label = nav.sections.find((s) => !('href' in s))?.label ?? '';
 let container: AstroContainer;
 let fragment: string;
 let Shell: Component;
+let SiteHeader: Component;
+const load = async (dir: string, name: string): Promise<Component> =>
+  ((await import(`../src/${dir}/${name}.astro`)) as { default: Component }).default;
 
 const header = (props: Record<string, unknown> = {}, path = '/docs/x/') =>
-  container.renderToString(SiteHeader as Component, {
+  container.renderToString(SiteHeader, {
     request: new Request(`https://ocx.sh${path}`),
     props: { menu: true, active: 'docs', ...props },
     slots: { search: '<input id="own-search">' },
@@ -60,7 +62,8 @@ const trigger = (root: Element) => root.querySelector('button[data-ocx-section="
 beforeAll(async () => {
   container = await AstroContainer.create();
   fragment = await renderShell();
-  Shell = ((await import('../src/layouts/Shell.astro')) as { default: Component }).default;
+  Shell = await load('layouts', 'Shell');
+  SiteHeader = await load('components', 'SiteHeader');
 });
 
 afterEach(() => {
@@ -68,13 +71,12 @@ afterEach(() => {
 });
 
 describe('the fragment', () => {
-  const parts = () => {
+  const parts = (): Record<string, DocumentFragment> => {
     const doc = new JSDOM(fragment).window.document;
     return Object.fromEntries(
-      [...doc.querySelectorAll<HTMLTemplateElement>('template[data-shell-part]')].map((t) => [
-        t.dataset['shellPart'],
-        t.content,
-      ]),
+      [...doc.querySelectorAll<HTMLTemplateElement>('template[data-shell-part]')].map(
+        (t) => [t.dataset['shellPart'] ?? '', t.content] as const,
+      ),
     );
   };
 

@@ -44,7 +44,7 @@ describe('publishShell', () => {
 
   it('writes nothing for an invalid nav: the previous pointer stays', async () => {
     write(fragment);
-    const broken = structuredClone(nav) as typeof nav;
+    const broken = structuredClone(nav);
     broken.claims.pop();
     await expect(publishShell(tmp, broken)).rejects.toThrow(/nav\.json is invalid/);
     expect(existsSync(join(tmp, '_shell'))).toBe(false);
