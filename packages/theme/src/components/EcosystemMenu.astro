@@ -61,7 +61,7 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
               {c.items.map((e) => (
                 <li>
                   {e.href ? (
-                    <a class="ocx-mega__link" href={e.href} aria-describedby={`d${nav.entries.indexOf(e)}`}>
+                    <a class="ocx-mega__link" href={e.href} aria-describedby={`om${nav.entries.indexOf(e)}`}>
                       {e.label}
                       <Icon name="arrow-right" />
                     </a>
@@ -70,7 +70,7 @@ const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'ver
                   )}
                   <span class="ocx-mega__preview" data-meta={e.meta} aria-hidden="true">
                     {e.label}
-                    <span class="ocx-mega__desc" id={e.href ? `d${nav.entries.indexOf(e)}` : undefined}>
+                    <span class="ocx-mega__desc" id={e.href ? `om${nav.entries.indexOf(e)}` : undefined}>
                       {e.desc}
                     </span>
                   </span>

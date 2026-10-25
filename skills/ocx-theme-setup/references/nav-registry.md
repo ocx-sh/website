@@ -53,7 +53,7 @@ entries), so `solutions` shows `more` with category `learn` and the Shorts and P
 It must be the only pinned hub, and the last one of its section. An entry `href` is a claim path or
 lies under a claim other than `/`; `validate` reports anything else. A path that needs only a menu
 link takes an entry in a hub, not a section. A hub whose `all` text starts with its label (`more` / `more to learn →`)
-shows the rest as screen-reader text in the mobile menu, so a bare "more" never fails Lighthouse's link-text audit.
+shows the rest as screen-reader text in both mobile menus (Starlight and Shell), so a bare "more" never fails Lighthouse's link-text audit. `all` is the hub link's name; only the trailing `→` is dropped.
 
 ## Adding a section
 

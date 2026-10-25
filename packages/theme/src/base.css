@@ -550,6 +550,14 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     border: 0;
     border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
   }
+  .ocx-hint {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
   .ocx-header__drawer ul {
     display: flex;
     flex-wrap: wrap;

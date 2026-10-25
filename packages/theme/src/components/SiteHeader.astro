@@ -188,6 +188,7 @@ early request, which cost Lighthouse performance (0.99) on pages whose LCP waits
               {l.href ? (
                 <a href={l.href} aria-current={l.current ? 'page' : undefined} {...l.attrs}>
                   {l.label}
+                  {'hint' in l && l.hint && <span class="ocx-hint">{l.hint}</span>}
                   {l.out && <Icon name="external" size="sm" label={EXTERNAL_LABEL} />}
                 </a>
               ) : (

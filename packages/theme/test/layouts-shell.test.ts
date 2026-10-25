@@ -70,6 +70,13 @@ describe('Shell ocx mode', () => {
     expect(menu.getAttribute('popovertarget')).toBe('ocx-header-menu');
     expect(doc.querySelector('#ocx-header-menu[popover] a')).not.toBeNull();
   });
+
+  it('gives the pinned hub a hidden suffix so its link text is descriptive', async () => {
+    const { doc } = await render({});
+    const more = doc.querySelector('#ocx-header-menu a[href="/learn/"]')!;
+    expect(more.textContent.trim()).toBe('more to learn');
+    expect(more.querySelector('.ocx-hint')?.textContent).toBe(' to learn');
+  });
 });
 
 describe('Shell neutral mode', () => {
