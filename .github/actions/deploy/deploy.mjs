@@ -46,6 +46,8 @@ const ERROR_PAGE = 'bunnycdn_errors/404.html';
 const PUBLIC_ORIGIN = 'https://ocx.sh';
 const PREVIEW_ZONE_PREFIX = 'sh-ocx-preview-';
 const PRUNE_CAP_MIN_LISTED = 10;
+const SHELL_DIR = '_shell/';
+const SHELL_POINTER = '_shell/v1/current.json';
 
 /** @param {number} ms */
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -122,19 +124,22 @@ function resolveTarget({ inputs, repo, nav }) {
 
 /**
  * The upload phase of a dist file. Assets go first so that no page ever references a missing one;
- * the top-level `pagefind/` files (entry, loader, wasm) follow; HTML, 404 page included, is last.
+ * the top-level `pagefind/` files (entry, loader, wasm) follow; HTML, 404 page included, comes next.
+ * The live-header pointer (`_shell/v1/current.json`) goes last, so it never names a fragment that is not up yet.
  * Hashed chunks in subdirectories of `pagefind/` are assets.
  * @param {string} distPath
- * @returns {0 | 1 | 2}
+ * @returns {0 | 1 | 2 | 3}
  */
 function phaseOf(distPath) {
+  if (distPath === SHELL_POINTER) return 3;
   if (distPath.endsWith('.html')) return 2;
   return /^pagefind\/[^/]+$/.test(distPath) ? 1 : 0;
 }
 
 /**
  * Stale HTML: listed under the path, not uploaded now, and not in another repo's claim subtree or the
- * error-page directory. Non-HTML is never stale, so a deploy never deletes an asset.
+ * error-page directory. Non-HTML is never stale, so a deploy never deletes an asset. `_shell/` is spared too:
+ * old rev fragments (`_shell/v1/<rev>/nav.html`) stay so that re-pointing `current.json` rolls back.
  * @param {object} args
  * @param {{ rel: string, entry: StorageEntry }[]} args.listed files listed under the path
  * @param {Set<string>} args.uploaded zone-relative paths written by this deploy
@@ -146,8 +151,13 @@ function phaseOf(distPath) {
  */
 function planPrune({ listed, uploaded, path, nav, repo }) {
   const nested = nav.claims.filter((c) => c.repo !== repo && c.path.startsWith(path)).map((c) => c.path.slice(1));
+  const shell = `${path.slice(1)}${SHELL_DIR}`;
   const scope = listed.filter(
-    ({ rel }) => rel.endsWith('.html') && !rel.startsWith('bunnycdn_errors/') && !nested.some((n) => rel.startsWith(n)),
+    ({ rel }) =>
+      rel.endsWith('.html') &&
+      !rel.startsWith('bunnycdn_errors/') &&
+      !rel.startsWith(shell) &&
+      !nested.some((n) => rel.startsWith(n)),
   );
   return { scope, stale: scope.filter(({ rel }) => !uploaded.has(rel)) };
 }
@@ -197,7 +207,7 @@ export async function deploy(options) {
 
   const base = path.slice(1);
   const remoteOf = (/** @type {DistFile} */ f) => (f.path === '404.html' ? ERROR_PAGE : `${base}${f.path}`);
-  const phases = [0, 1, 2].map((n) => files.filter((f) => phaseOf(f.path) === n));
+  const phases = [0, 1, 2, 3].map((n) => files.filter((f) => phaseOf(f.path) === n));
   const uploaded = new Set(files.map(remoteOf));
 
   // Step 3. ponytail: a 404 on the root listing is read as "nothing deployed here yet"; real Bunny
@@ -220,7 +230,7 @@ export async function deploy(options) {
     return { url, uploaded: 0, deleted: 0, planned: { uploads: files.length, deletes: stale.length } };
   }
 
-  // Steps 4 and 5: a barrier between phases, so every asset is written before any page.
+  // Steps 4 and 5: a barrier between phases, so every asset is written before any page, the shell pointer after all of them.
   let written = 0;
   for (const group of phases) {
     await pool(group, PARALLEL, async (f) => {
