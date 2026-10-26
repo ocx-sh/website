@@ -162,7 +162,7 @@
   },
   "devDependencies": {
     "@astrojs/starlight": "^0.42.5",
-    "@iconify-json/lucide": "1.2.137",
+    "@iconify-json/lucide": "1.2.146",
     "@iconify-json/simple-icons": "1.2.99",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.19.2",
