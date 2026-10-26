@@ -9,8 +9,8 @@ import nav from '../src/nav.json' with { type: 'json' };
 import { renderShell } from '../src/shell-render.mjs';
 import { shellRev } from '../src/shell-rev.mjs';
 import { swapShell } from '../src/shell-swap.mjs';
-import { syncShell } from '../src/shell-sync.mjs';
-import { SHELL_DIR, SHELL_HOST, SHELL_PARTS, SHELL_REV } from '../src/shell.mjs';
+import { SHELL_HOST, syncShell } from '../src/shell-sync.mjs';
+import { SHELL_DIR, SHELL_PARTS, SHELL_REV } from '../src/shell.mjs';
 
 type Component = Parameters<AstroContainer['renderToString']>[0];
 type Win = Window & typeof globalThis;
