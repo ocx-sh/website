@@ -27,7 +27,12 @@ const tab = (page: Page, name: string) => menu(page).getByRole('tab', { name, ex
 /** Opens the page with the live fragment published at LIVE; `release()` lets the pointer answer. */
 async function open(page: Page, { stale = true, path = '/' } = {}) {
   const errors: string[] = [];
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // The `site` stage serves only the root site, so Chromium's prefetch of a focused link (/catalog/) 404s:
+  // that failed-resource line is not the loader's. Every other console error, and every page error, still counts.
+  page.on('console', (m) => {
+    const failedLoad = m.text().startsWith('Failed to load resource') && !m.location().url.includes('/_shell/');
+    if (m.type() === 'error' && !failedLoad) errors.push(m.text());
+  });
   page.on('pageerror', (e) => errors.push(e.message));
   const requests: string[] = [];
   page.on('request', (r) => r.url().includes('/_shell/') && requests.push(new URL(r.url()).pathname));
