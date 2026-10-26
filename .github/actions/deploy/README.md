@@ -55,13 +55,15 @@ same checkout, so the SHA fixes all three.
    owns `path`. Checks `dist` for links, layout and the Pagefind version (the `ocx-site check`
    rules). Requires `dist/index.html`. A failure here ends the run with zero requests.
 2. Lists `<zone>/<path>`.
-3. Uploads every file except HTML and the top-level `pagefind/` files, 8 at a time, each with its
+3. Uploads every file except HTML, the top-level `pagefind/` files and `_shell/v1/current.json`, 8 at a time, each with its
    uppercase SHA-256 as `Checksum`. A network error, 5xx or 429 retries up to 3 attempts in total.
    Any other failure stops the run.
-4. Uploads the top-level `pagefind/` files, then every HTML file. `404.html` goes to
+4. Uploads the top-level `pagefind/` files, then every HTML file, then the live-header pointer
+   `_shell/v1/current.json`, so it never names a fragment that is not up yet. `404.html` goes to
    `bunnycdn_errors/404.html`.
 5. Deletes listed `*.html` files this build did not upload. It never deletes anything else, and it
-   skips other repos' claim subtrees and `bunnycdn_errors/`. If a delete fails the run fails, and the
+   skips other repos' claim subtrees, `bunnycdn_errors/` and `_shell/` (old header fragments stay,
+   so re-pointing `current.json` rolls back). If a delete fails the run fails, and the
    leftover page stays until the next deploy.
 
 The prune cap runs first. Deleting more than half of the listed HTML files, with at least 10 listed,

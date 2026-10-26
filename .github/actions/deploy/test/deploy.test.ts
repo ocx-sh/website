@@ -465,6 +465,43 @@ describe('prune (C-041)', () => {
     expect(methods.lastIndexOf('PUT')).toBeLessThan(methods.indexOf('DELETE'));
   });
 
+  it('keeps old live-header fragments under _shell/, so current.json can be re-pointed to roll back', async () => {
+    const { fake, run } = setup({
+      repo: 'ocx-sh/website',
+      path: '/',
+      dist: {
+        'index.html': 'new',
+        'pagefind/pagefind-entry.json': '{"version":"1.5.2"}',
+        '_shell/v1/current.json': '{"v":1,"rev":"bbbbbbbbbbbb"}',
+        '_shell/v1/bbbbbbbbbbbb/nav.html': 'new nav',
+      },
+      files: { '_shell/v1/aaaaaaaaaaaa/nav.html': 'old nav', 'old-page.html': 'stale' },
+    });
+    expect(await run()).toMatchObject({ deleted: 1 });
+    expect(fake.files.has('_shell/v1/aaaaaaaaaaaa/nav.html')).toBe(true);
+    expect(fake.files.has('old-page.html')).toBe(false);
+  });
+
+  it('writes the live-header pointer after the fragment it names, last of all', async () => {
+    const { fake, run } = setup({
+      repo: 'ocx-sh/website',
+      path: '/',
+      dist: {
+        'index.html': 'new',
+        'pagefind/pagefind-entry.json': '{"version":"1.5.2"}',
+        '404.html': 'missing',
+        '_astro/app.js': 'js',
+        '_shell/v1/current.json': '{"v":1,"rev":"bbbbbbbbbbbb"}',
+        '_shell/v1/bbbbbbbbbbbb/nav.html': 'new nav',
+      },
+      fake: { latencyMs: 3 },
+    });
+    await run();
+    const puts = writes(fake.requests).map(rel);
+    expect(puts.at(-1)).toBe('_shell/v1/current.json');
+    expect(puts.indexOf('_shell/v1/bbbbbbbbbbbb/nav.html')).toBeLessThan(puts.indexOf('_shell/v1/current.json'));
+  });
+
   it('a failed DELETE exits 1 naming the file, after the other deletes ran', async () => {
     const f = flaky((m, u) => m === 'DELETE' && u.endsWith('/catalog/a.html'), 403, 99);
     const { fake, run } = setup({
