@@ -1,6 +1,7 @@
-// The live header's swap (r10), loaded by shell-sync.mjs only when the site publishes another nav rev:
-// fetch the rev's fragment, check it fits the header it is about to replace, and swap its parts in,
-// keeping what is the page's own (active section, current link, the consumer's links, the search slot).
+// The live header's swap (r10), loaded by shell-sync.mjs on the root site's host once the page has loaded: wait for idle, ask
+// which nav rev is current (any failure leaves the baked header as it is), then, for another rev, fetch its
+// fragment, check it fits the header it is about to replace, and swap its parts in, keeping what is the
+// page's own (active section, current link, the consumer's links, the search slot).
 // Refuses, leaving the baked header untouched, on anything unexpected or while the nav is in use.
 import { mount } from './components/ui/zag.mjs';
 import { SHELL_DIR, SHELL_PARTS, SHELL_REV } from './shell.mjs';
@@ -132,4 +133,23 @@ export async function swapShell(doc, nav, rev) {
   else for (const back of undo.reverse()) back();
   mount(nav, spec);
   return fitted;
+}
+
+/**
+ * Asks the root site which nav rev is current and swaps it in when it is not the baked one.
+ * @param {Document} doc
+ * @param {HTMLElement} nav the header's `navigation-menu` Zag root, `data-nav-rev` its baked rev
+ */
+export async function syncLive(doc, nav) {
+  const win = doc.defaultView;
+  await new Promise((done) =>
+    win?.requestIdleCallback ? win.requestIdleCallback(done, { timeout: 5000 }) : setTimeout(done, 2000),
+  );
+  try {
+    const res = await fetch(`${SHELL_DIR}current.json`, { cache: 'no-cache' });
+    const now = res.ok ? /** @type {{ v?: unknown, rev?: unknown } | null} */ (await res.json()) : null;
+    if (now?.v === 1 && now.rev !== nav.dataset['navRev']) await swapShell(doc, nav, now.rev);
+  } catch {
+    // 404 off ocx.sh, network, malformed pointer: the baked header stays.
+  }
 }
