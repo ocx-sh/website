@@ -305,14 +305,15 @@ describe('ocxTheme plugin', () => {
     expect(include).toEqual(lazy.map((d) => `@ocx-sh/theme > ${d}`));
   });
 
-  it('C-017: the injected integration sets site https://ocx.sh and the two fontsource families', async () => {
+  it('C-017: the injected integration sets site https://ocx.sh and the two local font families', async () => {
     const { addIntegration, astroConfig } = await setup();
     expect(addIntegration).toHaveBeenCalled();
     const update = await injected(addIntegration, astroConfig);
     expect(update.site).toBe('https://ocx.sh');
     const fonts = update.fonts ?? [];
     expect(fonts.map((f) => f.name).sort()).toEqual(['IBM Plex Mono', 'IBM Plex Sans']);
-    for (const f of fonts) expect(f.provider.name).toBe('fontsource');
+    // Local files of the pinned @fontsource packages: no build-time fetch of the latest font release.
+    for (const f of fonts) expect(f.provider.name).toBe('local');
     // The cssVariable is what binds the faces to the theme font tokens (and Head.astro's <Font>).
     expect(fonts.map((f) => f.cssVariable).sort()).toEqual(['--ocx-font-mono', '--ocx-font-sans']);
   });
