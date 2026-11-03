@@ -1,5 +1,6 @@
 // Public `@ocx-sh/theme/starlight` entry: the Starlight plugin (design §4.3).
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
@@ -11,6 +12,21 @@ import { mergeTargets } from '../registry.mjs';
 import { EXPRESSIVE_CODE } from './ec.mjs';
 
 const SITE = 'https://ocx.sh';
+// The latin subset of the pinned @fontsource files, as the Fonts API's local provider reads them. The
+// fontsource provider asked api.fontsource.org for the latest version at every build, so an upstream
+// font release changed the hashed file names (and the page's gzip size) with no commit here.
+const UNICODE_RANGE =
+  'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD';
+const require = createRequire(import.meta.url);
+/** @param {'sans' | 'mono'} family */
+const plex = (family) => ({
+  variants: [400, 600].map((weight) => ({
+    weight,
+    style: /** @type {const} */ ('normal'),
+    unicodeRange: [UNICODE_RANGE],
+    src: [require.resolve(`@fontsource/ibm-plex-${family}/files/ibm-plex-${family}-latin-${weight}-normal.woff2`)],
+  })),
+});
 const INDEX_WEIGHT = 1;
 // Gzip bytes, the unit HTML_GZ_MAX (~14 KB, Lighthouse's first round trip) is paid in. Every
 // stylesheet request before first paint queues behind the preloaded fonts in Lighthouse's
@@ -198,7 +214,8 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
                 // local("Courier New"), absent on Linux, so the swap would shift layout there.
                 fonts: [
                   {
-                    provider: fontProviders.fontsource(),
+                    provider: fontProviders.local(),
+                    options: plex('sans'),
                     name: 'IBM Plex Sans',
                     cssVariable: '--ocx-font-sans',
                     weights: [400, 600],
@@ -209,7 +226,8 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
                     optimizedFallbacks: false,
                   },
                   {
-                    provider: fontProviders.fontsource(),
+                    provider: fontProviders.local(),
+                    options: plex('mono'),
                     name: 'IBM Plex Mono',
                     cssVariable: '--ocx-font-mono',
                     weights: [400, 600],

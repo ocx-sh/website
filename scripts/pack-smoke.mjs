@@ -32,6 +32,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { PAGEFIND_VERSION } from '../packages/theme/src/check/pagefind.mjs';
 import { COMPONENT_EXEMPT } from '../packages/theme/test/component-inventory.mjs';
 import { isZagBacked, pageImports, rootClass, stripFences } from '../packages/theme/test/showcase.mjs';
 
@@ -293,6 +294,8 @@ function main() {
     const sitePkg = join(site, 'package.json');
     const manifest = /** @type {{ dependencies: Record<string, string> }} */ (parseJson(readFileSync(sitePkg, 'utf8')));
     manifest.dependencies['@ocx-sh/theme'] = `file:${tarball}`;
+    // Starlight's own range floats: pin the Pagefind the theme was tested with (C-070), not the latest.
+    manifest.dependencies.pagefind = PAGEFIND_VERSION;
     writeFileSync(sitePkg, `${JSON.stringify(manifest, null, 2)}\n`);
     // C-124 (D-Z20): the example's component pages, showcase kit and public assets, verbatim.
     for (const dir of [
