@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Repo-local Renovate rules, merged after the ocx-sh/conventions preset. Ecosystem norms (npm, docker, actions, cargo, python) live in conventions; put only repo-specific rules here."
+  ],
+  "packageRules": [
+    {
+      "description": ["@types/node follows the node runtime major pinned in ocx.toml"],
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25"
+    },
+    {
+      "description": ["Astro and Starlight move together: the theme pins a Starlight minor as peer range"],
+      "groupName": "astro",
+      "matchPackageNames": ["astro", "@astrojs/**"]
+    }
+  ]
+}
