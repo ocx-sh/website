@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { AstroIntegration } from 'astro';
+import { CORE_RANGE } from '../src/fonts/plex.generated.mjs';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import type { HookParameters, StarlightUserConfig } from '@astrojs/starlight/types';
 import { describe, expect, it, vi } from 'vitest';
@@ -266,6 +267,8 @@ describe('ocxTheme plugin', () => {
     expect(limit?.('/a/Select.css', randomBytes(6 * 1024))).toBe(false);
     expect(limit?.('/a/common.css', randomBytes(116 * 1024))).toBe(false);
     expect(limit?.('/a/logo.png', Buffer.alloc(100))).toBeUndefined();
+    // A small rest font must never be base64-inlined into the render-blocking sheet.
+    expect(limit?.('/a/plex-sans-400-rest.woff2', Buffer.alloc(100))).toBe(false);
     const own = { ...astroConfig, vite: { build: { assetsInlineLimit: 0 } } } as AstroConfig;
     expect((await injected(addIntegration, own)).vite?.build).toBeUndefined();
   });
@@ -312,10 +315,20 @@ describe('ocxTheme plugin', () => {
     expect(update.site).toBe('https://ocx.sh');
     const fonts = update.fonts ?? [];
     expect(fonts.map((f) => f.name).sort()).toEqual(['IBM Plex Mono', 'IBM Plex Sans']);
-    // Local files of the pinned @fontsource packages: no build-time fetch of the latest font release.
+    // Local files of the generated core subsets: no build-time fetch of the latest font release.
     for (const f of fonts) expect(f.provider.name).toBe('local');
     // The cssVariable is what binds the faces to the theme font tokens (and Head.astro's <Font>).
     expect(fonts.map((f) => f.cssVariable).sort()).toEqual(['--ocx-font-mono', '--ocx-font-sans']);
+    for (const f of fonts) {
+      const variants = (
+        (f as { options?: unknown }).options as { variants: { unicodeRange: string[]; src: string[] }[] }
+      ).variants;
+      for (const v of variants) {
+        expect(v.unicodeRange).toEqual([CORE_RANGE]);
+        expect(v.src).toHaveLength(1);
+        expect(v.src[0]).toMatch(/plex-(sans|mono)-(400|600)-core\.woff2$/);
+      }
+    }
   });
 
   it('registers upright faces only: an italic face costs ~25 KB and blows the page-weight budget', async () => {
@@ -329,8 +342,9 @@ describe('ocxTheme plugin', () => {
     const { addIntegration, astroConfig } = await setup();
     const fonts = (await injected(addIntegration, astroConfig)).fonts ?? [];
     const byVar = Object.fromEntries(fonts.map((f) => [f.cssVariable, f]));
-    expect(byVar['--ocx-font-sans']?.fallbacks?.[0]).toBe('OCX Sans Fallback');
-    expect(byVar['--ocx-font-mono']?.fallbacks?.[0]).toBe('OCX Mono Fallback');
+    // The on-demand Rest family comes first: a character outside the core still renders in Plex.
+    expect(byVar['--ocx-font-sans']?.fallbacks?.slice(0, 2)).toEqual(['OCX Plex Sans Rest', 'OCX Sans Fallback']);
+    expect(byVar['--ocx-font-mono']?.fallbacks?.slice(0, 2)).toEqual(['OCX Plex Mono Rest', 'OCX Mono Fallback']);
     for (const f of fonts) expect(f.optimizedFallbacks).toBe(false);
     // Four faces in all (Lighthouse font budget); tokens.css maps medium/bold onto them.
     for (const f of fonts) expect(f.weights).toEqual([400, 600]);

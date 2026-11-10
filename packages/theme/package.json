@@ -115,11 +115,10 @@
   ],
   "scripts": {
     "prepack": "node -e \"for (const f of require('node:fs').globSync('src/**/*.d.mts')) require('node:fs').rmSync(f)\" && tsc --allowJs --declaration --emitDeclarationOnly -p tsconfig.dts.json",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "fonts": "node scripts/generate-fonts.mjs"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-mono": "^5.3.0",
-    "@fontsource/ibm-plex-sans": "^5.3.0",
     "@pagefind/default-ui": "1.5.2",
     "@zag-js/accordion": "1.44.0",
     "@zag-js/async-list": "1.44.0",
@@ -166,9 +165,13 @@
     "@iconify-json/simple-icons": "1.2.99",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.19.2",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
     "ajv": "8.20.0",
     "astro": "7.3.5",
     "satteri": "0.10.5",
-    "typescript": "^6.0.3"
+    "subset-font": "2.9.0",
+    "typescript": "^6.0.3",
+    "wawoff2": "2.0.1"
   }
 }

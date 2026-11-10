@@ -43,13 +43,14 @@ describe('Shell ocx mode', () => {
     expect(doc.querySelector('link[rel="icon"]')?.getAttribute('href')).toBe('/favicon.svg');
   });
 
-  it('preloads the four upright font faces in both modes', async () => {
+  it('preloads the four core font files in both modes', async () => {
     for (const props of [{}, { brand: { title: 'M' } }]) {
       const { doc } = await render(props);
       const hrefs = [...doc.querySelectorAll('link[rel="preload"][as="font"][crossorigin]')].map((l) =>
         l.getAttribute('href'),
       );
-      expect(hrefs.map((h) => /ibm-plex-(sans|mono)-latin-(400|600)-normal/.exec(h ?? '')?.[0])).toHaveLength(4);
+      expect(hrefs).toHaveLength(4);
+      expect(hrefs.every((h) => /plex-(sans|mono)-(400|600)-core/.test(h ?? ''))).toBe(true);
       expect(hrefs.every((h) => h?.endsWith('.woff2'))).toBe(true);
     }
   });

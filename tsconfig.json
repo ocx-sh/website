@@ -25,6 +25,8 @@
     "packages/*/src/**/*.mjs",
     "packages/*/bin/**/*.ts",
     "packages/*/bin/**/*.mjs",
+    "packages/*/scripts/**/*.mjs",
+    "packages/*/scripts/**/*.d.ts",
     "packages/*/test/**/*.ts",
     "packages/*/test/**/*.mjs",
     "infra/**/*.ts",

@@ -27,7 +27,9 @@ describe('shared-sheet primitives', () => {
 
   it("base.css's @imports lead the sheet (CSS drops an @import after any rule)", () => {
     const body = src('base.css').replace(/\/\*[\s\S]*?\*\//g, '');
-    expect(body.trimStart()).toMatch(/^(@import [^;]+;\s*){6}@font-face/);
+    expect(body.trimStart()).toMatch(/^(@import [^;]+;\s*){7}@font-face/);
+    // Six UI primitives, then the on-demand Plex rest faces.
+    expect(body).toContain("@import './fonts/rest.css';");
   });
 
   it("Skeleton's base (text primitive, sweep) rides in base.css: the DependencyExplorer's first viewport paints it", () => {

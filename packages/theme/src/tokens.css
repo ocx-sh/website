@@ -76,8 +76,8 @@
   --ocx-color-code-prompt: var(--ocx-color-accent);
 
   /* Type — mono is the voice; sans where humans read sentences. */
-  --ocx-font-sans: 'IBM Plex Sans', 'OCX Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
-  --ocx-font-mono: 'IBM Plex Mono', 'OCX Mono Fallback', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ocx-font-sans: 'IBM Plex Sans', 'OCX Plex Sans Rest', 'OCX Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif;
+  --ocx-font-mono: 'IBM Plex Mono', 'OCX Plex Mono Rest', 'OCX Mono Fallback', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* UI scale — chrome, nav, tables, cards. The ONLY sizes below 15px. */
   --ocx-text-2xs: 10.5px;   /* mono caps: eyebrows, table heads, callout titles */
