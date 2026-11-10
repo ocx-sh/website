@@ -112,6 +112,8 @@
 
   /* Display scale — landing, hubs, single-page sites. */
   --ocx-display-hero: clamp(48px, 7vw, 84px);/* landing hero band ONLY — one per site; tracking -0.035em */
+  --ocx-display-split: clamp(44px, 6vw, 72px);/* landing hero beside its terminal: a narrower column than the centred hero */
+  --ocx-display-section: clamp(32px, 4.4vw, 52px);/* landing pillar h2 */
   --ocx-display-1: clamp(40px, 5vw, 60px);  /* 404 numeral, single-page h1 */
   --ocx-display-2: clamp(28px, 3.2vw, 38px);/* landing h2, hub & install h1 */
   --ocx-display-lead: 19px;

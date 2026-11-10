@@ -1,0 +1,21 @@
+---
+title: ScrollReveal
+description: A block that fades in and rises as it scrolls into view, for a closing call to action.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Wraps a block so it fades in and rises as its top edge enters the viewport, driven by the same scroll module as
+`ScrollFade` and `FeatureSection reveal`. Without JS, or under reduced motion, the block is simply there.
+
+## Stories
+
+<Stories of="scroll-reveal" />
+
+## Props
+
+<PropsTable
+  of="ScrollReveal.astro"
+  rows={[{ name: 'class', type: 'string', description: 'Extra class on the wrapper.' }]}
+/>

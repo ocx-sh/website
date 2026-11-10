@@ -108,9 +108,10 @@ const p = Object.fromEntries(
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
   import { holdEarlyContextMenu } from './copy-host.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="copy-menu"]')) {
+  onRoots('[data-zag-root="copy-menu"]', (root) => {
     const context = root.hasAttribute('data-context');
     // Context mode: the hosts start the load, not a hover over the container (copy-host.mjs).
     const handle = mount(root, {
@@ -118,7 +119,7 @@ const p = Object.fromEntries(
       trigger: context ? 'manual' : 'interaction',
     });
     if (context) holdEarlyContextMenu(root, handle);
-  }
+  });
 </script>
 
 <style>

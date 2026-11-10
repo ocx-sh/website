@@ -22,10 +22,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function render(props: { title: string; flip?: boolean }): Promise<Document> {
+async function render(
+  props: { title: string; flip?: boolean; eyebrow?: string; reveal?: boolean },
+  extra: Record<string, string> = {},
+): Promise<Document> {
   const html = await container.renderToString(FeatureSection, {
     props,
-    slots: { default: '<pre class="visual">ocx add astral-sh/uv:0.10</pre>', text: '<p class="body">Body text.</p>' },
+    slots: {
+      default: '<pre class="visual">ocx add astral-sh/uv:0.10</pre>',
+      text: '<p class="body">Body text.</p>',
+      ...extra,
+    },
   });
   return new JSDOM(html).window.document;
 }
@@ -66,6 +73,34 @@ describe('WP13.4 FeatureSection markup', () => {
     expect(style).toMatch(/@layer ocx\s*\{/);
     expect(style).toMatch(/@media \(scripting: enabled\) and \(prefers-reduced-motion: no-preference\)/);
     // ponytail: that no-JS / reduced-motion readers see the content is proven in the e2e spec, not by parsing CSS.
+  });
+});
+
+describe('FeatureSection eyebrow, more and reveal', () => {
+  it('puts the eyebrow above the heading, and renders none without it', async () => {
+    const text = (await render({ title: 'A', eyebrow: '01 · one lock' })).querySelector('.ocx-feature__text');
+    expect([...(text?.children ?? [])].map((c) => c.className.split(' ')[0])).toEqual([
+      'ocx-feature__eyebrow',
+      'ocx-feature__title',
+      'ocx-feature__body',
+    ]);
+    expect(text?.querySelector('.ocx-feature__eyebrow')?.textContent).toBe('01 · one lock');
+    expect((await render({ title: 'A' })).querySelector('.ocx-feature__eyebrow')).toBeNull();
+  });
+
+  it('renders the `more` slot under the text, inside the text column, only when given', async () => {
+    const doc = await render({ title: 'A' }, { more: '<a href="/docs/">read more</a>' });
+    const more = doc.querySelector('.ocx-feature__text > .ocx-feature__more');
+    expect(more?.querySelector('a')?.getAttribute('href')).toBe('/docs/');
+    expect(more?.previousElementSibling?.className.split(' ')[0]).toBe('ocx-feature__body');
+    expect((await render({ title: 'A' })).querySelector('.ocx-feature__more')).toBeNull();
+  });
+
+  it('`reveal` marks the section for the scroll module and has no effect on the reading order', async () => {
+    const on = (await render({ title: 'A', reveal: true })).querySelector('.ocx-feature');
+    expect(on?.hasAttribute('data-scroll')).toBe(true);
+    expect(on?.hasAttribute('data-revealed')).toBe(false);
+    expect((await render({ title: 'A' })).querySelector('.ocx-feature')?.hasAttribute('data-scroll')).toBe(false);
   });
 });
 

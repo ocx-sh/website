@@ -18,7 +18,10 @@ import {
   PRE_JS_VISIBLE,
   routeOf,
   SHELL_PAGES,
+  PAGE_FONT_BYTES,
+  SITE_PAGE_JS,
   sitePages,
+  UNBUDGETED_PAGES,
 } from '../tests/budgets.mjs';
 import { RETRY_RUNS } from './lighthouse.mjs';
 import { serveStage, STAGE_ROOT, stageExample } from './lhci-stage.mjs';
@@ -117,9 +120,15 @@ describe('C-111 Lighthouse URL list', () => {
     expect(RETRY_RUNS).toBe(3);
   });
 
-  it('asserts categories and budgets once per page class and per PRE_JS_VISIBLE page', () => {
+  it('asserts categories and budgets once per page class and per page with its own JS cap', () => {
     const matrix = rc.ci.assert.assertMatrix ?? [];
-    expect(matrix).toHaveLength(Object.keys(CLASS_PATTERNS).length + Object.keys(PRE_JS_VISIBLE).length);
+    expect(matrix).toHaveLength(
+      Object.keys(CLASS_PATTERNS).length +
+        Object.keys(PRE_JS_VISIBLE).length +
+        Object.keys(SITE_PAGE_JS).length +
+        Object.keys(PAGE_FONT_BYTES).length +
+        UNBUDGETED_PAGES.length,
+    );
     for (const url of urls) {
       const full = `http://localhost:9876${url}`;
       const hits = matrix.filter((m) => new RegExp(m.matchingUrlPattern).test(full));
@@ -129,7 +138,13 @@ describe('C-111 Lighthouse URL list', () => {
       for (const cat of ['performance', 'accessibility', 'best-practices', 'seo']) {
         expect(a[`categories:${cat}`], `${url} ${cat}`).toEqual(['error', { minScore: 1 }]);
       }
+      if (UNBUDGETED_PAGES.includes(url)) {
+        expect(Object.keys(a), url).toHaveLength(4);
+        continue;
+      }
       expect(a['resource-summary:script:size']).toEqual(['error', { maxNumericValue: b.preJsGz }]);
+      expect(a['resource-summary:font:size']).toEqual(['error', { maxNumericValue: b.fontBytes }]);
+      expect(a['resource-summary:stylesheet:size']).toEqual(['error', { maxNumericValue: b.cssBytes }]);
       expect(a['total-byte-weight']).toEqual(['error', { maxNumericValue: b.totalBytes }]);
       expect(a['dom-size-insight']).toEqual(['error', { maxNumericValue: b.domElements }]);
     }

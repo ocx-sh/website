@@ -1,0 +1,17 @@
+---
+title: A long page
+description: The bar measures the whole page, so on a long page it fills slowly.
+height: 400
+order: 1
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollProgress from '@ocx-sh/theme/components/ScrollProgress.astro';
+
+<ScrollProgress />
+
+<div style="min-block-size: 600vh">
+  <p>A long page: scroll a long way and the bar is still short of the end.</p>
+</div>

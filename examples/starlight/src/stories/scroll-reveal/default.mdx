@@ -1,0 +1,21 @@
+---
+title: A block that rises into view
+description: "Scroll the canvas: the block below fades in and rises as its top edge enters the view."
+height: 400
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollReveal from '@ocx-sh/theme/components/ScrollReveal.astro';
+
+<div style="min-block-size: 140vh">
+  <p>Scroll down.</p>
+</div>
+
+<ScrollReveal>
+  <h2>Pin once. Run everywhere.</h2>
+</ScrollReveal>
+
+{/* Room below, so the block can rise all the way when the canvas is scrolled to its end. */}
+<div style="min-block-size: 360px"></div>

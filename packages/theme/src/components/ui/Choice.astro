@@ -70,13 +70,15 @@ const api =
 )}
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
 
   const load = {
     checkbox: () => import('./checkbox.zag.mjs'),
     switch: () => import('./switch.zag.mjs'),
   };
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="checkbox"], [data-zag-root="switch"]'))
+  onRoots('[data-zag-root="checkbox"], [data-zag-root="switch"]', (root) => {
     // No replay: the native click already toggled the input; readDom carries it over (S-110).
     mount(root, { load: load[root.dataset.zagRoot as keyof typeof load], replay: false });
+  });
 </script>

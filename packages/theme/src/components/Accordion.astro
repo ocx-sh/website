@@ -62,9 +62,11 @@ const items = (await Astro.slots.render('default')).replace(
 />
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('.ocx-accordion[data-zag-root]'))
+  onRoots('.ocx-accordion[data-zag-root]', (root) => {
     mount(root, { load: () => import('./accordion.zag.mjs') });
+  });
 </script>
 
 <style>

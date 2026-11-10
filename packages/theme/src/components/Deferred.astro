@@ -1,0 +1,78 @@
+---
+// Deferred: a part of the page that loads after the page does. The page ships only an exactly sized,
+// animated skeleton (the required `skeleton` slot, same box as the real content, so nothing shifts);
+// the content's HTML, CSS and JS arrive from a `frag/` page (layouts/Fragment.astro) at idle after the
+// load event, or at the first input. ui/deferred.mjs fetches it, adopts its stylesheets and waits for
+// them, inserts its body, re-creates its scripts and announces `ocx:inserted`, which every component
+// script mounts from (ui/roots.mjs). Then the content fades in over the skeleton (the `.ocx-swap` fade;
+// instant under reduced motion). `ocx:deferred:load {ok}` reports the outcome.
+// Rule: defer only content a visitor can do without. Without JS the skeleton stays and a link to the
+// fragment is shown; a failure keeps the box and offers Retry. Never defer the LCP element or the
+// page's only copy of text a crawler must see.
+import Button from './ui/Button.astro';
+
+export interface Props {
+  /** URL of the fragment page (a `frag/` route), same origin. Mind the site's base: `${import.meta.env.BASE_URL}frag/x/`. */
+  src: string;
+  /** Names the content (the no-JS link, the loaded region's accessible name). */
+  label: string;
+  /** Shown when the fragment fails to load. */
+  error?: string;
+  /** The retry button's text. */
+  retry?: string;
+  /**
+   * When to load: `idle` after the load event (default); `input` at the visitor's first wheel, key, pointer
+   * move or press, or touch, never before (below-the-fold content that costs a first load nothing); `panel` once the
+   * Tabs panel holding the box is first shown (an inactive tab's content ships only when it is picked; outside a
+   * panel it acts as `idle`).
+   */
+  trigger?: 'idle' | 'input' | 'panel';
+}
+
+const { src, label, error = 'Could not load this.', retry = 'Retry', trigger = 'idle' } = Astro.props;
+if (!Astro.slots.has('skeleton'))
+  throw new Error('Deferred: the "skeleton" slot is required; it must reserve the content\'s exact box');
+---
+
+<div
+  class="ocx-swap ocx-deferred"
+  data-ocx-deferred
+  data-src={src}
+  data-trigger={trigger}
+  data-state="idle"
+  aria-busy="true"
+  tabindex="-1"
+>
+  <div class="ocx-deferred__skeleton" data-swap-skeleton aria-hidden="true">
+    <slot name="skeleton" />
+  </div>
+  <div class="ocx-deferred__content" data-deferred-content role="group" aria-label={label}></div>
+  <div class="ocx-deferred__error" data-deferred-error hidden role="alert">
+    <p>{error}</p>
+    <Button size="s" data-deferred-retry>
+      {retry}
+    </Button>
+  </div>
+</div>
+<noscript>
+  <a class="ocx-deferred__link" href={src}>
+    {label}
+  </a>
+</noscript>
+
+<script>
+  import { onRoots } from './ui/roots.mjs';
+  import { mount } from './ui/lazy.mjs';
+  import { arm, loader } from './ui/deferred-triggers.mjs';
+  const seen = new Set<string>();
+  onRoots('[data-ocx-deferred]', (root) => {
+    // A fragment's ids and scripts are made for one place on a page.
+    if (import.meta.env.DEV) {
+      const src = root.dataset['src'] ?? '';
+      if (seen.has(src)) console.warn('[ocx] Deferred: two boxes on this page load the same fragment', src);
+      seen.add(src);
+    }
+    const handle = mount(root, { load: loader(root), trigger: 'manual', replay: false });
+    arm(root, () => void handle.start());
+  });
+</script>

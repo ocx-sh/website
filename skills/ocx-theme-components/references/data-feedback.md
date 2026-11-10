@@ -105,6 +105,24 @@ wrapper (no helper); the content fades in and the skeleton out over
 `--ocx-duration-base`, then the skeleton is `visibility: hidden`. Reduced motion:
 instant. `DependencyExplorer`'s summary stats use it.
 
+## Deferred
+
+| Component | Use | Props |
+|---|---|---|
+| `Deferred.astro` | A part of the page that loads after it | `src` (a same-origin `frag/` page, mind the base), `label`, `error`, `retry`, `trigger` (`idle` default · `input` at the first wheel, key, focus, pointer or touch, for below-the-fold content · `panel` when its Tabs panel is first shown); required slot `skeleton` |
+
+The `skeleton` slot reserves the content's exact box (a `Skeleton` composite
+built from the content's own source, or your own marked `data-swap-skeleton`).
+Deferred is an `ocx-swap` box: it fades the content in over the skeleton, and
+fails to a message with Retry that keeps the box. The content is a page under
+`src/pages/frag/` wrapped in `FragmentLayout` (`@ocx-sh/theme/layouts/Fragment.astro`:
+bare document, `noindex`, no site CSS, outside the sitemap and Pagefind; a page
+that needs code fences imports an `.mdx` file). Listen to `ocx:deferred:load {ok}`
+on the box. A failed fetch, script import or stylesheet shows "Could not load this." with Retry. If the theme's own loader fails to import, Retry reloads the page: the browser keeps a failed module import.
+A fragment appears once per page (dev mode warns on a repeat), and `frag/` is reserved for the theme's
+fragment pages. Without JavaScript the skeleton stays and a link shows, so defer
+only what a visitor can do without. Details: [loading-model](loading-model.md#deferred-content).
+
 ## Toast
 
 ```js

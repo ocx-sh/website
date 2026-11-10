@@ -482,8 +482,6 @@ export namespace shell {
     export { viewBox_41 as viewBox };
     let body_41: string;
     export { body_41 as body };
-    let stroke_37: number;
-    export { stroke_37 as stroke };
     let group_41: "shell";
     export { group_41 as group };
     let keywords_41: string;
@@ -524,8 +522,8 @@ export namespace elvish {
     export { viewBox_45 as viewBox };
     let body_45: string;
     export { body_45 as body };
-    let stroke_38: number;
-    export { stroke_38 as stroke };
+    let stroke_37: number;
+    export { stroke_37 as stroke };
     let group_45: "shell";
     export { group_45 as group };
     let keywords_45: string;
@@ -884,7 +882,6 @@ export const ICONS: {
     shell: {
         viewBox: string;
         body: string;
-        stroke: number;
         group: "shell";
         keywords: string;
     };

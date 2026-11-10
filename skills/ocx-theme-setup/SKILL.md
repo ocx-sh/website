@@ -127,8 +127,8 @@ overriding any of these; it lists merge rules and the exact override set.
 
 - `customCss`: `@ocx-sh/theme/tokens.css`, `@ocx-sh/theme/base.css`,
   `@ocx-sh/theme/starlight.css`, then yours. Your CSS is unlayered, so it wins.
-- `components`: thirteen Starlight overrides (Head, Header, Footer, PageTitle,
-  TableOfContents, ThemeSelect, ThemeProvider, MobileMenuFooter,
+- `components`: fourteen Starlight overrides (Head, Header, Footer, PageTitle,
+  TableOfContents, MobileTableOfContents, ThemeSelect, ThemeProvider, MobileMenuFooter,
   MarkdownContent, Search, Sidebar, MobileMenuToggle, PageFrame). Your keys win.
 - Fonts: IBM Plex Sans and Mono (400, 600) through the Astro Fonts API with
   metric-matched fallbacks. Four small core files (ASCII plus common punctuation) are
@@ -138,6 +138,14 @@ overriding any of these; it lists merge rules and the exact override set.
 - `expressiveCode`: the theme's code frame and token colours, merged under yours.
 - `pagefind.mergeIndex`: every other `search: true` claim, so one search box
   finds every section.
+- A `frag/sidebar/<key>/` route per collapsed sidebar group (and `frag/sidebar/_all/`): a collapsed group
+  without the current page ships empty and loads its links on the first touch of its group (the sidebar's delegated controller, no Zag), and a no-JS
+  "All pages" link opens `_all`. Keyed by the configured `sidebar`, so groups a route middleware adds render
+  inline. Noindex, outside the sitemap. Single-locale only: on a multilingual site deferral is off and the
+  build warns. It reads a Starlight internal file, so it needs the pinned `<0.43` range; the build fails with a clear
+  message if that file moves. Keys are build hashes, never stable URLs. A failed group fetch shows an "All pages" link
+  and retries on the next toggle. Without JS, a link to the full page list comes first.
+- Pagefind's results skin loads at the first search dialog open, not with the page.
 - A `/favicon.svg` route with the logo, unless you ship `public/favicon.svg` or
   set Starlight's `favicon`.
 - Markdown widgets on Astro's default Sätteri processor: GitHub alerts, emoji
@@ -185,9 +193,11 @@ site that skips it keeps its baked header for good.
   split them in the port script, one page per rule, module or section group. One page over
   14,200 bytes gzipped fails the Lighthouse HTML budget (see `ocx-theme-quality`), and the
   sidebar must list the parts explicitly.
-- **Sitemap**: do not add `@astrojs/sitemap`. Starlight already writes `sitemap-index.xml`
-  and `sitemap-0.xml` under your `base` (forced `site`). The root `robots.txt` gains your
-  sitemap line when your section goes live.
+- **Sitemap**: the theme adds `@astrojs/sitemap` with a filter that drops `frag/` pages, and writes
+  `sitemap-index.xml` and `sitemap-0.xml` under your `base` (forced `site`). If you already configure
+  `@astrojs/sitemap`, the theme adds none and warns. Pass `filter: withoutFragments(base)` (exported by `@ocx-sh/theme/starlight`) to keep `frag/` out. The root `robots.txt` gains
+  your sitemap line when your section goes live.
+- **`frag/` is reserved**: the theme's fragment pages (deferred content, sidebar groups) live there. A `src/content/docs/frag/` folder fails the build. Pages under `src/pages/frag/` are the intended place for your own fragments.
 - **Build warnings**: `collection i18n does not exist or is empty` is harmless. `Could not render
   /404 … conflicts with /404` goes away with a `404.md` in the docs content. An unknown fence
   language (`pycon`) warns; map it with `expressiveCode: { shiki: { langAlias: { pycon: 'python' } } }`.
@@ -295,6 +305,11 @@ they have zero specificity and any consumer rule wins. The footer's top rule run
   Code from the `--ocx-color-code-*` tokens, in both schemes. A Shiki theme whose
   colours are `var(--ocx-color-code-*)` follows the scheme the same way. The rules sit in
   `@layer ocx`: never load an unlayered highlight.js theme beside it, it would win.
+- **Highlighted code outside a code block**: `await highlight(code, lang)` from
+  `@ocx-sh/theme/highlight` returns HTML spans coloured like an Expressive Code
+  frame (`starlark`/`bazel` map to Python). Build time only (Node): render it with
+  `set:html` in Astro frontmatter, never import it in client code. An unknown `lang`
+  fails the build.
 - **Lazy widgets of your own**: `mount(root, { load, trigger?, replay? })` from
   `@ocx-sh/theme/lazy` is the trigger layer the theme's Zag components use, with
   no Zag import. It starts on the first `pointerenter`/`focusin`/`touchstart`

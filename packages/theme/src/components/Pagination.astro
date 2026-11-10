@@ -57,10 +57,12 @@ const Tag = href == null ? 'button' : 'a';
 </nav>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="pagination"]'))
+  onRoots('[data-zag-root="pagination"]', (root) => {
     // Links mode: an early click already navigated natively; replaying it would navigate twice.
     mount(root, { load: () => import('./pagination.zag.mjs'), replay: root.dataset['ocxHref'] == null });
+  });
 </script>
 
 <style is:global>

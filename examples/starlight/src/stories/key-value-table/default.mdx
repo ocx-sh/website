@@ -1,0 +1,21 @@
+---
+title: Pairs with a header and a footer
+description: Header rows across the full width, key and value rows with a trailing note, and a footer row.
+height: 400
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import KeyValueTable from '@ocx-sh/theme/components/KeyValueTable.astro';
+
+<KeyValueTable
+  label="Platforms in ocx.lock"
+  headers={['ocx.toml · node = "ocx.sh/nodejs/node:24"', 'ocx.lock']}
+  rows={[
+    { key: 'linux/amd64', value: '→ sha256:1a31…c2c3', highlight: true, note: '← CI runner' },
+    { key: 'linux/arm64', value: '→ sha256:6a29…10c6' },
+    { key: 'darwin/arm64', value: '→ sha256:80c3…1617' },
+    { key: 'windows/amd64', value: '→ sha256:c41a…5ecb' },
+  ]}
+  footer="tag 24 floats · digests stay put"
+/>

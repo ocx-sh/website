@@ -3,44 +3,8 @@
 // from `onOpenChange` (Popover also from `render`, for a panel that starts open), so nothing is fetched before the machine is live and the part is opened (the loading
 // model of AGENTS.md). No module of its own: it ships inside the two lazy chunks that already load on
 // interaction. The first open fetches, a later open reuses the result, a failure is retried by `Retry`.
+import { load } from './fetch-html.mjs';
 import { emit } from './zag-runtime.mjs';
-
-/** Results by resolved URL for the page's life, shared by every part with that `src`. @type {Map<string, Promise<string>>} */
-const cache = new Map();
-
-/** A request, headers and body together, gives up after this long and shows the error state. */
-const TIMEOUT_MS = 10_000;
-
-/**
- * @param {string} src
- * @param {Document} doc
- * @param {boolean} html a fragment inserted as markup: same origin only
- * @returns {Promise<string>}
- */
-function load(src, doc, html) {
-  const view = /** @type {Window} */ (doc.defaultView);
-  /** @type {URL} */ let url;
-  try {
-    url = new URL(src, doc.baseURI);
-  } catch (e) {
-    return Promise.reject(e instanceof Error ? e : new Error(`fill: bad src ${src}`));
-  }
-  const key = url.href;
-  // Before the cache: a text result a Hint cached from another origin must never reach innerHTML.
-  if (html && url.origin !== view.location.origin) return Promise.reject(new Error(`fill: ${key} is not same-origin`));
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const request = view
-    .fetch(key, { credentials: 'same-origin', signal: AbortSignal.timeout(TIMEOUT_MS) })
-    .then((res) => {
-      if (!res.ok) throw new Error(`fill: ${key} answered ${res.status}`);
-      return res.text(); // the signal also aborts a body that never ends
-    });
-  cache.set(key, request);
-  // A failure is not kept: Retry fetches again.
-  request.catch(() => cache.delete(key));
-  return request;
-}
 
 /**
  * Popover: fills the root's `[data-fill]` region the first time the panel opens.

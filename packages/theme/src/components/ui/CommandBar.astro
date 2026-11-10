@@ -16,7 +16,7 @@ import { connect, machine, triggerProps } from '../clipboard.zag.mjs';
 import { highlight } from '../../highlight.mjs';
 import Icon from './Icon.astro';
 import Select from './Select.astro';
-import { PRE_PAINT } from './command-bar.mjs';
+import { PRE_PAINT, PRE_PAINT_CALL } from './command-bar.mjs';
 import { nextUiId } from './ids.mjs';
 import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
 import type { ZagProps } from './zag.mjs';
@@ -25,6 +25,8 @@ import './command-bar.css';
 export interface CommandChoice {
   /** Picker value; with `detect`, 'linux', 'macos' or 'windows' match the visitor's OS. */
   value: string;
+  /** With `detect`, the visitor's OS this choice is preselected for, when its `value` is not that OS (a shell). */
+  os?: 'linux' | 'macos' | 'windows';
   /** Picker text, and the toast and accessible name of the copy ("Linux install command"). */
   label: string;
   /** Shown in the field and copied verbatim. */
@@ -45,7 +47,7 @@ export interface Props extends Omit<HTMLAttributes<'div'>, 'class'> {
   pickerText?: boolean;
   /** What the copy is called after the choice's label, e.g. "install command". */
   noun?: string;
-  /** Preselect the visitor's OS before first paint (choice values 'linux', 'macos', 'windows'). */
+  /** Preselect the visitor's OS before first paint (a choice whose value or `os` is 'linux', 'macos', 'windows'). */
   detect?: boolean;
   /** Highlights the commands at build time, as a code block would: a Shiki language id, e.g. 'sh', 'powershell'. */
   lang?: string;
@@ -74,9 +76,9 @@ const {
 } = Astro.props;
 // `html` rides along in data-choices, so a pick swaps in highlighted markup without Shiki in the browser.
 const shown = await Promise.all(
-  choices.map(async ({ value, label, command, lang: own }) => {
+  choices.map(async ({ value, label, command, os, lang: own }) => {
     const as = own ?? lang;
-    return { value, label, command, ...(as && { html: await highlight(command, as) }) };
+    return { value, label, command, ...(os && { os }), ...(as && { html: await highlight(command, as) }) };
   }),
 );
 const [first] = choices;
@@ -95,6 +97,11 @@ const api = ssrApi(machine, connect, { ...props, id });
 const pickerZag = { positioning: { placement: 'bottom-start', sameWidth: false } } as never;
 // The picker's box is as wide as its longest label, whichever is selected: a pick never resizes it.
 const ch = Math.max(0, ...choices.map((c) => c.label.length));
+// One detector per page: the first detecting bar's script defines it, later bars only call it (a page of
+// two bars would otherwise ship its 2 KB source twice). `locals` is one object for the whole render.
+const seen = Astro.locals as { ocxDetectDefined?: boolean };
+const definesDetect = picker && detect && !seen.ocxDetectDefined;
+if (definesDetect) seen.ocxDetectDefined = true;
 // Rendered, not `has()`: a `slot="action"` element under a false `{cond && …}` still counts as a slot.
 const action = Astro.slots.has('action') ? (await Astro.slots.render('action')).trim() : '';
 ---
@@ -147,7 +154,7 @@ const action = Astro.slots.has('action') ? (await Astro.slots.render('action')).
             </code>
           )}
           {/* Straight after the text: no parser yield (a paint) can fall between the SSR text and its swap. */}
-          {picker && detect && <script is:inline set:html={PRE_PAINT} />}
+          {picker && detect && <script is:inline set:html={definesDetect ? PRE_PAINT : PRE_PAINT_CALL} />}
           {/* not-content: Starlight's `* + *` content rhythm would push the check below the copy icon. */}
           <span class="ocx-cmdbar__icons not-content" aria-hidden="true">
             <Icon name="copy" class="ocx-cmdbar__idle" />
@@ -162,7 +169,8 @@ const action = Astro.slots.has('action') ? (await Astro.slots.render('action')).
 </div>
 
 <script>
-  import { install } from './command-bar.mjs';
+  import { wireBar } from './command-bar.mjs';
+  import { onRoots } from './roots.mjs';
 
-  install();
+  onRoots('.ocx-cmdbar', wireBar);
 </script>

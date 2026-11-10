@@ -1,4 +1,10 @@
 /**
+ * The file of a Starlight internal under `dist/components-internals/` (or a `../` sibling), or a build error naming the
+ * supported range when it moved.
+ * @param {string} rel
+ */
+export function starlightInternal(rel: string): string;
+/**
  * @typedef {{ label: string, href: string }} Crumb
  * @typedef {{
  *   breadcrumbs?: false | { root?: Crumb | false },
@@ -15,6 +21,7 @@
  * @returns {import('@astrojs/starlight/types').StarlightPlugin}
  */
 export default function ocxTheme({ breadcrumbs, math }?: OcxThemeOptions): import("@astrojs/starlight/types").StarlightPlugin;
+export { withoutFragments };
 export type Crumb = {
     label: string;
     href: string;
@@ -30,3 +37,4 @@ export type Output = {
     codeSplitting?: unknown;
     manualChunks?: unknown;
 } | unknown[] | undefined;
+import { withoutFragments } from './sitemap-filter.mjs';

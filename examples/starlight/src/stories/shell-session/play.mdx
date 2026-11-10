@@ -1,0 +1,26 @@
+---
+title: Typed in a loop
+description: With play, each command types at 40 ms per character and its output appears after it; the loop pauses off screen and stands still under reduced motion.
+height: 330
+order: 4
+block: true
+toaster: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession play>
+```sh
+ocx lock
+```
+```text
+locked 3 tools in ocx.lock
+```
+```sh
+ocx exec -- node --version
+```
+```text
+v24.9.0
+```
+</ShellSession>

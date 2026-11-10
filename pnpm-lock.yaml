@@ -120,6 +120,9 @@ importers:
 
   packages/theme:
     dependencies:
+      '@astrojs/sitemap':
+        specifier: ^3.7.3
+        version: 3.7.4
       '@pagefind/default-ui':
         specifier: 1.5.2
         version: 1.5.2

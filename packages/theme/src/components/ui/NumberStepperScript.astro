@@ -5,7 +5,9 @@
 ---
 
 <script>
-  import { install } from './number-stepper.mjs';
+  import { STEP_BUTTON, install, syncButton } from './number-stepper.mjs';
+  import { onRoots } from './roots.mjs';
 
   install();
+  onRoots(STEP_BUTTON, syncButton);
 </script>

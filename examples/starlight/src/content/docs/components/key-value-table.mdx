@@ -1,0 +1,32 @@
+---
+title: KeyValueTable
+description: Header rows, key and value rows with a highlight and a trailing note, and a footer row, in the mono font.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A real table for short pairs: a platform and its digest, a setting and its value.
+Header rows and the footer span both columns. One row may be highlighted (the row that is "you"), and a row may end in a note.
+A key and a value with its note each stay on one line. Only on a narrow screen do they wrap, the note as one unit, so the table never scrolls sideways.
+
+## Stories
+
+<Stories of="key-value-table" />
+
+## Props
+
+<PropsTable
+  of="KeyValueTable.astro"
+  rows={[
+    { name: 'label', type: 'string', required: true, description: 'Accessible name of the table.' },
+    {
+      name: 'rows',
+      type: '{ key, value, highlight?, note? }[]',
+      required: true,
+      description: 'The pairs. highlight tints the row in the accent colour. note is trailing text after the value.',
+    },
+    { name: 'headers', type: 'string[]', description: 'Rows across the full width above the pairs.' },
+    { name: 'footer', type: 'string', description: 'A quiet row across the full width below the pairs.' },
+  ]}
+/>

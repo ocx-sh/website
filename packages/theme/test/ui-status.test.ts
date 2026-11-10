@@ -351,7 +351,10 @@ describe('WP14a Skeleton', () => {
     expect(swap).toMatch(
       /\.ocx-swap > \*\s*\{[^}]*grid-area:\s*1 \/ 1[^}]*opacity var\(--ocx-duration-base\)[^}]*visibility var\(--ocx-duration-base\)/,
     );
-    expect(swap).toMatch(/\.ocx-swap\[data-loaded\] > \.ocx-ui-skeleton[^{]*\{[^}]*visibility:\s*hidden/);
+    // A skeleton that is not a Skeleton (Deferred's wrapper) marks itself `data-swap-skeleton` and swaps the same way.
+    expect(swap).toMatch(
+      /\.ocx-swap\[data-loaded\] > :is\(\.ocx-ui-skeleton, \[data-swap-skeleton\]\)[^{]*\{[^}]*visibility:\s*hidden/,
+    );
   });
 
   it('WP14a Skeleton: forced colours draw bars in GrayText and hide the sweep', () => {

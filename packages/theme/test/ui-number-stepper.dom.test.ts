@@ -2,7 +2,7 @@
 // Number stepper script: a click steps the input, fires input then change, keeps focus in the input,
 // and disables the button that hit min / max.
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { install, sync } from '../src/components/ui/number-stepper.mjs';
+import { STEP_BUTTON, install, sync, syncButton } from '../src/components/ui/number-stepper.mjs';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -33,6 +33,13 @@ describe('number stepper', () => {
     expect(document.activeElement).toBe(input);
     down.querySelector('svg')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(input.value).toBe('3');
+  });
+
+  it('syncButton disables a button that starts at its bound, for each step button onRoots hands it', () => {
+    const { down, up } = place('value="5" min="0" max="5"');
+    for (const button of document.querySelectorAll(STEP_BUTTON)) syncButton(button);
+    expect(up.disabled).toBe(true);
+    expect(down.disabled).toBe(false);
   });
 
   it('disables the button at a bound and re-enables it when the value moves away', () => {

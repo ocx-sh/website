@@ -104,6 +104,8 @@ export async function buildSite(): Promise<void> {
     const started = Date.now();
     execFileSync('pnpm', ['--filter', 'site', 'build'], {
       cwd: root,
+      // Vitest exports BASE_URL (its own base); the site builds under its own, `/`.
+      env: { ...process.env, BASE_URL: undefined },
       stdio: 'pipe',
       timeout: 600_000,
       maxBuffer: 64 * 1024 * 1024,

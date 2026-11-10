@@ -1,0 +1,26 @@
+---
+title: Loaded when its tab is picked
+description: With trigger panel an inactive tab ships nothing until it is first shown; the first tab holds its content inline, the second loads on selection.
+height: 360
+order: 4
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+
+export const session = 'ocx lock\nlocked 3 tools in ocx.lock\nocx exec -- node --version\nv24.9.0\n';
+
+<Tabs>
+  <TabItem label="Inline">
+    The first tab is in the page.
+  </TabItem>
+  <TabItem label="Loaded">
+    <Deferred src={`${import.meta.env.BASE_URL}frag/shell-session/`} label="Shell session" trigger="panel">
+      <Skeleton slot="skeleton" variant="code" code={session} />
+    </Deferred>
+  </TabItem>
+</Tabs>

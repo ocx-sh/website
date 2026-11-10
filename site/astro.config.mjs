@@ -1,5 +1,6 @@
 // The root site of ocx.sh: `/`, `/integrations/`, `/apps/` and `/team/` (the root claims in the
 // theme's nav.json). Every other path belongs to a section repo; `/install/` is ocx-sh/www-setup's.
+import { gzipSync } from 'node:zlib';
 import starlight from '@astrojs/starlight';
 import ocxTheme from '@ocx-sh/theme/starlight';
 import { defineConfig } from 'astro/config';
@@ -12,6 +13,15 @@ export default defineConfig({
   // Starlight reads it before plugins run, so the theme checks it rather than sets it.
   trailingSlash: 'always',
   devToolbar: { enabled: false },
+  vite: {
+    build: {
+      // The landing's script (about 3.3 KB, under Vite's 4 KiB inline limit) would land in the HTML,
+      // 1.5 KB gzip of the first-RTT budget (HTML_GZ_MAX); it ships as a chunk. Every other asset
+      // keeps what the theme sets, which a consumer limit replaces: its CSS rule, 750 B gzip.
+      assetsInlineLimit: (file, content) =>
+        file.includes('Landing.astro') ? false : file.endsWith('.css') ? gzipSync(content).length < 750 : undefined,
+    },
+  },
   integrations: [
     // Before starlight(): its Pagefind hook must not index the temporary fragment file.
     shellFragment(),

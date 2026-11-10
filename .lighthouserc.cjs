@@ -16,7 +16,17 @@
  */
 const { chromium } = require('playwright-core');
 const { STAGE_ROOT } = require('./scripts/lhci-stage.mjs');
-const { BUDGETS, CLASS_PATTERNS, PRE_JS_VISIBLE, budgetOf, examplePages, sitePages } = require('./tests/budgets.mjs');
+const {
+  BUDGETS,
+  CLASS_PATTERNS,
+  PAGE_FONT_BYTES,
+  PRE_JS_VISIBLE,
+  SITE_PAGE_JS,
+  UNBUDGETED_PAGES,
+  budgetOf,
+  examplePages,
+  sitePages,
+} = require('./tests/budgets.mjs');
 
 // C-111 / D-Z15: every committed example page (minus samples/**) plus the static 404.html, derived
 // from the source tree by tests/budgets.mjs, then every HTML page of the built root site (C-309).
@@ -30,18 +40,29 @@ const CATEGORIES = Object.fromEntries(
 const assertions = (budget) => ({
   ...CATEGORIES,
   'resource-summary:script:size': ['error', { maxNumericValue: budget.preJsGz }],
+  'resource-summary:font:size': ['error', { maxNumericValue: budget.fontBytes }],
+  'resource-summary:stylesheet:size': ['error', { maxNumericValue: budget.cssBytes }],
   'total-byte-weight': ['error', { maxNumericValue: budget.totalBytes }],
   'dom-size-insight': ['error', { maxNumericValue: budget.domElements }],
 });
-const own = Object.keys(PRE_JS_VISIBLE);
+const own = [
+  ...Object.keys(PRE_JS_VISIBLE),
+  ...Object.keys(PAGE_FONT_BYTES),
+  ...Object.keys(SITE_PAGE_JS),
+  ...UNBUDGETED_PAGES,
+];
 // One block per page class (C-110): its pathname pattern, prefixed to match lhci's full URLs,
-// minus the pages with their own preJsGz cap, which get one block each.
+// minus the pages with their own JS cap (PRE_JS_VISIBLE, SITE_PAGE_JS), which get one block each,
+// and the UNBUDGETED_PAGES, which get the four categories only.
 const ASSERT_MATRIX = [
   .../** @type {(keyof typeof BUDGETS)[]} */ (Object.keys(BUDGETS)).map((cls) => ({
     matchingUrlPattern: `^https?://[^/]+${own.map((p) => `(?!${p}$)`).join('')}${CLASS_PATTERNS[cls].slice(1)}`,
     assertions: assertions(BUDGETS[cls]),
   })),
-  ...own.map((p) => ({ matchingUrlPattern: `^https?://[^/]+${p}$`, assertions: assertions(budgetOf(p)) })),
+  ...own.map((p) => ({
+    matchingUrlPattern: `^https?://[^/]+${p}$`,
+    assertions: UNBUDGETED_PAGES.includes(p) ? CATEGORIES : assertions(budgetOf(p)),
+  })),
 ];
 
 module.exports = {

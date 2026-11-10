@@ -144,10 +144,12 @@ const clear = ssrAttrs(api.getClearTriggerProps());
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="combobox"]'))
+  onRoots('[data-zag-root="combobox"]', (root) => {
     mount(root, { load: () => import('./combobox.zag.mjs') });
+  });
 </script>
 
 <style>

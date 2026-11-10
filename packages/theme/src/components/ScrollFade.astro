@@ -1,0 +1,27 @@
+---
+import ScrollMount from './ui/ScrollMount.astro';
+// ScrollFade: a block that fades out and drifts as the page scrolls away from the top (a hero). The scroll
+// module writes --ocx-fade-o (opacity: gone after 0.55 of a viewport) and --ocx-fade-y (the scroll offset);
+// `rate` is how much of that offset the block follows. Visible and still without JS or under reduced motion.
+export interface Props {
+  /** Share of the scroll offset the block drifts down with, so it trails the page. */
+  rate?: number;
+  class?: string;
+}
+
+const { rate = 0.25, class: className } = Astro.props;
+---
+
+<ScrollMount />
+<div class:list={['ocx-fade', className]} data-ocx-fade={rate}>
+  <slot />
+</div>
+
+<style is:global>
+  @layer ocx {
+    .ocx-fade {
+      transform: translateY(calc(var(--ocx-fade-y, 0) * var(--ocx-fade-k, 0) * 1px));
+      opacity: var(--ocx-fade-o, 1);
+    }
+  }
+</style>

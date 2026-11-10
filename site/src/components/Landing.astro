@@ -1,0 +1,158 @@
+---
+// The ocx.sh landing page: a scroll-driven story (hero, the problem, four pillars, call to action) built from
+// the theme's components. The markup is the final, revealed state; the scroll components scrub it. The hero
+// terminal, the integration tabs and the supply-chain session are Deferred: a sized skeleton now, the real
+// content from site/src/pages/frag/ at idle.
+import nav from '@ocx-sh/theme/nav.json';
+import { catalogHref } from '@ocx-sh/theme/nav';
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
+import InstallBar from '@ocx-sh/theme/components/InstallBar.astro';
+import KeyValueTable from '@ocx-sh/theme/components/KeyValueTable.astro';
+import ScrollFade from '@ocx-sh/theme/components/ScrollFade.astro';
+import ScrollReveal from '@ocx-sh/theme/components/ScrollReveal.astro';
+import ScrollProgress from '@ocx-sh/theme/components/ScrollProgress.astro';
+import ScrollStage from '@ocx-sh/theme/components/ScrollStage.astro';
+import TileGrid from '@ocx-sh/theme/components/TileGrid.astro';
+import Button from '@ocx-sh/theme/components/ui/Button.astro';
+import CommandBar from '@ocx-sh/theme/components/ui/CommandBar.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+import Tag from '@ocx-sh/theme/components/ui/Tag.astro';
+import { HERO_SESSION, LOCK, PACKAGE, PROBLEM, REGISTRIES, SUPPLY_SESSION, TALLEST_PANEL } from './landing-content';
+import './landing.css';
+
+// The integrations pillar links the hub with its own "all" label.
+const hub = nav.hubs.find((h) => h.id === 'integrations');
+const frag = (name: string) => `${import.meta.env.BASE_URL}frag/${name}/`;
+const add = (command: string) => [{ value: 'add', label: 'Add', command }];
+---
+
+<div class="lp not-content" data-landing>
+  <ScrollProgress />
+
+  <section class="lp-hero" aria-label="ocx">
+    <div class="lp-hero__in lp-wrap">
+      <ScrollFade class="lp-hero__text">
+        <Tag>ocx.toml + ocx.lock</Tag>
+        <h1 id="_top" class="lp-h lp-h1">
+          Same tools.
+          <br />
+          <em>Every machine.</em>
+        </h1>
+        <p class="lp-lead">
+          ocx.toml lists your tools; ocx.lock pins each to a digest. Laptops and CI on Linux, macOS and Windows run the
+          same version, served from the registry you already run.
+        </p>
+        <InstallBar />
+        <div class="lp-hero__links">
+          <a href="/docs/getting-started">get started →</a>
+          <a href={catalogHref(nav)}>catalog</a>
+          <a href="https://github.com/ocx-sh/ocx">github</a>
+        </div>
+      </ScrollFade>
+      <ScrollFade class="lp-hero__term" rate={0.12}>
+        <Deferred src={frag('landing-hero')} label="Terminal: ocx init, ocx add, ocx exec">
+          <div slot="skeleton" class="lp-sk-session" data-swap-skeleton>
+            <Skeleton variant="code" title code={HERO_SESSION.join('\n')} />
+          </div>
+        </Deferred>
+      </ScrollFade>
+    </div>
+    <span id="lp-hero-end"></span>
+    <ScrollFade class="lp-cue" rate={0.001}>
+      <span aria-hidden="true">scroll</span>
+    </ScrollFade>
+  </section>
+
+  <ScrollStage>
+    <Fragment slot="head">
+      <span class="lp-eyebrow">the drift</span>
+      <h2 class="lp-h lp-h--section">Same project. Three Node.js versions.</h2>
+    </Fragment>
+    {PROBLEM.map((c) => (
+      <div>
+        <span class="lp-card__os">{c.os}</span>
+        <code class="lp-card__cmd" data-stage-strike data-stage-detail>
+          {c.cmd}
+        </code>
+        <span class="lp-card__note">{c.note}</span>
+      </div>
+    ))}
+    <Fragment slot="finale">
+      <CommandBar choices={add(`ocx add ${PACKAGE}`)} lang="sh" prompt="$" />
+      <p class="lp-final__cap">One line in ocx.toml. Node 24 on macOS, Linux, Windows and CI.</p>
+    </Fragment>
+  </ScrollStage>
+
+  <div class="lp-pillars lp-wrap">
+    <FeatureSection eyebrow="01 · one lock" title="Locked once. Same version on every machine." plain reveal>
+      <p slot="text">
+        One ocx.lock covers every platform, so the Linux CI runner, the Mac laptop and Windows match. Digests move only
+        on ocx update, and ocx exec refuses a stale lock.
+      </p>
+      <KeyValueTable label="Platforms in ocx.lock" headers={LOCK.headers} rows={LOCK.rows} footer={LOCK.footer} />
+    </FeatureSection>
+
+    <FeatureSection eyebrow="02 · no new infrastructure" title="Ship tools where your images live." flip plain reveal>
+      <p slot="text">
+        Push tools next to your container images. The logins and permissions you already have apply, with no package
+        server to stand up.
+      </p>
+      <TileGrid label="Registries ocx works with" tiles={REGISTRIES}>
+        <Fragment slot="footer">
+          <CommandBar choices={add('ocx add ghcr.io/ocx-contrib/astral-sh/uv:0.13')} lang="sh" prompt="$" />
+        </Fragment>
+      </TileGrid>
+    </FeatureSection>
+
+    <FeatureSection eyebrow="03 · integrations" title="Automation-first." plain reveal>
+      <p slot="text">
+        JSON output, clean environments, composable commands and an exit code per failure. Bazel, CMake, Python and CI
+        read the same ocx.toml and ocx.lock.
+      </p>
+      <a slot="more" href={hub?.href}>
+        {hub?.all}
+      </a>
+      <Deferred src={frag('landing-integrations')} label="Integration examples" trigger="input">
+        <div slot="skeleton" class="lp-ex-sk" data-swap-skeleton>
+          <div class="lp-ex-sk__tabs" data-swap-skeleton />
+          <Skeleton variant="code" code={TALLEST_PANEL} />
+          <div class="lp-ex-sk__more" data-swap-skeleton />
+        </div>
+      </Deferred>
+    </FeatureSection>
+
+    <FeatureSection eyebrow="04 · supply chain" title="Know what you run. Even offline." flip plain reveal>
+      <p slot="text">
+        ocx never runs package code at install. Signature checks and SBOMs, by digest. Pull once, then run with no
+        network.
+      </p>
+      <a slot="more" href="/docs/guides/verify-installs/">
+        how verification works →
+      </a>
+      <Deferred src={frag('landing-supply')} label="Supply-chain session" trigger="input">
+        <Skeleton slot="skeleton" variant="code" code={SUPPLY_SESSION.join('\n')} />
+      </Deferred>
+    </FeatureSection>
+  </div>
+
+  <section class="lp-cta" aria-labelledby="lp-cta-h">
+    <ScrollReveal class="lp-cta__in">
+      <h2 id="lp-cta-h" class="lp-h lp-h--cta">
+        Pin once.
+        <br />
+        <em>Run everywhere.</em>
+      </h2>
+      <InstallBar />
+      <div class="lp-actions">
+        <Button variant="primary" size="l" href="/docs/getting-started">
+          Get started
+        </Button>
+        <Button size="l" href={catalogHref(nav)}>
+          Browse the catalog
+        </Button>
+      </div>
+      <p class="lp-note">ocx is in early development. The CLI is functional but APIs may change.</p>
+    </ScrollReveal>
+  </section>
+</div>

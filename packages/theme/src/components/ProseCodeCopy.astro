@@ -9,6 +9,7 @@ import './prose-code-copy.css';
 ---
 
 <script>
-  import { enhanceProseCode } from './prose-code-copy.mjs';
-  enhanceProseCode(document);
+  import { PROSE_PRE, enhancePre } from './prose-code-copy.mjs';
+  import { onRoots } from './ui/roots.mjs';
+  onRoots(PROSE_PRE, enhancePre);
 </script>

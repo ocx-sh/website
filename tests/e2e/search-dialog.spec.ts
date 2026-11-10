@@ -338,3 +338,72 @@ test.describe('C-210 search dialog (desktop gates)', () => {
     });
   });
 });
+
+// The dialog box's own rules ship in search-results.css, requested at the first open: the dialog starts only once that
+// sheet has loaded (or failed), so no frame shows the open layer unstyled, and a blocked sheet still leaves it usable.
+test.describe('the dialog styles arrive with the dialog', () => {
+  const SHEET = '**/search-results*.css';
+
+  test('a slow sheet: no frame shows the open layer before the dialog box is styled', async ({ page }) => {
+    await page.route(SHEET, async (route) => {
+      await new Promise((r) => setTimeout(r, 1200));
+      await route.continue();
+    });
+    await page.goto(PATH);
+    await page.evaluate(() => {
+      const frames: string[] = [];
+      (window as unknown as { __frames: string[] }).__frames = frames;
+      const tick = () => {
+        const layer = document.querySelector('site-search .ocx-search__layer');
+        const box = document.querySelector('site-search [data-part="content"]');
+        if (layer?.matches(':popover-open') && box) frames.push(getComputedStyle(box).position);
+        requestAnimationFrame(tick);
+      };
+      tick();
+    });
+    await trigger(page).click();
+    await expect(dialog(page)).toBeVisible({ timeout: 10_000 });
+    await page.waitForTimeout(300);
+    const frames = await page.evaluate(() => (window as unknown as { __frames: string[] }).__frames);
+    expect(frames.length, 'the layer opened').toBeGreaterThan(0);
+    expect(new Set(frames), 'every open frame has the styled (fixed) dialog box').toEqual(new Set(['fixed']));
+  });
+
+  test('hovering the trigger requests the machine and both sheets before any click, and opens nothing', async ({
+    page,
+  }) => {
+    const requests: string[] = [];
+    page.on('request', (r) => requests.push(r.url()));
+    await page.goto(PATH);
+    await page.waitForLoadState('networkidle');
+    expect(requests.filter((u) => /search-results|search\.zag|pagefind-ui|\/ui\./.test(u))).toEqual([]);
+    await trigger(page).hover();
+    await expect.poll(() => requests.some((u) => /search-results/.test(u))).toBe(true);
+    expect(
+      requests.some((u) => /search\.zag/.test(u)),
+      'machine chunk warmed too',
+    ).toBe(true);
+    await expect(dialog(page)).toBeHidden();
+    await expect(root(page)).toHaveAttribute('data-zag-state', 'idle');
+  });
+
+  test('a slow sheet: the trigger is aria-busy until the dialog opens', async ({ page }) => {
+    await page.route(SHEET, async (route) => {
+      await new Promise((r) => setTimeout(r, 1200));
+      await route.continue();
+    });
+    await page.goto(PATH);
+    await trigger(page).click();
+    await expect(page.locator('site-search [data-open-modal]')).toHaveAttribute('aria-busy', 'true');
+    await expect(dialog(page)).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('site-search [data-open-modal]')).not.toHaveAttribute('aria-busy', /.*/);
+  });
+
+  test('a blocked sheet: the dialog still opens and takes input', async ({ page }) => {
+    await page.route(SHEET, (route) => route.abort());
+    await page.goto(PATH);
+    await trigger(page).click();
+    await expect(dialog(page)).toBeVisible({ timeout: 10_000 });
+    await expect(input(page)).toBeVisible();
+  });
+});

@@ -60,14 +60,25 @@ and open questions. Read it before any design or code change.** Research trail:
   `@zag-js/vanilla` is imported only in
   `ui/zag-runtime.mjs`, a `@zag-js/<machine>` only in a `*.zag.mjs` (D-Z17).
   Nothing loads before interaction: `mount` triggers on first hover/focus/touch;
-  `visible` only for `Toc`; `manual` only for search, the command palette (it mounts explicitly via `mountCommandPalette`), CopyMenu context mode, toaster and the mobile
+  `visible` only for `Toc` and ShellSession `play` (an animation that runs only on screen); Deferred's own `idle` (after load at idle, or the first input; a trigger of Deferred, not of `mount`; Deferred also takes `input`, the first input only, `focusin` included, for below-the-fold content: owner decision 2026-11-09, and `panel`, which starts on tab activation); `manual` only for search, Deferred (it starts its own boxes), the command palette (it mounts explicitly via `mountCommandPalette`), CopyMenu context mode, toaster and the mobile
   toggle (C-104); a Dialog/Drawer rendered open starts eagerly. One accepted exception:
   `ProseCodeCopy` inserts its "Copy code" buttons when its page script runs (about 1 KB;
   they must be visible and reachable by a screen reader), while clipboard and toast code stay lazy. Header nav,
-  sidebar groups, mobile drawer, toaster and the CycleButton click listener mount from `Search.astro`'s
+  sidebar groups (one delegated controller, no Zag), mobile drawer, toaster and the CycleButton click listener mount from `Search.astro`'s
   every-page script: overriding `Search` drops them (the plugin warns).
-- Budgets (JS, HTML, weight, DOM, heap) live in `tests/budgets.mjs`, enforced by
-  `task e2e` and `task lighthouse`; a value only goes up with a Spec Delta.
+- Sidebar: a collapsed nested group without the current page ships empty (`data-defer`) and the sidebar controller (`starlight/sidebar-controller.mjs`, loaded by `chrome.mjs` on the first
+  touch of the sidebar; it imports no Zag) loads its links from `frag/sidebar/<key>/` on the first touch of its group; the key is the group's labels and hrefs, `_all` is the no-JS list. A group the visitor left open reopens
+  pre-paint into reserved space (`--n` links) and loads at once.
+- Component page scripts mount through `onRoots` (`ui/roots.mjs`), never by scanning `document` once (`Tree` handles
+  `ocx:inserted` itself: its script must stay import-free to be inlined, a shared import makes it a request),
+  so markup that arrives after load works: `deferral-contract.test.ts` enforces it and
+  `deferred-contract.spec.ts` proves every component's `default` story comes alive inside a Deferred.
+- Deferred content comes from `frag/` pages built with `layouts/Fragment.astro` (a bare document), not
+  from gated pages; they are `noindex` and the theme plugin keeps them out of the sitemap. Defer only
+  what a visitor can do without, with a skeleton that matches the content to 1 px.
+- Budgets (JS, HTML, weight, fonts, stylesheets, DOM, heap) live in `tests/budgets.mjs`, enforced by
+  `task e2e` and `task lighthouse`; a value only goes up with a Spec Delta. The components gallery
+  (`/docs/components/`, `UNBUDGETED_PAGES`) has no page budget, only Lighthouse 100×4.
   Run heavy gates (e2e, lighthouse, visual) one at a time: the host OOMs.
 - Component tests: Astro Container (SSR) tests run in the node environment and
   DOM behaviour tests in jsdom, in separate files; the Container API cannot

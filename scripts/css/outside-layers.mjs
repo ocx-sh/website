@@ -15,6 +15,10 @@ const ALLOW = [
     reason: "Starlight's print sheet: unlayered upstream --sl-* overrides under @media print",
   },
   {
+    file: /\/_astro\/ui\.[\w-]+\.css$/,
+    reason: "Pagefind's own sheet as an asset: search-skin.mjs imports it into layer(starlight.core) at the first open",
+  },
+  {
     file: /\/probe\/cascade\//,
     reason: 'C-028 cascade probe page: an unlayered consumer rule with identity-encoded literal colours, by design',
   },

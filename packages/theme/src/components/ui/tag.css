@@ -1,5 +1,5 @@
 /* Tag look (design c-tags): label, stamp and the filter toggle chip. Global and layered because
-   runtime chips (TagsInput clones) and PlatformIcons wear it too; imported from Tag.astro. */
+   runtime chips (TagsInput clones) and PlatformIcons wear it too; in base.css. */
 @layer ocx {
   .ocx-ui-tag {
     --_tone: var(--ocx-color-fg-muted);

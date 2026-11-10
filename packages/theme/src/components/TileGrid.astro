@@ -1,0 +1,88 @@
+---
+// TileGrid: short tiles (a title and a subtitle, optionally an icon) in two hairline-separated columns, and
+// a `footer` slot across all columns under them (a CommandBar, a command). One column on a very narrow screen.
+import type { IconName } from '../icons/icons.mjs';
+import Icon from './ui/Icon.astro';
+
+export interface Props {
+  tiles: {
+    title: string;
+    subtitle?: string;
+    /** A registry icon beside the title. */
+    icon?: IconName;
+  }[];
+  /** Accessible name of the list of tiles. */
+  label: string;
+}
+
+const { tiles, label } = Astro.props;
+const footer = Astro.slots.has('footer') ? (await Astro.slots.render('footer')).trim() : '';
+---
+
+<div class="ocx-tiles not-content">
+  <ul class="ocx-tiles__list" role="list" aria-label={label}>
+    {tiles.map((t) => (
+      <li class="ocx-tiles__tile">
+        <b class="ocx-tiles__title">
+          {t.icon && <Icon name={t.icon} />}
+          {t.title}
+        </b>
+        {t.subtitle && <span class="ocx-tiles__subtitle">{t.subtitle}</span>}
+      </li>
+    ))}
+  </ul>
+  {footer && <div class="ocx-tiles__footer" set:html={footer} />}
+</div>
+
+<style is:global>
+  @layer ocx {
+    /* The 1px gap shows the container's background: hairlines between tiles without a border per tile. */
+    .ocx-tiles {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--ocx-border-width);
+      background: var(--ocx-color-border);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      font-family: var(--ocx-font-mono);
+    }
+    .ocx-tiles__list {
+      display: contents;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .ocx-tiles__tile {
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-3);
+      margin: 0;
+      padding: var(--ocx-space-6);
+      background: var(--ocx-color-surface);
+    }
+    .ocx-tiles__title {
+      display: flex;
+      align-items: center;
+      gap: var(--ocx-space-3);
+      font-size: var(--ocx-text-md);
+      font-weight: var(--ocx-font-weight-semibold);
+      color: var(--ocx-color-fg);
+    }
+    .ocx-tiles__subtitle {
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+      overflow-wrap: anywhere;
+    }
+    .ocx-tiles__footer {
+      grid-column: 1 / -1;
+      min-inline-size: 0;
+      padding: var(--ocx-space-5);
+      background: var(--ocx-color-code-bg);
+      color: var(--ocx-color-code-fg);
+    }
+    @media (width < 20rem) {
+      .ocx-tiles {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  }
+</style>

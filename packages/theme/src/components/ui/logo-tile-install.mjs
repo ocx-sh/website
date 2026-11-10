@@ -2,6 +2,8 @@
 // settling of images that finished before the script ran (see logo-tile.mjs for the states). Kept apart
 // from the monogram and `fillLogoTile` code so a page that only renders tiles ships this, nothing more.
 
+import { onRoots } from './roots.mjs';
+
 const TILE = '.ocx-logo-tile';
 const IMAGE = '.ocx-logo-tile__image';
 
@@ -37,9 +39,9 @@ const onImage = (event) => {
 let installed = false;
 
 /**
- * Listen for every logo image on the page and settle those that already finished. Idempotent;
- * LogoTile.astro calls it from its page script, a consumer that clones tiles in later needs
- * nothing more.
+ * Listen for every logo image on the page and settle those that already finished, now and in markup
+ * inserted later (`onRoots`). Idempotent; LogoTile.astro calls it from its page script, a consumer
+ * that clones tiles in later needs nothing more.
  */
 export function install() {
   if (!installed) {
@@ -49,7 +51,7 @@ export function install() {
   }
   // ponytail: `complete` with no pixels reads as broken, so an SVG without an intrinsic size that
   // was cached before this ran falls back to the monogram; drop to events only if that bites.
-  for (const img of document.querySelectorAll(`${IMAGE}[src]`)) {
+  onRoots(`${IMAGE}[src]`, (img) => {
     if (img instanceof HTMLImageElement && img.complete) settle(img, img.naturalWidth > 0);
-  }
+  });
 }

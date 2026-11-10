@@ -148,35 +148,42 @@ const CSS = `@layer ocx{${[
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   // A dynamic import keeps the module out of the page HTML (Vite inlines a script under 4 KB). It
   // starts at idle after load, or on the first input if that comes sooner: started at
   // DOMContentLoaded, its chained request landed before LCP in Lighthouse's simulation and cost a
   // round trip (perf 0.99). The placeholder rows hold the box meanwhile. An `ocx:deps:load` sent
-  // before the mount is held and replayed after it, so an early reload is never lost.
-  const roots = [...document.querySelectorAll<HTMLElement>('.ocx-deps')];
+  // before the mount is held and replayed after it, so an early reload is never lost. A root
+  // inserted after the start (a Deferred fragment) mounts at once.
   const INPUT = ['pointerover', 'focusin', 'touchstart', 'keydown'];
   const held = new Map<EventTarget, unknown>();
   const hold = (e: Event) => {
     if (e.currentTarget) held.set(e.currentTarget, (e as CustomEvent).detail);
   };
+  const pending: HTMLElement[] = [];
   let started = false;
+  const go = (root: HTMLElement) =>
+    void import('./dependency-explorer.mjs').then(({ mountExplorer }) => {
+      root.removeEventListener('ocx:deps:load', hold);
+      void mountExplorer(root);
+      if (held.has(root)) root.dispatchEvent(new CustomEvent('ocx:deps:load', { detail: held.get(root) }));
+    });
   const start = () => {
     if (started) return;
     started = true;
     for (const type of INPUT) removeEventListener(type, start, true);
-    void import('./dependency-explorer.mjs').then(({ mountExplorer }) =>
-      roots.forEach((root) => {
-        root.removeEventListener('ocx:deps:load', hold);
-        void mountExplorer(root);
-        if (held.has(root)) root.dispatchEvent(new CustomEvent('ocx:deps:load', { detail: held.get(root) }));
-      }),
-    );
+    pending.splice(0).forEach(go);
   };
-  if (roots.length) {
-    for (const root of roots) root.addEventListener('ocx:deps:load', hold);
+  let armed = false;
+  onRoots('.ocx-deps', (root) => {
+    root.addEventListener('ocx:deps:load', hold);
+    if (started) return go(root);
+    pending.push(root);
+    if (armed) return;
+    armed = true;
     for (const type of INPUT) addEventListener(type, start, { capture: true, passive: true });
     const idle = () => (window.requestIdleCallback ?? setTimeout)(start);
     if (document.readyState === 'complete') idle();
     else addEventListener('load', idle, { once: true });
-  }
+  });
 </script>

@@ -1,0 +1,24 @@
+---
+title: Long keys on a narrow screen
+description: A long key breaks after its slashes and a long value wraps, so the table never scrolls sideways.
+height: 320
+order: 1
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import KeyValueTable from '@ocx-sh/theme/components/KeyValueTable.astro';
+
+<div style="max-inline-size: 18rem">
+  <KeyValueTable
+    label="Long keys"
+    rows={[
+      {
+        key: 'ghcr.io/ocx-sh/lore/ocx-theme-components',
+        value: 'sha256:1a31c2c31a31c2c31a31c2c31a31c2c3',
+        highlight: true,
+      },
+      { key: 'registry.example.com/team/tool', value: 'sha256:6a2910c6' },
+    ]}
+  />
+</div>

@@ -1,0 +1,153 @@
+---
+import ScrollMount from './ui/ScrollMount.astro';
+// ScrollStage: a stage pinned under the header while the page scrolls past it. The items (the default slot's
+// children) fly in from the sides in pairs, then are struck through one by one, and the `finale` slot appears
+// last. The scroll position drives it through custom properties (ui/scroll.mjs). The markup is the readable state:
+// without JS, or under reduced motion, nothing is pinned, every item is there in full strength and not yet
+// struck (a struck item is dimmed, which a reader without the motion should not have to read), and the finale shows.
+// Slots: `head` (the heading above the items), the default slot (the items), `finale`.
+// In an item, an element marked `data-stage-strike` gets the strike line, and one marked `data-stage-detail`
+// is left out on phones, where an item is a single line.
+export interface Props {
+  /** Accessible name of the stage, when its `head` slot holds no heading to label it. */
+  label?: string;
+}
+
+const { label } = Astro.props;
+const has = async (name: string) => Astro.slots.has(name) && (await Astro.slots.render(name)).trim() !== '';
+const head = await has('head');
+const finale = await has('finale');
+---
+
+<ScrollMount />
+<section class="ocx-stage not-content" data-ocx-stage aria-label={label}>
+  <div class="ocx-stage__pin" data-stage-pin>
+    {head && (
+      <div class="ocx-stage__head">
+        <slot name="head" />
+      </div>
+    )}
+    <div class="ocx-stage__items" data-stage-items>
+      <slot />
+    </div>
+    {finale && (
+      <div class="ocx-stage__finale" data-stage-finale>
+        <slot name="finale" />
+      </div>
+    )}
+  </div>
+</section>
+
+<style is:global>
+  @layer ocx {
+    /* The section is taller than the screen by the travel; the pin sticks under the header for that distance. */
+    .ocx-stage {
+      position: relative;
+      block-size: calc(100svh + var(--ocx-space-12) * 8);
+    }
+    .ocx-stage__pin {
+      position: sticky;
+      inset-block-start: var(--ocx-header-height);
+      box-sizing: border-box;
+      block-size: calc(100svh - var(--ocx-header-height));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: var(--ocx-space-7);
+      padding-inline: clamp(var(--ocx-space-5), 5vw, var(--ocx-space-9));
+      overflow: clip;
+      text-align: center;
+    }
+    .ocx-stage__head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--ocx-space-4);
+    }
+    .ocx-stage__items {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--ocx-space-12) * 3)), 1fr));
+      gap: var(--ocx-space-4) var(--ocx-space-6);
+      inline-size: 100%;
+      max-inline-size: calc(var(--ocx-space-12) * 8);
+      text-align: start;
+    }
+    /* --ocx-e (fly in) and --ocx-s (strike) are written by the scroll module; the defaults are the readable state. */
+    .ocx-stage__items > * {
+      --ocx-e: 1;
+      --ocx-s: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--ocx-space-3);
+      padding: var(--ocx-space-4) var(--ocx-space-5);
+      background: var(--ocx-color-surface);
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      border-radius: var(--ocx-radius-lg);
+      transform: translateX(calc(var(--_side) * (1 - var(--ocx-e)) * var(--ocx-stage-dist, var(--ocx-space-12))));
+      opacity: calc(var(--ocx-e) * (1 - var(--ocx-s) * 0.65));
+    }
+    .ocx-stage__items > :nth-child(odd) {
+      --_side: -1;
+    }
+    .ocx-stage__items > :nth-child(even) {
+      --_side: 1;
+    }
+    .ocx-stage [data-stage-strike] {
+      position: relative;
+      align-self: flex-start;
+      max-inline-size: 100%;
+    }
+    .ocx-stage [data-stage-strike]::after {
+      content: '';
+      position: absolute;
+      inset-inline: calc(-1 * var(--ocx-space-2));
+      inset-block-start: 52%;
+      block-size: var(--ocx-border-width-strong);
+      background: var(--ocx-color-accent);
+      transform: scaleX(var(--ocx-s));
+      transform-origin: left;
+    }
+    .ocx-stage__finale {
+      --ocx-f: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--ocx-space-4);
+      opacity: var(--ocx-f);
+      transform: translateY(calc((1 - var(--ocx-f)) * var(--ocx-space-6)));
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .ocx-stage {
+        block-size: auto;
+      }
+      .ocx-stage__pin {
+        position: static;
+        block-size: auto;
+        padding-block: calc(var(--ocx-space-10) + var(--ocx-space-7));
+      }
+    }
+    /* Phones: the stage must fit one short screen, so an item is one line: its first part and its last. */
+    @media (width < 46rem) {
+      .ocx-stage__pin {
+        gap: var(--ocx-space-5);
+      }
+      .ocx-stage__items {
+        gap: var(--ocx-space-3);
+      }
+      .ocx-stage__items > * {
+        flex-direction: row;
+        align-items: baseline;
+        gap: var(--ocx-space-4);
+        padding-block: var(--ocx-space-3);
+      }
+      .ocx-stage__items > * > :first-child {
+        flex: none;
+        inline-size: 9em;
+      }
+      .ocx-stage [data-stage-detail] {
+        display: none;
+      }
+    }
+  }
+</style>

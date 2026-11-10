@@ -1,0 +1,26 @@
+---
+// Fragment page: the HTML a `Deferred` fetches after load and inserts into its box. A bare document
+// on purpose: no base.css, tokens, fonts, header or Starlight chrome (the host page already has them,
+// and a second copy would double the bytes the deferral exists to save). Component styles and scripts
+// still arrive in its head and body; the loader adopts them. Never indexed, never in the sitemap
+// (the theme plugin filters `frag/`), never searchable. Pages live at `src/pages/frag/<name>.astro`;
+// `ocx-theme-components` has the contract.
+export interface Props {
+  /** Only for a tab title when the fragment is opened by hand (the no-JS link). */
+  title?: string;
+}
+const { title = 'Fragment' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{title}</title>
+  </head>
+  <body data-pagefind-ignore="all">
+    <slot />
+  </body>
+</html>

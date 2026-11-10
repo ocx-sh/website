@@ -26,12 +26,22 @@ test.describe('components gallery', () => {
     await page.goto(INDEX);
     // The theme's sidebar: a top-level group is a `.group-label` span plus a list; its nested groups
     // are collapsible roots whose content lists the links (collapsed, so read attributes, not text).
-    const sidebarGroups = await page.locator('#starlight__sidebar .group-label').evaluateAll((labels) => {
+    // A collapsed group without the current page ships empty (`data-defer`): its links come from its fragment.
+    const sidebarGroups = await page.locator('#starlight__sidebar .group-label').evaluateAll(async (labels) => {
       const top = labels.find((l) => l.textContent?.trim() === 'Components')?.nextElementSibling;
-      return [...(top?.querySelectorAll(':scope > li[data-part="root"]') ?? [])].map((li) => ({
-        label: li.querySelector('[data-part="trigger"]')?.textContent?.trim() ?? '',
-        links: [...li.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? ''),
-      }));
+      const frag = document.querySelector('[data-frag]')?.getAttribute('data-frag') ?? '';
+      return Promise.all(
+        [...(top?.querySelectorAll(':scope > li[data-zag-root]') ?? [])].map(async (li) => {
+          const key = li.querySelector(':scope > [data-defer]')?.getAttribute('data-defer');
+          const root = key
+            ? new DOMParser().parseFromString(await (await fetch(`${frag}${key}/`)).text(), 'text/html').body
+            : li;
+          return {
+            label: li.querySelector('[data-part="trigger"]')?.textContent?.trim() ?? '',
+            links: [...root.querySelectorAll('a')].map((a) => a.getAttribute('href') ?? ''),
+          };
+        }),
+      );
     });
     expect(sidebarGroups.length).toBeGreaterThan(3);
     const headings = (await page.locator(HEADINGS).allInnerTexts()).map((t) => t.trim());

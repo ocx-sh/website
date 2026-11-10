@@ -125,9 +125,11 @@ const markers = marks.map((m) => (typeof m === 'number' ? { value: m, label: for
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="slider"]'))
+  onRoots('[data-zag-root="slider"]', (root) => {
     // No replay: a press before start reaches no machine, and a replayed press would double-step.
     mount(root, { load: () => import('./slider.zag.mjs'), replay: false });
+  });
 </script>

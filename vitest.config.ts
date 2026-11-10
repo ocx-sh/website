@@ -15,6 +15,8 @@ export default getViteConfig(
         'site/**/*.test.{ts,mjs}',
         '.github/actions/deploy/test/**/*.test.{ts,mjs}',
       ],
+      // A `?inline` CSS import (a lazy module's sheet as a string) must hold its rules, as in the build.
+      css: { include: [/\.css\?inline/] },
       // Builds `site/dist` once for the dist-reading tests (site/src/build-site.ts).
       globalSetup: ['site/src/global-setup.ts'],
       exclude: [...configDefaults.exclude, '**/.tmp/**', '**/.agents/worktrees/**'],

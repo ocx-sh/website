@@ -10,6 +10,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import * as pagination from '../src/components/pagination.zag.mjs';
 import { arrange, bind, summary } from '../src/components/ui/data-table.mjs';
 import { onClick as clearOnClick } from '../src/components/ui/search-field.mjs';
+import { onRoots } from '../src/components/ui/roots.mjs';
 import { mount } from '../src/components/ui/zag.mjs';
 import type { ZagModule } from '../src/components/ui/zag.mjs';
 
@@ -323,10 +324,10 @@ describe('DataTable page script: arms early on a restored filter', () => {
       return Promise.resolve(spec.endsWith('data-table.mjs') ? { bind } : pagination);
     };
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- runs the transpiled inline script with injected globals
-    const script = new Function('mount', '__import', 'document', 'window', 'CustomEvent', 'console', js) as (
+    const script = new Function('onRoots', 'mount', '__import', 'document', 'window', 'CustomEvent', 'console', js) as (
       ...args: unknown[]
     ) => Promise<void>;
-    await script(mount, __import, document, window, CustomEvent, console);
+    await script(onRoots, mount, __import, document, window, CustomEvent, console);
     return { table: () => loaded.filter((s) => s.endsWith('data-table.mjs')).length };
   };
   const filter = (root: Element) => {

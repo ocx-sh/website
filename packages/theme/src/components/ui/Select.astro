@@ -142,11 +142,13 @@ const box = grouped ? { disabled: Boolean(disabled), ...ssrAttrs(api.getControlP
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { onSelectSet } from './value-set.mjs';
   import { mount } from './zag.mjs';
 
   document.addEventListener('ocx:select:set', onSelectSet);
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="select"]'))
+  onRoots('[data-zag-root="select"]', (root) => {
     mount(root, { load: () => import('./select.zag.mjs') });
+  });
 </script>

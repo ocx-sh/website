@@ -1,13 +1,13 @@
 // @vitest-environment jsdom
 // CommandBar behaviour (command-bar.mjs) under a DOM: `apply` (one choice shown), `host` (OS from
-// the browser), the PRE_PAINT script, and `install` (a pick moves the copy machine; a copy is
+// the browser), the PRE_PAINT script, and `wireBar` (a pick moves the copy machine; a copy is
 // announced). Markup mirrors CommandBar.astro's SSR, which ui-command-bar.test.ts checks; the
 // copy is the real clipboard.zag.mjs, so a pick is proven to change what reaches the clipboard.
-import { runInNewContext, Script } from 'node:vm';
+import { createContext, runInNewContext, Script } from 'node:vm';
 import * as clipboard from '@zag-js/clipboard';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as copyModule from '../src/components/clipboard.zag.mjs';
-import { PRE_PAINT, apply, host, install } from '../src/components/ui/command-bar.mjs';
+import { PRE_PAINT, PRE_PAINT_CALL, apply, host, wireBar } from '../src/components/ui/command-bar.mjs';
 import { ssrApi, ssrAttrs } from '../src/components/ui/zag-runtime.mjs';
 import { mount } from '../src/components/ui/zag.mjs';
 import type { ZagModule } from '../src/components/ui/zag.mjs';
@@ -176,6 +176,57 @@ describe('PRE_PAINT (inline script, runs before the module)', () => {
     expect(text.textContent).toBe(CHOICES[0]!.command);
   });
 
+  it("picks a choice whose `os` names the visitor's platform when no value does (a shell picker)", () => {
+    const { text } = place({ detect: true });
+    const shells = [
+      { value: 'shell', label: 'Shell', command: 'curl -fsSL https://setup.ocx.sh/sh | sh' },
+      { value: 'powershell', label: 'PowerShell', command: 'irm https://setup.ocx.sh/pwsh | iex', os: 'windows' },
+    ];
+    const bar = document.querySelector<HTMLElement>('.ocx-cmdbar')!;
+    bar.setAttribute('data-choices', JSON.stringify(shells));
+    bar.querySelector('select')!.innerHTML = shells
+      .map((c) => `<option value="${c.value}">${c.label}</option>`)
+      .join('');
+    run({ platform: 'MacIntel' });
+    expect(text.textContent).toBe(shells[0]!.command);
+    run({ userAgentData: { platform: 'Windows' } });
+    expect(text.textContent).toBe(shells[1]!.command);
+  });
+
+  it('a second bar runs the detector the first one defined, from the short call form', () => {
+    const { text } = place({ detect: true });
+    const first = document.querySelector<HTMLElement>('.ocx-cmdbar')!;
+    document.body.insertAdjacentHTML(
+      'beforeend',
+      first.outerHTML.replace('id="pre"', 'id="pre2"').replaceAll('id="pick"', 'id="pick2"'),
+    );
+    const text2 = document.querySelectorAll('.ocx-cmdbar__text')[1]!;
+    const win = { document: { currentScript: document.getElementById('pre') }, navigator: { platform: 'Win32' } };
+    const ctx = createContext(win); // one global scope, as one page
+    new Script(PRE_PAINT).runInContext(ctx);
+    expect(text.textContent).toBe('irm https://setup.ocx.sh/pwsh | iex');
+    expect(text2.textContent).toBe(CHOICES[0]!.command);
+    win.document.currentScript = document.getElementById('pre2');
+    new Script(PRE_PAINT_CALL).runInContext(ctx);
+    expect(text2.textContent).toBe('irm https://setup.ocx.sh/pwsh | iex');
+  });
+
+  it('a bar whose call runs before the definition is detected once the definition runs', () => {
+    const { text } = place({ detect: true });
+    const win = { document: { currentScript: document.getElementById('pre') }, navigator: { platform: 'Win32' } };
+    const ctx = createContext(win);
+    new Script(PRE_PAINT_CALL).runInContext(ctx); // slot content rendered before its parent: no detector yet
+    expect(text.textContent).toBe(CHOICES[0]!.command);
+    win.document.currentScript = null;
+    new Script(PRE_PAINT).runInContext(ctx); // the definer's own bar is null here; the queued one is drained
+    expect(text.textContent).toBe('irm https://setup.ocx.sh/pwsh | iex');
+  });
+
+  it('the call form never throws, with or without a detector defined', () => {
+    expect(() => void runInNewContext(PRE_PAINT_CALL, { document: { currentScript: null } })).not.toThrow();
+    expect(() => new Script(PRE_PAINT_CALL)).not.toThrow();
+  });
+
   it('never throws (a bar that is not there, a navigator that lies)', () => {
     place({ detect: true });
     const script = document.getElementById('pre')!;
@@ -188,7 +239,7 @@ describe('PRE_PAINT (inline script, runs before the module)', () => {
   });
 });
 
-describe('install(): pick and copy', () => {
+describe('wireBar(): pick and copy', () => {
   const writeText = () => {
     const fn = vi.fn(() => Promise.resolve());
     vi.stubGlobal('navigator', { clipboard: { writeText: fn } });
@@ -197,7 +248,7 @@ describe('install(): pick and copy', () => {
   /** Wires the bar, then starts its copy machine on the real clipboard module. */
   async function live() {
     const parts = place();
-    install(document);
+    document.querySelectorAll<HTMLElement>('.ocx-cmdbar').forEach(wireBar);
     const handle = mount(parts.root, { load: () => Promise.resolve(copyModule as unknown as ZagModule) });
     await handle.start();
     return { ...parts, handle };
@@ -237,7 +288,7 @@ describe('install(): pick and copy', () => {
     const toasts: unknown[] = [];
     document.addEventListener('ocx:toast', (e) => toasts.push(e));
     const { root, trigger, picker } = place();
-    install(document);
+    document.querySelectorAll<HTMLElement>('.ocx-cmdbar').forEach(wireBar);
     pick(picker, 'windows');
     const handle = mount(root, { load: () => Promise.resolve(copyModule as unknown as ZagModule) });
     await handle.start();
@@ -251,7 +302,7 @@ describe('install(): pick and copy', () => {
     const toasts: unknown[] = [];
     document.addEventListener('ocx:toast', (e) => toasts.push(e));
     const { root, trigger, picker } = place();
-    install(document); // mounts on first interaction, loading the real clipboard module
+    document.querySelectorAll<HTMLElement>('.ocx-cmdbar').forEach(wireBar); // mounts on first interaction, loading the real clipboard module
     pick(picker, 'windows');
     root.dispatchEvent(new Event('pointerenter'));
     trigger.click();
@@ -361,6 +412,6 @@ describe('install(): pick and copy', () => {
 
   it('a bar with no field (action only) is skipped without error', () => {
     document.body.innerHTML = '<div class="ocx-cmdbar"><div class="ocx-cmdbar__action"><a href="#x">x</a></div></div>';
-    expect(() => install(document)).not.toThrow();
+    expect(() => wireBar(document.querySelector<HTMLElement>('.ocx-cmdbar')!)).not.toThrow();
   });
 });

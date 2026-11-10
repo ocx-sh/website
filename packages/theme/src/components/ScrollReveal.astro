@@ -1,0 +1,26 @@
+---
+import ScrollMount from './ui/ScrollMount.astro';
+// ScrollReveal: a block that fades in and rises as its top edge enters the viewport (a closing call to action).
+// The scroll module writes --ocx-reveal (0..1); without JS, or under reduced motion, the block is simply there.
+export interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<ScrollMount />
+<div class:list={['ocx-scroll-reveal', className]} data-ocx-reveal>
+  <slot />
+</div>
+
+<style is:global>
+  @layer ocx {
+    @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+      .ocx-scroll-reveal {
+        opacity: var(--ocx-reveal, 1);
+        transform: translateY(calc((1 - var(--ocx-reveal, 1)) * var(--ocx-space-8)));
+      }
+    }
+  }
+</style>

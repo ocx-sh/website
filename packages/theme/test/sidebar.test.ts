@@ -3,7 +3,6 @@
 // hooks and semantics are kept, and the pre-paint restore script runs here in jsdom. The toggle is a
 // manual Zag drawer root whose SSR keeps the JS-off popover fallback. Browser behaviour (drawer,
 // swipe, focus, restore across navigation) is tests/e2e/{mobile,sidebar}.spec.ts.
-import * as collapsible from '@zag-js/collapsible';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 // @ts-expect-error jsdom ships no types and @types/jsdom is not a dependency
 import * as jsdom from 'jsdom';
@@ -74,29 +73,21 @@ const { getSidebarHash: starlightHash } = (await import(
   /* @vite-ignore */ '../node_modules/@astrojs/starlight/dist/utils/navigation.js'
 )) as { getSidebarHash: (entries: unknown[]) => string };
 
-/** A group root's machine props, as SSR or the restore script wrote them. */
-const zagProps = (g: HTMLElement): unknown => JSON.parse(g.dataset['zagProps']!) as unknown;
+/** Whether a group is open, as SSR or the restore script wrote it: its button's `aria-expanded` and its list's `hidden`. */
+const isOpen = (g: HTMLElement): boolean => {
+  const button = g.querySelector(':scope > [data-part="trigger"]')!;
+  const list = g.querySelector<HTMLElement>(':scope > [data-part="content"]')!;
+  expect(button.getAttribute('aria-expanded'), 'aria-expanded agrees with hidden').toBe(String(!list.hidden));
+  return !list.hidden;
+};
 const groups = (d: Document) => [...d.querySelectorAll<HTMLElement>('[data-zag-root="collapsible"]')];
 const label = (g: Element) => g.querySelector('[data-part="trigger"]')?.firstChild?.textContent;
-const ssr = (id: string, defaultOpen: boolean) => ssrApi(collapsible.machine, collapsible.connect, { id, defaultOpen });
-
-/** A group's Zag-owned attributes per part, as the DOM reads them. */
+/** A group's parts, as the controller and the CSS read them. */
 function partAttrs(g: Element) {
-  const read = (el: Element | null) =>
-    Object.fromEntries(
-      [...(el?.attributes ?? [])].filter((a) => !/^(class|data-zag-.*)$/.test(a.name)).map((a) => [a.name, a.value]),
-    );
+  const read = (el: Element | null) => Object.fromEntries([...(el?.attributes ?? [])].map((a) => [a.name, a.value]));
   const trigger = g.querySelector(':scope > [data-part="trigger"]');
   return { root: read(g), trigger: read(trigger), content: read(trigger?.nextElementSibling ?? null) };
 }
-const apiAttrs = (id: string, open: boolean) => {
-  const api = ssr(id, open);
-  return {
-    root: domAttrs(api.getRootProps()),
-    trigger: domAttrs(api.getTriggerProps()),
-    content: domAttrs(api.getContentProps()),
-  };
-};
 
 describe('C-230 Sidebar markup', () => {
   it('the top level is flat: links and group labels, no disclosure, no <details>', async () => {
@@ -128,12 +119,12 @@ describe('C-230 Sidebar markup', () => {
 
   it('C-130b: every nested group is an idle collapsible root, open when it holds the current page or is not collapsed', async () => {
     const d = doc(await html('Sidebar'));
-    const found = groups(d).map((g) => [label(g), g.dataset['zagState'], zagProps(g)]);
+    const found = groups(d).map((g) => [label(g), g.dataset['zagState'], isOpen(g)]);
     expect(found).toEqual([
-      ['Current', 'idle', { defaultOpen: true }],
-      ['Closed', 'idle', { defaultOpen: false }],
-      ['Deep', 'idle', { defaultOpen: false }],
-      ['Open 🚀', 'idle', { defaultOpen: true }],
+      ['Current', 'idle', true],
+      ['Closed', 'idle', false],
+      ['Deep', 'idle', false],
+      ['Open 🚀', 'idle', true],
     ]);
     expect(groups(d).map((g) => g.dataset['zagId'])).toEqual(['sb-0', 'sb-1', 'sb-2', 'sb-3']);
   });
@@ -148,13 +139,27 @@ describe('C-230 Sidebar markup', () => {
     }
   });
 
-  it('C-130a: root, trigger and content of each group equal connect() for its id and open state', async () => {
+  it('C-130a: each group is plain markup (no Zag props or machine ids), its state in hidden and aria-expanded', async () => {
     const d = doc(await html('Sidebar'));
-    for (const g of groups(d)) {
-      const open = (zagProps(g) as { defaultOpen: boolean }).defaultOpen;
-      expect(partAttrs(g), label(g) ?? '').toEqual(apiAttrs(g.dataset['zagId']!, open));
+    for (const [i, g] of groups(d).entries()) {
+      const open = isOpen(g);
+      expect(partAttrs(g), label(g) ?? '').toEqual({
+        root: { 'data-zag-root': 'collapsible', 'data-zag-state': 'idle', 'data-zag-id': `sb-${i}` },
+        trigger: {
+          type: 'button',
+          'data-part': 'trigger',
+          'aria-controls': `sb-${i}-c`,
+          'aria-expanded': String(open),
+        },
+        content: {
+          id: `sb-${i}-c`,
+          'data-part': 'content',
+          'data-collapsible': '',
+          ...(open ? {} : { hidden: '' }),
+        },
+      });
     }
-    expect(d.body.innerHTML).not.toMatch(/data-focus/);
+    expect(d.body.innerHTML).not.toMatch(/data-focus|data-zag-props|data-scope|--height/);
   });
 
   it("keeps Starlight's persistence hook: sl-sidebar-state-persist with Starlight's sidebar hash", async () => {
@@ -195,19 +200,11 @@ describe('C-230 S-109 pre-paint restore (inline script)', () => {
   }
   const hash = starlightHash(sidebar());
 
-  it('restores each stored open state before the machine starts: parts equal connect() for the new state', async () => {
+  it('restores each stored open state before the controller starts: hidden and aria-expanded agree', async () => {
     const w = page(await html('Sidebar'), { stored: { hash, open: [false, true, true, false], scroll: 0 } });
     const found = groups(w.document);
-    expect(found.map((g) => zagProps(g))).toEqual([
-      { defaultOpen: false },
-      { defaultOpen: true },
-      { defaultOpen: true },
-      { defaultOpen: false },
-    ]);
-    for (const [i, g] of found.entries()) {
-      expect(partAttrs(g), label(g) ?? '').toEqual(apiAttrs(`sb-${i}`, [false, true, true, false][i]!));
-      expect(g.dataset['zagState']).toBe('idle');
-    }
+    expect(found.map((g) => isOpen(g))).toEqual([false, true, true, false]);
+    for (const g of found) expect(g.dataset['zagState']).toBe('idle');
   });
 
   it.each([
@@ -221,7 +218,7 @@ describe('C-230 S-109 pre-paint restore (inline script)', () => {
   ])('leaves the SSR state for %s', async (_, options) => {
     const markup = await html('Sidebar');
     const w = page(markup, options);
-    expect(groups(w.document).map((g) => zagProps(g))).toEqual(groups(doc(markup)).map((g) => zagProps(g)));
+    expect(groups(w.document).map((g) => isOpen(g))).toEqual(groups(doc(markup)).map((g) => isOpen(g)));
   });
 
   it('saves a group change under the sidebar hash (Starlight key, open[] by group index), keeping the rest', async () => {
@@ -233,6 +230,17 @@ describe('C-230 S-109 pre-paint restore (inline script)', () => {
       open: [true, null, true],
       scroll: 12,
     });
+  });
+
+  it('a stored state follows the group, not its place in the rendered DOM (a deferred group renders no nested ones)', async () => {
+    // 'Deep' is absent, as when its parent ships deferred; 'Open' keeps its whole-sidebar slot 3.
+    const d = doc(await html('Sidebar'));
+    groups(d)[2]!.remove();
+    const w = page(d.body.innerHTML, { stored: { hash, open: [null, null, null, false] } });
+    const open = groups(w.document).find((g) => label(g)?.startsWith('Open'))!;
+    expect(isOpen(open)).toBe(false);
+    open.dispatchEvent(new w.CustomEvent('ocx:collapsible:change', { detail: { open: true }, bubbles: true }));
+    expect(JSON.parse(w.sessionStorage.getItem('sl-sidebar-state')!)).toMatchObject({ open: [null, null, null, true] });
   });
 
   it('a change on another sidebar starts a fresh entry for this one', async () => {

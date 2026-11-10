@@ -25,10 +25,8 @@ if (!collapsible)
 
 <script>
   import { clear, isSelectable, select } from './tree.mjs';
-  // Selection needs this script, so a selectable row joins the tab order only here.
-  for (const tree of document.querySelectorAll('.ocx-tree'))
-    for (const row of tree.querySelectorAll('.ocx-tree__row'))
-      if (isSelectable(tree, row)) row.setAttribute('tabindex', '0');
+  // Imports only ./tree.mjs: a shared module (ui/roots.mjs) turns this script from inlined into a request,
+  // about 0.8 KB on every page with a tree. So onRoots' mount is written out below.
   const target = (e: Event) => {
     const row = e.target instanceof Element ? e.target.closest('.ocx-tree__row') : null;
     const tree = row?.closest<HTMLElement>('.ocx-tree');
@@ -50,15 +48,38 @@ if (!collapsible)
       select(tree, row);
     }
   });
-  // No selectable tree on the page → skip the listener entirely (no cost for non-selectable trees).
-  if (document.querySelector('.ocx-tree__row[tabindex="0"]'))
-    document.addEventListener('pointerdown', (e) => {
-      const inside = e.target instanceof Element ? e.target.closest('.ocx-tree') : null;
-      for (const selected of document.querySelectorAll('.ocx-tree [data-selected]')) {
-        const tree = selected.closest('.ocx-tree');
-        if (tree && tree !== inside) clear(tree);
-      }
-    });
+  // Only the first selectable tree adds the listener (no cost for pages whose trees are not selectable).
+  let outside = false;
+  const mounted = new WeakSet<Element>();
+  const mount = (scope: ParentNode) => {
+    const trees = [...scope.querySelectorAll<HTMLElement>('.ocx-tree')];
+    if (scope instanceof Element && scope.matches('.ocx-tree')) trees.unshift(scope as HTMLElement);
+    for (const tree of trees) {
+      if (mounted.has(tree)) continue;
+      mounted.add(tree);
+      // Selection needs this script, so a selectable row joins the tab order only here.
+      let selectable = false;
+      for (const row of tree.querySelectorAll('.ocx-tree__row'))
+        if (isSelectable(tree, row)) {
+          row.setAttribute('tabindex', '0');
+          selectable = true;
+        }
+      if (!selectable || outside) continue;
+      outside = true;
+      document.addEventListener('pointerdown', (e) => {
+        const inside = e.target instanceof Element ? e.target.closest('.ocx-tree') : null;
+        for (const selected of document.querySelectorAll('.ocx-tree [data-selected]')) {
+          const tree = selected.closest('.ocx-tree');
+          if (tree && tree !== inside) clear(tree);
+        }
+      });
+    }
+  };
+  mount(document);
+  // A Deferred fragment announces its subtree; without this listener its trees stay unmounted.
+  document.addEventListener('ocx:inserted', (e) => {
+    if (e.target instanceof Element) mount(e.target);
+  });
 </script>
 
 <style is:global>

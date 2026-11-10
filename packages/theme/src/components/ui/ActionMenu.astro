@@ -85,9 +85,11 @@ const p = Object.fromEntries(
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-action-menu[data-zag-root]'))
+  onRoots('.ocx-ui-action-menu[data-zag-root]', (root) => {
     mount(root, { load: () => import('./menu.zag.mjs') });
+  });
 </script>
 
 <style>

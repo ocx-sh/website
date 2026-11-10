@@ -1,0 +1,19 @@
+---
+// ScrollMount: the one page script of every scroll-driven component (ScrollFade, ScrollProgress, ScrollReveal,
+// ScrollStage, FeatureSection), each of which renders it: Astro ships a component's script once per page, so a page
+// with several of them makes one request, not one each (a request costs about 350 B of headers, more than these
+// scripts weigh). The selectors match nothing a page lacks.
+---
+
+<script>
+  import { onRoots } from './roots.mjs';
+  import { track } from './scroll.mjs';
+  import { revealOnIntersect } from '../feature-section.mjs';
+
+  onRoots('[data-ocx-fade]', (el) => track(el, 'fade'));
+  onRoots('[data-ocx-progress]', (bar) => track(bar, 'progress'));
+  onRoots('[data-ocx-reveal]', (el) => track(el, 'reveal'));
+  onRoots('[data-ocx-stage]', (stage) => track(stage, 'stage'));
+  onRoots('.ocx-feature:not([data-scroll])', (section) => revealOnIntersect([section]));
+  onRoots('.ocx-feature[data-scroll]', (section) => track(section, 'reveal'));
+</script>

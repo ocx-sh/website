@@ -118,13 +118,15 @@ const itemAttrs = (item: TagItem) => {
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { install } from './tag-group.mjs';
   import { mount } from './zag.mjs';
 
   install();
   // Replay on: the chips are plain buttons, so an early click did nothing natively (C-104).
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tag-group"]'))
+  onRoots('[data-zag-root="tag-group"]', (root) => {
     mount(root, { load: () => import('../toggle-group.zag.mjs') });
+  });
 </script>
 
 <style is:global>

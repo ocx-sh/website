@@ -3,19 +3,37 @@
 // position (odd = command, even = output); each keeps its own language. The entries are the
 // rendered Expressive Code blocks of the slot, marked in place; the style below fuses them.
 import { topLevel } from '../starlight/tab-icons.mjs';
+import { slimTokens } from './shell-session.mjs';
 
 export interface Props {
   /** Title bar text; also the name of the group. */
   title?: string;
+  /** Type each command in a loop (40 ms per character), its output appearing after it. Still under reduced motion. */
+  play?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, play = false } = Astro.props;
 const html = await Astro.slots.render('default');
 const { tokens, at, rest } = topLevel(html, (tag) => /\sclass="(?:[^"]*\s)?expressive-code(?:\s[^"]*)?"/.test(tag));
 // Expressive Code's hoisted stylesheet link and module script may sit beside the blocks.
 const stray = rest.find((tag) => tag.trim() && !/^<(?:link\s|script[\s>])/i.test(tag));
 if (at.length === 0) throw new Error('<ShellSession> needs at least one code fence in its slot.');
 if (stray !== undefined) throw new Error(`<ShellSession> holds only code fences, found ${stray.trim()}.`);
+const LINE = '<div class="ec-line';
+/** Marks each line after one ending in `\` as a continuation: it keeps the `$`'s width, so its indent holds, but no `$`. */
+const continued = (block: string): string => {
+  const [head = '', ...lines] = block.split(LINE);
+  const text = (line: string) => (line.split('</code>')[0] ?? '').replace(/<[^>]*>/g, '').trimEnd();
+  return (
+    head +
+    lines
+      .map(
+        (l, k) =>
+          (k > 0 && text(lines[k - 1] ?? '').endsWith('\\') ? '<div data-ocx-continued class="ec-line' : LINE) + l,
+      )
+      .join('')
+  );
+};
 for (const [n, i] of at.entries()) {
   const kind = n % 2 ? 'output' : 'command';
   tokens[i] = (tokens[i] ?? '').replace(
@@ -23,12 +41,33 @@ for (const [n, i] of at.entries()) {
     `<div data-ocx-session="${kind}" role="group" aria-label="${kind === 'output' ? 'Output' : 'Command'}"`,
   );
 }
+// A marked block runs to the next marker, so each command's lines are one piece.
+const MARK = '<div data-ocx-session="';
+const body = slimTokens(tokens.join(''))
+  .split(MARK)
+  .map((piece, k) => (k > 0 && piece.startsWith('command') ? continued(piece) : piece))
+  .join(MARK);
 ---
 
-<div class="ocx-shell-session not-content" role="group" aria-label={title ?? 'Shell session'}>
+<div
+  class="ocx-shell-session not-content"
+  role="group"
+  aria-label={title ?? 'Shell session'}
+  data-ocx-play={play ? '' : undefined}
+>
   {title && <div class="ocx-shell-session-header">{title}</div>}
-  <Fragment set:html={tokens.join('')} />
+  <Fragment set:html={body} />
 </div>
+
+<script>
+  import { onRoots } from './ui/roots.mjs';
+  import { mount } from './ui/lazy.mjs';
+
+  onRoots('.ocx-shell-session[data-ocx-play]', (root) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    mount(root, { load: () => import('./shell-session-play.mjs'), trigger: 'visible', replay: false });
+  });
+</script>
 
 <style is:global>
   @layer ocx {
@@ -102,11 +141,14 @@ for (const [n, i] of at.entries()) {
     .ocx-shell-session > [data-ocx-session='output'] .copy {
       display: none;
     }
-    /* ponytail: every line of a command gets `$`, so a `\` continuation line does too; no SSR line parsing. */
     .ocx-shell-session .code::before {
       content: '$ ';
       color: var(--ocx-color-accent-fg);
       user-select: none;
+    }
+    /* A `\` continuation line hides its `$` but keeps the space, so its indent does not shift. */
+    .ocx-shell-session [data-ocx-continued] .code::before {
+      visibility: hidden;
     }
     /* EC colours each token through an inline custom property, so `color` has to be set on the spans too. */
     .ocx-shell-session > [data-ocx-session='output'] .code,

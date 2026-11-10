@@ -1,0 +1,22 @@
+---
+title: Loaded at the first input
+description: With trigger input the part below the fold ships nothing until the visitor first scrolls, presses a key, moves the pointer or touches the page.
+height: 420
+order: 3
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+
+export const session = 'ocx lock\nlocked 3 tools in ocx.lock\nocx exec -- node --version\nv24.9.0\n';
+
+<div style="min-block-size: 200vh">
+  <p>Scroll down: the session below loads at the first scroll.</p>
+</div>
+
+<Deferred src={`${import.meta.env.BASE_URL}frag/shell-session/`} label="Shell session" trigger="input">
+  <Skeleton slot="skeleton" variant="code" code={session} />
+</Deferred>

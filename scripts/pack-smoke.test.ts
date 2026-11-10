@@ -32,6 +32,7 @@ const pkg = () => ({
     './shell': { types: './src/shell.d.mts', default: './src/shell.mjs' },
     './shell-rev': { types: './src/shell-rev.d.mts', default: './src/shell-rev.mjs' },
     './shell-render': { types: './src/shell-render.d.mts', default: './src/shell-render.mjs' },
+    './highlight': { types: './src/highlight.d.mts', default: './src/highlight.mjs' },
     './copy': { types: './src/components/copy.d.mts', default: './src/components/copy.mjs' },
     './logo-tile': { types: './src/components/ui/logo-tile.d.mts', default: './src/components/ui/logo-tile.mjs' },
     './command-palette': {
@@ -47,13 +48,13 @@ const FILES = [
   'src/tokens.css',
   'src/base.css',
   'src/fonts.css',
-  'src/starlight/starlight.css',
   ...['sans', 'mono'].flatMap((f) =>
     [400, 600].flatMap((w) => ['core', 'rest'].map((p) => `src/fonts/plex-${f}-${w}-${p}.woff2`)),
   ),
   'src/fonts/rest.css',
   'src/fonts/LICENSE-ibm-plex-sans.txt',
   'src/fonts/LICENSE-ibm-plex-mono.txt',
+  'src/starlight/starlight.css',
   'src/starlight/index.mjs',
   'src/starlight/index.d.mts',
   'src/starlight/Header.astro',
@@ -93,19 +94,12 @@ const FILES = [
   'src/shell-rev.d.mts',
   'src/shell-render.mjs',
   'src/shell-render.d.mts',
+  'src/highlight.mjs',
+  'src/highlight.d.mts',
 ];
 
 test('C-031 exactly the §4.1 export key set passes with no problems', () => {
   expect(checkExports(pkg(), FILES)).toEqual([]);
-});
-
-test('C-031 an extra or missing export key is flagged', () => {
-  const extra = pkg();
-  extra.exports['./extra.css'] = './src/tokens.css';
-  expect(checkExports(extra, FILES).join('\n')).toContain('./extra.css');
-  const missing = pkg();
-  delete missing.exports['./logo.svg'];
-  expect(checkExports(missing, FILES).join('\n')).toContain('./logo.svg');
 });
 
 test('the tarball ships the generated Plex files and no @fontsource dependency', () => {
@@ -117,6 +111,15 @@ test('the tarball ships the generated Plex files and no @fontsource dependency',
   ).toContain('plex-sans-400-rest.woff2');
   const p = { ...pkg(), dependencies: { '@fontsource/ibm-plex-sans': '5.3.0' } };
   expect(checkExports(p, FILES).join('\n')).toContain('@fontsource/ibm-plex-sans');
+});
+
+test('C-031 an extra or missing export key is flagged', () => {
+  const extra = pkg();
+  extra.exports['./extra.css'] = './src/tokens.css';
+  expect(checkExports(extra, FILES).join('\n')).toContain('./extra.css');
+  const missing = pkg();
+  delete missing.exports['./logo.svg'];
+  expect(checkExports(missing, FILES).join('\n')).toContain('./logo.svg');
 });
 
 test("C-031 an export key whose target isn't in the tarball's file list is flagged", () => {

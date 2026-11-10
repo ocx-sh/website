@@ -1,0 +1,31 @@
+---
+// A sidebar's links as plain lists (no Zag machinery, no persistence): the body of a `frag/sidebar/` fragment, whose
+// groups are open lists under a label. Not Sidebar.astro: that imports the chrome whose styles a fragment must not carry.
+import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+
+interface Props {
+  entries: StarlightRouteData['sidebar'];
+  depth?: number;
+}
+const { entries, depth = 0 } = Astro.props;
+const omitClass = (attrs: Record<string, unknown>) =>
+  Object.fromEntries(Object.entries(attrs).filter(([k]) => k !== 'class'));
+---
+
+<ul class={depth === 0 ? 'top-level' : undefined}>
+  {entries.map((e) =>
+    e.type === 'link' ? (
+      <li>
+        <a href={e.href} {...omitClass(e.attrs)} class:list={[{ large: depth === 0 }, e.attrs.class]}>
+          {e.label}
+          {e.badge && <span class:list={['sl-badge', e.badge.variant, e.badge.class]}>{e.badge.text}</span>}
+        </a>
+      </li>
+    ) : (
+      <li>
+        <span class="group-label">{e.label}</span>
+        <Astro.self entries={e.entries} depth={depth + 1} />
+      </li>
+    ),
+  )}
+</ul>

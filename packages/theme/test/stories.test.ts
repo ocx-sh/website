@@ -40,7 +40,7 @@ describe('C-125 parseFrontmatter', () => {
   it('reads strings (quoted or not), integers and booleans', () => {
     expect(
       parseFrontmatter(
-        '---\ntitle: More tabs than fit\ndescription: "Scrolls: sideways."\nheight: 180\norder: 3\nlog: true\nprose: false\n---\n\nbody',
+        '---\ntitle: More tabs than fit\ndescription: "Scrolls: sideways."\nheight: 180\norder: 3\nlog: true\nprose: false\nscrolls: true\n---\n\nbody',
       ),
     ).toEqual({
       title: 'More tabs than fit',
@@ -49,6 +49,7 @@ describe('C-125 parseFrontmatter', () => {
       order: 3,
       log: true,
       prose: false,
+      scrolls: true,
     });
   });
 

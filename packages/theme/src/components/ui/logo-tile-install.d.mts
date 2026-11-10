@@ -1,6 +1,6 @@
 /**
- * Listen for every logo image on the page and settle those that already finished. Idempotent;
- * LogoTile.astro calls it from its page script, a consumer that clones tiles in later needs
- * nothing more.
+ * Listen for every logo image on the page and settle those that already finished, now and in markup
+ * inserted later (`onRoots`). Idempotent; LogoTile.astro calls it from its page script, a consumer
+ * that clones tiles in later needs nothing more.
  */
 export function install(): void;

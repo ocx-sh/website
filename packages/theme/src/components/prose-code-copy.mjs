@@ -25,22 +25,35 @@ const svg = ({ viewBox, body, stroke }, part) =>
 /** @type {WeakMap<Element, ReturnType<typeof setTimeout>>} */
 const timers = new WeakMap();
 
+/** Documents whose delegated listeners are wired. @type {WeakSet<Document>} */
+const wired = new WeakSet();
+
 /**
- * Adds the button to every enhanceable `pre` under `doc` and wires one delegated click.
+ * Adds the "Copy code" button to one enhanceable `pre` (once) and wires the document's delegated
+ * listeners (once).
+ * @param {Element} pre
+ */
+export function enhancePre(pre) {
+  const doc = pre.ownerDocument;
+  listen(doc);
+  if (pre.matches('[data-ocx-code-copy]') || pre.closest('.expressive-code')) return;
+  const button = doc.createElement('button');
+  button.type = 'button';
+  button.className = 'ocx-prose-copy';
+  button.title = 'Copy code';
+  button.setAttribute('aria-label', 'Copy code');
+  button.innerHTML = svg(copy, 'idle') + svg(check, 'done');
+  pre.setAttribute('data-ocx-code-copy', '');
+  pre.append(button);
+}
+
+/**
+ * The delegated half: a prefetch on hover or focus, and the copy click.
  * @param {Document} doc
  */
-export function enhanceProseCode(doc) {
-  for (const pre of doc.querySelectorAll(PROSE_PRE)) {
-    if (pre.matches('[data-ocx-code-copy]') || pre.closest('.expressive-code')) continue;
-    const button = doc.createElement('button');
-    button.type = 'button';
-    button.className = 'ocx-prose-copy';
-    button.title = 'Copy code';
-    button.setAttribute('aria-label', 'Copy code');
-    button.innerHTML = svg(copy, 'idle') + svg(check, 'done');
-    pre.setAttribute('data-ocx-code-copy', '');
-    pre.append(button);
-  }
+function listen(doc) {
+  if (wired.has(doc)) return;
+  wired.add(doc);
   // Start the load when a block is hovered or its button focused, so the click's copy is not left waiting on the network.
   const prefetch = (/** @type {Event} */ event) => {
     if (/** @type {Element | null} */ (event.target)?.closest?.('[data-ocx-code-copy]'))
@@ -77,4 +90,13 @@ export function enhanceProseCode(doc) {
     );
   };
   doc.addEventListener('click', (event) => void copyBlock(event));
+}
+
+/**
+ * Enhances every code block under `doc` (a consumer that renders prose at once; the page script uses
+ * `onRoots(PROSE_PRE, enhancePre)` so blocks inserted later are covered).
+ * @param {Document} doc
+ */
+export function enhanceProseCode(doc) {
+  for (const pre of doc.querySelectorAll(PROSE_PRE)) enhancePre(pre);
 }

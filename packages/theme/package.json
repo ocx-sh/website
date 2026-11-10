@@ -93,6 +93,10 @@
       "types": "./src/shell-rev.d.mts",
       "default": "./src/shell-rev.mjs"
     },
+    "./highlight": {
+      "types": "./src/highlight.d.mts",
+      "default": "./src/highlight.mjs"
+    },
     "./shell-render": {
       "types": "./src/shell-render.d.mts",
       "default": "./src/shell-render.mjs"
@@ -119,6 +123,7 @@
     "fonts": "node scripts/generate-fonts.mjs"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
     "@pagefind/default-ui": "1.5.2",
     "@zag-js/accordion": "1.44.0",
     "@zag-js/async-list": "1.44.0",
@@ -161,12 +166,12 @@
   },
   "devDependencies": {
     "@astrojs/starlight": "^0.42.5",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
     "@iconify-json/lucide": "1.2.137",
     "@iconify-json/simple-icons": "1.2.99",
     "@types/mdast": "^4.0.4",
     "@types/node": "^24.19.2",
-    "@fontsource/ibm-plex-mono": "5.3.0",
-    "@fontsource/ibm-plex-sans": "5.3.0",
     "ajv": "8.20.0",
     "astro": "7.3.5",
     "satteri": "0.10.5",

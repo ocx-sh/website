@@ -1,0 +1,52 @@
+---
+title: Items fly in and are struck through
+description: "Scroll inside the canvas: the stage stays put while the cards fly in from the sides in pairs, then each command is struck through and the finale appears."
+height: 640
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollStage from '@ocx-sh/theme/components/ScrollStage.astro';
+
+{/* A story has no header, so the stage pins at the top of the canvas and starts at progress 0. */}
+
+<style is:global>{`@layer ocx { :root:root { --ocx-header-height: 0px; } }`}</style>
+
+<ScrollStage label="Three ways to get Node">
+  <Fragment slot="head">
+    <h2>Same project. Three Node.js versions.</h2>
+  </Fragment>
+  <div>
+    <span>Ubuntu 24.04</span>
+    <code data-stage-strike data-stage-detail>
+      apt-get install nodejs
+    </code>
+    <span>Node 18 · end of life</span>
+  </div>
+  <div>
+    <span>macOS</span>
+    <code data-stage-strike data-stage-detail>
+      brew install node
+    </code>
+    <span>Node 26 · whatever is installed</span>
+  </div>
+  <div>
+    <span>Windows</span>
+    <code data-stage-strike data-stage-detail>
+      winget install OpenJS.NodeJS.LTS
+    </code>
+    <span>Node 26 · the current LTS</span>
+  </div>
+  <div>
+    <span>CI runner</span>
+    <code data-stage-strike data-stage-detail>
+      uses: actions/setup-node@v7
+    </code>
+    <span>one more syntax per CI vendor</span>
+  </div>
+  <Fragment slot="finale">
+    <code>$ ocx add ocx.sh/nodejs/node:24</code>
+    <p>One line in ocx.toml. Node 24 everywhere.</p>
+  </Fragment>
+</ScrollStage>

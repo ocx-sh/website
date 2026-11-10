@@ -1,0 +1,33 @@
+---
+title: TileGrid
+description: Short tiles with a title, a subtitle and an optional icon in two hairline-separated columns, with a footer slot across both.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Tiles for a short list of named things: registries, platforms, hosts.
+The tiles sit in two columns, one on a very narrow screen, with a hairline between them.
+The `footer` slot spans both columns under the tiles: a command bar or a command.
+An icon comes from the theme's icon set by name. An unknown name fails the build.
+
+## Stories
+
+<Stories of="tile-grid" />
+
+## Props
+
+The `footer` slot holds the content across all columns.
+
+<PropsTable
+  of="TileGrid.astro"
+  rows={[
+    {
+      name: 'tiles',
+      type: '{ title, subtitle?, icon? }[]',
+      required: true,
+      description: 'The tiles, in reading order. icon is a registry icon name drawn beside the title.',
+    },
+    { name: 'label', type: 'string', required: true, description: 'Accessible name of the list of tiles.' },
+  ]}
+/>

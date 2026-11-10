@@ -1,0 +1,143 @@
+---
+// KeyValueTable: header rows across the full width, key → value rows (one may be highlighted, each may end in a
+// note) and a footer row, set in the mono font. A real <table>, so the pairs stay readable to assistive tech.
+// Each row stays on one line; in a column too narrow for that, the note moves below its value and a key may break.
+export interface Props {
+  /** Accessible name of the table. */
+  label: string;
+  /** Rows across the full width above the pairs (a file name, a title). */
+  headers?: string[];
+  rows: {
+    key: string;
+    value: string;
+    /** Tint the row in the accent colour (the row that is "you"). */
+    highlight?: boolean;
+    /** Trailing text after the value, in the accent colour. */
+    note?: string;
+  }[];
+  /** A quiet row across the full width below the pairs. */
+  footer?: string;
+}
+
+const { label, headers = [], rows, footer } = Astro.props;
+---
+
+<div class="ocx-kv-box not-content">
+  <table class="ocx-kv" aria-label={label}>
+    {headers.length > 0 && (
+      <thead>
+        {headers.map((h) => (
+          <tr>
+            <th colspan="2" scope="colgroup">
+              {h}
+            </th>
+          </tr>
+        ))}
+      </thead>
+    )}
+    <tbody>
+      {rows.map((r) => (
+        <tr data-highlight={r.highlight ? '' : undefined}>
+          <th scope="row">{r.key}</th>
+          <td>
+            {r.value}
+            {r.note && ' '}
+            {r.note && <span class="ocx-kv__note">{r.note}</span>}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+    {footer && (
+      <tfoot>
+        <tr>
+          <td colspan="2">{footer}</td>
+        </tr>
+      </tfoot>
+    )}
+  </table>
+</div>
+
+<style is:global>
+  @layer ocx {
+    .ocx-kv {
+      inline-size: 100%;
+      margin: 0;
+      border-collapse: collapse;
+      border: var(--ocx-border-width) solid var(--ocx-color-border);
+      background: var(--ocx-color-surface);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
+      text-align: start;
+    }
+    .ocx-kv :is(th, td) {
+      padding: var(--ocx-space-4) var(--ocx-space-6);
+      border: 0;
+      border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+      text-align: start;
+      vertical-align: baseline;
+      overflow-wrap: anywhere;
+    }
+    .ocx-kv tr:last-child > :is(th, td) {
+      border-block-end: 0;
+    }
+    .ocx-kv thead th {
+      padding-block: var(--ocx-space-5);
+      font-size: var(--ocx-text-md);
+      font-weight: var(--ocx-font-weight-regular);
+      color: var(--ocx-color-fg);
+    }
+    /* The key column shrinks to its longest key, so the value column gets the rest. */
+    .ocx-kv tbody th {
+      inline-size: 1%;
+      white-space: nowrap;
+      overflow-wrap: normal;
+      font-weight: var(--ocx-font-weight-regular);
+      color: var(--ocx-color-fg-muted);
+    }
+    /* A value and its note stay on one line; only a narrow screen wraps them, the note as one unit. */
+    .ocx-kv tbody td {
+      color: var(--ocx-color-code-fg);
+      white-space: nowrap;
+      overflow-wrap: normal;
+    }
+    .ocx-kv tbody tr[data-highlight] {
+      background: var(--ocx-color-accent-tint);
+    }
+    .ocx-kv tbody tr[data-highlight] td {
+      color: var(--ocx-color-fg);
+    }
+    .ocx-kv tbody tr[data-highlight] th {
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-kv__note {
+      display: inline-block;
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-kv tfoot td {
+      font-size: var(--ocx-text-xs);
+      color: var(--ocx-color-fg-subtle);
+    }
+    /* A narrow screen gives the key less room, so long keys break at their slashes. */
+    /* The table's own column decides: too narrow for a row on one line, the note moves below its value. */
+    .ocx-kv-box {
+      container-type: inline-size;
+    }
+    @container (width < 28rem) {
+      .ocx-kv :is(th, td) {
+        padding-inline: var(--ocx-space-4);
+      }
+      .ocx-kv tbody th {
+        inline-size: 40%;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      .ocx-kv tbody td {
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
+      .ocx-kv__note {
+        display: block;
+      }
+    }
+  }
+</style>

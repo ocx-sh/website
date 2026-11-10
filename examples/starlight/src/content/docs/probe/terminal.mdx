@@ -1,0 +1,31 @@
+---
+title: Bundle a release
+description: Consumer-shaped content page with one Terminal, the script budget fixture of the content class.
+---
+
+import Terminal from '@ocx-sh/theme/components/Terminal.astro';
+
+This page exists for `tests/budgets.mjs`: a consumer docs page that renders a component next to
+a code block must fit the `content` script budget. Do not link it from navigation.
+
+## Choose what goes in the archive {#what-goes-in}
+
+Most upstream toolchains ship one root directory inside their archive. A package manager needs a
+flat surface, so either pre-flatten the tree or strip the wrapper at install time.
+
+```sh
+ocx package create --extract --strip-components 1 cmake.tar.gz -p linux/amd64 -m metadata.json -o cmake.tar.xz
+```
+
+<Terminal src="/casts/fixture/getting-started-install.cast" title="Installing a package" collapsed />
+
+## Ship the sidecar metadata {#sidecars}
+
+The command copies the metadata file next to the output archive, named after the archive. The
+`-m metadata.json` flag names the file, and the push picks it up again by that name.
+
+
+## Keep the archive stable {#stable}
+
+Entries are sorted by filename, so directory iteration order does not leak in. File mtimes come
+from the filesystem and are embedded in the tar headers.

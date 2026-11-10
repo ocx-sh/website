@@ -5,7 +5,7 @@
 
 /**
  * @typedef {{ title: string, height: number, description?: string, order?: number,
- *   log?: boolean, block?: boolean, prose?: boolean, toaster?: boolean }} StoryMeta
+ *   log?: boolean, block?: boolean, prose?: boolean, toaster?: boolean, scrolls?: boolean }} StoryMeta
  * @typedef {{ id: string, slug: string, name: string, meta: StoryMeta, raw: string }} Story
  */
 
@@ -19,6 +19,7 @@ const KEYS = {
   block: 'bool',
   prose: 'bool',
   toaster: 'bool',
+  scrolls: 'bool',
 };
 const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
 

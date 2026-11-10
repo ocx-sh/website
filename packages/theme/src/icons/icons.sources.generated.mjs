@@ -51,7 +51,7 @@ export const ICON_SOURCES = {
   linux: 'custom',
   apple: 'simple-icons',
   windows: 'simple-icons',
-  shell: 'lucide',
+  shell: 'simple-icons',
   powershell: 'simple-icons',
   nushell: 'simple-icons',
   fish: 'simple-icons',

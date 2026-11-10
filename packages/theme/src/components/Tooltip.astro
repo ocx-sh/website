@@ -28,8 +28,9 @@ const id = nextTooltipId();
 </span>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { initTooltip } from './tooltip.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('[data-ocx-tooltip]')) initTooltip(root);
+  onRoots('[data-ocx-tooltip]', initTooltip);
 </script>
 
 <style>

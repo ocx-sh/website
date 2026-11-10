@@ -19,12 +19,32 @@ in a new tab for the two-column one.
 
 ## Props
 
-The `text` slot holds the prose column; the default slot is the visual.
+The `text` slot holds the prose column; the default slot is the visual. The `more` slot sits under the text (a link).
 
 <PropsTable
   of="FeatureSection.astro"
   rows={[
     { name: 'title', type: 'string', required: true, description: 'Section heading, rendered as an <h2>.' },
-    { name: 'flip', type: 'boolean', default: 'false', description: 'Put the visual on the left (wide screens only; narrow screens stack text first).' },
+    {
+      name: 'flip',
+      type: 'boolean',
+      default: 'false',
+      description: 'Put the visual on the left (wide screens only; narrow screens stack text first).',
+    },
+    {
+      name: 'plain',
+      type: 'boolean',
+      default: 'false',
+      description:
+        'Flat rows instead of a card: no panel or border, two equal columns, the display heading and lead sizes and a hairline between consecutive rows. For a landing page.',
+    },
+    { name: 'eyebrow', type: 'string', description: 'A short label above the heading.' },
+    {
+      name: 'reveal',
+      type: 'boolean',
+      default: 'false',
+      description:
+        'Reveal by scroll position: the section fades and rises as its top edge enters the viewport, driven by one shared scroll listener. Replaces the one-shot reveal; none under reduced motion, and the section never moves the layout around it.',
+    },
   ]}
 />

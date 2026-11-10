@@ -76,9 +76,10 @@ const p = Object.fromEntries(
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount, rendersOpen } from './zag.mjs';
   type Api = { setOpen: (open: boolean) => void } | undefined;
-  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-dialog[data-zag-root]')) {
+  onRoots('.ocx-ui-dialog[data-zag-root]', (root) => {
     // No trigger (ConfirmDialog, AlertDialog): nothing to hover/focus, so load only on demand.
     const trigger = root.dataset.zagTrigger === 'manual' ? 'manual' : 'interaction';
     const handle = mount(root, { load: () => import('./dialog.zag.mjs'), trigger });
@@ -92,7 +93,7 @@ const p = Object.fromEntries(
     });
     // Presets: a `data-dialog-action` button closes with its value; every other close (Esc, X,
     // outside click) is 'dismiss'. One `ocx:dialog-result` per close, so a waiting caller always hears back.
-    if (!root.querySelector('[data-dialog-action]')) continue;
+    if (!root.querySelector('[data-dialog-action]')) return;
     let value: string | undefined;
     root.addEventListener('click', (event) => {
       const button = (event.target as Element).closest<HTMLElement>('[data-dialog-action]');
@@ -109,7 +110,7 @@ const p = Object.fromEntries(
       }
       value = undefined;
     });
-  }
+  });
 </script>
 
 <style>

@@ -1,4 +1,4 @@
-// C-307: the landing carries the theme's InstallCommand, one bar per shell. The component owns the commands
+// C-307: the landing carries the theme's InstallCommand, as a picker bar over every shell in the hero and again in the call to action. The component owns the commands
 // (components-install-command.test.ts); this checks they reach the built page byte for byte, in order.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -13,12 +13,19 @@ const COMMANDS = [
 ];
 
 describe('install commands on the landing (C-307)', () => {
-  it('index.html carries the five commands as command bars, in order', () => {
+  it('index.html carries the five commands in both bars, in order (the first shown)', () => {
     const html = readFileSync(`${dist}index.html`, 'utf8');
-    // The text is highlighted: token spans inside the code element.
-    const bars = [...html.matchAll(/<code class="ocx-cmdbar__text"[^>]*>(.*?)<\/code>/g)].map((m) =>
+    // The shown text is highlighted: token spans inside the code element.
+    const shown = [...html.matchAll(/<code class="ocx-cmdbar__text"[^>]*>(.*?)<\/code>/g)].map((m) =>
       m[1]?.replace(/<[^>]+>/g, '').trim(),
     );
-    expect(bars).toEqual(COMMANDS);
+    // The page's `ocx add` bars hold one command each and are not install bars.
+    expect(shown.filter((t) => t?.includes('setup.ocx.sh'))).toEqual([COMMANDS[0], COMMANDS[0]]);
+    const picked = [...html.matchAll(/data-choices="([^"]*)"/g)].map((m) =>
+      (JSON.parse((m[1] ?? '').replaceAll('&#34;', '"').replaceAll('&quot;', '"')) as { command: string }[]).map(
+        (c) => c.command,
+      ),
+    );
+    expect(picked.filter((p) => p.length > 1)).toEqual([COMMANDS, COMMANDS]);
   });
 });

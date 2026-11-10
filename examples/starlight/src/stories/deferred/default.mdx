@@ -1,0 +1,16 @@
+---
+title: A shell session loaded after the page
+description: The skeleton holds the box; the session arrives at idle and fades in without moving anything.
+height: 300
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+
+export const session = 'ocx lock\nlocked 3 tools in ocx.lock\nocx exec -- node --version\nv24.9.0\n';
+
+<Deferred src={`${import.meta.env.BASE_URL}frag/shell-session/`} label="Shell session">
+  <Skeleton slot="skeleton" variant="code" code={session} />
+</Deferred>

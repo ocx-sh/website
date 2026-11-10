@@ -44,9 +44,11 @@ const api = ssrApi(machine, connect, { ...props, id });
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="clipboard"]'))
+  onRoots('[data-zag-root="clipboard"]', (root) => {
     mount(root, { load: () => import('./clipboard.zag.mjs') });
+  });
 </script>
 
 <style>

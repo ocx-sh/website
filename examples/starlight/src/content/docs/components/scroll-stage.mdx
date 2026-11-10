@@ -1,0 +1,35 @@
+---
+title: ScrollStage
+description: A stage pinned under the header whose items fly in and are struck through as the page scrolls, ending in a finale.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+A stage that stays on screen while the page scrolls past it.
+The items, the children of the default slot, fly in from the sides in pairs, then each is struck through, and the `finale` slot appears last.
+The `head` slot holds the heading above them.
+In an item, an element marked `data-stage-strike` gets the strike line, and one marked `data-stage-detail` is left out on phones, where an item is a single line.
+
+One shared scroll listener drives it from the scroll position.
+Without JS, or under reduced motion, nothing is pinned. All items show at full strength, not struck through (a struck item is dimmed), and the finale shows.
+Put the stage below the first screen. It starts in that readable state and takes its place when the script runs.
+
+## Stories
+
+<Stories of="scroll-stage" />
+
+## Props
+
+Slots: `head`, the default slot (the items) and `finale`.
+
+<PropsTable
+  of="ScrollStage.astro"
+  rows={[
+    {
+      name: 'label',
+      type: 'string',
+      description: 'Accessible name of the stage, for when the head holds no heading to label it.',
+    },
+  ]}
+/>
