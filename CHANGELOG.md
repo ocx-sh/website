@@ -5,7 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2026-10-25
+## [0.4.0] - 2026-11-10
+
+### Added
+
+- Deferred page parts and the landing built from theme components
+
+### Changed
+
+- Preload four core Plex files, load the rest of latin on demand *(theme)*
+
+### Fixed
+
+- Build fonts from the pinned @fontsource files; pin the pack-smoke consumer's Pagefind *(theme)*
+
+## [0.3.0] - 2026-10-26
 
 ### Added
 
@@ -21,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The pinned hub fits the page-weight and DOM budgets: preview and blurb lose their wrapper spans, Icon drops default attributes, desc ids shorten *(theme)*
 - Keep Icon attributes as they were; the menu trims alone *(theme)*
 - Live-header trigger sheds bytes; data-nav-rev sits on the nav root to fit the HTML budget *(theme)*
+- Keep the live header's fetch out of the every-page chunk *(theme)*
 
 ### Documentation
 
@@ -33,16 +48,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The mobile menu's "more" link reads "more to learn" to assistive tech so Lighthouse's link-text audit passes *(theme)*
 - Regenerate nav.d.mts for the mobile hint *(theme)*
 - The Shell mobile menu's pinned hub reads "more to learn" to assistive tech *(theme)*
+- Keep old _shell fragments and write current.json after the HTML phase *(deploy)*
 
 ## [0.2.3] - 2026-10-24
 
-### Changed
+### Added
 
-- The ecosystem menu reads "solutions"; catalog is a publish tool and the public index docs get an entry *(nav)*
+- Ocx.sh/catalog/ is served from ocx-sh/index's own storage zone, not a 302 to index.ocx.sh *(infra)*
+- Index.ocx.sh as a replicated SSD Bunny zone *(infra)*
+- The ecosystem menu is "solutions"; catalog is a publish tool, the public index docs get an entry *(nav)*
+- The team page shows member cards and a get-in-touch row *(site)*
+- Ocx.sh/apps/catalog/ is served from ocx-sh/catalog's own storage zone, not a 302 to GitHub Pages *(infra)*
+- Ocx-sh/index's catalog zone is sh-ocx-index-catalog *(infra)*
 
 ### Fixed
 
-- The command bar's copied check sits level with the copy icon inside Starlight content *(theme)*
+- The command bar's copied check sits level with the copy icon *(theme)*
 
 ## [0.2.2] - 2026-10-23
 
@@ -172,6 +193,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Theme code fences on story pages *(showcase)*
+[0.4.0]: https://github.com/ocx-sh/website/compare/v0.3.0..v0.4.0
+[0.3.0]: https://github.com/ocx-sh/website/compare/v0.2.3..v0.3.0
 [0.2.3]: https://github.com/ocx-sh/website/compare/v0.2.2..v0.2.3
 [0.2.2]: https://github.com/ocx-sh/website/compare/v0.2.1..v0.2.2
 [0.2.1]: https://github.com/ocx-sh/website/compare/v0.2.0..v0.2.1
