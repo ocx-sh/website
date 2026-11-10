@@ -141,6 +141,7 @@ test.describe('D-056 keyboard', () => {
     await tag(page, '22.12').focus();
     await page.keyboard.press('Shift+F10');
     await expect(content(page)).toBeVisible();
+    await expect(content(page)).toBeFocused(); // Zag moves focus into the menu a frame after it opens
     await page.keyboard.press('ArrowDown');
     await expect(items(page).first()).toHaveAttribute('data-highlighted', '');
     await page.keyboard.press('Escape');
@@ -153,6 +154,7 @@ test.describe('D-056 keyboard', () => {
     await tag(page, '24.1').focus();
     await page.keyboard.press('Shift+F10');
     await expect(content(page)).toBeVisible();
+    await expect(content(page)).toBeFocused(); // Zag moves focus into the menu a frame after it opens
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await expect(toasts(page).locator('[data-part="title"]')).toHaveText('Copied — identifier');
