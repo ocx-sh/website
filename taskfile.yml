@@ -59,11 +59,13 @@ tasks:
         cmd: pnpm --dir {{.ITEM}} exec astro sync
 
   lint:
-    desc: oxlint (type-aware), typed ESLint, actionlint
+    desc: oxlint (type-aware), typed ESLint, grim publish dry run over skills/
     deps: [sync]
     cmds:
       - '{{.OXC}} oxlint --type-aware'
       - pnpm exec eslint --max-warnings 0 .
+      # grim's frontmatter limits (description <= 1024) otherwise first fail in release.yml
+      - ocx exec -g lint -- grim publish --dry-run --version 0.0.0
       # actionlint + zizmor run in `workflows:lint` (baseline), part of `verify`.
 
   fmt:
