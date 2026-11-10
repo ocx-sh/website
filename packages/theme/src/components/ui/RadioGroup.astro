@@ -59,10 +59,12 @@ const api = ssrApi(machine, connect, { ...props, id });
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="radio-group"]'))
+  onRoots('[data-zag-root="radio-group"]', (root) => {
     mount(root, { load: () => import('./radio-group.zag.mjs'), replay: false });
+  });
 </script>
 
 <style>

@@ -142,7 +142,7 @@ site-search button[data-close-modal] {
 site-search button[data-close-modal]:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); }
 
 /* Sidebar (mock #1b, C-230): mono-caps group labels over one flat item list,
- * nested groups on Zag collapsible (Sidebar.astro), no chevrons, no nested
+ * nested groups toggled by sidebar-controller.mjs (Sidebar.astro), no chevrons, no nested
  * indent rules; active = tint + coral text. Starlight's scoped sublist rules do
  * not reach this markup: their base (list reset, block links) is restated. */
 sl-sidebar-state-persist { display: contents; }
@@ -161,6 +161,9 @@ sl-sidebar-state-persist { display: contents; }
 .sidebar-content [data-part='trigger'] {
   margin: 0; border: 0; border-radius: var(--ocx-radius-md); background: none; text-align: start; cursor: pointer;
 }
+/* A deferred group the pre-paint restore opened holds its place until its links arrive: one link's height (its
+ * line and padding, as `.sidebar-content a` below) times the links it will hold, so nothing below it moves. */
+#starlight__sidebar [data-defer]:not([hidden], [data-failed]) { min-block-size: calc(var(--n) * (1.4 * var(--ocx-text-base) + 2 * var(--ocx-space-3))); }
 /* The group's chunk failed to load: its links stay reachable (as a native <details> never lost them). */
 #starlight__sidebar [data-zag-root='collapsible'][data-zag-state='error'] > [data-part='content'][hidden] { display: block; }
 /* Open and close: the disclosure pattern (ui/disclosure.css). The list grows while it fades in and on
@@ -444,5 +447,39 @@ starlight-file-tree :is(summary, a, .tree-entry) { border-radius: var(--ocx-radi
 /* Starlight isolates .main-pane, which traps an open Dialog or Drawer (z-index modal/drawer) under
  * the static sidebar and the header. Lift the isolation only while one is open in the content. */
 .main-pane:has(:is([data-scope='dialog'], [data-scope='drawer'])[data-part='content'][data-state='open']) { isolation: auto; }
+
+/* The phone table of contents (MobileTableOfContents.astro): Starlight's scoped rules, unscoped so the override
+ * ships no style block. Its 0.5rem toggle radius is left out: the theme's corner ceiling is 2px, which the
+ * scoped rule never beat. */
+mobile-starlight-toc nav {
+  position: fixed; z-index: var(--sl-z-index-toc); top: calc(var(--sl-nav-height) - 1px); inset-inline: 0;
+  border-top: 1px solid var(--sl-color-gray-5); background-color: var(--sl-color-bg-nav);
+}
+@media (min-width: 50rem) { mobile-starlight-toc nav { inset-inline-start: var(--sl-content-inline-start, 0); } }
+mobile-starlight-toc summary {
+  gap: 0.5rem; align-items: center; height: var(--sl-mobile-toc-height);
+  border-bottom: 1px solid var(--sl-color-hairline-shade); padding: 0.5rem 1rem;
+  font-size: var(--sl-text-xs); outline-offset: var(--sl-outline-offset-inside);
+}
+mobile-starlight-toc summary::marker, mobile-starlight-toc summary::-webkit-details-marker { display: none; }
+mobile-starlight-toc .toggle {
+  flex-shrink: 0; gap: 1rem; align-items: center; justify-content: space-between;
+  border: 1px solid var(--sl-color-gray-5); padding-block: 0.5rem;
+  padding-inline-start: 0.75rem; padding-inline-end: 0.5rem; line-height: 1;
+  background-color: var(--sl-color-black); user-select: none; cursor: pointer;
+}
+mobile-starlight-toc details[open] .toggle { color: var(--sl-color-white); border-color: var(--sl-color-accent); }
+mobile-starlight-toc details .toggle:hover { color: var(--sl-color-white); border-color: var(--sl-color-gray-2); }
+[dir='rtl'] mobile-starlight-toc .caret { transform: rotateZ(180deg); }
+mobile-starlight-toc details[open] .caret { transform: rotateZ(90deg); }
+mobile-starlight-toc .display-current {
+  white-space: nowrap; text-overflow: ellipsis; overflow: hidden; color: var(--sl-color-white);
+}
+mobile-starlight-toc .dropdown {
+  --border-top: 1px; margin-top: calc(-1 * var(--border-top));
+  border: var(--border-top) solid var(--sl-color-gray-6); border-top-color: var(--sl-color-hairline-shade);
+  max-height: calc(85vh - var(--sl-nav-height) - var(--sl-mobile-toc-height)); overflow-y: auto;
+  background-color: var(--sl-color-black); box-shadow: var(--sl-shadow-md); overscroll-behavior: contain;
+}
 
 } /* @layer ocx */

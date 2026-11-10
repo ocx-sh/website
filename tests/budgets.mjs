@@ -6,6 +6,9 @@
  *
  * A budget value only goes up with a Spec Delta row in
  * `.agents/plans/plan_zag-adoption.md`; Z13 ratchets them down.
+ *
+ * Override rule: one page per override (`SITE_PAGE_JS`, `UNBUDGETED_PAGES`, `PAGE_FONT_BYTES`), dated with the
+ * decision, its measured value pinned in `budgets.test.ts`. `UNBUDGETED_PAGES` stays at one entry.
  */
 import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +18,7 @@ const KB = 1024;
 
 /**
  * @typedef {'content' | 'showcase' | 'story'} PageClass
- * @typedef {{ preJsGz: number, postJsGz: number, totalBytes: number, domElements: number, heapMB: number }} Budget
+ * @typedef {{ preJsGz: number, postJsGz: number, totalBytes: number, fontBytes: number, cssBytes: number, domElements: number, heapMB: number }} Budget
  */
 
 /**
@@ -36,6 +39,35 @@ export const HTML_GZ_MAX = 14_200;
 export const PAGEFIND_GZ_MAX = 58 * KB;
 
 /**
+ * Font transfer cap of every page (lhci `resource-summary:font:size`, headers included). Not the x1.15 formula:
+ * the four preloaded core files transfer 40,554 B, and Lighthouse's simulated LCP drops a step once a page's fonts
+ * pass about 42.3 KB (1.51 s to 1.36 s over the step above). 42,000 B keeps the page under that edge. A showcase
+ * page with a story iframe measures 41,618 B: the iframe revalidates the same four files (304, 266 B each) on
+ * the preview server, which sends no Cache-Control. One iframe loads without scrolling today; a second canvas in
+ * the first viewport adds 1,064 B more and trips this cap: move the canvas down, never raise the cap for it.
+ */
+export const FONT_BYTES_MAX = 42_000;
+
+/**
+ * Per-page font caps (Spec Delta MODIFIED C-110, #38, 2026-11-10): `/docs/probe/glyphs/` holds characters outside the core
+ * font on purpose and fetches rest files (sans 400: 10,757 B). Measured 51,311 B x 1.15, rounded up to 1 KiB.
+ * Its text is the one page `scripts/css/core-glyphs.mjs` allows.
+ * @type {Readonly<Record<string, number>>}
+ */
+export const PAGE_FONT_BYTES = {
+  '/docs/probe/glyphs/': 58 * KB,
+};
+
+/**
+ * Render-blocking stylesheet ceilings in gzip bytes (`scripts/css/shared-sheet.mjs`, `task css`): the sheets every
+ * Starlight content page of the showcase loads (`_astro_assets.*` + `common.*`, measured on `probe/long`: 22,161 B)
+ * and the root site's shared sheet (`common.*`: 19,825 B), rounded up to 250 B. Issue #38: this is the quantity
+ * every consumer page pays before first paint. A change that trips it moves rules into a component sheet that
+ * loads with its component; raising a ceiling needs a Spec Delta row.
+ */
+export const SHARED_SHEET_GZ = { starlight: 22_250, site: 20_000 };
+
+/**
  * Byte values in bytes; `heapMB` in MiB. Sizes are gzip of the response body.
  * Z13 ratchet (Spec Delta MODIFIED C-110): measured max over the class's pages × 1.15, rounded up to
  * 1 KiB / 100 elements / 1 MiB, the larger of the budgets e2e and lhci where both measure (table in
@@ -48,7 +80,9 @@ export const BUDGETS = {
     // Theme + Zag chrome JS after every widget is touched, Pagefind excluded (D-Z2 ≤ 90 kB; Spec Delta
     // MODIFIED C-110, amended): Pagefind has its own cap, PAGEFIND_GZ_MAX.
     postJsGz: 64 * KB,
-    totalBytes: 147 * KB,
+    totalBytes: 126 * KB, // #38 ratchet: lhci max 112,045 B (/) x 1.15 = 128,851 B, rounded up to 1 KiB
+    fontBytes: FONT_BYTES_MAX,
+    cssBytes: 38 * KB, // lhci max 33,284 B (/) x 1.15
     // 800 until /install/ joined the merged search: each merged section adds one Pagefind filter value
     // (3 nodes), and /docs/probe/long/ measured 799 with 6 sections, 802 with 7. 900 leaves ~3 sections.
     domElements: 900,
@@ -57,7 +91,9 @@ export const BUDGETS = {
   showcase: {
     preJsGz: 19 * KB,
     postJsGz: 93 * KB,
-    totalBytes: 161 * KB,
+    totalBytes: 130 * KB, // lhci max 115,180 B (components/toc) x 1.15 = 132,457 B
+    fontBytes: FONT_BYTES_MAX,
+    cssBytes: 41 * KB, // lhci max 36,106 B (components/tile-grid) x 1.15
     domElements: 1300,
     heapMB: 5,
   },
@@ -67,7 +103,9 @@ export const BUDGETS = {
   story: {
     preJsGz: 13 * KB,
     postJsGz: 75 * KB,
-    totalBytes: 133 * KB,
+    totalBytes: 95 * KB, // lhci max 84,086 B (stories/toc/default) x 1.15 = 96,699 B
+    fontBytes: FONT_BYTES_MAX,
+    cssBytes: 27 * KB, // lhci max 23,506 B (stories/feature-section/states) x 1.15
     domElements: 1100,
     heapMB: 4,
   },
@@ -81,23 +119,54 @@ export const BUDGETS = {
  * included, 19 requests) after the glue split → 33 KiB; Z13 ratchet: 27,187 B lhci → 31 KiB. The Toc
  * story pages carry the same cap (Spec Delta ADDED C-110): the doc page's first canvas loads the
  * default one, and every story page shows its Toc in the first viewport; ratcheted from 25,033 B lhci
- * (both) → 29 KiB.
+ * (both) → 29 KiB. `/docs/probe/terminal/` is a consumer-shaped content page (headings, a code block, a
+ * Terminal): lhci counts 6 script requests with this example's ~0.2 KB headers and its unmerged
+ * chrome chunk, 13,395 B, which the 11 KiB `content` cap (a consumer's 5 to 6 requests) cannot hold. The cap
+ * is that measurement rounded up to 0.5 KiB, not × 1.15: one more request (the 680 B `roots` chunk it lost)
+ * must trip it.
  * @type {Readonly<Record<string, number>>}
  */
 export const PRE_JS_VISIBLE = {
   '/docs/components/toc/': 31 * KB,
   '/docs/stories/toc/default/': 29 * KB,
   '/docs/stories/toc/states/': 29 * KB,
+  '/docs/probe/terminal/': 13.5 * KB,
 };
 
 /**
- * The budget of one gated page: its class budget, with a `PRE_JS_VISIBLE` cap if it has one.
+ * JS caps of the landing, `/`, over the `content` class (Spec Delta MODIFIED C-110, 2026-11-02): both
+ * install boxes carry the 5-shell picker, whose Select machine and positioning cost ~20 KB gzip once
+ * touched, and the story script plus the picker's pre-paint platform script add to preJsGz. The componentised
+ * landing (scroll components, Deferred) measured e2e on the built site: preJsGz 18,193 B → 21 KiB;
+ * postJsGz stays at its earlier 81,581 B × 1.15 → 92 KiB (87,475 B now). Both × 1.15 rounded up to 1 KiB.
+ * heapMB 4.5 (owner decision 2026-11-09, measured 4.22 MiB: the landing's Select and Clipboard machines).
+ * Every other site page keeps the `content` caps.
+ * @type {Readonly<Record<string, {preJsGz: number, postJsGz: number, heapMB: number}>>}
+ */
+export const SITE_PAGE_JS = {
+  '/': { preJsGz: 21 * KB, postJsGz: 92 * KB, heapMB: 4.5 },
+};
+
+/**
+ * Pages with no page budget (HTML, JS, weight, DOM, heap), still held to Lighthouse 100×4: the components gallery
+ * puts every card on one page, a development overview no consumer page resembles (owner decision 2026-11-09).
+ * Each component page and story keeps its class budget.
+ * @type {readonly string[]}
+ */
+export const UNBUDGETED_PAGES = ['/docs/components/'];
+
+/**
+ * The budget of one gated page: its class budget, with a `PAGE_FONT_BYTES`, `PRE_JS_VISIBLE` or `SITE_PAGE_JS` cap if it has one.
  * @param {string} path
  * @returns {Budget}
  */
 export function budgetOf(path) {
-  const budget = BUDGETS[classOf(path)];
+  const base = BUDGETS[classOf(path)];
+  const font = PAGE_FONT_BYTES[path];
+  const budget = font === undefined ? base : { ...base, fontBytes: font };
   const pre = PRE_JS_VISIBLE[path];
+  const site = SITE_PAGE_JS[path];
+  if (site) return { ...budget, ...site };
   return pre === undefined ? budget : { ...budget, preJsGz: pre };
 }
 
@@ -190,7 +259,7 @@ export function sitePages(distDir = SITE_DIST) {
   if (!existsSync(distDir)) throw new Error('missing dist: site/dist');
   return readdirSync(distDir, { recursive: true, encoding: 'utf8' })
     .map((f) => f.split('\\').join('/'))
-    .filter((f) => f.endsWith('.html') && !f.startsWith('_shell/')) // the live header's fragments are not pages
+    .filter((f) => f.endsWith('.html') && !f.startsWith('_shell/') && !f.startsWith('frag/')) // header and Deferred fragments are not pages
     .map((f) => (f === 'index.html' ? '/' : `/${f.replace(/index\.html$/, '')}`))
     .sort();
 }

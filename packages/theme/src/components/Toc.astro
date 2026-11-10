@@ -50,9 +50,11 @@ const api = ssrApi(machine, connect, { ...props, id, items: entries.map((e) => e
 </nav>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="toc"]'))
+  onRoots('[data-zag-root="toc"]', (root) => {
     mount(root, { load: () => import('./toc.zag.mjs'), trigger: 'visible' });
+  });
 </script>
 
 <style>

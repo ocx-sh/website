@@ -68,7 +68,7 @@ the picker ("Platform"); `pickerText` shows the choice label beside its icon;
 `noun` finishes the copy toast ("install command"); `lang` highlights the commands
 at build time in the code-block colours (a Shiki id such as `sh`, `powershell`;
 `choice.lang` overrides it per choice; an unknown id fails the build); `prompt` is a decorative shell prompt (`$`) before the command, `icon` a decorative registry glyph before the prompt (neither is copied; `choice.icon` is the picker's); `detect` preselects the
-visitor's OS before first paint (choice values `linux`, `macos`, `windows`).
+visitor's OS before first paint (a choice whose value, or `choice.os` for a non-OS choice such as a shell, is `linux`, `macos` or `windows`); the first detecting bar of a page ships the detector inline, later bars a one-line call to it.
 Slot `action` adds trailing controls: an icon-only link Button with an
 `aria-label`, wrapped in a `Hint`.
 To retarget the bar from code dispatch `ocx:command-bar:set` `{ command?, label?, choices?, value? }` on it: `choices` replaces the
@@ -77,8 +77,8 @@ options, `value` picks one. Like the other set events it is silent once (no `cha
 **`InstallCommand.astro`**: how to install ocx, for any page that says so. One tab per
 shell (sh, PowerShell, Nushell, fish, Elvish), each a `CommandBar` with the line typed
 in that shell, highlighted in its grammar; the tabs sync on `shell`. The commands live in the theme: never copy them
-into a page. `variant="bar"` is the short form, one `CommandBar` with a shell
-picker. `docs` adds an "Install guide" link to `/install/`: at the end of the tab
+into a page. `variant="bar"` is the short form (`InstallBar.astro` is the same bar alone, for a page that shows only the bar and should not load the Tabs stylesheet), one `CommandBar` with a shell
+picker that preselects PowerShell for a Windows visitor before first paint. `docs` adds an "Install guide" link to `/install/`: at the end of the tab
 row (Tabs slot `action`), or a `docs` icon button with a Hint at the end of the bar.
 
 ## Toggles

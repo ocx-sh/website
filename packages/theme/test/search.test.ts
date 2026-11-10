@@ -13,6 +13,7 @@ import { expectSsrMatchesConnect } from './zag-helpers.ts';
 
 const PagefindUI = vi.fn();
 vi.mock('@pagefind/default-ui', () => ({ PagefindUI }));
+vi.mock('../src/starlight/search-skin.mjs', () => ({ loadSkin: () => Promise.resolve() }));
 
 type Component = Parameters<AstroContainer['renderToString']>[0];
 type Dialog = typeof import('../src/starlight/search.zag.mjs');
@@ -225,7 +226,7 @@ describe('C-210 dialog runtime', () => {
 // ui/field.css). A cascade cannot run in jsdom, so this pins the source: tokens, the focus rule and
 // that both glyphs are the registry's own paths inline (a data URI is no late request).
 describe('C-274 Pagefind input wears the SearchField look', () => {
-  const source = readFileSync(new URL('../src/starlight/Search.astro', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/starlight/search-results.css', import.meta.url), 'utf8');
   const rules = (selector: string) => {
     const at = source.lastIndexOf(`${selector} {`);
     return at < 0 ? '' : source.slice(at, source.indexOf('}', at));
@@ -268,7 +269,10 @@ describe('C-274 Pagefind input wears the SearchField look', () => {
   });
 
   it('every rule of the block uses tokens: no raw colour, length or opacity dial', () => {
-    const block = source.slice(source.indexOf("Pagefind's input wears the SearchField look"));
+    const block = source.slice(
+      source.indexOf("Pagefind's input wears the SearchField look"),
+      source.indexOf('/* The dialog: Starlight'), // the dialog box's rules after it are checked by the cascade, e2e
+    );
     const css = withoutData(block.slice(block.indexOf('@layer ocx')));
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(|\b\d+(\.\d+)?(px|rem|em)\b/i);
     expect(css).toMatch(/color: var\(--ocx-color-fg-subtle\)/);

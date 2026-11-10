@@ -1,0 +1,21 @@
+---
+title: With a class
+description: "A class on the wrapper lays the block out as the page needs; it reveals the same."
+height: 400
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollReveal from '@ocx-sh/theme/components/ScrollReveal.astro';
+
+<div style="min-block-size: 140vh">
+  <p>Scroll down.</p>
+</div>
+
+<ScrollReveal class="cta">
+  <h2>Pin once. Run everywhere.</h2>
+  <p>Get started</p>
+</ScrollReveal>
+
+<style is:global>{`@layer ocx { .cta { text-align: center; } }`}</style>

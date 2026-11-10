@@ -1,0 +1,12 @@
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession>
+```sh
+ocx package pull ocx.sh/nodejs/node:24
+ocx --offline package exec \
+  ocx.sh/nodejs/node:24 -- node --version
+```
+```text
+v24.22.2
+```
+</ShellSession>

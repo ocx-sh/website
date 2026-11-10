@@ -24,7 +24,6 @@ import {
 import { ssrApi, ssrAttrs } from './zag-runtime.mjs';
 import type { ZagProps } from './zag.mjs';
 import './field.css';
-import './tag.css';
 // overlay.css (the popup) is not imported here: the client script links it when the machine loads.
 // As a stylesheet of the page it was one more request before first paint, and the popup is closed until then.
 
@@ -211,6 +210,7 @@ const item = (v: string, index: number) => ({ index, value: v });
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import overlay from './overlay.css?url';
   import { mount } from './zag.mjs';
 
@@ -229,8 +229,9 @@ const item = (v: string, index: number) => ({ index, value: v });
         }),
       ),
     ));
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tags-input"]'))
+  onRoots('[data-zag-root="tags-input"]', (root) => {
     mount(root, { load: () => Promise.all([import('./tags-input.zag.mjs'), sheet()]).then(([m]) => m), replay: false });
+  });
 </script>
 
 <style is:global>

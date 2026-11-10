@@ -124,6 +124,7 @@ describe('D-056 D-083 CopyMenu SSR', () => {
   it('the eager script imports copy-host.mjs only: the copy and toast code stay in the lazy chunk', () => {
     const script = source('../src/components/CopyMenu.astro').match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? '';
     expect([...script.matchAll(/^\s*import .* from '([^']+)'/gm)].map((m) => m[1])).toEqual([
+      './ui/roots.mjs',
       './ui/zag.mjs',
       './copy-host.mjs',
     ]);
@@ -148,7 +149,7 @@ describe('D-064 D-112 ProseCodeCopy', () => {
   it('is reachable: the script runs enhanceProseCode on the document, the sheet is imported', () => {
     const src = source('../src/components/ProseCodeCopy.astro');
     expect(src).toMatch(
-      /import \{ enhanceProseCode \} from '\.\/prose-code-copy\.mjs';\s*enhanceProseCode\(document\);/,
+      /import \{ PROSE_PRE, enhancePre \} from '\.\/prose-code-copy\.mjs';[\s\S]*onRoots\(PROSE_PRE, enhancePre\);/,
     );
     expect(src).toContain("import './prose-code-copy.css';");
   });

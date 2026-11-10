@@ -722,6 +722,13 @@ Target: this plan's Component Contracts (Stage-A WP14 deferrals folded in at exe
   23,373 B e2e, 29,290 B lhci transfer (headers, 19 requests) → 33 KiB. Every other page
   keeps its class cap; the eager glue is now the trigger layer only (`ui/zag.mjs`, vanilla half in
   `ui/zag-runtime.mjs`), preJsGz −7.7 KB gz on every other page.
+- MODIFIED **C-110** (landing, 2026-11-02): the landing `/` gets its own JS caps, `SITE_PAGE_JS` in
+  `tests/budgets.mjs` (read by the budgets e2e and lhci): preJsGz 14 KiB and postJsGz 92 KiB. Both
+  install boxes carry the 5-shell picker (owner decision), whose Select machine and positioning
+  chunk cost ~20 KB gzip once touched, and the story script is a chunk. Measured on the built site,
+  e2e: preJsGz 12,298 B, postJsGz 81,581 B, each × 1.15 rounded up to 1 KiB. After the optimizations
+  that fit (the detect script ships once per page; a single-bar landing measured 10,281 B / 57,232 B, but drops the picker). Every other site
+  page keeps the `content` caps; `htmlGz` stays 14,200 B (the landing script ships as a chunk).
 - MODIFIED **C-130a** (Z9, header): the header's SSR equals `connect()` minus `lean()`
   (`navigation-menu.zag.mjs`): `dir`, `data-scope`, `data-state`, `data-orientation`, `data-ssr`,
   `data-uid`, `data-trigger-proxy-id`, `data-current`, `style`, and on the nav's own parts also
@@ -821,6 +828,8 @@ Target: this plan's Component Contracts (Stage-A WP14 deferrals folded in at exe
   route middleware (`examples/starlight/src/probe-sidebar.ts`), so the budget, Lighthouse and
   sidebar e2e gates build and measure the collapsible groups the one-link example sidebar (D-Z23)
   never renders.
+- MODIFIED **C-110** (landing rebuild, 2026-11-08): `SITE_PAGE_JS['/']` `preJsGz` 14 KiB to 21 KiB (measured 17,864 B at that step; 18,193 B after the componentised landing, see `tests/budgets.mjs`; budgets e2e, × 1.15 rounded up). The landing now loads its hero terminal and the pillar sessions as idle or input fragments built from the theme's own components, whose scripts count after `networkidle`. Owner pre-approved in the plan; no other budget moves.
+- MODIFIED **C-110** (owner decision 2026-11-09): `SITE_PAGE_JS['/']` gains `heapMB: 4.5` over the `content` 4 MiB (measured 4.22 MiB; the landing mounts two Select and four Clipboard machines the other pages lack, about 0.65 MiB). The same page override as `preJsGz`/`postJsGz`; no other budget moves.
 - MODIFIED **C-110** (Z13 ratchet): every budget set to measured × 1.15, rounded up (1 KiB, 100
   elements, 1 MiB), from the max over the class's pages; where both gates measure, the larger figure
   (budgets e2e: gzip of bodies, 2 runs; lhci: transfer size, 3 runs each, 37 URLs). Content `postJsGz`
@@ -1959,3 +1968,118 @@ rule is gated and first paint must be final.
   press or context request).
 - ADDED: `value-set.mjs` splits idle from live: `ocx:*:set` rewrites the DOM an idle (not started,
   or still loading) machine reads on start; a live machine handles the event through its own api.
+
+### Spec Deltas (Deferred components)
+
+- MODIFIED **C-110 / C-111** (owner decision 2026-11-09): `UNBUDGETED_PAGES` in `tests/budgets.mjs` holds
+  exactly `/docs/components/`, the gallery that puts every card on one page, a development overview no consumer
+  page resembles (heap 5.01–5.04 MiB against 5 once the branch's new components joined it; main 4.95). It leaves
+  the page budgets (HTML, JS, weight, DOM, heap) in `budgets.spec.ts` and `.lighthouserc.cjs`; Lighthouse 100×4
+  still holds there. Every component page and story keeps its class budget.
+- MODIFIED **C-104**: the mount triggers gain `idle`. It starts after the `load` event once the browser
+  is idle, or at the first `pointerover`, `focusin`, `touchstart` or `keydown` anywhere, whichever is
+  first (`lazy.mjs`). Used by `Deferred`; `DependencyExplorer` keeps its own starter of the same shape,
+  which also starts a root that arrives after it ran. The "nothing loads before interaction" rule
+  stands for every other component.
+- MODIFIED **C-104** (owner decision 2026-11-09): `Deferred` gains `trigger="input"`. The box loads at the
+  first `wheel`, `keydown`, `pointermove`, `pointerdown` or `touchstart` (no `scroll` event: every scroll gesture is one of these; a zero-movement pointermove, which the browser fakes under a resting cursor, is ignored; one passive capture
+  listener set shared by all boxes, removed after the first input), never before; a box inserted later
+  starts at once. The skeleton stays until then. Used by the landing's pillars 03 and 04; the hero keeps `idle`.
+- ADDED **`onRoots(selector, fn)`** (`ui/roots.mjs`): calls `fn` once per matching element, now and in
+  every subtree a bubbling `ocx:inserted` event announces. Every component page script mounts through
+  it instead of scanning `document` once, so markup inserted after load behaves like server-rendered
+  markup. `deferral-contract.test.ts` fails on a script-level `document` scan in a component script
+  or in an eager install module. `command-bar.mjs` `install()` becomes `wireBar(bar)`,
+  `prose-code-copy.mjs` gains `enhancePre(pre)` (`enhanceProseCode` stays for plain consumers) and
+  its listeners wire once per document; `logo-tile-install.mjs` and `number-stepper.mjs` settle their
+  images and buttons through `onRoots`.
+- ADDED **`Deferred.astro`** and `ui/deferred.mjs`: an `ocx-swap` box with a required, `aria-hidden`
+  `skeleton` slot, an empty named content cell, a hidden error block with Retry and a `<noscript>`
+  link. At `idle` it fetches a fragment page (`ui/fetch-html.mjs`, split out of `fill.mjs`, same-origin,
+  cached, 10 s), adopts its stylesheets and styles (links deduped by resolved href, styles by text) and
+  waits for the links, inserts the body, re-creates its scripts (a module `src` the page runs is
+  skipped, an inline module is deduped by text, a classic inline script runs again), dispatches
+  `ocx:inserted` and `ocx:deferred:load {ok}`, and sets `data-loaded` for the existing fade. A failure
+  keeps the box and shows Retry. `skeleton.css` swaps a `[data-swap-skeleton]` wrapper like a
+  `Skeleton`. Showcase page, `default` and `error` stories, skills `ocx-theme-components` and
+  `ocx-theme-quality`. Only non-essential content may be deferred.
+- ADDED **`frag/` pages** and `layouts/Fragment.astro` (`FragmentLayout`): a bare document (no base
+  CSS or chrome), `noindex`, `data-pagefind-ignore="all"`. `/frag/` joins `ROOT_DIRS` and is a reserved
+  path segment; `sitePages()` skips `frag/` like `_shell/`; the root site's dist test allows the folder.
+  The theme plugin adds `@astrojs/sitemap` (new dependency, `^3.7.3` like Starlight's; Starlight then
+  adds none) with a filter that drops `<base>frag/` URLs. The example site serves
+  `/docs/frag/shell-session/` and, for the contract spec, `/docs/frag/stories/<slug>/default/` for
+  every component.
+- ADDED specs `components-deferred.spec.ts`, `deferred-size.spec.ts` (every `data-ocx-deferred` in both
+  built sites at 375, 768 and 1440 px: skeleton box equals loaded box within 1 px, no layout shift) and
+  `deferred-contract.spec.ts` (every component's `default` story inserted into a Deferred reaches
+  `live` with no duplicate ids).
+- MODIFIED **C-104** (owner decision 2026-11-09): `Deferred` gains `trigger="panel"`. The box loads when the
+  Tabs panel holding it is first shown, so an inactive tab ships nothing until picked; an already visible panel
+  starts at once, and outside a tabpanel it behaves as `idle`. The `input` trigger also counts `focusin`, so a
+  screen reader's virtual cursor starts the load.
+- MODIFIED **C-104**: `ShellSession` mounts `play` with `trigger: 'visible'`, an animation that runs only on
+  screen. `visible` now serves `Toc` and `play`.
+- ADDED **sidebar deferral**: a collapsed nested group without the current page ships empty (`data-defer`) and
+  loads its links from `frag/sidebar/<key>/` on the first touch of its trigger. `_all` is the no-JS list. A group
+  the visitor left open reopens pre-paint into reserved space (`--n` links) and loads at once. Single-locale
+  only (a multilingual site renders groups inline and the build warns). It reads a Starlight internal file, so
+  it holds to the pinned `<0.43` range. A failed fetch shows an "All pages" link and retries on the next toggle.
+- ADDED **lazy Pagefind skin**: the results skin loads at the first dialog open (`search-skin.mjs`), not with the page.
+- ADDED **`ui/ScrollMount.astro`**: the one page script of the scroll components, so a page makes one request for all.
+- MODIFIED **C-110**: `UNBUDGETED_PAGES` and `SITE_PAGE_JS['/']` are page overrides, each dated with its owner
+  decision and its measured value pinned in `budgets.test.ts`. `HTML_GZ_MAX` stays at 14,200.
+
+### Spec Deltas (critical path, #38)
+
+- MODIFIED **C-104 / D-Z17**: the sidebar's nested groups leave the `mount` list and start no Zag machine. One
+  delegated controller (`starlight/sidebar-controller.mjs`, no `@zag-js/*`, about 1.7 KB minified, 0.9 KB gzip) is
+  loaded by `chrome.mjs` on the first `pointerover`, `pointerenter`, `focusin` or `touchstart` of the sidebar, so pre-interaction
+  JS does not grow; a click that lands first is handed over. It toggles `hidden` and `aria-expanded`, fires the same
+  bubbling `ocx:collapsible:change {open}`, and fills deferred links (`ui/deferred-group.mjs`, shared with the Zag
+  collapsible). The open and close transition was already CSS. Every other collapsible keeps its machine.
+  Basis: all 11 groups of `/docs/probe/long/` started cost 0.77 → 2.43 MiB heap (3.21 MiB with everything
+  touched). Sidebar HTML (4 groups, container render): 5,632 → 4,192 B, gzip 1,749 → 1,566 B.
+- MODIFIED **C-110 `fontBytes`**: every class gets `fontBytes: 42,000` (lhci `resource-summary:font:size`, headers included).
+  It is not the ×1.15 formula. Lighthouse's simulated LCP drops a step once a page's fonts pass about 42.3 KB. Four core
+  files transfer 40,554 B. A showcase page with a story iframe measures 41,618 B: the iframe revalidates the four files
+  (304, 266 B each) on the preview server, which sends no Cache-Control. One per-page exception,
+  `PAGE_FONT_BYTES['/docs/probe/glyphs/'] = 58 * KB`: it fetches rest files by design (51,311 B × 1.15, up to 1 KiB).
+- MODIFIED **C-110 `cssBytes`**: lhci `resource-summary:stylesheet:size`, measured max × 1.15, up to 1 KiB. Content 38 KiB
+  (33,284 B, `/`), showcase 41 KiB (36,106 B, `components/tile-grid`), story 27 KiB (23,506 B, `stories/feature-section/states`).
+- MODIFIED **C-110 `totalBytes` ratchet**: content 147 → 126 KiB (112,045 B), showcase 161 → 130 KiB (115,180 B), story 133 → 95 KiB
+  (84,086 B), all lhci maxima × 1.15, up to 1 KiB. The budgets e2e does not measure total transfer. `HTML_GZ_MAX`, `preJsGz`,
+  `postJsGz`, DOM and heap caps stay.
+- ADDED **C-110 shared-sheet ceiling** (`SHARED_SHEET_GZ`, `scripts/css/shared-sheet.mjs`, part of `task css`): the blocking
+  sheets every page loads, gzip. Starlight example 22,250 B (measured 22,161: `_astro_assets` + `common` on `probe/long`,
+  minus Expressive Code), root site 20,000 B (19,825). Issue #38 named this quantity. A trip means moving rules into a
+  component sheet, or a Spec Delta that raises the ceiling.
+- ADDED **C-110 component content probe** (`/docs/probe/terminal/`, `PRE_JS_VISIBLE['/docs/probe/terminal/'] = 13.5 * KB`): a
+  consumer-shaped content page (headings, a code block, one `Terminal`) guards the script requests of a page with a
+  component, which no `content` page of the example had. `onRoots` (`ui/roots.mjs`) joined the `EVERY_PAGE` chunk group; as its own
+  chunk it cost one request (680 B transfer, 243 B body). lhci script transfer with the `roots` chunk 14,075 B (red) → 13,395 B
+  without; `/docs/probe/long/` 10,672 → 10,803 B (the group absorbs the `onRoots` body). The cap is the measurement rounded up
+  to 0.5 KiB, not × 1.15, so one more request trips it; a consumer's 11 KiB is met by its 5 to 6 requests, not by this
+  example's 6 with larger headers and an unmerged `chrome` chunk. A `Tree` on the page took `postJsGz` to 65,831 B (cap 64 KiB),
+  so the probe holds the `Terminal` only. Consumer pages with a `Tree`: its script imported `onRoots`, so Astro could no longer
+  inline it and it became an 807 B request (11,970 B on `/publishing/bundle-anatomy/`, cap 11,264). `Tree` now mounts itself
+  (a `WeakSet` plus an `ocx:inserted` listener) and imports only `tree.mjs`, so it is inline again; `deferral-contract.test.ts`
+  holds both. The showcase page `components/tree/` renders its trees in iframes, so only the story pages inline it.
+
+Measurement log (#38):
+
+- Fonts: four preloaded files 77,168 → 39,336 B. LCP of shell-session 1.66 → 1.36 s alone, 1.51 s in the three-lane run.
+- Consumer proof (ocx docs built against the packed theme, medians of three): `/reference/command-line/index-commands/`
+  FCP 1502 → 1202 ms, LCP 1802 → 1354 ms, raw score 0.9910 → 0.9990. `/reference/environment/` 0.9930 → 0.9990.
+  `/getting-started/install-ocx/` 0.9910 → 0.9955. `/reference/command-line/package-publishing/` 0.9910 → 0.9980.
+  Shared sheet 23,621 → 20,099 B transfer; fonts 77,848 → 40,016 B; script requests 5 → 4.
+- Heap on `/docs/probe/long/`, real mouse: 11 sidebar groups cost 0.84 MiB after the controller. Machines before cost
+  +1.66 MiB by the old method; by the same method 2.43 → 2.00 MiB.
+- Rejected, with numbers:
+  - Latin-1 letters in the core: 49,860 B, past the 42.3 KB step.
+  - `frac`, `dnom`, `numr`: 48,108 B.
+  - Dropping `VDMX`: changes Plex Mono 600 pixels.
+  - Lazy mega-panel styles: the shared consumer sheet is 20,099 B, under the 20.5 KB gate, and its 1.1 KB gzip reaches no further step.
+  - Unhinted fonts, `font-display: optional`, a variable font: look change.
+  - Splitting the stylesheet: a simulation artefact under HTTP/1.1, no gain under HTTP/2.
+  - Non-latin subsets in `fonts.css`: zero uses across 357 built pages and three consumer repos.

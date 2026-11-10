@@ -1,0 +1,263 @@
+/* The landing page (Landing.astro). Imported from its frontmatter, so it loads in the page head before the content.
+   Every value is a theme token; the scroll driver (landing.ts) only writes custom properties (--e --s --f --r
+   --y --o --prog) and the CSS turns them into transform and opacity. The defaults of those properties are the
+   final, revealed state: the page is complete without JS, under reduced motion and before hydration. The
+   hidden start states sit behind `.js` (set by an inline script before first paint) and no-preference. */
+@layer ocx {
+  /* Breaks out of Starlight's splash column: the landing lays itself out edge to edge. */
+  /* The splash page renders no title panel (theme PageTitle): its empty box would only add padding. */
+  main:has(.lp) > .content-panel:first-child:not(:has(.lp)) {
+    display: none;
+  }
+  main > .content-panel:has(.lp) {
+    padding: 0;
+  }
+  main > .content-panel:has(.lp) > .sl-container {
+    max-inline-size: none;
+  }
+  .lp {
+    --lp-gutter: clamp(var(--ocx-space-5), 5vw, var(--ocx-space-9));
+    overflow-x: clip;
+    font-size: var(--ocx-text-base);
+    line-height: var(--ocx-lh-body);
+    color: var(--ocx-color-fg);
+  }
+  .lp :where(h1, h2, p, ul, li, code, a) {
+    margin: 0;
+  }
+  .lp-wrap {
+    box-sizing: border-box;
+    inline-size: 100%;
+    max-inline-size: var(--ocx-landing-max);
+    margin-inline: auto;
+    padding-inline: var(--lp-gutter);
+  }
+  .lp .lp-eyebrow {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-2xs);
+    font-weight: var(--ocx-font-weight-semibold);
+    letter-spacing: var(--ocx-tracking-caps);
+    text-transform: uppercase;
+    color: var(--ocx-color-accent-fg);
+  }
+  .lp .lp-h {
+    font-family: var(--ocx-font-sans);
+    font-weight: var(--ocx-font-weight-bold);
+    letter-spacing: var(--ocx-tracking-display);
+    line-height: var(--ocx-lh-display);
+    color: var(--ocx-color-fg);
+    text-wrap: balance;
+    margin: 0;
+    border: 0;
+    padding: 0;
+  }
+  .lp .lp-h--section {
+    max-inline-size: 820px;
+    font-size: var(--ocx-display-section);
+  }
+  .lp .lp-lead {
+    max-inline-size: 34em;
+    font-size: var(--ocx-display-lead);
+    line-height: var(--ocx-prose-lh);
+    color: var(--ocx-color-fg-muted);
+    text-wrap: pretty;
+  }
+
+  /* ── Hero ── */
+  .lp-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-block-size: calc(100svh - var(--ocx-header-height));
+    overflow: clip;
+  }
+  .lp-hero::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 28%;
+    inset-block-start: 46%;
+    inline-size: 1000px;
+    block-size: 700px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(closest-side, var(--ocx-color-accent-tint), transparent);
+    pointer-events: none;
+  }
+  .lp-hero__in {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ocx-space-9);
+    padding-block: var(--ocx-space-11) var(--ocx-space-12);
+  }
+  /* Stacked, the hero grows downward as the document streams in (text, then terminal): top-aligned, so what
+     painted first never moves. Centering it would shift the whole hero when the terminal's markup arrives. */
+  @media (width < 64rem) {
+    .lp-hero,
+    .lp-hero__in {
+      align-items: flex-start;
+    }
+  }
+  .lp-hero__text {
+    flex: 1 1 480px;
+    min-inline-size: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ocx-space-6);
+  }
+  .lp-hero__term {
+    flex: 1 1 420px;
+    min-inline-size: 0;
+  }
+  .lp .lp-h1 {
+    font-size: var(--ocx-display-split);
+    letter-spacing: -0.035em;
+    line-height: var(--ocx-lh-none);
+  }
+  .lp-h1 em,
+  .lp-h--cta em {
+    font-style: normal;
+    color: var(--ocx-color-accent-fg);
+  }
+  .lp-hero__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ocx-space-3) var(--ocx-space-6);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+  }
+  .lp .lp-hero__links a,
+  .lp .lp-more,
+  .lp .ocx-feature__more a {
+    color: var(--ocx-color-accent-fg);
+    text-decoration: none;
+  }
+  .lp .lp-hero__links a:not(:first-child) {
+    color: var(--ocx-color-fg-muted);
+  }
+  .lp .lp-hero__links a:hover,
+  .lp .lp-more:hover,
+  .lp .ocx-feature__more a:hover {
+    color: var(--ocx-color-accent-hover);
+  }
+  .lp-cue {
+    position: absolute;
+    inset-block-end: var(--ocx-space-6);
+    inset-inline-start: 50%;
+    translate: -50% 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ocx-space-3);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-2xs);
+    letter-spacing: var(--ocx-tracking-caps);
+    text-transform: uppercase;
+    color: var(--ocx-color-fg-subtle);
+  }
+  .lp-cue::after {
+    content: '';
+    inline-size: var(--ocx-border-width);
+    block-size: var(--ocx-space-7);
+    background: var(--ocx-color-border-strong);
+  }
+
+  /* ── The problem (ScrollStage): what a card holds ── */
+  .lp-card__os {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-2xs);
+    font-weight: var(--ocx-font-weight-semibold);
+    letter-spacing: var(--ocx-tracking-caps);
+    text-transform: uppercase;
+    color: var(--ocx-color-fg-subtle);
+  }
+  .lp code.lp-card__cmd {
+    padding: 0;
+    background: none;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-md);
+    color: var(--ocx-color-fg);
+  }
+  .lp-card__note {
+    font-size: var(--ocx-text-sm);
+    color: var(--ocx-color-fg-muted);
+  }
+  .lp-final__cap {
+    font-size: var(--ocx-prose-body);
+    color: var(--ocx-color-fg-muted);
+  }
+  .lp .ocx-stage__finale .ocx-cmdbar {
+    inline-size: min(100%, calc(var(--ocx-space-12) * 5));
+  }
+
+  /* ── Pillars (FeatureSection): the section reveals sideways with the scroll, so the column clips ── */
+  .lp-pillars {
+    overflow: clip;
+    padding-block: var(--ocx-space-9);
+  }
+  .lp-pillars .ocx-feature__body code {
+    color: var(--ocx-color-keyword);
+  }
+  /* A titled ShellSession draws one border more than the skeleton's frame: the skeleton makes it up. */
+  .lp-sk-session,
+  .lp-ex-sk {
+    padding-block-end: var(--ocx-border-width);
+  }
+  /* The skeleton of the integration tabs: tab strip, tallest panel, guide link; measured against Tabs. */
+  .lp-ex-sk {
+    display: flex;
+    flex-direction: column;
+  }
+  /* Tabs' trigger row (padding space-3, one text-sm heading line, strong border) and the panel's top margin. */
+  .lp-ex-sk__tabs {
+    block-size: calc(
+      2 * var(--ocx-space-3) + var(--ocx-text-sm) * var(--ocx-lh-heading) + var(--ocx-border-width-strong)
+    );
+    margin-block-end: var(--ocx-space-5);
+  }
+  .lp-ex-sk__more {
+    block-size: 1lh;
+    margin-block-start: var(--ocx-space-3);
+  }
+
+  /* The guide link of an integration example sits at the bottom right of its panel. */
+  .lp .ocx-tabs .lp-more {
+    display: block;
+    margin-block-start: var(--ocx-space-3);
+    text-align: end;
+  }
+
+  /* ── Call to action ── */
+  .lp-cta {
+    display: flex;
+    justify-content: center;
+    padding: calc(var(--ocx-space-12) + var(--ocx-space-5)) var(--lp-gutter);
+    border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
+    text-align: center;
+  }
+  .lp-cta__in {
+    inline-size: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ocx-space-7);
+    max-inline-size: 100%;
+  }
+  .lp .lp-h--cta {
+    font-size: var(--ocx-display-1);
+  }
+  .lp-cta .ocx-cmdbar {
+    inline-size: min(100%, calc(var(--ocx-space-12) * 5));
+  }
+  .lp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--ocx-space-4);
+  }
+  .lp-note {
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-fg-subtle);
+  }
+}

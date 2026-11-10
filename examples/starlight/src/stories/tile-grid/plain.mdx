@@ -1,0 +1,19 @@
+---
+title: Tiles only
+description: Without a footer the grid is the tiles alone; an odd count leaves the last cell empty.
+height: 260
+order: 1
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import TileGrid from '@ocx-sh/theme/components/TileGrid.astro';
+
+<TileGrid
+  label="Platforms"
+  tiles={[
+    { title: 'Linux', subtitle: 'amd64, arm64' },
+    { title: 'macOS', subtitle: 'arm64' },
+    { title: 'Windows', subtitle: 'amd64' },
+  ]}
+/>

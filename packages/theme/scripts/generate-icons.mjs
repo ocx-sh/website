@@ -83,7 +83,7 @@ export const NAME_MAP = {
   apple: [['simple-icons', 'apple'], 'os', 'macos darwin mac os platform'],
   windows: [['simple-icons', 'windows'], 'os', 'microsoft win os platform'],
   // Shells (tab icons, `<TabItem icon>`).
-  shell: [['lucide', 'square-terminal'], 'shell', 'sh bash zsh posix terminal'],
+  shell: [['simple-icons', 'gnubash'], 'shell', 'sh bash zsh posix terminal'],
   powershell: [['simple-icons', 'powershell'], 'shell', 'pwsh windows terminal'],
   nushell: [['simple-icons', 'nushell'], 'shell', 'nu terminal'],
   fish: [['simple-icons', 'fishshell'], 'shell', 'fish shell terminal'],

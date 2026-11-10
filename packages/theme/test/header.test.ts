@@ -2,6 +2,7 @@
 // every part is SSR-final; the ecosystem Content is the mega panel, a popover with a vertical
 // Zag tabs rail. JS-off semantics here; browser behaviour is header.spec.ts.
 import { readFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import * as tabsZag from '@zag-js/tabs';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 // @ts-expect-error jsdom ships no types and @types/jsdom is not a dependency
@@ -50,6 +51,21 @@ beforeAll(async () => {
   container = await AstroContainer.create();
   Header = await load('starlight', 'Header');
   EcosystemMenu = await load('components', 'EcosystemMenu');
+});
+
+// Every docs page inlines this header, so its gzip bytes come out of the 14,200 B page HTML budget
+// (tests/budgets.mjs HTML_GZ_MAX); one byte past Lighthouse's first round trip costs performance 100.
+const HEADER_GZ_MAX = 4290; // measured 4190 (16,522 B raw) + 100 B slack
+
+describe('header weight', () => {
+  it('ocx-sh/website#38: the Starlight Header renders within HEADER_GZ_MAX gzipped bytes', async () => {
+    const html = await container.renderToString(Header, {
+      request: new Request('https://ocx.sh/docs/x/'),
+      locals: { t, starlightRoute: {} } as unknown as App.Locals,
+    });
+    const gz = gzipSync(html).length;
+    expect(gz).toBeLessThanOrEqual(HEADER_GZ_MAX);
+  });
 });
 
 describe('C-023 Header sections', () => {

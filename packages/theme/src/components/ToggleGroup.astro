@@ -69,14 +69,16 @@ const api = ssrApi(machine, connect, { id, ...props });
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { onToggleGroupSet } from './ui/value-set.mjs';
   import { mount } from './ui/zag.mjs';
 
   document.addEventListener('ocx:toggle-group:set', onToggleGroupSet);
 
   // Replay on: the items are plain buttons, so an early click did nothing natively (C-104).
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="toggle-group"]'))
+  onRoots('[data-zag-root="toggle-group"]', (root) => {
     mount(root, { load: () => import('./toggle-group.zag.mjs') });
+  });
 </script>
 
 <style is:global>

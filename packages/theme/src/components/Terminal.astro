@@ -127,8 +127,9 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mountTerminal } from './terminal.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('.ocx-terminal')) mountTerminal(root);
+  onRoots('.ocx-terminal', mountTerminal);
 </script>
 
 <style is:global>

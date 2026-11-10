@@ -60,9 +60,11 @@ const button = slot.replace(start, (tag) => `${tag} ${trigger}`);
 </span>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('.ocx-ui-hint[data-zag-root]'))
+  onRoots('.ocx-ui-hint[data-zag-root]', (root) => {
     mount(root, { load: () => import('./tooltip.zag.mjs') });
+  });
 </script>
 
 <style>

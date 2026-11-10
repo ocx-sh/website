@@ -1,0 +1,27 @@
+---
+// Injected route `frag/sidebar/<key>/` (the plugin): the links of one collapsed sidebar group, fetched by the first
+// touch of its trigger (collapsible.zag.mjs), or `_all`, every link, which the no-JS page links to. A bare document like
+// every fragment (layouts/Fragment.astro); never indexed, never in the sitemap.
+import Bare from '../layouts/Fragment.astro';
+import SidebarList from './SidebarList.astro';
+import { configSidebar } from 'virtual:ocx-theme/sidebar';
+import { servedGroups } from './sidebar-groups.mjs';
+
+export function getStaticPaths() {
+  return [...servedGroups(configSidebar).keys(), '_all'].map((key) => ({ params: { key } }));
+}
+const { key } = Astro.params;
+const group = key === undefined ? undefined : servedGroups(configSidebar).get(key);
+---
+
+<Bare title="All pages">
+  {group ? (
+    <SidebarList entries={group.entries} depth={1} />
+  ) : (
+    <nav aria-label="All pages">
+      <h1>All pages</h1>
+      <a href={import.meta.env.BASE_URL}>Back to the docs</a>
+      <SidebarList entries={configSidebar()} />
+    </nav>
+  )}
+</Bare>

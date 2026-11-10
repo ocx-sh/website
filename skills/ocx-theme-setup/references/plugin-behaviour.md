@@ -17,14 +17,15 @@ replaces the theme's for that slot only.
 | `Head` | Starlight's head plus preloads of the four core font files, and `html[data-platform]` set before paint (Kbd reads it) |
 | `Header` | Brand, sections, ecosystem mega-menu, install button, GitHub and theme icons; rendered at build time from `nav.json` |
 | `Footer` | `nav.json` footer links, licence and copyright line |
-| `PageTitle` | Breadcrumb trail (the `breadcrumbs` option) and the H1 |
-| `TableOfContents` | Adds "edit this page" and "report an issue" links |
+| `PageTitle` | Breadcrumb trail (the `breadcrumbs` option) and the H1; nothing on a `template: splash` page, which supplies its own `<h1 id="_top">` (with a `hero`, Starlight renders it) |
+| `TableOfContents` | Adds "edit this page" and "report an issue" links; its one script also defines the phone TOC element |
+| `MobileTableOfContents` | Starlight's markup with no script of its own (one request fewer before interaction) and its styles in `starlight.css` |
 | `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu. The glyph shows the current state (sun while light, moon while dark), right at first paint. A switch crossfades the page (a view transition, `--ocx-duration-moderate`); under reduced motion, or without the API, it flips at once. It sets `html[data-theme]` and `html.dark`; a choice that equals the OS scheme is stored as `auto`, and a page with no pinned choice follows OS changes live |
 | `ThemeProvider` | Inline pre-paint theme script, no markup |
 | `MobileMenuFooter` | Icon theme toggle inside the mobile menu |
 | `MarkdownContent` | Wraps every page body |
-| `Search` | Search dialog on Zag, Pagefind UI loaded on first open; its script also mounts nav menu, mobile drawer, sidebar collapsibles and toaster |
-| `Sidebar` | Grouped sidebar with Zag collapsibles |
+| `Search` | Search dialog on Zag, Pagefind UI loaded on first open; its script also mounts nav menu, mobile drawer, sidebar groups (one delegated controller) and toaster |
+| `Sidebar` | Grouped sidebar; nested groups are plain markup toggled by one delegated controller (no Zag machine per group), loaded on the first touch of the sidebar |
 | `MobileMenuToggle` | The mobile menu button |
 | `PageFrame` | Header, sidebar pane and main layout |
 
@@ -33,6 +34,10 @@ Overriding `Search`: the warning text names the fix. Call
 the header nav and the mobile menu fall back to native popovers, nested
 sidebar groups render open, no toast ever shows and the outline's current
 marker never fades.
+
+Overriding `TableOfContents`: the plugin warns too. The phone outline element is defined by the theme's
+`TableOfContents.astro` script, so render `@ocx-sh/theme/starlight/TableOfContents.astro` inside your override,
+or the phone outline stays a blank heading with no Escape or outside click.
 
 Chrome overrides you write must not import a styled Starlight component: its
 stylesheet would inline into every page. Style Starlight markup from your own
@@ -100,3 +105,5 @@ The injected integration also:
 - registers the route middleware that computes the breadcrumb trail into
   `starlightRoute.ocxTrail`;
 - serves the plugin options to that middleware as `virtual:ocx-theme/options`.
+
+The theme reads these Starlight files by path (no export key), so Starlight is pinned to the peer range and a build fails naming it if one moved: `utils/navigation.js`, `components-internals/TableOfContents/{starlight-toc.js,TableOfContentsList.astro}`, `user-components/Icon.astro`.

@@ -12,6 +12,12 @@ const route = (path: string) => path.replace(/404\.html$/, '404/');
 async function layout(page: Page, path: string) {
   await page.goto(path);
   await page.evaluate(() => document.fonts.ready);
+  // Idle boxes load after the load event: compare settled pages. `input` boxes stay skeletons (no input is fired here).
+  await page.waitForFunction(() =>
+    [...document.querySelectorAll<HTMLElement>('[data-ocx-deferred]')]
+      .filter((box) => box.dataset['trigger'] === 'idle')
+      .every((box) => box.hasAttribute('data-loaded') || box.dataset['state'] === 'error'),
+  );
   return page.evaluate(() =>
     [...document.querySelectorAll('body *:not(mobile-starlight-toc *)')].flatMap((e) => {
       const r = e.getBoundingClientRect();

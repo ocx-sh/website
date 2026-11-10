@@ -1,0 +1,15 @@
+---
+title: Fragment failed
+description: A fragment that cannot be loaded (here a src on another origin, which is refused) keeps the box, stops the sweep and offers Retry.
+height: 220
+order: 2
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+
+<Deferred src="https://example.invalid/frag/missing/" label="Shell session">
+  <Skeleton slot="skeleton" variant="code" lines={4} />
+</Deferred>

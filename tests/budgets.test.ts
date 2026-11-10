@@ -4,29 +4,51 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { BUDGETS, budgetOf, classOf, examplePages, PAGEFIND_GZ_MAX, PRE_JS_VISIBLE, sitePages } from './budgets.mjs';
+import {
+  BUDGETS,
+  budgetOf,
+  FONT_BYTES_MAX,
+  PAGE_FONT_BYTES,
+  SHARED_SHEET_GZ,
+  classOf,
+  examplePages,
+  PAGEFIND_GZ_MAX,
+  PRE_JS_VISIBLE,
+  SITE_PAGE_JS,
+  sitePages,
+  UNBUDGETED_PAGES,
+} from './budgets.mjs';
 
 const KB = 1024;
+const up = (measured: number, unit: number) => Math.ceil((measured * 1.15) / unit) * unit;
 
 describe('C-110 budgets module', () => {
+  it('exempts only the components gallery from page budgets (owner decision 2026-11-09)', () => {
+    expect(UNBUDGETED_PAGES).toEqual(['/docs/components/']);
+    expect(examplePages()).toContain('/docs/components/');
+  });
+
   // Z13 ratchet (Spec Delta MODIFIED C-110): measured max × 1.15, rounded up; a value only goes up
   // with a Spec Delta row. Measured (Schedule log): content e2e/lhci preJsGz 9,466, postJsGz 56,806
   // (chrome only), totalBytes 130,620, DOM 609, heap 3.45 MiB; showcase preJsGz 16,862, postJsGz
   // 82,427, totalBytes 142,602, DOM 1,054, heap 4.17 MiB; pagefindGz 51,456 (UI + engine, a query).
-  const up = (measured: number, unit: number) => Math.ceil((measured * 1.15) / unit) * unit;
   it('holds the ratcheted caps for content and showcase', () => {
     expect(BUDGETS).toEqual({
       content: {
         preJsGz: up(9_466, KB),
         postJsGz: up(56_806, KB), // Pagefind excluded: PAGEFIND_GZ_MAX (Spec Delta MODIFIED C-110)
-        totalBytes: up(130_620, KB),
+        totalBytes: up(112_045, KB), // #38 ratchet, lhci max (/)
+        fontBytes: 42_000, // not x1.15: the simulated LCP step at 42.3 KB (budgets.mjs)
+        cssBytes: up(33_284, KB),
         domElements: 900, // up(609, 100) = 800 plus one 100 step: merged sections add 3 nodes each (budgets.mjs)
         heapMB: up(3.45, 1),
       },
       showcase: {
         preJsGz: up(16_862, KB),
         postJsGz: up(82_427, KB),
-        totalBytes: up(142_602, KB),
+        totalBytes: up(115_180, KB), // #38 ratchet, lhci max (components/toc)
+        fontBytes: 42_000,
+        cssBytes: up(36_106, KB),
         domElements: up(1_054, 100),
         heapMB: up(4.17, 1),
       },
@@ -34,15 +56,26 @@ describe('C-110 budgets module', () => {
       story: {
         preJsGz: up(10_902, KB),
         postJsGz: up(66_397, KB),
-        totalBytes: up(117_541, KB),
+        totalBytes: up(84_086, KB), // #38 ratchet, lhci max (stories/toc/default)
+        fontBytes: 42_000,
+        cssBytes: up(23_506, KB),
         domElements: up(889, 100),
         heapMB: up(3.39, 1),
       },
     });
-    for (const k of ['preJsGz', 'postJsGz', 'totalBytes', 'domElements', 'heapMB'] as const)
+    for (const k of ['preJsGz', 'postJsGz', 'totalBytes', 'fontBytes', 'cssBytes', 'domElements', 'heapMB'] as const)
       expect(BUDGETS.story[k], k).toBeLessThanOrEqual(BUDGETS.showcase[k]);
     expect(PAGEFIND_GZ_MAX).toBe(up(51_456, KB));
     expect(PAGEFIND_GZ_MAX).toBeLessThanOrEqual(58 * KB); // the loop lead's cap (Spec Delta, amended)
+  });
+
+  it('caps fonts below the 42.3 KB LCP step, with one page exception, and holds the shared-sheet ceilings', () => {
+    expect(FONT_BYTES_MAX).toBeLessThan(42_300);
+    expect(PAGE_FONT_BYTES).toEqual({ '/docs/probe/glyphs/': up(51_311, KB) });
+    expect(budgetOf('/docs/probe/glyphs/').fontBytes).toBe(up(51_311, KB));
+    expect(budgetOf('/docs/probe/long/').fontBytes).toBe(42_000);
+    // Measured on the built dists (node gzip), rounded up to 250 B; a value only goes up with a Spec Delta.
+    expect(SHARED_SHEET_GZ).toEqual({ starlight: 22_250, site: 20_000 });
   });
 
   it('classifies every gated page into exactly one class', () => {
@@ -70,10 +103,15 @@ describe('C-110 budgets module', () => {
       '/docs/components/toc/': up(27_187, KB),
       '/docs/stories/toc/default/': up(25_033, KB),
       '/docs/stories/toc/states/': up(25_033, KB),
+      '/docs/probe/terminal/': 13.5 * KB,
     });
     expect(budgetOf('/docs/components/toc/')).toEqual({ ...BUDGETS.showcase, preJsGz: 31 * KB });
     expect(budgetOf('/docs/stories/toc/default/')).toEqual({ ...BUDGETS.story, preJsGz: 29 * KB });
-    for (const p of examplePages().filter((p) => !(p in PRE_JS_VISIBLE)))
+    expect(budgetOf('/docs/probe/glyphs/')).toEqual({
+      ...BUDGETS.content,
+      fontBytes: PAGE_FONT_BYTES['/docs/probe/glyphs/'],
+    });
+    for (const p of examplePages().filter((p) => !(p in PRE_JS_VISIBLE) && !(p in PAGE_FONT_BYTES)))
       expect(budgetOf(p), p).toBe(BUDGETS[classOf(p)]);
   });
 
@@ -83,7 +121,7 @@ describe('C-110 budgets module', () => {
   });
 });
 
-// The root site's pages share the `content` budget: no new class, no raised value.
+// The root site's pages share the `content` budget, except the landing's JS caps (Spec Delta MODIFIED C-110).
 describe('C-309 site page classes', () => {
   const dist = mkdtempSync(join(tmpdir(), 'budgets-site-'));
   afterAll(() => rmSync(dist, { recursive: true, force: true }));
@@ -105,10 +143,13 @@ describe('C-309 site page classes', () => {
   });
 
   it('classifies landing, hubs, team and 404 as content, with the content budget', () => {
-    for (const p of ['/', '/integrations/', '/apps/', '/team/', '/404.html']) {
-      expect(classOf(p), p).toBe('content');
-      expect(budgetOf(p), p).toBe(BUDGETS.content);
-    }
+    for (const p of ['/', '/integrations/', '/apps/', '/team/', '/404.html']) expect(classOf(p), p).toBe('content');
+    for (const p of ['/integrations/', '/apps/', '/team/', '/404.html']) expect(budgetOf(p), p).toBe(BUDGETS.content);
+  });
+
+  it("raises only the landing's preJsGz, postJsGz (measured × 1.15 rounded up to 1 KiB) and heapMB (4.5, owner decision 2026-11-09)", () => {
+    expect(SITE_PAGE_JS).toEqual({ '/': { preJsGz: up(18_193, KB), postJsGz: up(81_581, KB), heapMB: 4.5 } });
+    expect(budgetOf('/')).toEqual({ ...BUDGETS.content, preJsGz: 21 * KB, postJsGz: 92 * KB, heapMB: 4.5 });
   });
 
   it('throws `missing dist: site/dist` without a dist', () => {

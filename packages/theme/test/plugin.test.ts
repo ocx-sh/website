@@ -3,7 +3,7 @@
 // config as Starlight would: the consumer's config with every `updateConfig` merged over it.
 import { execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { isAbsolute, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -17,7 +17,8 @@ import pkg from '../package.json' with { type: 'json' };
 import nav from '../src/nav.json' with { type: 'json' };
 import { mergeTargets } from '../src/registry.mjs';
 import type { Nav } from '../src/registry.mjs';
-import ocxTheme from '../src/starlight/index.mjs';
+import ocxTheme, { starlightInternal } from '../src/starlight/index.mjs';
+import { withoutFragments } from '../src/starlight/sitemap-filter.mjs';
 
 type SetupContext = HookParameters<'config:setup'>;
 type AstroConfig = SetupContext['astroConfig'];
@@ -34,6 +35,7 @@ const OVERRIDES = [
   'Footer',
   'PageTitle',
   'TableOfContents',
+  'MobileTableOfContents',
   'ThemeSelect',
   'MobileMenuFooter',
   'MarkdownContent',
@@ -55,6 +57,7 @@ async function setup(
     base: '/docs/',
     site: undefined,
     trailingSlash: 'always',
+    integrations: [],
     publicDir: pathToFileURL(join(tmpdir(), 'ocx-no-public/')),
     srcDir: pathToFileURL(join(tmpdir(), 'ocx-site/src/')),
     ...astro,
@@ -317,8 +320,6 @@ describe('ocxTheme plugin', () => {
     expect(fonts.map((f) => f.name).sort()).toEqual(['IBM Plex Mono', 'IBM Plex Sans']);
     // Local files of the generated core subsets: no build-time fetch of the latest font release.
     for (const f of fonts) expect(f.provider.name).toBe('local');
-    // The cssVariable is what binds the faces to the theme font tokens (and Head.astro's <Font>).
-    expect(fonts.map((f) => f.cssVariable).sort()).toEqual(['--ocx-font-mono', '--ocx-font-sans']);
     for (const f of fonts) {
       const variants = (
         (f as { options?: unknown }).options as { variants: { unicodeRange: string[]; src: string[] }[] }
@@ -329,6 +330,8 @@ describe('ocxTheme plugin', () => {
         expect(v.src[0]).toMatch(/plex-(sans|mono)-(400|600)-core\.woff2$/);
       }
     }
+    // The cssVariable is what binds the faces to the theme font tokens (and Head.astro's <Font>).
+    expect(fonts.map((f) => f.cssVariable).sort()).toEqual(['--ocx-font-mono', '--ocx-font-sans']);
   });
 
   it('registers upright faces only: an italic face costs ~25 KB and blows the page-weight budget', async () => {
@@ -374,13 +377,13 @@ describe('ocxTheme plugin', () => {
     const own = await setup({ favicon: '/brand.png' });
     const a = vi.fn<AstroSetup['injectRoute']>();
     await injected(own.addIntegration, own.astroConfig, a);
-    expect(a).not.toHaveBeenCalled();
+    expect(a).not.toHaveBeenCalledWith(expect.objectContaining({ pattern: '/favicon.svg' }));
     const dir = mkdtempSync(join(tmpdir(), 'ocx-public-'));
     writeFileSync(join(dir, 'favicon.svg'), '<svg/>');
     const pub = await setup({}, { publicDir: pathToFileURL(`${dir}/`) });
     const b = vi.fn<AstroSetup['injectRoute']>();
     await injected(pub.addIntegration, pub.astroConfig, b);
-    expect(b).not.toHaveBeenCalled();
+    expect(b).not.toHaveBeenCalledWith(expect.objectContaining({ pattern: '/favicon.svg' }));
     rmSync(dir, { recursive: true });
   });
 
@@ -415,6 +418,14 @@ describe('ocxTheme plugin', () => {
     for (const part of ['nav', 'drawer', 'sidebar collapsibles', 'toaster', 'Search.astro'])
       expect(message).toContain(part);
     expect((await setup({ components: { Header: './src/H.astro' } })).logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('a consumer TableOfContents override warns once: the phone outline element is defined by the theme TableOfContents script', async () => {
+    const { logger } = await setup({ components: { TableOfContents: './src/Toc.astro' } });
+    expect(logger.warn).toHaveBeenCalledOnce();
+    const [message] = logger.warn.mock.calls[0] as [string];
+    for (const part of ['TableOfContents', 'mobile-starlight-toc', 'starlight/TableOfContents.astro'])
+      expect(message).toContain(part);
   });
 
   it('route middleware is registered by absolute forward-slash path to route-middleware.mjs', async () => {
@@ -484,6 +495,64 @@ describe('ocxTheme plugin', () => {
   });
 });
 
+describe('sitemap: frag/ pages stay out', () => {
+  it('adds @astrojs/sitemap, so Starlight adds none', async () => {
+    const { addIntegration } = await setup();
+    expect(addIntegration.mock.calls.map(([i]) => i.name)).toContain('@astrojs/sitemap');
+  });
+
+  it('a consumer that lists @astrojs/sitemap keeps the only instance and is told how to filter', async () => {
+    const { addIntegration, logger } = await setup({}, { integrations: [{ name: '@astrojs/sitemap', hooks: {} }] });
+    expect(addIntegration.mock.calls.map(([i]) => i.name)).not.toContain('@astrojs/sitemap');
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("withoutFragments('/docs/')"));
+  });
+
+  it('the filter drops /frag/ under the base only', () => {
+    const keep = withoutFragments('/docs/');
+    expect(keep('https://ocx.sh/docs/components/tabs/')).toBe(true);
+    expect(keep('https://ocx.sh/docs/frag/shell-session/')).toBe(false);
+    expect(keep('https://ocx.sh/frag/')).toBe(true); // another claim's path, not this site's
+    expect(withoutFragments('/')('https://ocx.sh/frag/landing/')).toBe(false);
+  });
+});
+
+describe('deferred sidebar: scope guards', () => {
+  const sidebarModule = async (config: Partial<StarlightUserConfig>) => {
+    const { addIntegration, astroConfig, logger } = await setup(config);
+    const injectRoute = vi.fn<AstroSetup['injectRoute']>();
+    const update = await injected(addIntegration, astroConfig, injectRoute);
+    const plugin = update.vite?.plugins?.find((p) => p.resolveId('virtual:ocx-theme/sidebar'));
+    return { injectRoute, logger, source: plugin?.load('\0virtual:ocx-theme/sidebar') };
+  };
+
+  it('a single-locale site injects frag/sidebar and builds the sidebar with Starlight', async () => {
+    const { injectRoute, source } = await sidebarModule({});
+    expect(injectRoute).toHaveBeenCalledWith(expect.objectContaining({ pattern: '/frag/sidebar/[key]' }));
+    expect(source).toContain('getSidebarFromConfig');
+  });
+
+  it('a multi-locale site defers nothing: no route, an empty sidebar, one warning', async () => {
+    const { injectRoute, source, logger } = await sidebarModule({
+      defaultLocale: 'en',
+      locales: { en: { label: 'English' }, de: { label: 'Deutsch' } },
+    });
+    expect(injectRoute).not.toHaveBeenCalledWith(expect.objectContaining({ pattern: '/frag/sidebar/[key]' }));
+    expect(source).toBe('export const configSidebar = () => [];');
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('single-locale'));
+  });
+
+  it('docs content under frag/ is refused: the prefix belongs to fragment routes', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'ocx-frag-'));
+    mkdirSync(join(root, 'src/content/docs/frag'), { recursive: true });
+    try {
+      const { addIntegration, astroConfig } = await setup({}, { srcDir: pathToFileURL(join(root, 'src/')) });
+      await expect(injected(addIntegration, astroConfig)).rejects.toThrow(/frag\/ is reserved/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('C-031: package surface (declared)', () => {
   const pkgDir = fileURLToPath(new URL('../', import.meta.url));
   const exportsMap: Record<string, string | Record<string, string>> = pkg.exports;
@@ -517,6 +586,7 @@ describe('C-031: package surface (declared)', () => {
         './shell',
         './shell-rev',
         './shell-render',
+        './highlight',
         './markdown',
       ].sort(),
     );
@@ -538,6 +608,7 @@ describe('C-031: package surface (declared)', () => {
       './shell',
       './shell-rev',
       './shell-render',
+      './highlight',
       './markdown',
     ]) {
       const cond = exportsMap[key] as Record<string, string>;
@@ -603,5 +674,29 @@ describe('C-107 override stubs', () => {
     const ours = await render(`../src/starlight/${name}.astro`);
     expect(ours).toBe(await render(`@astrojs/starlight/components/${name}.astro`));
     expect(ours.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Starlight internals read by file (the CI tripwire for a Starlight bump)', () => {
+  const FILES = [
+    'TableOfContents/starlight-toc.js',
+    'TableOfContents/TableOfContentsList.astro',
+    '../user-components/Icon.astro',
+    '../utils/navigation.js',
+  ];
+
+  it.each(FILES)('%s exists in the installed Starlight', (rel) => {
+    expect(existsSync(starlightInternal(rel))).toBe(true);
+  });
+
+  it('starlight-toc.js still exports StarlightTOC, and navigation.js getSidebarFromConfig', () => {
+    expect(readFileSync(starlightInternal('TableOfContents/starlight-toc.js'), 'utf8')).toMatch(
+      /export \{[^}]*StarlightTOC/,
+    );
+    expect(readFileSync(starlightInternal('../utils/navigation.js'), 'utf8')).toMatch(/getSidebarFromConfig/);
+  });
+
+  it('a moved file fails naming the supported range', () => {
+    expect(() => starlightInternal('TableOfContents/gone.js')).toThrow(/supports @astrojs\/starlight/);
   });
 });

@@ -6,6 +6,7 @@
 import { connect, machine } from '@zag-js/dialog';
 import { pagefindUserConfig } from 'virtual:starlight/pagefind-config';
 import { emit } from '../components/ui/zag-runtime.mjs';
+import { loadSkin } from './search-skin.mjs';
 
 export { connect, machine };
 
@@ -91,7 +92,9 @@ async function loadPagefind(root) {
   if (!container || started.has(container)) return;
   started.add(container);
   try {
-    const { PagefindUI } = await import('@pagefind/default-ui');
+    // The skin goes in before the UI draws anything: no unstyled frame. Requests at first open, never a link in
+    // the page (that would block every first paint), nor a string in this chunk (the JS budget counts it).
+    const [{ PagefindUI }] = await Promise.all([import('@pagefind/default-ui'), loadSkin()]);
     new PagefindUI(
       pagefindOptions(pagefindUserConfig, {
         base: import.meta.env.BASE_URL,

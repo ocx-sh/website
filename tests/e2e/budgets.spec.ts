@@ -5,7 +5,16 @@
 // committed page).
 import { gzipSync } from 'node:zlib';
 import { expect, test, type Page } from '@playwright/test';
-import { budgetOf, classOf, examplePages, HTML_GZ_MAX, PAGEFIND_GZ_MAX, SHELL_PAGES, sitePages } from '../budgets.mjs';
+import {
+  budgetOf,
+  classOf,
+  examplePages,
+  HTML_GZ_MAX,
+  PAGEFIND_GZ_MAX,
+  SHELL_PAGES,
+  sitePages,
+  UNBUDGETED_PAGES,
+} from '../budgets.mjs';
 import { expectNoLeak } from './helpers/leak.ts';
 import { activate, MANUAL_ROOT, startManual, tagRoots, ZAG_ROOT } from './helpers/zag.ts';
 
@@ -66,7 +75,7 @@ const sumOf = (s: { own: number; pagefind: number }) => s.own + s.pagefind;
 const gated = [
   ...examplePages().map((path) => ({ path, project: 'chromium' })),
   ...sitePages().map((path) => ({ path, project: 'site' })),
-];
+].filter(({ path }) => !UNBUDGETED_PAGES.includes(path));
 
 for (const { path, project } of gated) {
   const cls = classOf(path);

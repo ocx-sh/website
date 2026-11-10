@@ -1,0 +1,23 @@
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession title="~/acme · zsh · darwin/arm64" play>
+```sh
+ocx init
+```
+```text
+created ~/acme/ocx.toml
+```
+```sh
+ocx add ocx.sh/nodejs/node:24
+```
+```text
+Binding  Group    Digest
+node     default  sha256:1e34…e370
+```
+```sh
+ocx exec -- node --version
+```
+```text
+v24.22.2
+```
+</ShellSession>

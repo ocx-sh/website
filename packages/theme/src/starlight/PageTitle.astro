@@ -1,16 +1,18 @@
 ---
 // Starlight `PageTitle` override: the breadcrumb trail (computed by the route middleware; optional root →
 // section → sidebar groups → this page) immediately before the H1, no divider (C-025). No trail on
-// splash pages or when it would hold the current page alone.
+// splash pages or when it would hold the current page alone. A splash page without a `hero` owns its
+// H1 (`id="_top"`, the skip link's target): two would give the page two titles and a duplicate id.
 import Breadcrumbs from '../components/ui/Breadcrumbs.astro';
 import type { OcxRouteData } from './route-middleware.mjs';
 
 const route: OcxRouteData = Astro.locals.starlightRoute;
 const trail = route.ocxTrail ?? [];
+const splash = route.entry.data.template === 'splash';
 ---
 
-{trail.length > 1 && <Breadcrumbs items={trail} class="ocx-page-trail" />}
-<h1 id="_top">{route.entry.data.title}</h1>
+{!splash && trail.length > 1 && <Breadcrumbs items={trail} class="ocx-page-trail" />}
+{!splash && <h1 id="_top">{route.entry.data.title}</h1>}
 
 <style is:global>
   @layer ocx {

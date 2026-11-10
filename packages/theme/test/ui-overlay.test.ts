@@ -324,7 +324,14 @@ describe('Select, Combobox and overlay CSS', () => {
       'cycle-button.mjs',
       // DataTable sort/filter/paging has no Zag machine for tables (owner finding).
       'data-table.mjs',
+      // A sidebar group's deferred links: fetch, fill, retry; shared by the sidebar controller and collapsible.zag.mjs.
+      'deferred-group.mjs',
+      // Deferred's `input` and `panel` triggers, and the loader's import with its failure state.
+      'deferred-triggers.mjs',
+      // Deferred's loader: fetch, adopt styles, insert, announce; Deferred.astro starts it at idle.
+      'deferred.mjs',
       // `src` of Popover and Hint: a fetch on the first open, called from popover.zag.mjs and tooltip.zag.mjs.
+      'fetch-html.mjs',
       'fill.mjs',
       // Combobox fuzzy match helper is plain logic, not Zag behaviour (owner finding).
       'fuzzy.mjs',
@@ -339,6 +346,10 @@ describe('Select, Combobox and overlay CSS', () => {
       // Primitives without a Zag machine: native controls plus a few lines of DOM glue (C-266…C-272).
       'progress-circle.mjs',
       'range.mjs',
+      // onRoots: mounts a component's roots now and in every subtree a Deferred fragment inserts later.
+      'roots.mjs',
+      // Scroll-driven effects: one rAF-throttled scroll listener writing custom properties, no Zag machine fits.
+      'scroll.mjs',
       'search-field.mjs',
       'tag-group.mjs',
       'toggle-button.mjs',

@@ -115,6 +115,8 @@ test.describe('story page', () => {
     for (const route of routes) {
       await page.setViewportSize({ width: 720, height: 600 });
       await page.goto(route);
+      // A story that is scrolled on purpose (`scrolls: true`) is taller than its canvas by design.
+      if ((await page.locator('html').getAttribute('data-story-scrolls')) !== null) continue;
       const height = Number(await page.locator('html').getAttribute('data-story-height'));
       await page.setViewportSize({ width: 720, height });
       const scroll = await page.evaluate(() => document.documentElement.scrollHeight);

@@ -1,0 +1,8 @@
+```python title=""
+from ocx_sdk import Ocx, bootstrap
+
+ocx = Ocx(exe=bootstrap.ensure())
+project = ocx.project(".")  # ocx.toml + ocx.lock
+project.exec(["node", "--version"])
+```
+<a class="lp-more" href="/integrations/python/">ocx-sdk guide →</a>

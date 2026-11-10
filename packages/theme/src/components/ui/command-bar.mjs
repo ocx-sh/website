@@ -71,12 +71,22 @@ export function host(nav) {
   return undefined;
 }
 
+/** The global the first detecting bar of a page defines, and every bar then calls. */
+const DETECT = 'ocxDetect';
+/** Bars whose call ran before the definition: slot content renders before its parent, so a later bar can come first. */
+const QUEUE = 'ocxDetectQ';
+
 /**
- * Inline script, placed in the field straight after the command text (the picker is parsed by then)
- * so that it runs during parsing, before first paint: SSR renders the first choice, this swaps to the visitor's platform
- * when the bar offers it (a choice whose `value` is 'linux', 'macos' or 'windows'). Never throws.
+ * Inline script of the first detecting bar of a page, placed in the field straight after the command
+ * text (the picker is parsed by then) so it runs during parsing, before first paint: SSR renders the
+ * first choice, this swaps to the visitor's platform when the bar offers it (a choice whose `value` or
+ * `os` is 'linux', 'macos' or 'windows'). It defines the detector once as a global and runs it on its
+ * own bar and on every bar queued before it; later bars of the page ship PRE_PAINT_CALL instead. Never throws.
  */
-export const PRE_PAINT = `(()=>{try{const apply=${String(apply)},host=${String(host)},bar=document.currentScript.closest('.ocx-cmdbar'),os=host(navigator);if(bar&&os)apply(bar,os)}catch{}})()`;
+export const PRE_PAINT = `try{globalThis.${DETECT}=s=>{try{const apply=${String(apply)},host=${String(host)},bar=s.closest('.ocx-cmdbar'),os=host(navigator),c=bar&&os&&JSON.parse(bar.dataset.choices||'[]').find(c=>c.value===os||c.os===os);if(c)apply(bar,c.value)}catch{}};${DETECT}(document.currentScript);(globalThis.${QUEUE}||[]).forEach(${DETECT})}catch{}`;
+
+/** Inline script of every later detecting bar on the page: runs the detector PRE_PAINT defined, or queues its bar for it. Never throws. */
+export const PRE_PAINT_CALL = `try{${DETECT}(document.currentScript)}catch{(globalThis.${QUEUE}||=[]).push(document.currentScript)}`;
 
 /** @typedef {{ value: string, label: string, command: string }} Choice */
 
@@ -102,68 +112,66 @@ function setChoices(bar, choices) {
 }
 
 /**
- * Wires every bar: a pick moves the copy machine's value, a copy is announced in the bar's status.
- * @param {Document} [doc]
+ * Wires one bar: a pick moves the copy machine's value, a copy is announced in the bar's status.
+ * @param {HTMLElement} bar
  */
-export function install(doc = document) {
-  for (const bar of /** @type {NodeListOf<HTMLElement>} */ (doc.querySelectorAll('.ocx-cmdbar'))) {
-    const root = /** @type {HTMLElement | null} */ (bar.querySelector('[data-zag-root="clipboard"]'));
-    if (!root) continue;
-    // Idempotent per root: CopyButton's own script may have mounted it already.
-    const handle = mount(root, { load: () => /** @type {Promise<any>} */ (import('../clipboard.zag.mjs')) });
-    const status = bar.querySelector('.ocx-cmdbar__status');
-    /** @type {ReturnType<typeof setTimeout> | undefined} */
-    let timer;
-    // ponytail: a second copy inside the 2 s window keeps the same text, so it is not announced again.
-    const say = (/** @type {string} */ text) => {
-      if (!status) return;
-      status.textContent = text;
-      clearTimeout(timer);
-      timer = setTimeout(() => (status.textContent = ''), 2000);
-    };
-    bar.addEventListener('ocx:select:change', (event) => {
-      const command = apply(bar, /** @type {CustomEvent<{ value: string }>} */ (event).detail.value);
-      if (command !== undefined)
-        /** @type {{ setValue?: (value: string) => void } | undefined} */ (handle.api)?.setValue?.(command);
-    });
-    // `ocx:command-bar:set {command?, label?, choices?, value?}`: a consumer retargets the bar. `choices` replaces the
-    // picker's choices, `value` picks one (the command follows it); `command` alone sets the shown command. The
-    // text, the copy name and the machine's value follow, with no pick event.
-    bar.addEventListener('ocx:command-bar:set', (event) => {
-      const {
-        label,
-        choices,
-        value,
-        command: given,
-      } = /** @type {CustomEvent<{ command?: string, label?: string, choices?: Choice[], value?: string } | null>} */ (
-        event
-      ).detail ?? {};
-      // An unknown `value` changes nothing, with or without `choices`: no swap that would strand the shown command.
-      /** @type {unknown} */
-      const stored = JSON.parse(bar.dataset['choices'] ?? '[]');
-      const known = choices ?? /** @type {Choice[]} */ (stored);
-      if (value !== undefined && !known.some((c) => c.value === value)) return;
-      if (choices) setChoices(bar, choices);
-      const picked = value === undefined ? undefined : apply(bar, value);
-      const command = picked ?? given;
-      if (value !== undefined)
-        bar
-          .querySelector('[data-zag-root="select"]')
-          ?.dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value } }));
-      if (command === undefined) return;
-      const text = bar.querySelector('.ocx-cmdbar__text');
-      // A pick has drawn its text already, highlighting included.
-      if (text && picked === undefined) text.textContent = command;
-      if (label) root.dataset['label'] = `${label} ${bar.dataset['noun']}`;
-      /** @type {unknown} */
-      const props = JSON.parse(root.dataset['zagProps'] ?? '{}');
-      root.dataset['zagProps'] = JSON.stringify({
-        .../** @type {Record<string, unknown>} */ (props),
-        defaultValue: command,
-      });
+export function wireBar(bar) {
+  const root = /** @type {HTMLElement | null} */ (bar.querySelector('[data-zag-root="clipboard"]'));
+  if (!root) return;
+  // Idempotent per root: CopyButton's own script may have mounted it already.
+  const handle = mount(root, { load: () => /** @type {Promise<any>} */ (import('../clipboard.zag.mjs')) });
+  const status = bar.querySelector('.ocx-cmdbar__status');
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let timer;
+  // ponytail: a second copy inside the 2 s window keeps the same text, so it is not announced again.
+  const say = (/** @type {string} */ text) => {
+    if (!status) return;
+    status.textContent = text;
+    clearTimeout(timer);
+    timer = setTimeout(() => (status.textContent = ''), 2000);
+  };
+  bar.addEventListener('ocx:select:change', (event) => {
+    const command = apply(bar, /** @type {CustomEvent<{ value: string }>} */ (event).detail.value);
+    if (command !== undefined)
       /** @type {{ setValue?: (value: string) => void } | undefined} */ (handle.api)?.setValue?.(command);
+  });
+  // `ocx:command-bar:set {command?, label?, choices?, value?}`: a consumer retargets the bar. `choices` replaces the
+  // picker's choices, `value` picks one (the command follows it); `command` alone sets the shown command. The
+  // text, the copy name and the machine's value follow, with no pick event.
+  bar.addEventListener('ocx:command-bar:set', (event) => {
+    const {
+      label,
+      choices,
+      value,
+      command: given,
+    } = /** @type {CustomEvent<{ command?: string, label?: string, choices?: Choice[], value?: string } | null>} */ (
+      event
+    ).detail ?? {};
+    // An unknown `value` changes nothing, with or without `choices`: no swap that would strand the shown command.
+    /** @type {unknown} */
+    const stored = JSON.parse(bar.dataset['choices'] ?? '[]');
+    const known = choices ?? /** @type {Choice[]} */ (stored);
+    if (value !== undefined && !known.some((c) => c.value === value)) return;
+    if (choices) setChoices(bar, choices);
+    const picked = value === undefined ? undefined : apply(bar, value);
+    const command = picked ?? given;
+    if (value !== undefined)
+      bar
+        .querySelector('[data-zag-root="select"]')
+        ?.dispatchEvent(new CustomEvent('ocx:select:set', { detail: { value } }));
+    if (command === undefined) return;
+    const text = bar.querySelector('.ocx-cmdbar__text');
+    // A pick has drawn its text already, highlighting included.
+    if (text && picked === undefined) text.textContent = command;
+    if (label) root.dataset['label'] = `${label} ${bar.dataset['noun']}`;
+    /** @type {unknown} */
+    const props = JSON.parse(root.dataset['zagProps'] ?? '{}');
+    root.dataset['zagProps'] = JSON.stringify({
+      .../** @type {Record<string, unknown>} */ (props),
+      defaultValue: command,
     });
-    bar.addEventListener('ocx:clipboard:copy', () => say(`Copied ${root.dataset['label']}`));
-    bar.addEventListener('ocx:clipboard:error', () => say('Copy failed'));
-  }
+    /** @type {{ setValue?: (value: string) => void } | undefined} */ (handle.api)?.setValue?.(command);
+  });
+  bar.addEventListener('ocx:clipboard:copy', () => say(`Copied ${root.dataset['label']}`));
+  bar.addEventListener('ocx:clipboard:error', () => say('Copy failed'));
 }

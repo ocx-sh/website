@@ -10,16 +10,18 @@ import { getImage } from 'astro:assets';
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 import Avatar from '@ocx-sh/theme/components/ui/Avatar.astro';
 import kate from '../../../assets/team/kate.jpg';
+import michael from '../../../assets/team/michael.jpg';
 
 {/* public/team/kate.jpg stays only so the old /team/kate.jpg URL still resolves (infra/old-urls.txt); the page uses this sized AVIF. */}
 
 export const kateImage = await getImage({ src: kate, format: 'avif', width: 38, height: 38, densities: [1, 2] });
+export const michaelImage = await getImage({ src: michael, format: 'avif', width: 38, height: 38, densities: [1, 2] });
 
 The people who build, maintain and promote ocx.
 
 <CardGrid>
   <div class="ocx-card">
-    <Avatar name="Michael Herwig" size="lg" />
+    <Avatar name="Michael Herwig" src={michaelImage.src} srcset={michaelImage.srcSet.attribute} size="lg" />
     <strong>Michael Herwig</strong>
     <span>Creator and maintainer</span>
     <span>[GitHub](https://github.com/michael-herwig) · [GitLab](https://gitlab.com/michael-herwig) · [LinkedIn](https://www.linkedin.com/in/herwigm)</span>

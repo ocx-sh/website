@@ -1,0 +1,24 @@
+---
+import ScrollMount from './ui/ScrollMount.astro';
+// ScrollProgress: a thin bar fixed under the header that fills as the page scrolls. Decorative (aria-hidden);
+// the scroll module writes --ocx-prog. Without JS or under reduced motion it stays empty.
+---
+
+<ScrollMount />
+<div class="ocx-scroll-progress" data-ocx-progress aria-hidden="true"></div>
+
+<style is:global>
+  @layer ocx {
+    .ocx-scroll-progress {
+      position: fixed;
+      inset-block-start: var(--ocx-header-height);
+      inset-inline: 0;
+      z-index: var(--ocx-z-header);
+      block-size: var(--ocx-border-width-strong);
+      background: var(--ocx-color-accent);
+      transform: scaleX(var(--ocx-prog, 0));
+      transform-origin: left;
+      pointer-events: none;
+    }
+  }
+</style>

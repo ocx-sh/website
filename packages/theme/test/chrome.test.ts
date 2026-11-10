@@ -119,6 +119,14 @@ describe('C-025 PageTitle', () => {
   });
 });
 
+describe('PageTitle on a splash page', () => {
+  it('renders no H1: the page owns it', async () => {
+    const doc = await render('PageTitle', '/', { entry: { data: { title: 'Page title', template: 'splash' } } });
+    expect(doc.querySelector('h1')).toBeNull();
+    expect(doc.querySelector('nav')).toBeNull();
+  });
+});
+
 // Starlight derives `starlightRoute.editUrl` from config `editLink.baseUrl`
 // (undefined when unset), so the route's editUrl stands in for the config here.
 describe('C-027 TableOfContents', () => {

@@ -1,0 +1,20 @@
+---
+// Deferral contract: every component's `default` story as a fragment, at /docs/frag/stories/<slug>/default/.
+// deferred-contract.spec.ts inserts each into a Deferred and checks the component comes alive there,
+// which is the proof that any component can be deferred. Not a showcase page: noindex, outside the sitemap.
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render } from 'astro:content';
+import FragmentLayout from '@ocx-sh/theme/layouts/Fragment.astro';
+
+export const getStaticPaths = (async () =>
+  (await getCollection('stories'))
+    .filter((entry) => entry.id.endsWith('/default'))
+    .map((entry) => ({ params: { id: entry.id }, props: { entry } }))) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<FragmentLayout title={`${entry.id} fragment`}>
+  <Content />
+</FragmentLayout>

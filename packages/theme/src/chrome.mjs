@@ -29,8 +29,30 @@ export function mountChrome(doc) {
   const sidebar = doc.getElementById('starlight__sidebar');
   const persist = sidebar?.querySelector('sl-sidebar-state-persist');
   if (persist instanceof HTMLElement) persist.dataset['mounted'] = '';
-  for (const group of sidebar?.querySelectorAll('[data-zag-root="collapsible"]') ?? [])
-    if (group instanceof HTMLElement) mount(group, { load: () => import('./components/collapsible.zag.mjs') });
+  // The groups share one controller (starlight/sidebar-controller.mjs, no Zag), loaded on the first touch of the
+  // sidebar; a click that lands before it is ready is handed over. A failed load opens every group (the error state).
+  const groups = sidebar?.querySelectorAll('[data-zag-root="collapsible"]');
+  if (sidebar && groups?.length) {
+    // pointerover bubbles from the trigger under the mouse; a bare click (assistive tech) wakes it too.
+    const touches = ['pointerover', 'pointerenter', 'focusin', 'touchstart', 'click'];
+    /** @type {Element[]} */
+    const early = [];
+    /** @param {Event} event */
+    const remember = (event) => {
+      const button = /** @type {Element | null} */ (event.target)?.closest?.('[data-part="trigger"]');
+      if (event.type === 'click' && button) early.push(button);
+    };
+    const wake = (/** @type {Event} */ first) => {
+      for (const type of touches) sidebar.removeEventListener(type, wake);
+      remember(first);
+      sidebar.addEventListener('click', remember);
+      import('./starlight/sidebar-controller.mjs')
+        .then((m) => m.start(sidebar, early, first.target))
+        .catch(() => groups.forEach((g) => g instanceof HTMLElement && (g.dataset['zagState'] = 'error')))
+        .finally(() => sidebar.removeEventListener('click', remember));
+    };
+    for (const type of touches) sidebar.addEventListener(type, wake, { passive: true });
+  }
   // The mobile menu toggle's first tap loads the drawer and opens it on that tap; after a load error
   // the pane opens through its native popover instead (S-102), and later taps are the popover's.
   const menu = doc.querySelector('.ocx-menu[data-zag-root="drawer"]');

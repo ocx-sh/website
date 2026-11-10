@@ -160,11 +160,12 @@ const id = nextUiId('data-table');
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import type { Pager } from './data-table.mjs';
   import { mount } from './zag.mjs';
 
   const ARM = ['pointerenter', 'focusin', 'touchstart', 'ocx:data-table:require'];
-  for (const root of document.querySelectorAll<HTMLElement>('[data-ocx-data-table]')) {
+  onRoots('[data-ocx-data-table]', (root) => {
     const nav = root.querySelector<HTMLElement>('[data-zag-root="pagination"]');
     const handle = nav && mount(nav, { load: () => import('../pagination.zag.mjs') });
     // Page 1 first (valid under the old count), then the new count; an empty result keeps one
@@ -207,7 +208,7 @@ const id = nextUiId('data-table');
     };
     restored();
     window.addEventListener('pageshow', restored, { once: true });
-  }
+  });
 </script>
 
 <style is:global>

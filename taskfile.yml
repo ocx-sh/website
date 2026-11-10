@@ -111,7 +111,7 @@ tasks:
     cmds: [pnpm exec vitest run packages/theme]
 
   css:
-    desc: Built-CSS gate (outside-layers, literal-colours, dark-parity, inlined-sheets, core-glyphs) over every app dist
+    desc: Built-CSS gate (outside-layers, literal-colours, dark-parity, inlined-sheets, core-glyphs, shared-sheet) over every app dist
     cmds:
       - node scripts/require-dist.mjs {{.DISTS}}
       - node scripts/css/literal-colours.mjs $(find {{.DISTS}} -name '*.css' -o -name '*.html')
@@ -119,6 +119,7 @@ tasks:
       - node scripts/css/dark-parity.mjs $(find {{.DISTS}} -name '*.css' -o -name '*.html')
       - node scripts/css/inlined-sheets.mjs {{.DISTS}}
       - node scripts/css/core-glyphs.mjs {{.DISTS}}
+      - node scripts/css/shared-sheet.mjs {{.DISTS}}
 
   e2e:
     desc: Playwright over the built dists

@@ -60,7 +60,7 @@ const content = meta.prose ? `<div class="ocx-prose">${body}</div>` : body;
 const boot = `(()=>{const d=document.documentElement,q=new URLSearchParams(location.search),f=q.get('theme'),a=()=>{let t=f;if(t!=='light'&&t!=='dark'){try{t=localStorage.getItem('starlight-theme')}catch{}}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.dataset.theme=t};a();if(!f)addEventListener('storage',a);if(q.has('thumb'))d.dataset.thumb='';const p=(navigator.userAgentData&&navigator.userAgentData.platform)||navigator.platform||'';d.dataset.platform=/mac|iphone|ipad|ipod/i.test(p)?'mac':/linux/i.test(p)?'linux':'windows'})()`;
 ---
 
-<html lang="en" data-story-height={meta.height}>
+<html lang="en" data-story-height={meta.height} data-story-scrolls={meta.scrolls ? '' : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

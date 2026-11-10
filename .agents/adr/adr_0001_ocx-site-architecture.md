@@ -477,6 +477,25 @@ and the deploy action's production release wait for M0; offline code and tests d
 Q3 (take hetzner1 out of the HTML path) is closed: the owner decided the staged
 sequence ending in a DNS move after registry removal (D1.4).
 
+## Amendment (2026-11-09): deferred content and sidebar groups
+
+D2.4's "No `Sidebar` override" no longer holds: the theme overrides `Sidebar` to defer collapsed groups.
+This does not revise D2.1–D2.5's other decisions.
+
+- **`frag/` contract.** `Deferred` loads a fragment page from `frag/`: a bare document, `noindex`, outside the
+  sitemap and the search index. `frag/` is reserved for the theme's pages. A fragment appears once per page.
+- **Triggers.** `idle` (after load, or the first input), `input` (the first input only, `focusin` included)
+  and `panel` (first tab activation). Nothing else loads before interaction.
+- **Sidebar groups.** A collapsed group without the current page ships empty and loads from
+  `frag/sidebar/<key>/`. It is single-locale and reads a Starlight internal file, so it pins the Starlight
+  `<0.43` range and fails the build with a clear message if that file moves.
+- **Starlight internals read by file.** `dist/utils/navigation.js` (the deferred sidebar),
+  `dist/components-internals/TableOfContents/{starlight-toc.js,TableOfContentsList.astro}` and
+  `dist/user-components/Icon.astro` (the `TableOfContents` and `MobileTableOfContents` overrides, which fold the phone
+  TOC into the one TOC entry script). Each fails the build naming the supported range if it moves; a test imports them.
+- **Budget overrides.** `SITE_PAGE_JS['/']` and `UNBUDGETED_PAGES` (the components gallery) are one-page
+  overrides, dated with the owner decision. See [plan_zag-adoption.md](../plans/plan_zag-adoption.md) › Spec Deltas.
+
 ## Amendment (2026-09-28): Zag supplies component behaviour
 
 Zag (`@zag-js/*`, exact-pinned at `1.44.0`, no `^`/`~`/range) supplies the

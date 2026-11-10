@@ -1,0 +1,24 @@
+---
+title: Eyebrow, link and scroll reveal
+description: An eyebrow above the heading, a link under the text, and a reveal that follows the scroll position instead of playing once.
+height: 640
+order: 2
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
+
+<FeatureSection title="Locked once. Same version on every machine." eyebrow="01 · one lock" reveal>
+  <Fragment slot="text">
+
+One ocx.lock covers every platform, so the Linux CI runner, the Mac laptop and Windows match.
+
+  </Fragment>
+  <Fragment slot="more">
+    <a href="/docs/">read the lock file reference →</a>
+  </Fragment>
+
+<img class="feature-img" src="/docs/favicon.svg" alt="The ocx logo" width="240" height="240" />
+
+</FeatureSection>

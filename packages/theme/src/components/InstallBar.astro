@@ -1,0 +1,42 @@
+---
+// InstallBar: the installer one-liner as one CommandBar with a shell picker (PowerShell preselected for a Windows
+// visitor). Apart from InstallCommand so a page with only the bar does not load Tabs' stylesheet.
+import nav from '../nav.json';
+import { installHref } from '../nav.mjs';
+import Button from './ui/Button.astro';
+import CommandBar from './ui/CommandBar.astro';
+import Hint from './ui/Hint.astro';
+import Icon from './ui/Icon.astro';
+import { SHELLS } from './install-shells.mjs';
+
+export interface Props {
+  /** Adds an icon button (tooltip "Install guide") to `/install/` at the end of the bar. */
+  docs?: boolean;
+}
+
+const { docs = false } = Astro.props;
+const href = installHref(nav);
+---
+
+<CommandBar
+  choices={SHELLS.map(({ label, icon, lang, command, os }) => ({
+    value: icon,
+    label,
+    command,
+    icon,
+    lang,
+    ...(os && { os }),
+  }))}
+  pickerLabel="Shell"
+  detect
+  noun="install command"
+>
+  {/* Icon-only, as every bar action: a text button would take the width the command needs on a phone. */}
+  {docs && (
+    <Hint slot="action" label="Install guide">
+      <Button iconOnly aria-label="Install guide" href={href}>
+        <Icon name="docs" />
+      </Button>
+    </Hint>
+  )}
+</CommandBar>

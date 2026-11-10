@@ -90,9 +90,11 @@ const html = items.map((item, i) => node(item, [i])).join('');
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tree-view"]'))
+  onRoots('[data-zag-root="tree-view"]', (root) => {
     mount(root, { load: () => import('./tree-view.zag.mjs') });
+  });
 </script>
 
 <style>

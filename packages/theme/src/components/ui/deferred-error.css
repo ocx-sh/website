@@ -1,0 +1,6 @@
+@layer ocx {
+  /* Focus lands on the box after a Retry hid the button that had it. */
+  .ocx-deferred { outline: none; }
+  .ocx-deferred__error { place-self: center; text-align: center; }
+  .ocx-deferred__error p { margin: 0 0 var(--ocx-space-3); }
+}

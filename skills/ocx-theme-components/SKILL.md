@@ -1,6 +1,6 @@
 ---
 name: ocx-theme-components
-description: Component catalog of @ocx-sh/theme for Astro and Starlight pages - import paths, props, a11y contracts, events, lazy Zag loading. Use when writing or reviewing an .astro or .mdx page that imports @ocx-sh/theme/components, when picking Button, Link, CopyButton, CopyMenu, CommandBar, InstallCommand, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, TagsInput, Choice, RadioGroup, Slider, Tag, TagGroup, Dialog, AlertDialog, ConfirmDialog, CommandPalette, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, toast, Avatar, LogoTile, Terminal, ProseCodeCopy, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, HubGrid or DependencyExplorer, for Markdown alerts, emoji, details or math, or when a component fires no event, loads JS early, shifts layout or fails a11y. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
+description: Component catalog of @ocx-sh/theme for Astro and Starlight pages - import paths, props, a11y contracts, events, lazy Zag loading. Use when writing or reviewing an .astro or .mdx page that imports @ocx-sh/theme/components, when picking Button, Link, CopyButton, CopyMenu, CommandBar, InstallCommand, InstallBar, ToggleButton, CycleButton, ToggleGroup, Input, InputGroup, SearchField, Select, Combobox, TagsInput, Choice, RadioGroup, Slider, Tag, TagGroup, Dialog, AlertDialog, ConfirmDialog, CommandPalette, Drawer, Popover, Menu, ActionMenu, Tooltip, Hint, Accordion, Collapsible, Tabs, Tree, TreeView, List, DataTable, Pagination, Meter, ProgressCircle, Loader, toast, Avatar, LogoTile, Terminal, ProseCodeCopy, Kbd, Breadcrumbs, Sidebar, Toc, Icon, PlatformIcons, FeatureSection, KeyValueTable, TileGrid, ScrollStage, ScrollProgress, ScrollFade, ScrollReveal, HubGrid or DependencyExplorer, for Markdown alerts, emoji, details or math, or when a component fires no event, loads JS early, shifts layout or fails a11y. Not for astro.config setup (ocx-theme-setup) or colours and tokens (ocx-theme-theming).
 license: Apache-2.0
 metadata:
   summary: Which @ocx-sh/theme component to use, how to import it, the props and a11y contracts that matter, and the lazy-loading rules
@@ -64,6 +64,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `CopyMenu.astro` | A menu of copy items, from a button or as a right-click menu over many hosts (tags, cards, rows) | [actions-forms](references/actions-forms.md) |
 | `ProseCodeCopy.astro` | A "Copy code" button on every code block in plain-HTML prose (README, docs without Expressive Code) | [actions-forms](references/actions-forms.md) |
 | `ui/CommandBar.astro` | A copyable shell command, optionally a picker of variants (platform, scope) | [actions-forms](references/actions-forms.md) |
+| `InstallBar.astro` | The installer one-liner as one command bar with a shell picker, without Tabs' stylesheet | [actions-forms](references/actions-forms.md) |
 | `InstallCommand.astro` | How to install ocx: the installer one-liner per shell, as synced tabs of command bars | [actions-forms](references/actions-forms.md) |
 | `ui/ToggleButton.astro` | One on/off button (`aria-pressed`) | [actions-forms](references/actions-forms.md) |
 | `ui/CycleButton.astro` | A button stepping through 2+ states (theme, sort direction) | [actions-forms](references/actions-forms.md) |
@@ -103,6 +104,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/ProgressCircle.astro` | Progress of a task, determinate or not | [data-feedback](references/data-feedback.md) |
 | `ui/Loader.astro` | Announced loading state of a region | [data-feedback](references/data-feedback.md) |
 | `ui/Skeleton.astro` | Placeholder bars reserving the final box | [data-feedback](references/data-feedback.md) |
+| `Deferred.astro` | Load a non-essential part after the page: exact skeleton now, real content from a `frag/` page at idle (see [loading-model](references/loading-model.md#deferred-content)) | [data-feedback](references/data-feedback.md) |
 | `ui/Avatar.astro` + `ui/AvatarGroup.astro` | Person or org image with initials fallback | [data-feedback](references/data-feedback.md) |
 | `ui/LogoTile.astro` | Logo over a hash-hued monogram, bare when it loads | [data-feedback](references/data-feedback.md) |
 | `PlatformIcons.astro` | OS glyphs for `os/arch` platform strings | [data-feedback](references/data-feedback.md) |
@@ -110,6 +112,12 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `Terminal.astro` | A recorded asciinema cast in terminal chrome | [content](references/content-navigation.md) |
 | `ShellSession.astro` | Command and output fences fused into one shell-like surface (`$` commands, `>` outputs) | [content](references/content-navigation.md) |
 | `FeatureSection.astro` | Alternating text-and-visual block on landing pages | [content](references/content-navigation.md) |
+| `ScrollStage.astro` | Pinned stage whose items fly in and get struck through with scroll, then a finale | [content](references/content-navigation.md) |
+| `ScrollProgress.astro` | Thin page-scroll progress bar under the header | [content](references/content-navigation.md) |
+| `ScrollFade.astro` | Hero wrapper that fades and drifts as the page scrolls away | [content](references/content-navigation.md) |
+| `ScrollReveal.astro` | Block that fades in and rises as it scrolls into view | [content](references/content-navigation.md) |
+| `TileGrid.astro` | Two-column tiles (title, subtitle, optional icon) with a footer slot across both | [content](references/content-navigation.md) |
+| `KeyValueTable.astro` | Mono table of key and value rows with header rows, a highlighted row, notes and a footer | [content](references/content-navigation.md) |
 | `HubGrid.astro` | One hub's entries from `nav.json` as category groups of cards | [content](references/content-navigation.md) |
 | `ui/Kbd.astro` | Keyboard keys, OS-adaptive (`Mod+K`) | [content](references/content-navigation.md) |
 | `ui/Breadcrumbs.astro` | A breadcrumb trail outside the page title | [content](references/content-navigation.md) |
@@ -179,4 +187,6 @@ component.
 - One `variant="primary"` per view at most.
 - A reserved box for anything that loads late (`Skeleton`, `Terminal` with a
   cast under `public/` or explicit `cols` and `rows`, images with width and height).
+- Heavy, non-essential blocks go in `Deferred` (not inline): they cost the first
+  round trip otherwise.
 - No `@zag-js/*` import and no inline `style` colour in page code.

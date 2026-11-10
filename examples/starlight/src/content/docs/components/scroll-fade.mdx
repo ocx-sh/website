@@ -1,0 +1,30 @@
+---
+title: ScrollFade
+description: A block that fades out and drifts as the page scrolls away from the top, for a hero.
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Wraps a hero so it fades out as the page scrolls away from the top: gone after about half a screen of scrolling.
+It also drifts down by a share of the scroll offset, so it trails the page.
+Without JS, or under reduced motion, it stays visible and still.
+
+## Stories
+
+<Stories of="scroll-fade" />
+
+## Props
+
+<PropsTable
+  of="ScrollFade.astro"
+  rows={[
+    {
+      name: 'rate',
+      type: 'number',
+      default: '0.25',
+      description: 'Share of the scroll offset the block drifts down with.',
+    },
+    { name: 'class', type: 'string', description: 'Extra class on the wrapper.' },
+  ]}
+/>

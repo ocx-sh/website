@@ -1,6 +1,7 @@
 /* Skeleton base (Skeleton.astro): the text primitive, the bar and its sweep. In base.css, not the
    component: the DependencyExplorer paints skeletons in its first viewport, where one more stylesheet
-   request put LCP a round trip later (Lighthouse perf 0.99). The variants stay in the component. */
+   request put LCP a round trip later (Lighthouse perf 0.99), and an inline sheet counts against the
+   page's HTML budget. Deferred's wrapper rule rides along. */
 @layer ocx {
   /* Reserves the final box at first paint: lines × line-height, nothing moves when content lands. */
   .ocx-ui-skeleton:not([data-variant]) {
@@ -43,7 +44,8 @@
   /* Swap: `<div class="ocx-swap">` holds a skeleton and its content in one grid cell, so the box is the
      larger of the two (both sized from the build). Script sets `data-loaded` on the wrapper: the content
      fades in, the skeleton out (opacity only), and the skeleton ends `visibility: hidden`. The durations
-     read tokens, so reduced motion makes it instant. */
+     read tokens, so reduced motion makes it instant. A skeleton that is not a Skeleton (Deferred's wrapper,
+     a hand-drawn one) carries `data-swap-skeleton`. */
   .ocx-swap {
     display: grid;
   }
@@ -53,12 +55,12 @@
       opacity var(--ocx-duration-base),
       visibility var(--ocx-duration-base);
   }
-  .ocx-swap > :not(.ocx-ui-skeleton),
-  .ocx-swap[data-loaded] > .ocx-ui-skeleton {
+  .ocx-swap > :not(.ocx-ui-skeleton, [data-swap-skeleton]),
+  .ocx-swap[data-loaded] > :is(.ocx-ui-skeleton, [data-swap-skeleton]) {
     opacity: 0;
     visibility: hidden;
   }
-  .ocx-swap[data-loaded] > :not(.ocx-ui-skeleton) {
+  .ocx-swap[data-loaded] > :not(.ocx-ui-skeleton, [data-swap-skeleton]) {
     opacity: 1;
     visibility: visible;
   }
@@ -71,5 +73,139 @@
     .ocx-ui-skeleton__line::after {
       display: none;
     }
+  }
+  .ocx-deferred > * {
+    min-inline-size: 0;
+  }
+  /* Not in deferred-error.css: that comes with the loader, which may be what failed. */
+  .ocx-deferred[data-state='error'] > [data-swap-skeleton] { opacity: 0; visibility: hidden; }
+  .ocx-deferred[data-state='error'] > .ocx-deferred__error { opacity: 1; visibility: visible; }
+  /* Variants (Skeleton.astro's `variant`). */
+  /* Primitives. */
+  .ocx-ui-skeleton[data-variant='circle'] {
+    --_size: var(--ocx-control-sm);
+    display: inline-flex;
+  }
+  .ocx-ui-skeleton[data-variant='circle'][data-size='md'] {
+    --_size: var(--ocx-control-lg);
+  }
+  .ocx-ui-skeleton[data-variant='circle'][data-size='lg'] {
+    --_size: var(--ocx-control-2xl);
+  }
+  .ocx-ui-skeleton[data-variant='circle'] > .ocx-ui-skeleton__line {
+    inline-size: var(--_size);
+    block-size: var(--_size);
+    border-radius: var(--ocx-radius-full);
+  }
+  .ocx-ui-skeleton[data-variant='rect'] {
+    display: block;
+  }
+  .ocx-ui-skeleton[data-variant='rect'] > .ocx-ui-skeleton__line {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: var(--_ratio);
+  }
+
+  /* Composites: a bar sits in a 1lh row (0.2lh above and below), as a line of text does. */
+  .ocx-ui-skeleton:is(
+    [data-variant='card'],
+    [data-variant='list'],
+    [data-variant='table'],
+    [data-variant='code'],
+    [data-variant='terminal']
+  ) {
+    --_m: 0.2lh;
+  }
+  /* Card: the .ocx-card box (class on the root); a title bar over one line of text. */
+  .ocx-ui-skeleton[data-variant='card'] > .ocx-ui-skeleton__line:first-child {
+    inline-size: 40%; /* ponytail: raw until a skeleton token exists */
+  }
+  /* List: the List's content box and row (base.css-free copy of the same tokens). */
+  .ocx-ui-skeleton[data-variant='list'] {
+    --_bar: var(--ocx-color-border);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ocx-space-1);
+    padding: var(--ocx-space-2);
+    font-size: var(--ocx-text-sm);
+    background: var(--ocx-color-surface-subtle);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .ocx-ui-skeleton__row {
+    display: block;
+    padding: var(--ocx-space-2) var(--ocx-space-3);
+  }
+  /* Table: the DataTable region, head row and cells. */
+  .ocx-ui-skeleton[data-variant='table'] {
+    display: flex;
+    flex-direction: column;
+    overflow: clip;
+    font-size: var(--ocx-text-base);
+    line-height: var(--ocx-lh-heading);
+    background: var(--ocx-color-surface);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .ocx-ui-skeleton__tr {
+    display: grid;
+    grid-template-columns: repeat(var(--_cols), minmax(0, 1fr));
+    border-block-end: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+  .ocx-ui-skeleton__tr:last-child {
+    border-block-end: 0;
+  }
+  .ocx-ui-skeleton__cell {
+    display: block;
+    padding: var(--ocx-space-4) var(--ocx-space-5);
+  }
+  .ocx-ui-skeleton__tr[data-head] {
+    --_bar: var(--ocx-color-border);
+    font-size: var(--ocx-text-2xs);
+    background: var(--ocx-color-surface-subtle);
+  }
+  .ocx-ui-skeleton__tr[data-head] > .ocx-ui-skeleton__cell {
+    padding: var(--ocx-space-3) var(--ocx-space-5);
+  }
+  /* Code and Terminal: one framed box, a title bar over a body. Code is the Expressive Code frame: the body
+       is the code area (--_pad, no --_min floor) and the title is EC's 36px bar (--_head), both set inline.
+       Terminal is the Terminal frame: the player area at the Terminal's own min-height (control-xl +
+       2 × control-3xl at the default 3 lines, one control-3xl more per line). */
+  .ocx-ui-skeleton:is([data-variant='code'], [data-variant='terminal']) {
+    --_bar: var(--ocx-color-border);
+    display: flex;
+    flex-direction: column;
+    overflow: clip;
+    background: var(--ocx-color-code-bg);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-lg);
+  }
+  .ocx-ui-skeleton[data-variant='terminal'] {
+    container-type: inline-size; /* 100cqi in a sized terminal's --_min */
+  }
+  .ocx-ui-skeleton__chrome {
+    box-sizing: border-box;
+    block-size: var(--_head, auto);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    font-size: var(--ocx-text-sm);
+    line-height: var(--ocx-lh-heading);
+    background: var(--ocx-color-surface-subtle);
+  }
+  .ocx-ui-skeleton__chrome > .ocx-ui-skeleton__line {
+    inline-size: 30%; /* ponytail: the title, raw until a skeleton token exists */
+  }
+  .ocx-ui-skeleton__body {
+    display: flex;
+    flex-direction: column;
+    min-block-size: var(--_min, calc(var(--ocx-control-xl) + (var(--_lines) - 1) * var(--ocx-control-3xl)));
+    padding: var(--_pad, var(--ocx-space-4));
+    font-size: var(--ocx-text-base);
+    line-height: var(--ocx-lh-code);
+  }
+  .ocx-ui-skeleton__chrome + .ocx-ui-skeleton__body {
+    border-block-start: var(--ocx-border-width) solid var(--ocx-color-border);
   }
 }

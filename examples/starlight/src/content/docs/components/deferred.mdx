@@ -1,0 +1,85 @@
+---
+title: Deferred
+description: 'A part of the page that loads after the page does: an exactly sized skeleton now, the real content when the page is idle, on the first input, or when its tab opens.'
+---
+
+import PropsTable from '../../../components/showcase/PropsTable.astro';
+import Stories from '../../../components/showcase/Stories.astro';
+
+Some content is worth having but never worth the first round trip. Examples are a terminal session, a tabbed
+code sample and a table of dependencies. `Deferred` ships only a skeleton you size to match it. The real
+content lives in its own page under `frag/`, built with the `FragmentLayout`. It arrives after the
+`load` event once the browser is idle, or at the first input if that comes sooner.
+
+The fragment page is a bare document. It has no site CSS or header. It is `noindex`, outside the sitemap and the
+search index. What it brings is the component's own HTML, styles and scripts. The loader fetches it,
+adds its stylesheets and waits for them, inserts the body, runs its scripts and announces
+`ocx:inserted`.
+
+Every component script mounts through that event. A Tabs, a CommandBar or a
+Terminal inside a fragment is therefore as live as one in the page. Then the content fades in over the skeleton
+(instantly under reduced motion).
+
+```astro
+---
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+---
+
+<Deferred src={`${import.meta.env.BASE_URL}frag/shell-session/`} label="Shell session">
+  <Skeleton slot="skeleton" variant="code" code={'ocx lock\nlocked 3 tools\n'} />
+</Deferred>
+```
+
+```astro
+---
+// src/pages/frag/shell-session.astro: fences need MDX, so the content is a separate file.
+import FragmentLayout from '@ocx-sh/theme/layouts/Fragment.astro';
+import Content from '../../fragments/shell-session.mdx';
+---
+
+<FragmentLayout title="Shell session">
+  <Content />
+</FragmentLayout>
+```
+
+## The rules
+
+- **Size the skeleton to the content.** The skeleton and the content share one grid cell, so the box is
+  the larger of the two. A matching skeleton means nothing moves. Use a `Skeleton` composite
+  (`code`, `terminal`, `table`, `card`) built from the same source as the content, or draw one and mark
+  it `data-swap-skeleton`. The `skeleton` slot is required, or the build fails.
+- **Defer only what a visitor can do without.** With scripting off the skeleton stays and a link to the
+  fragment shows. Never defer the largest element in the first viewport, or the only copy of text a
+  crawler must see.
+- **A failure keeps the box.** A failed fetch, script import or stylesheet stops the sweep, the message and a Retry button show, and Retry tries again. `ocx:deferred:load {ok}` reports the outcome on the box.
+
+## Stories
+
+<Stories of="deferred" />
+
+## Events
+
+- `ocx:inserted` (bubbles, from the content cell): the fragment's markup is in the page. Every component script mounts from it. Listen to enhance the fragment yourself.
+- `ocx:deferred:load` `{ ok }` (bubbles, from the box): the load finished. `ok` is false on an error.
+
+## Keyboard
+
+| Key | Action |
+|---|---|
+| Enter, Space | On Retry: fetch the fragment again; focus moves to the box. |
+
+Deferred has no other keys. The loaded content brings its own.
+
+## Props
+
+<PropsTable
+  of="Deferred.astro"
+  rows={[
+    { name: 'src', type: 'string', description: 'URL of the fragment page, a frag/ route on the same origin. Mind the site base: `${import.meta.env.BASE_URL}frag/x/`.' },
+    { name: 'label', type: 'string', description: 'Names the content: the no-JS link text and the loaded region\'s accessible name.' },
+    { name: 'error', type: 'string', default: "'Could not load this.'", description: 'Shown when the fragment, its script or its stylesheet fails to load. Retry tries again.' },
+    { name: 'retry', type: 'string', default: "'Retry'", description: 'Text of the retry button.' },
+    { name: 'trigger', type: "'idle' | 'input' | 'panel'", default: "'idle'", description: 'When to load. `idle`: after the load event, or the first input. `input`: at the visitor\'s first wheel, key press, focus, pointer move or press, or touch, never before, for content below the fold. `panel`: once the Tabs panel holding the box is first shown, so an inactive tab ships nothing until picked.' },
+  ]}
+/>

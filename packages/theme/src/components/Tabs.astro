@@ -73,10 +73,12 @@ const restore =
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="tabs"]'))
+  onRoots('[data-zag-root="tabs"]', (root) => {
     mount(root, { load: () => import('./tabs.zag.mjs') });
+  });
 </script>
 
 <style is:global>

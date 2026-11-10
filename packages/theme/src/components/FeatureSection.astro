@@ -1,7 +1,9 @@
 ---
+import ScrollMount from './ui/ScrollMount.astro';
 // Alternating ("chess layout") landing-page block (WP13.4, port of ocx
 // FeatureSection.vue): `text` slot one side, default slot (the visual) the other.
-// Reveal: one-shot IntersectionObserver flag (ocx 43d3f2dc9), see feature-section.mjs.
+// Reveal: one-shot IntersectionObserver flag (ocx 43d3f2dc9), see feature-section.mjs; `reveal` swaps it
+// for the scroll-driven one of ui/scroll.mjs.
 // ponytail: the Vue original tracked scroll position every frame to drive a
 // continuous focus glow; this port keeps only its end-state transition, played once.
 interface Props {
@@ -9,28 +11,37 @@ interface Props {
   title: string;
   /** Put the visual on the left (desktop only; mobile always stacks text first). */
   flip?: boolean;
+  /** A short label above the heading. */
+  eyebrow?: string;
+  /** Flat rows instead of a card: no panel or border, equal columns, the display heading and lead sizes, a hairline between consecutive rows. */
+  plain?: boolean;
+  /** Reveal by scroll position instead of once: the section fades and rises as its top edge enters the viewport. */
+  reveal?: boolean;
 }
 
-const { title, flip = false } = Astro.props;
+const { title, flip = false, eyebrow, plain = false, reveal = false } = Astro.props;
+const more = Astro.slots.has('more') ? (await Astro.slots.render('more')).trim() : '';
 ---
 
-<section class="ocx-feature" data-flip={flip ? '' : undefined}>
+<ScrollMount />
+<section
+  class="ocx-feature"
+  data-flip={flip ? '' : undefined}
+  data-plain={plain ? '' : undefined}
+  data-scroll={reveal ? '' : undefined}
+>
   <div class="ocx-feature__text">
+    {eyebrow && <span class="ocx-feature__eyebrow">{eyebrow}</span>}
     <h2 class="ocx-feature__title">{title}</h2>
     <div class="ocx-feature__body">
       <slot name="text" />
     </div>
+    {more && <div class="ocx-feature__more" set:html={more} />}
   </div>
   <div class="ocx-feature__visual">
     <slot />
   </div>
 </section>
-
-<script>
-  import { revealOnIntersect } from './feature-section.mjs';
-
-  revealOnIntersect(document.querySelectorAll('.ocx-feature'));
-</script>
 
 <style>
   @layer ocx {
@@ -55,6 +66,22 @@ const { title, flip = false } = Astro.props;
     .ocx-feature__text,
     .ocx-feature__visual {
       margin: 0;
+    }
+
+    .ocx-feature__eyebrow {
+      display: block;
+      margin: 0 0 var(--ocx-space-3);
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-2xs);
+      font-weight: var(--ocx-font-weight-semibold);
+      letter-spacing: var(--ocx-tracking-caps);
+      text-transform: uppercase;
+      color: var(--ocx-color-accent-fg);
+    }
+    .ocx-feature__more {
+      margin: var(--ocx-space-5) 0 0;
+      font-family: var(--ocx-font-mono);
+      font-size: var(--ocx-text-sm);
     }
 
     /* Two classes: outranks the prose h2 rule (border, margins) under a :where() scope strategy. */
@@ -96,12 +123,42 @@ const { title, flip = false } = Astro.props;
       height: auto;
     }
 
+    /* `plain`: a flat row. Equal columns, no panel, the display sizes of a landing page. */
+    .ocx-feature[data-plain] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--ocx-space-9) calc(var(--ocx-space-10) + var(--ocx-space-3));
+      margin: 0;
+      padding: calc(var(--ocx-space-10) + var(--ocx-space-7)) 0;
+      background: none;
+      border: 0;
+      border-radius: 0;
+    }
+    .ocx-feature[data-plain] + .ocx-feature[data-plain] {
+      border-block-start: var(--ocx-border-width) solid var(--ocx-color-surface-subtle);
+    }
+    .ocx-feature[data-plain] .ocx-feature__title {
+      font-family: var(--ocx-font-sans);
+      font-size: var(--ocx-display-section);
+      letter-spacing: var(--ocx-tracking-display);
+      line-height: var(--ocx-lh-display);
+      text-wrap: balance;
+    }
+    .ocx-feature[data-plain] .ocx-feature__body {
+      max-inline-size: 34em;
+      font-size: var(--ocx-display-lead);
+      text-wrap: pretty;
+    }
+
     @media (width < 50rem) {
+      .ocx-feature[data-plain],
       .ocx-feature,
       .ocx-feature[data-flip] {
         grid-template-columns: minmax(0, 1fr);
         gap: var(--ocx-space-7);
         padding: var(--ocx-space-7) var(--ocx-space-6);
+      }
+      .ocx-feature[data-plain] {
+        padding-inline: 0;
       }
       .ocx-feature[data-flip] .ocx-feature__visual {
         order: 0;
@@ -125,6 +182,15 @@ const { title, flip = false } = Astro.props;
           opacity var(--_reveal) var(--ocx-ease-out),
           transform var(--_reveal) var(--ocx-ease-out);
         animation: ocx-feature-settle calc(var(--_reveal) * 2) var(--ocx-ease-out);
+      }
+    }
+
+    /* `reveal`: the scroll module sets --ocx-reveal (0..1) from the section's top edge; without it
+       the section is simply there. The shift moves only the section, not the layout around it. */
+    @media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+      .ocx-feature[data-scroll] {
+        opacity: var(--ocx-reveal, 1);
+        transform: translateY(calc((1 - var(--ocx-reveal, 1)) * var(--ocx-space-7)));
       }
     }
 

@@ -63,8 +63,9 @@ const iconSlot = items.some((it) => it.icon);
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { closeOnFocusOut } from '../../starlight/menu-focusout.mjs';
-  for (const panel of document.querySelectorAll<HTMLElement>('.ocx-ui-menu__popup')) closeOnFocusOut(panel);
+  onRoots('.ocx-ui-menu__popup', closeOnFocusOut);
 </script>
 
 <style>

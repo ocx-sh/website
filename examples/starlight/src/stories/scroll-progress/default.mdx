@@ -1,0 +1,16 @@
+---
+title: A bar that fills with the scroll
+description: "Scroll the canvas: the bar under the top edge fills from left to right as the page scrolls."
+height: 400
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollProgress from '@ocx-sh/theme/components/ScrollProgress.astro';
+
+<ScrollProgress />
+
+<div style="min-block-size: 200vh">
+  <p>Scroll down. The bar sits under the header and fills as you go.</p>
+</div>

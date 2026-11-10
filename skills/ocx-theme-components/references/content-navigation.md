@@ -5,7 +5,7 @@ block, keys, a breadcrumb trail, an in-page table of contents, an icon or the
 logo.
 Import path prefix: `@ocx-sh/theme/components/`.
 
-Contents: [Terminal](#terminal) · [ShellSession](#shellsession) · [FeatureSection](#featuresection) ·
+Contents: [Terminal](#terminal) · [ShellSession](#shellsession) · [FeatureSection](#featuresection) · [KeyValueTable](#keyvaluetable) · [TileGrid](#tilegrid) · [Scroll effects](#scroll-effects) ·
 [HubGrid](#hubgrid) ·
 [Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Sidebar](#sidebar) · [Toc](#toc) · [Icon](#icon) ·
 [Logo](#logo) · [Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
@@ -34,6 +34,7 @@ Record casts from a real command run; do not hand-write them.
 alternate by position: odd ones are commands, even ones outputs. Each keeps its
 own language (`sh`, `pwsh`, `nu` for commands; `text`, `log`, `json`, `toml` for
 outputs). A command with no output goes in the same fence as the next command.
+The `play` animation starts when the session scrolls into view.
 
 ````mdx
 <ShellSession title="Lock and build">
@@ -49,19 +50,60 @@ locked 3 tools in ocx.lock
 | Prop | Notes |
 |---|---|
 | `title` | Optional title bar, also the group's accessible name |
+| `play` | Types each command in a loop (40 ms per character), its output after it; pauses off screen, still under reduced motion; the box keeps its size |
 
 The slot holds code fences only; the build fails on an empty slot or on any
 other content. The look is a shell: each command line gets an accent `$`, each
 output line a `>`, and output text is the comment colour whatever its language.
-The markers are drawn, never copied; a `\` continuation line also gets a `$`. A
+The markers are drawn, never copied; a line after a trailing `\` continues the command and gets no `$`, its indent unchanged. A
 command copies only its own text; an output has no copy button. Do not give the fences titles: the session's title replaces theirs.
 
 ## FeatureSection
 
 **`FeatureSection.astro`**: the alternating landing block. `title` (required,
 rendered as `<h2>`), `flip` (visual on the left on desktop; mobile always
-stacks text first). Slot `text` is the copy, the default slot the visual. A
-one-shot reveal plays once when the block scrolls in.
+stacks text first). `eyebrow` is a small label above the heading. Slot `text`
+is the copy, slot `more` a link under it, the default slot the visual. A
+one-shot reveal plays once when the block scrolls in; `reveal` swaps it for a
+scroll-driven fade and rise (one shared scroll listener, none under reduced motion).
+`plain` makes the block a flat row (no card, two equal columns, the display heading and lead sizes, a
+hairline between consecutive rows) for landing pages.
+
+## KeyValueTable
+
+**`KeyValueTable.astro`**: a real `<table>` in the mono font for short pairs.
+`label` (required, the accessible name), `rows` (required, `{ key, value, highlight?, note? }`:
+`highlight` tints the row in the accent colour, `note` is trailing text after
+the value), `headers` (rows across both columns above the pairs) and `footer`
+(a quiet row below). A key, and a value with its note, each stay on one
+line; only a narrow screen wraps them, the note as one unit. Zero JS.
+
+## TileGrid
+
+**`TileGrid.astro`**: `tiles` (required, `{ title, subtitle?, icon? }`) in two
+hairline-separated columns, one on a very narrow screen; `label` (required) names the list.
+`icon` is a name from the theme's icon set (an unknown name fails the build; never
+draw one). Slot `footer` spans all columns under the tiles: a `CommandBar` or a
+command. Zero JS of its own.
+
+## Scroll effects
+
+One shared module (`ui/scroll.mjs`) runs a single passive, rAF-throttled scroll listener per page and
+writes custom properties only. The markup is always the readable state: no JS or reduced motion shows
+everything, still, at full strength. Put these below the first screen; they start readable and move once the script runs.
+
+- **`ui/ScrollMount.astro`**: internal, no props: the one page script of ScrollFade, ScrollProgress, ScrollReveal, ScrollStage and FeatureSection, which each render it, so a page makes one request for all of them. Never use it directly.
+- **`ScrollStage.astro`**: a stage pinned under the header. Default slot = the items (its children) fly in
+  from the sides in pairs, then are struck through; slot `head` = the heading above; slot `finale` appears
+  last. In an item, `data-stage-strike` gets the strike line, `data-stage-detail` is dropped on phones
+  (an item is one line there). `label` names the section.
+- **`ScrollProgress.astro`**: a thin accent bar under the header filling with the page scroll. No props;
+  decorative.
+- **`ScrollFade.astro`**: wraps a hero; fades out over 0.55 of a viewport of scrolling and drifts down by
+  `rate` (default 0.25) of the scroll offset.
+- **`ScrollReveal.astro`**: wraps a block (a closing call to action); it fades in and rises as its top edge enters
+  the viewport and hides again when scrolled back up. Prop `class`; none under reduced motion.
+- `FeatureSection reveal` uses the same module.
 
 ## HubGrid
 
@@ -107,7 +149,7 @@ own layout (Shell has no sidebar slot).
 **`Toc.astro`** is a scroll-spy table of contents for a region inside a
 page, not Starlight's page TOC. `items` (required,
 `{ id, label, depth }[]`), `label`. Plain anchors work before the machine
-starts; it starts when scrolled into view, the only `visible` trigger.
+starts; it starts when scrolled into view, one of two `visible` triggers (the other is the `play` of `ShellSession`).
 Event `ocx:toc:change`.
 
 ## Icon

@@ -1,0 +1,26 @@
+---
+title: Registries with a command underneath
+description: Six tiles in two columns, each a title and a subtitle, and a footer across both columns holding a command bar.
+height: 430
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import TileGrid from '@ocx-sh/theme/components/TileGrid.astro';
+import CommandBar from '@ocx-sh/theme/components/ui/CommandBar.astro';
+
+<TileGrid
+  label="Registries ocx works with"
+  tiles={[
+    { title: 'GitHub', subtitle: 'ghcr.io', icon: 'github' },
+    { title: 'GitLab', subtitle: 'registry.gitlab.com' },
+    { title: 'Artifactory', subtitle: 'cloud or on-prem' },
+    { title: 'Amazon ECR', subtitle: '*.ecr.aws' },
+    { title: 'Azure', subtitle: '*.azurecr.io' },
+    { title: 'Harbor', subtitle: 'self-hosted' },
+  ]}
+>
+  <Fragment slot="footer">
+    <CommandBar choices={[{ value: 'add', label: 'Add', command: 'ocx add ghcr.io/acme/deploy:2.1' }]} lang="sh" />
+  </Fragment>
+</TileGrid>

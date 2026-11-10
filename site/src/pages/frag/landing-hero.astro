@@ -1,0 +1,9 @@
+---
+// Loaded after the page by a Deferred in Landing.astro; the content is the MDX of the same name (fences need MDX).
+import FragmentLayout from '@ocx-sh/theme/layouts/Fragment.astro';
+import Content from '../../fragments/landing-hero.mdx';
+---
+
+<FragmentLayout title="Landing hero">
+  <Content />
+</FragmentLayout>

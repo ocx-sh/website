@@ -1,0 +1,37 @@
+import Tabs from '@ocx-sh/theme/components/Tabs.astro';
+import TabItem from '@ocx-sh/theme/components/TabItem.astro';
+import Deferred from '@ocx-sh/theme/components/Deferred.astro';
+import Skeleton from '@ocx-sh/theme/components/ui/Skeleton.astro';
+
+<Tabs>
+  <TabItem label="Bazel">
+    ```starlark title=""
+    # MODULE.bazel
+    bazel_dep(name = "rules_ocx", version = "0.5.0")
+    ocx = use_extension(
+        "@rules_ocx//ocx:extensions.bzl", "ocx")
+    ocx.project(
+        name = "tools",
+        ocx_toml = "//:ocx.toml",
+        ocx_lock = "//:ocx.lock",
+    )
+    use_repo(ocx, "tools")  # @tools//:node
+    ```
+    <a class="lp-more" href="/integrations/bazel/">rules_ocx guide →</a>
+  </TabItem>
+  <TabItem label="CMake">
+    <Deferred src={`${import.meta.env.BASE_URL}frag/landing-tab/cmake/`} label="CMake example" trigger="panel">
+      <Skeleton slot="skeleton" variant="code" code={'x\n'.repeat(5)} />
+    </Deferred>
+  </TabItem>
+  <TabItem label="Python">
+    <Deferred src={`${import.meta.env.BASE_URL}frag/landing-tab/python/`} label="Python example" trigger="panel">
+      <Skeleton slot="skeleton" variant="code" code={'x\n'.repeat(5)} />
+    </Deferred>
+  </TabItem>
+  <TabItem label="GitHub">
+    <Deferred src={`${import.meta.env.BASE_URL}frag/landing-tab/actions/`} label="GitHub Actions example" trigger="panel">
+      <Skeleton slot="skeleton" variant="code" code={'x\n'.repeat(4)} />
+    </Deferred>
+  </TabItem>
+</Tabs>

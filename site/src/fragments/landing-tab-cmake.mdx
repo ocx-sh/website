@@ -1,0 +1,8 @@
+```cmake title=""
+# CMakeLists.txt
+include(ocx)
+ocx_project(NAME TOOLS BINS node)
+add_custom_target(check ALL
+  COMMAND ${OCX_TOOLS_RUN} node --version VERBATIM)
+```
+<a class="lp-more" href="/integrations/cmake/">find_ocx guide →</a>

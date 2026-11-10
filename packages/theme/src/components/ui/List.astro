@@ -129,9 +129,10 @@ if (slot) for (const item of ordered) rich.set(item.value, await Astro.slots.ren
 </div>
 
 <script>
+  import { onRoots } from './roots.mjs';
   import { mount } from './zag.mjs';
 
-  for (const root of document.querySelectorAll<HTMLElement>('[data-zag-root="listbox"]')) {
+  onRoots('[data-zag-root="listbox"]', (root) => {
     const async = root.hasAttribute('data-ocx-async');
     const handle = mount(root, {
       load: () => (async ? import('./async-list.zag.mjs') : import('./listbox.zag.mjs')),
@@ -147,7 +148,7 @@ if (slot) for (const item of ordered) rich.set(item.value, await Astro.slots.ren
             if (root.dataset['zagState'] === 'live') root.dispatchEvent(new CustomEvent(type, { detail }));
           });
         });
-  }
+  });
 </script>
 
 <style is:global>

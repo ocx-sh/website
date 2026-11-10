@@ -1,0 +1,17 @@
+---
+title: A hero that fades as you scroll away
+description: "Scroll the canvas: the block fades out and drifts down, gone after about half a screen."
+height: 400
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollFade from '@ocx-sh/theme/components/ScrollFade.astro';
+
+<div style="min-block-size: 200vh">
+  <ScrollFade>
+    <h2>Same tools. Every machine.</h2>
+    <p>Scroll down and this block fades.</p>
+  </ScrollFade>
+</div>

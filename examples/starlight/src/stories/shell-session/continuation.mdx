@@ -1,0 +1,21 @@
+---
+title: Line continuation
+description: A command split with a trailing backslash; the continued line keeps its indent and gets no second $.
+height: 260
+order: 4
+block: true
+toaster: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession>
+```sh
+ocx --offline package exec \
+  ocx.sh/nodejs/node:24 -- node --version
+```
+```text
+v24.22.1
+```
+</ShellSession>

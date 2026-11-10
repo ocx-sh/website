@@ -1,0 +1,18 @@
+---
+// One inactive tab of the integration examples, loaded when its tab is first picked (fragments/landing-integrations.mdx).
+import FragmentLayout from '@ocx-sh/theme/layouts/Fragment.astro';
+import Actions from '../../../fragments/landing-tab-actions.mdx';
+import Cmake from '../../../fragments/landing-tab-cmake.mdx';
+import Python from '../../../fragments/landing-tab-python.mdx';
+
+export const getStaticPaths = () => [
+  { params: { tab: 'cmake' } },
+  { params: { tab: 'python' } },
+  { params: { tab: 'actions' } },
+];
+const Content = { cmake: Cmake, python: Python, actions: Actions }[Astro.params.tab as 'cmake'];
+---
+
+<FragmentLayout title={`Integration example: ${Astro.params.tab}`}>
+  <Content />
+</FragmentLayout>

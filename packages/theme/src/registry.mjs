@@ -61,7 +61,7 @@
  */
 
 /** Directories the root claim `/` owns besides `/` itself and top-level files (R5). */
-export const ROOT_DIRS = Object.freeze(/** @type {const} */ (['/_astro/', '/_shell/', '/pagefind/']));
+export const ROOT_DIRS = Object.freeze(/** @type {const} */ (['/_astro/', '/_shell/', '/frag/', '/pagefind/']));
 
 const TOPS = new Set(['docs', 'catalog', 'install', 'schemas', 'integrations', 'apps', 'team', 'learn']);
 const HUBS = new Set(['integrations', 'apps']);
@@ -70,6 +70,7 @@ const REPO = /^ocx-sh\/[A-Za-z0-9._-]+$/;
 const RESERVED = new Set([
   '_astro',
   '_shell',
+  'frag',
   'pagefind',
   'artifactory',
   'bunnycdn_errors',

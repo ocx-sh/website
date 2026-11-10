@@ -7,7 +7,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 // @ts-expect-error jsdom ships no types and @types/jsdom is not a dependency
 import * as jsdom from 'jsdom';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { PRE_PAINT } from '../src/components/ui/command-bar.mjs';
+import { PRE_PAINT, PRE_PAINT_CALL } from '../src/components/ui/command-bar.mjs';
 import { ssrApi } from '../src/components/ui/zag-runtime.mjs';
 import { probeErrorLines } from './astro-props.ts';
 import { domAttrs } from './zag-helpers.ts';
@@ -249,6 +249,22 @@ describe('CommandBar SSR: action slot and detect', () => {
     expect(script.compareDocumentPosition(doc.querySelector('.ocx-cmdbar__picker')!)).toBe(
       doc.DOCUMENT_POSITION_PRECEDING,
     );
+  });
+
+  it('a page of two detecting bars defines the detector once: the second bar only calls it', async () => {
+    const locals = {} as never; // one render's locals, shared by every component on the page
+    const page = async () => {
+      const html = await container.renderToString(CommandBar, { props: { choices: install, detect: true }, locals });
+      return new JSDOM(html).window.document.querySelector('.ocx-cmdbar__copy script')?.textContent;
+    };
+    expect(await page()).toBe(PRE_PAINT);
+    expect(await page()).toBe(PRE_PAINT_CALL);
+    expect(await page()).toBe(PRE_PAINT_CALL);
+    expect(PRE_PAINT_CALL.length).toBeLessThan(PRE_PAINT.length / 10);
+    // A new page render starts over: its first bar defines again.
+    expect(
+      (await render({ choices: install, detect: true })).doc.querySelector('.ocx-cmdbar__copy script')?.textContent,
+    ).toBe(PRE_PAINT);
   });
 
   it('no detect, or nothing to pick: no inline script; SSR is the first choice either way', async () => {

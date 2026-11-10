@@ -10,8 +10,9 @@ import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
 Fences alternate by position: the first, third and so on are commands, the second, fourth and so on are outputs.
 A command with no output goes in the same fence as the next command.
 The session reads like a shell: every command line starts with an accent `$`, every output line with a `>` and the whole line is in the comment colour, whatever the output's language.
-The markers are drawn, not text: they are neither selected nor copied, and a `\` continuation line gets a `$` too.
+The markers are drawn, not text: they are neither selected nor copied. A line after a trailing `\` continues the command: it keeps its indent and gets no `$`.
 A command has a copy button, which copies only the command; an output has none.
+With `play` the session types itself: the player loads when the session first scrolls into view, so keep the lines short enough not to scroll sideways.
 The slot holds code fences and nothing else; the build fails on anything more.
 
 <ShellSession title="Lock and build">
@@ -32,6 +33,28 @@ locked 3 tools in ocx.lock
 <PropsTable
   of="ShellSession.astro"
   rows={[
-    { name: 'title', type: 'string', description: 'Title bar text, also the accessible name of the session. Without it there is no title bar.' },
+    {
+      name: 'play',
+      type: 'boolean',
+      default: 'false',
+      description:
+        'Type each command in a loop at 40 ms per character, its output appearing after it. Every line is laid out from the start, so the box never changes size; the loop pauses while off screen or the tab is hidden. Under reduced motion it shows the final state.',
+    },
+    {
+      name: 'title',
+      type: 'string',
+      description: 'Title bar text, also the accessible name of the session. Without it there is no title bar.',
+    },
   ]}
 />
+
+## Events
+
+None. The session fires no events; `play` only starts the typing loop.
+
+## Keyboard
+
+No APG widget pattern applies. A command's copy button is a plain button in the tab order.
+
+- <kbd>Tab</kbd>: Next command's copy button.
+- <kbd>Enter</kbd> or <kbd>Space</kbd>: Copy that command.

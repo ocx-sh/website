@@ -1,4 +1,4 @@
-// C-230 / S-109: the sidebar's nested groups on Zag collapsible, persisted as Starlight does.
+// C-230 / S-109: the sidebar's nested groups on one delegated controller (no Zag), persisted as Starlight does.
 // The probe pages carry a nested sidebar (examples/starlight/src/probe-sidebar.ts), after the
 // example's own top-level "Components" group: the flat top-level group "Probes" holds "Fixtures"
 // (the probe pages, so open on them), "Gallery" (collapsed) and, inside it, "Deep" (collapsed). Desktop only: below 50em the sidebar is the
@@ -106,10 +106,10 @@ test.describe('C-230 JS off', () => {
   });
 });
 
-test('C-230: the collapsible chunk fails → closed groups show their links (no page becomes unreachable)', async ({
+test('C-230: the sidebar controller chunk fails → closed groups show their links (no page becomes unreachable)', async ({
   page,
 }) => {
-  await page.route(/collapsible\.zag/, (route) => route.abort());
+  await page.route(/sidebar-controller/, (route) => route.abort());
   await page.goto(LONG);
   await expect(content(page, 'Gallery')).toBeHidden();
   await trigger(page, 'Gallery').hover();
@@ -129,10 +129,10 @@ test('C-130c: first paint is final: the groups (restored state included) look th
     await page.evaluate(() => document.fonts.ready.then(() => undefined));
     return page.locator(`${PANE} .top-level`).screenshot({ animations: 'disabled' });
   };
-  await page.route(/collapsible\.zag/, (route) => route.abort());
+  await page.route(/sidebar-controller/, (route) => route.abort());
   await page.goto('/docs/probe/cascade/');
   const before = await shot();
-  await page.unroute(/collapsible\.zag/);
+  await page.unroute(/sidebar-controller/);
   await page.reload();
   for (const name of ['Fixtures', 'Gallery', 'Deep']) {
     await group(page, name).dispatchEvent('pointerenter');

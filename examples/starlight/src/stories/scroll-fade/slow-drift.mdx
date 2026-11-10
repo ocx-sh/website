@@ -1,0 +1,18 @@
+---
+title: A slower drift
+description: With a smaller rate the block follows less of the scroll offset, so it trails the page less; it still fades out at the same distance.
+height: 400
+order: 1
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollFade from '@ocx-sh/theme/components/ScrollFade.astro';
+
+<div style="min-block-size: 200vh">
+  <ScrollFade rate={0.05}>
+    <h2>Same tools. Every machine.</h2>
+    <p>Scroll down: this block fades but barely drifts.</p>
+  </ScrollFade>
+</div>

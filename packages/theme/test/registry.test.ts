@@ -149,8 +149,8 @@ describe('C-004 claim uniqueness and nesting', () => {
     expect(withPrefix(at(validate(n), i), 'R4')).not.toEqual([]);
   });
 
-  it('C-004: ROOT_DIRS is exactly /_astro/, /_shell/ and /pagefind/, frozen', () => {
-    expect(ROOT_DIRS).toEqual(['/_astro/', '/_shell/', '/pagefind/']);
+  it('C-004: ROOT_DIRS is exactly /_astro/, /_shell/, /frag/ and /pagefind/, frozen', () => {
+    expect(ROOT_DIRS).toEqual(['/_astro/', '/_shell/', '/frag/', '/pagefind/']);
     expect(Object.isFrozen(ROOT_DIRS)).toBe(true);
   });
 

@@ -1,0 +1,11 @@
+@layer ocx {
+  .ocx-shell-session .code[data-cur] {
+    justify-self: start;
+    padding-inline-end: calc(var(--ec-codePadInl) + var(--ocx-space-3));
+    background: linear-gradient(var(--ocx-color-fg), var(--ocx-color-fg)) no-repeat right var(--ec-codePadInl) center / var(--ocx-space-3) 1em;
+    animation: ocx-shell-cursor calc(var(--ocx-duration-slow) * 4) linear infinite;
+  }
+  @keyframes ocx-shell-cursor {
+    50% { background-size: 0 0; }
+  }
+}

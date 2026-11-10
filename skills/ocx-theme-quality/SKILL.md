@@ -40,9 +40,16 @@ Start from the theme's content-page budget and only ratchet down:
 | Script before any input, gzip | 11 KiB |
 | Script after touching every widget, gzip, Pagefind excluded | 64 KiB |
 | Pagefind scripts, gzip | 58 KiB |
-| Total transfer | 147 KiB |
+| Total transfer | 126 KiB |
+| Font transfer | 42,000 bytes (Lighthouse's simulated LCP drops a step at about 42.3 KB; four core files are 40.5 KB) |
+| Stylesheet transfer | 38 KiB |
 | DOM elements | 800 |
 | JS heap | 4 MiB |
+
+Two more gates hold what every page pays before first paint. `fontBytes` and `cssBytes` are Lighthouse
+assertions per page class. `scripts/css/shared-sheet.mjs` (part of `task css`) caps the gzip size of the blocking
+sheets every page loads. When one trips, move rules into the sheet of the component that needs them, or keep
+fonts to the preloaded core. Raising a cap needs a written Spec Delta.
 
 A budget goes up only with a written reason in the commit (what grew, why it
 is worth it, the new measured value). Page HTML is the budget most often
@@ -58,6 +65,10 @@ page.
   a large library to a page script. Accepted exception: `ProseCodeCopy` inserts its
   "Copy code" buttons on load (about 1 KB, they must be visible); its clipboard and toast
   code still load on first click.
+- **Deferred parts.** Content that is heavy and not essential (a terminal session, tabbed
+  samples) loads through `Deferred` from a `frag/` page, with a skeleton of the same box. Check
+  the skeleton and the loaded box agree within 1 px at 375, 768 and 1440 px with zero layout
+  shift, and that the part is not the LCP element. Below-the-fold content uses `trigger="input"` (loads at the first wheel, key, pointer or touch), an inactive tab `trigger="panel"`, so the first load does not pay for it.
 - **Reserved boxes.** Every image has `width` and `height` or an
   `aspect-ratio`; a `Terminal` plays a cast under `public/` (its header sizes
   the box) or has `cols` and `rows`; late content sits in a
@@ -93,6 +104,11 @@ from `site/`; copy it, do not reinvent it.
 - `HTML_GZ_MAX` is 14,200 bytes per page. A long generated reference page
   (Stardoc, Griffe, Sphinx) blows it: split it into several pages in the port
   script, never raise the cap.
+- Leave `frag/` pages (`/frag/sidebar/*`, other `Deferred` fragments) out of page discovery: they are bare,
+  `noindex` documents that fail SEO, accessibility and best-practices by design.
+- A content page with one component (`Terminal`, `Tree`) must still fit the `content` script budget
+  (pre-interaction JS, 11 KiB): the theme's `probe/terminal/` page holds that, so check the first such page
+  of your site against it.
 - `404.html` is not auditable under `astro preview`: the server answers it with
   status 404, so leave it out of page discovery.
 - After pinning the theme as a git dependency, refresh the pnpm lockfile

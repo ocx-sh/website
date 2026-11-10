@@ -3,6 +3,7 @@
 import { ExpressiveCode, ExpressiveCodeTheme } from '@astrojs/starlight/expressive-code';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { slimTokens } from '../src/components/shell-session.mjs';
 import { EXPRESSIVE_CODE } from '../src/starlight/ec.mjs';
 
 type Component = Parameters<AstroContainer['renderToString']>[0];
@@ -51,6 +52,13 @@ const entries = (html: string) =>
 const OPEN = '<div class="expressive-code">';
 
 describe('ShellSession', () => {
+  it('marks a line after a trailing backslash as a continuation, in commands only', async () => {
+    const cmd = await fence('ocx --offline package exec \\\n  ocx.sh/nodejs/node:24 -- node --version\nocx lock', 'sh');
+    const out = await render([cmd, await fence('a \\\nb', 'text')].join('\n'));
+    const lines = [...out.matchAll(/<div( data-ocx-continued)? class="ec-line/g)].map((m) => Boolean(m[1]));
+    expect(lines).toEqual([false, true, false, false, false]);
+  });
+
   it('marks fences by position: odd are commands, even are outputs', async () => {
     const slot = [
       await fence('ocx lock', 'sh'),
@@ -64,7 +72,7 @@ describe('ShellSession', () => {
     ]);
   });
 
-  it('changes only the opening tags: data-code, markup and the order of the blocks survive byte for byte', async () => {
+  it('changes only the opening tags (and slims the tokens): data-code, markup and the order of the blocks survive', async () => {
     // `>`, `<` and quotes inside data-code are not markup.
     const command = await fence('echo "<div class=\\"expressive-code\\"> a > b"', 'sh');
     const slot = [command, await fence('{ "ok": true }', 'json')].join('\n');
@@ -73,7 +81,8 @@ describe('ShellSession', () => {
     expect(entries(out)).toHaveLength(2);
     const marked = (kind: string, label: string) =>
       `<div data-ocx-session="${kind}" role="group" aria-label="${label}" class="expressive-code">`;
-    expect(out).toContain(slot.replace(OPEN, marked('command', 'Command')).replace(OPEN, marked('output', 'Output')));
+    const slim = slimTokens(slot);
+    expect(out).toContain(slim.replace(OPEN, marked('command', 'Command')).replace(OPEN, marked('output', 'Output')));
   });
 
   it('takes a single fence, and a hoisted stylesheet link and module script beside the blocks', async () => {
@@ -89,6 +98,22 @@ describe('ShellSession', () => {
     const plain = await render(slot);
     expect(plain).toContain('aria-label="Shell session"');
     expect(plain).not.toContain('ocx-shell-session-header');
+  });
+
+  it('slims the tokens: fewer bytes, the same text', async () => {
+    const slot = await fence('ocx exec -- node --version', 'sh');
+    const out = await render(slot);
+    const text = (h: string) => h.replace(/<[^>]*>/g, '');
+    expect(out.match(/<span style/g)?.length).toBeLessThan(slot.match(/<span style/g)?.length ?? 0);
+    expect(text(out.split('</pre>')[0] ?? '')).toContain('ocx exec -- node --version');
+  });
+
+  it('`play` marks the root for the player; without it there is no marker', async () => {
+    const slot = await fence('ocx lock', 'sh');
+    expect(await render(slot, { play: true })).toContain(
+      'class="ocx-shell-session not-content" role="group" aria-label="Shell session" data-ocx-play',
+    );
+    expect(await render(slot)).not.toContain('data-ocx-play');
   });
 
   it.each([

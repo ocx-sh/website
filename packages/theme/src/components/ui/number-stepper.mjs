@@ -44,8 +44,16 @@ export function install(doc = document) {
   doc.addEventListener('click', onClick);
   doc.addEventListener('input', onValue);
   doc.addEventListener('change', onValue);
-  for (const button of doc.querySelectorAll(STEP)) {
-    const input = inputFor(button);
-    if (input) sync(input);
-  }
+}
+
+/** The step buttons the page script syncs once each (`onRoots`). */
+export const STEP_BUTTON = STEP;
+
+/**
+ * Disables a step button that starts at its bound.
+ * @param {Element} button
+ */
+export function syncButton(button) {
+  const input = inputFor(button);
+  if (input) sync(input);
 }

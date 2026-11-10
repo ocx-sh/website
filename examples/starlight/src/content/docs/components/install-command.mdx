@@ -30,3 +30,13 @@ whose tooltip names it, so the command keeps its width on a phone.
     { name: 'docs', type: 'boolean', default: 'false', description: 'Adds an "Install guide" link to /install/: text at the end of the tab row, a docs icon button with a tooltip at the end of the bar.' },
   ]}
 />
+
+`InstallBar` is the bar alone (the same props, without `variant`). A page that shows only the bar imports it
+instead, so Tabs' stylesheet stays out of that page's head.
+
+<PropsTable
+  of="InstallBar.astro"
+  rows={[
+    { name: 'docs', type: 'boolean', default: 'false', description: 'Adds a docs icon button with a tooltip "Install guide" at the end of the bar.' },
+  ]}
+/>

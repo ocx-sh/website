@@ -52,7 +52,9 @@ const api = ssrApi(machine, connect, { ...props, id });
 </div>
 
 <script>
+  import { onRoots } from './ui/roots.mjs';
   import { mount } from './ui/zag.mjs';
-  for (const root of document.querySelectorAll<HTMLElement>('.ocx-collapsible[data-zag-root]'))
+  onRoots('.ocx-collapsible[data-zag-root]', (root) => {
     mount(root, { load: () => import('./collapsible.zag.mjs') });
+  });
 </script>

@@ -1,0 +1,28 @@
+---
+title: Flat rows
+description: With plain, the section is a flat row, not a card; two rows in a column keep a hairline between them.
+height: 980
+order: 3
+block: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import FeatureSection from '@ocx-sh/theme/components/FeatureSection.astro';
+
+<FeatureSection title="Locked once. Same version on every machine." eyebrow="01 · one lock" plain>
+  <Fragment slot="text">
+
+One ocx.lock covers every platform, so the Linux CI runner, the Mac laptop and Windows match.
+
+  </Fragment>
+  <img class="feature-img" src="/docs/favicon.svg" alt="The ocx logo" width="240" height="240" />
+</FeatureSection>
+
+<FeatureSection title="Ship tools where your images live." eyebrow="02 · no new infrastructure" flip plain>
+  <Fragment slot="text">
+
+Push tools next to your container images.
+
+  </Fragment>
+  <img class="feature-img" src="/docs/favicon.svg" alt="The ocx logo" width="240" height="240" />
+</FeatureSection>

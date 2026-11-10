@@ -46,7 +46,10 @@ const glyph =
 </span>
 
 <script>
-  for (const img of document.querySelectorAll<HTMLImageElement>('.ocx-avatar__image')) {
+  import { onRoots } from './roots.mjs';
+
+  onRoots('.ocx-avatar__image', (el) => {
+    const img = el as HTMLImageElement;
     const report = () => {
       const status = img.naturalWidth ? 'loaded' : 'error';
       img.hidden = status === 'error';
@@ -55,7 +58,7 @@ const glyph =
     img.addEventListener('load', report);
     img.addEventListener('error', report);
     if (img.complete) report();
-  }
+  });
 </script>
 
 <style>

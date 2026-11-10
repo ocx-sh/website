@@ -226,6 +226,7 @@
   "footer": [
     { "label": "discord", "href": "https://discord.gg/mT2UCF8CVe" },
     { "label": "roadmap", "href": "/docs/roadmap/" },
-    { "label": "security", "href": "/docs/security/" }
+    { "label": "security", "href": "/docs/security/" },
+    { "label": "team", "href": "/team/" }
   ]
 }

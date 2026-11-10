@@ -1,0 +1,30 @@
+---
+title: Items only
+description: Without a head or a finale the stage is the items alone, labelled through the label prop.
+height: 520
+order: 1
+block: true
+scrolls: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ScrollStage from '@ocx-sh/theme/components/ScrollStage.astro';
+
+{/* A story has no header, so the stage pins at the top of the canvas and starts at progress 0. */}
+
+<style is:global>{`@layer ocx { :root:root { --ocx-header-height: 0px; } }`}</style>
+
+<ScrollStage label="Platforms">
+  <div>
+    <span>linux</span>
+    <span>amd64, arm64</span>
+  </div>
+  <div>
+    <span>macOS</span>
+    <span>arm64</span>
+  </div>
+  <div>
+    <span>Windows</span>
+    <span>amd64</span>
+  </div>
+</ScrollStage>

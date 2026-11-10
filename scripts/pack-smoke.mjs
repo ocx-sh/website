@@ -68,6 +68,7 @@ const EXPORT_KEYS = [
   './shell',
   './shell-rev',
   './shell-render',
+  './highlight',
   './copy',
   './logo-tile',
   './command-palette',
@@ -317,6 +318,8 @@ function main() {
       'src/stories',
       'src/pages/stories',
       'src/pages/shell',
+      'src/pages/frag',
+      'src/fragments',
       'public',
     ])
       // LivePreviews.astro serves /docs/previews/ (not copied) and imports a repo script by path.

@@ -1,7 +1,7 @@
 ---
 // Starlight `TableOfContents` override: the default TOC plus "edit this page ↗"
 // (only with `editLink.baseUrl`) and "report an issue ↗" (C-027).
-import Default from '@astrojs/starlight/components/TableOfContents.astro';
+import TableOfContentsList from 'virtual:ocx-theme/starlight/TableOfContents/TableOfContentsList.astro';
 import nav from '../nav.json';
 import { claimFor } from '../nav.mjs';
 import { probe } from '../components/toc-probe.mjs';
@@ -31,7 +31,17 @@ const TAIL =
   'Object.defineProperty(t,"current",{set:g});addEventListener("scroll",g);addEventListener("resize",g);g()}))';
 ---
 
-<Default />
+{toc && (
+  <starlight-toc data-min-h={toc.minHeadingLevel} data-max-h={toc.maxHeadingLevel}>
+    <nav aria-labelledby="starlight__on-this-page">
+      <h2 id="starlight__on-this-page">{Astro.locals.t('tableOfContents.onThisPage')}</h2>
+      <TableOfContentsList toc={toc.items} />
+    </nav>
+  </starlight-toc>
+)}
+<script>
+  import './toc-elements.mjs';
+</script>
 {toc && <script is:inline set:html={TAIL} />}
 <ul class="ocx-toc-links">
   {editUrl && (
