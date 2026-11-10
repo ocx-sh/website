@@ -249,6 +249,7 @@ test.describe('C-161 Select (select.zag)', () => {
     await page.keyboard.press('Enter');
     await expect(listbox(page)).toBeVisible();
     await expect(listbox(page).getByRole('option', { name: 'linux/amd64' })).toHaveAttribute('data-highlighted', '');
+    await expect(listbox(page)).toBeFocused(); // Zag moves focus to the list a frame after opening
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await expect(listbox(page)).toBeHidden();
