@@ -131,7 +131,10 @@ overriding any of these; it lists merge rules and the exact override set.
   TableOfContents, ThemeSelect, ThemeProvider, MobileMenuFooter,
   MarkdownContent, Search, Sidebar, MobileMenuToggle, PageFrame). Your keys win.
 - Fonts: IBM Plex Sans and Mono (400, 600) through the Astro Fonts API with
-  metric-matched fallbacks. Add no font of your own.
+  metric-matched fallbacks. Four small core files (ASCII plus common punctuation) are
+  preloaded; the rest of latin loads on demand through the `OCX Plex * Rest` families.
+  `fonts.css` and the Starlight path ship latin only; other scripts render in the system font.
+  Add no font of your own.
 - `expressiveCode`: the theme's code frame and token colours, merged under yours.
 - `pagefind.mergeIndex`: every other `search: true` claim, so one search box
   finds every section.
@@ -206,7 +209,7 @@ same check.
 ## Other generators
 
 The VitePress catalog uses `@ocx-sh/theme/vitepress` (CSS-only adapter) plus
-`@ocx-sh/theme/fonts.css` (plain `@font-face`, since it has no Astro Fonts API).
+`@ocx-sh/theme/fonts.css` (plain `@font-face` for the core files, importing the on-demand rest faces; it has no Astro Fonts API).
 Header data for a non-Starlight site: `@ocx-sh/theme/nav.json` and the helpers
 in `@ocx-sh/theme/nav`; the logo is `@ocx-sh/theme/logo.svg` (inline it, never
 an `<img>`). On an Astro page, render it with `@ocx-sh/theme/components/ui/Logo.astro`
@@ -216,7 +219,7 @@ instead. No mdBook or MkDocs adapter exists.
 
 `@ocx-sh/theme/layouts/Shell.astro` is the whole HTML document for an Astro
 site without Starlight: pre-paint theme script, `tokens.css`, `base.css`,
-`fonts.css` (plain `@font-face`, no Fonts API config needed; the four upright faces are
+`fonts.css` (plain `@font-face`, no Fonts API config needed; the four core faces are
 preloaded, and the metric-matched fallbacks in `base.css` keep layout from shifting), the header, `<main id="main">`
 and the footer. Set `site` and `base` in Astro config; Shell validates no claim,
 `site` or `trailingSlash` (the Starlight plugin and `ocx-site check` do).

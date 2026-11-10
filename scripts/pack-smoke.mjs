@@ -98,7 +98,7 @@ const ZAG_WHEN = {
  * Pure and side-effect-free so it is unit-testable without packing a real
  * tarball (see pack-smoke.test.ts).
  *
- * @param {{ exports?: ExportsMap; bin?: Record<string, string> }} pkgJson
+ * @param {{ exports?: ExportsMap; bin?: Record<string, string>; dependencies?: Record<string, string> }} pkgJson
  * @param {readonly string[]} files paths present in the installed tarball, relative to its root
  * @returns {string[]} problems found; empty array means the check passed
  */
@@ -126,6 +126,19 @@ export function checkExports(pkgJson, files) {
   for (const [name, target] of Object.entries(pkgJson.bin ?? {}))
     if (!resolves(target)) problems.push(`bin ${name}: ${target} is not in the tarball`);
   if (!pkgJson.bin?.['ocx-site']) problems.push('bin ocx-site is missing');
+  // The package ships its own Plex subsets (src/fonts/); @fontsource is a devDependency, never installed by a consumer.
+  const shipped = [
+    ...['sans', 'mono'].flatMap((f) =>
+      [400, 600].flatMap((w) => ['core', 'rest'].map((p) => `src/fonts/plex-${f}-${w}-${p}.woff2`)),
+    ),
+    'src/fonts/rest.css',
+    'src/fonts/LICENSE-ibm-plex-sans.txt',
+    'src/fonts/LICENSE-ibm-plex-mono.txt',
+  ];
+  for (const f of shipped) if (!present.has(f)) problems.push(`font file ${f} is not in the tarball`);
+  for (const d of Object.keys(pkgJson.dependencies ?? {}))
+    if (d.startsWith('@fontsource/'))
+      problems.push(`dependency ${d}: fonts ship in src/fonts/, make it a devDependency`);
   for (const f of files)
     if (/\.(ts|mts|cts)$/.test(f) && !/\.d\.(ts|mts|cts)$/.test(f)) problems.push(`.ts source in tarball: ${f}`);
   return problems;

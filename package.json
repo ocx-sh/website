@@ -18,6 +18,7 @@
     "@types/pngjs": "^6.0.5",
     "astro": "7.3.5",
     "chrome-launcher": "1.2.1",
+    "entities": "8.1.0",
     "eslint": "^10.9.0",
     "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-oxlint": "^1.86.0",

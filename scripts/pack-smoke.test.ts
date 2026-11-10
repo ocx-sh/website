@@ -48,6 +48,12 @@ const FILES = [
   'src/base.css',
   'src/fonts.css',
   'src/starlight/starlight.css',
+  ...['sans', 'mono'].flatMap((f) =>
+    [400, 600].flatMap((w) => ['core', 'rest'].map((p) => `src/fonts/plex-${f}-${w}-${p}.woff2`)),
+  ),
+  'src/fonts/rest.css',
+  'src/fonts/LICENSE-ibm-plex-sans.txt',
+  'src/fonts/LICENSE-ibm-plex-mono.txt',
   'src/starlight/index.mjs',
   'src/starlight/index.d.mts',
   'src/starlight/Header.astro',
@@ -100,6 +106,17 @@ test('C-031 an extra or missing export key is flagged', () => {
   const missing = pkg();
   delete missing.exports['./logo.svg'];
   expect(checkExports(missing, FILES).join('\n')).toContain('./logo.svg');
+});
+
+test('the tarball ships the generated Plex files and no @fontsource dependency', () => {
+  expect(
+    checkExports(
+      pkg(),
+      FILES.filter((f) => f !== 'src/fonts/plex-sans-400-rest.woff2'),
+    ).join('\n'),
+  ).toContain('plex-sans-400-rest.woff2');
+  const p = { ...pkg(), dependencies: { '@fontsource/ibm-plex-sans': '5.3.0' } };
+  expect(checkExports(p, FILES).join('\n')).toContain('@fontsource/ibm-plex-sans');
 });
 
 test("C-031 an export key whose target isn't in the tarball's file list is flagged", () => {

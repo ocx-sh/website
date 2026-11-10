@@ -16,6 +16,8 @@
 @import './components/ui/loader.css';
 @import './components/ui/skeleton.css';
 @import './components/ui/collapsible.css';
+/* On-demand rest of IBM Plex latin (never preloaded). */
+@import './fonts/rest.css';
 
 /* Metric fallbacks for IBM Plex: shown until the web font swaps in, sized so the
  * swap does not shift layout. Every local() in a set shares one advance-width

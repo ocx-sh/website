@@ -14,7 +14,7 @@ replaces the theme's for that slot only.
 
 | Slot | What the theme's version does |
 |---|---|
-| `Head` | Starlight's head plus preloads of the four upright font faces, and `html[data-platform]` set before paint (Kbd reads it) |
+| `Head` | Starlight's head plus preloads of the four core font files, and `html[data-platform]` set before paint (Kbd reads it) |
 | `Header` | Brand, sections, ecosystem mega-menu, install button, GitHub and theme icons; rendered at build time from `nav.json` |
 | `Footer` | `nav.json` footer links, licence and copyright line |
 | `PageTitle` | Breadcrumb trail (the `breadcrumbs` option) and the H1 |
@@ -52,14 +52,28 @@ stylesheet would inline into every page. Style Starlight markup from your own
 
 ## Fonts
 
-The plugin registers two Fontsource families through the Astro Fonts API:
+The plugin registers two families through the Astro Fonts API, from the package's own
+generated subsets of the latin Plex files (`src/fonts/`):
 
 | Family | Weights | CSS variable |
 |---|---|---|
 | IBM Plex Sans | 400, 600 | `--ocx-font-sans` |
 | IBM Plex Mono | 400, 600 | `--ocx-font-mono` |
 
-Fallbacks lead with the metric-matched `OCX Sans Fallback` and
+Only a small core is registered and preloaded: four files, 39 KB together, with ASCII
+and common punctuation (`· © “ ” ‘ ’ – — … × − ↑ ↓` and the no-break space; `® ™ ° •` load on demand). The rest of latin lives in
+the `OCX Plex Sans Rest` and `OCX Plex Mono Rest` families (`fonts/rest.css`, imported by
+`base.css`, never preloaded). They follow Plex in the font stacks, so a character outside
+the core renders in Plex once its rest file arrives. Kerning cannot span the boundary
+between a core and a rest glyph. The files are generated: change the core list in
+`packages/theme/scripts/generate-fonts.mjs`, run `pnpm --filter @ocx-sh/theme fonts` and
+commit; never edit `src/fonts/` by hand. The guard `scripts/css/core-glyphs.mjs` fails a
+built page whose text needs a rest character, so the core grows on purpose.
+
+`fonts.css` and the Starlight path ship latin; other scripts (Cyrillic, Greek, Vietnamese, extended Latin) render in the system font.
+Frac, dnom and numr (diagonal fractions) are not in the subsets.
+
+Fallbacks follow the Rest family and lead with the metric-matched `OCX Sans Fallback` and
 `OCX Mono Fallback` faces from `base.css`, so the swap causes no layout shift.
 Use the variables, never a family name. Do not add a third family: every
 font file counts against the page weight budget. Only upright faces ship:

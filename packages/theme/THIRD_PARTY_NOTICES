@@ -168,3 +168,11 @@ If the Work includes a "NOTICE" text file as part of its distribution, then any 
 9. Accepting Warranty or Additional Liability. While redistributing the Work or Derivative Works thereof, You may choose to offer, and charge a fee for, acceptance of support, warranty, indemnity, or other liability obligations and/or rights consistent with this License. However, in accepting such obligations, You may act only on Your own behalf and on Your sole responsibility, not on behalf of any other Contributor, and only if You agree to indemnify, defend, and hold each Contributor harmless for any liability incurred by, or claims asserted against, such Contributor by reason of your accepting any such warranty or additional liability.
 
 END OF TERMS AND CONDITIONS
+
+--------------------------------------------------------------------------------
+IBM Plex Sans and IBM Plex Mono
+  Used in: src/fonts/plex-*.woff2 (the latin subsets, split into a preloaded core and an on-demand rest)
+  Source:  https://github.com/IBM/plex (via @fontsource/ibm-plex-sans and @fontsource/ibm-plex-mono 5.3.0)
+  Copyright: 2019 IBM Corp.
+  License: SIL Open Font License 1.1, no Reserved Font Name (full texts in src/fonts/LICENSE-ibm-plex-sans.txt and LICENSE-ibm-plex-mono.txt)
+  Changes: reduced to the latin subset (Cyrillic, Greek, Vietnamese and extended Latin are not shipped) and its codepoints and the layout features the theme uses (scripts/generate-fonts.mjs); outlines and hinting are unchanged.

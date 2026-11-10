@@ -41,6 +41,8 @@ and open questions. Read it before any design or code change.** Research trail:
   chosen 2026-09-28: Lucide (UI), Simple Icons (OS, brand, shells) and a few custom glyphs. Add or
   change one in `NAME_MAP` of `packages/theme/scripts/generate-icons.mjs`, rerun
   `pnpm --filter @ocx-sh/theme icons`, and commit `icons.generated.mjs`; never edit it by hand.
+- Fonts are generated: change the core list in `generate-fonts.mjs`, rerun `pnpm --filter @ocx-sh/theme fonts`, commit; never edit
+  `packages/theme/src/fonts/` by hand.
 - **Hard rule: an AI agent never draws, redraws or edits icon paths.** Every icon comes from
   Lucide or Simple Icons. A custom glyph is allowed only for a brand missing from Simple Icons (or
   over the 2 KB cap there), copied verbatim from a licensed upstream file whose source URL and
