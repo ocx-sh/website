@@ -49,7 +49,7 @@ CycleButton states, and `TabItem` (`shell`, `powershell`, `nushell`, `fish`,
 
 Never place an icon as `<img src="….svg">`, a CSS `url()` or a
 `background-image`: those load late and flicker. Colour comes from the
-parent's `color` (a token); an icon never carries a colour of its own.
+parent's `color` (a token); an icon never carries a colour of its own. An inline data-URI `mask` is allowed only where the DOM cannot hold an `<svg>` (Pagefind's icons, the sidebar group trigger's chevron), and a test pins it to the registry path.
 
 ## What the registry holds
 

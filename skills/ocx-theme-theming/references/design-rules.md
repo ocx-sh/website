@@ -76,7 +76,8 @@ with images blocked; the e2e suite enforces it.
   raster images through Astro `<Image>` or `<Picture>` with responsive widths
   and avif or webp. Load styles for first-paint content before that content.
 - Don't: use an `<img>` or CSS `url()` for a UI icon or the logo (it loads
-  late). Don't leave an image without a reserved box. Don't put styles for
+  late; the one exception is an inline data-URI `mask` where the DOM cannot hold an `<svg>`: Pagefind's icons and
+  the sidebar group chevron, pinned to the registry path by a test). Don't leave an image without a reserved box. Don't put styles for
   first-paint content inside that content.
 
 ## Icons

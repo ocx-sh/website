@@ -141,7 +141,7 @@ page), not for Starlight, which renders its own through the plugin. `groups`
 `label` renders no heading, `href` links the heading), `label` (landmark name,
 default `Documentation`). The page sets `current` on its own item, which gets
 `aria-current="page"`. Zero JS and no request: it is plain server-rendered
-links in the Starlight sidebar's look. Place it beside `<main>` content in your
+links in the Starlight sidebar's look (strong heading, muted links, the current page semibold with a start bar). Place it beside `<main>` content in your
 own layout (Shell has no sidebar slot).
 
 ## Toc

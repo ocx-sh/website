@@ -63,7 +63,7 @@ Autonomy: never prompt; the goal file is the approval).
 | D-Z2 | ~20 kB JS per docs page, 19.6 kB of it the header, loaded on first hover/focus? | research §3 sizes; spec review: once search (dialog), mobile drawer, toast and sidebar collapsible are Zag too, a page where the reader touches everything loads ~65–70 kB | **Accepted, restated**: nothing loads before interaction (C-113); the header costs ~20 kB on first hover/focus; a content page after every chrome widget is touched stays ≤ 90 kB gz (C-110). Lighthouse 100×4 on every page |
 | D-Z3 | Code-token colour for variables/keys: coral or purple? | design export has no purple; coral is the single interactive colour (HANDOVER) | **Coral** (current). Z13 asserts `--ocx-color-code-variable` stays coral |
 | D-Z4 | Research §1 keeps search, sidebar and mobile menu Starlight-owned; the goal adopts them | discussion › Requirements is the later, ratified source and names all three. Starlight 0.42.4 facts (Discover): `MobileMenuToggle` is a bare `popovertarget="starlight__sidebar"` button; the pane is `<sl-sidebar-pane popover>` in `PageFrame`, which sets `popover` to `null` at ≥ 50em and makes `.main-frame` inert while open; `Search` is `<site-search>` with a native `<dialog>`, a constructor-bound Ctrl/⌘K listener and Pagefind UI imported at idle | **Adopt as overrides**. Hooks kept: `#starlight__sidebar`, `.sl-menu-button`, `#starlight__search`, `body[data-search-modal-open]`, the ≥ 50em static pane, sidebar open-state and scroll persistence |
-| D-Z5 | Sidebar: Zag `tree-view` or `collapsible`? Or keep Starlight's `<details>` (spec-review cut proposal)? | APG: `role=tree` is for app hierarchies; site nav is disclosure navigation. The goal names the sidebar explicitly, so keeping `<details>` would leave that item unmet | **collapsible** per nested group; top level stays the flat mono-caps list of the design. Cut proposal rejected for the reason above |
+| D-Z5 | Sidebar: Zag `tree-view` or `collapsible`? Or keep Starlight's `<details>` (spec-review cut proposal)? | APG: `role=tree` is for app hierarchies; site nav is disclosure navigation. The goal names the sidebar explicitly, so keeping `<details>` would leave that item unmet | **collapsible** per nested group; top level stays the flat mono-caps list of the design (nested groups gain a chevron and an indent, owner decision 2026-11-13). Cut proposal rejected for the reason above |
 | D-Z6 | Mobile menu: `dialog` or `drawer`? | drawer 27.6 kB, adds swipe-to-close; loaded only on first tap, so no Lighthouse cost | **drawer**, via `MobileMenuToggle` + `PageFrame` overrides |
 | D-Z7 | Checkbox/switch/radio: discussion says native checkbox; Tier A lists the machines | Zag's checkbox/switch/radio-group keep a real `<input>` as the form control | **Zag-backed with the native input as source of truth** (works without JS, submits in forms). `Choice` keeps its API; `RadioGroup` is new |
 | D-Z8 | WP14 `Menu` (nav links) vs Zag `menu` | APG forbids `role=menu` for site navigation | `Menu.astro` stays the nav disclosure; new **`ActionMenu.astro`** on Zag `menu` (incl. context mode) |
@@ -318,7 +318,8 @@ IDs start at C-101 / S-101 to stay clear of design §7 (C-001…C-072).
   `CopyButton`; every behaviour asserted by `components-dependency-explorer.*` still holds.
 
 ### Sidebar and mobile menu — Z12
-- **C-230 `Sidebar.astro`**: top level flat (design); nested groups on `Collapsible`; open state
+- **C-230 `Sidebar.astro`**: top level flat (design); nested groups on `Collapsible`, a sans semibold row
+  with a chevron (`::after` mask) opening into an indented list under a guide line (2026-11-13); open state
   and scroll restored before paint from `sessionStorage` (Starlight's persist semantics);
   `aria-current="page"` kept.
 - **C-231 Mobile menu** via `MobileMenuToggle.astro` + `PageFrame.astro` on Zag `drawer` below
@@ -586,6 +587,8 @@ Most need the owner: 1 (no tiles for eight components), 5 (header indicator), 7 
 7. **Sidebar** (Z12): top-level groups never collapse (D-Z5), so a consumer's `collapsed: true` on a
    top-level group is ignored; nested group triggers keep the chevron-free mono-caps label, so a
    closed group shows no open/closed cue. Interim: no cue. Add one?
+   **Resolved 2026-11-13:** nested groups get a chevron (rotates when open), semibold sans text and an
+   indented list under a guide line; the current page gets a start bar.
 8. **Sidebar mount** (Z12): groups and the mobile drawer mount from Search.astro's every-page script;
    a consumer overriding Search keeps the pane on its native popover and groups in their first-paint
    state. A failed chunk shows the links (`[data-zag-state=error]`). Interim: documented at the
@@ -803,6 +806,11 @@ Target: this plan's Component Contracts (Stage-A WP14 deferrals folded in at exe
   every script except `/pagefind/` URLs and is back at 90 KiB (content, D-Z2) / 160 KiB (showcase);
   new `pagefindGz` ≤ `PAGEFIND_GZ_MAX` = measured 51.5 kB × 1.15 → 58 KiB, both in
   `tests/e2e/budgets.spec.ts`.
+- MODIFIED **C-110** (`SHARED_SHEET_GZ`, owner-approved 2026-11-13, sidebar hierarchy): starlight 22 250 -> 22 500 B, site 20 000 -> 20 200 B gzip. The chevron mask, the nested indent with its guide line and the current-page bar add about 330 B to the shared sheet (measured 22 488 / 20 151 B).
+- MODIFIED **C-230** (sidebar look, 2026-11-13, resolves owner question 7): CSS only. Top-level headings use
+  `--ocx-color-fg`; a nested trigger is a sans semibold row with a `chevron-right` mask on `::after` (rotates
+  when open, transitions only in the live state, C-130c); nested `[data-part=content]` is indented under a guide
+  line; the current page is semibold with an inline-start bar; hover tints with `--ocx-color-hover`.
 - MODIFIED **C-230** (Z12): nested groups are collapsible roots rendered by `Sidebar.astro` itself
   (`ssrApi` of `collapsible.zag.mjs`, ids `sb-<n>`), not `Collapsible.astro`: its component script
   would be one more request on every page with groups and its sheet would inline into every page.

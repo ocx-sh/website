@@ -386,7 +386,7 @@ Outside the layer: `@font-face` only. No `!important` anywhere in `src/`.
 | `TableOfContents` | component (wraps default) | #1a | adds "edit this page ↗" (Starlight `editLink`) and "report an issue ↗" (`github.com/<claim.repo>/issues/new`) |
 | `ThemeSelect` | component | OcxHeader | icon toggle, the one implementation shared by the header and the mobile menu |
 | `MobileMenuFooter` | component | #1a mobile | icon toggle instead of the "Auto ▾" select. Header icons do not clip at 390 px |
-| Sidebar | **CSS only** | #1b | mono-caps group labels, flat items, active = tint + coral text, no chevrons, no nested rules. If CSS cannot flatten it, the route middleware flattens `starlightRoute.sidebar` (cheaper than a `Sidebar` override) |
+| Sidebar | **CSS only** | #1b | mono-caps top-level headings in the strong text colour; nested groups are sans semibold rows with a chevron (a mask on `::after`) that open into an indented list under a guide line; pages are muted links; the current page is tint + coral text, semibold, with a bar at its start (owner decision 2026-11-13, resolves owner question 7). If CSS cannot flatten it, the route middleware flattens `starlightRoute.sidebar` (cheaper than a `Sidebar` override) |
 | Content measure, H2 rule, title spacing | CSS | #1b | `--sl-content-width` ≈ 675 px, top rule on each H2 section |
 | Code groups | content convention | #1b | Starlight `<Tabs syncKey="shell">` (converters emit `.mdx`). EC frame = plain panel with copy icon |
 

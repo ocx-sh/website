@@ -75,7 +75,7 @@ describe('C-110 budgets module', () => {
     expect(budgetOf('/docs/probe/glyphs/').fontBytes).toBe(up(51_311, KB));
     expect(budgetOf('/docs/probe/long/').fontBytes).toBe(42_000);
     // Measured on the built dists (node gzip), rounded up to 250 B; a value only goes up with a Spec Delta.
-    expect(SHARED_SHEET_GZ).toEqual({ starlight: 22_250, site: 20_000 });
+    expect(SHARED_SHEET_GZ).toEqual({ starlight: 22_500, site: 20_200 });
   });
 
   it('classifies every gated page into exactly one class', () => {

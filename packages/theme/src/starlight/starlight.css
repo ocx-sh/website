@@ -141,9 +141,11 @@ site-search button[data-close-modal] {
 }
 site-search button[data-close-modal]:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); }
 
-/* Sidebar (mock #1b, C-230): mono-caps group labels over one flat item list,
- * nested groups toggled by sidebar-controller.mjs (Sidebar.astro), no chevrons, no nested
- * indent rules; active = tint + coral text. Starlight's scoped sublist rules do
+/* Sidebar (mock #1b, C-230; owner decision 2026-11-13): three levels that read apart. A top-level
+ * heading is a mono-caps label in the strong text colour; a nested group is a sans semibold row that
+ * ends in a chevron (a mask on ::after, the registry's chevron-right) and opens into an indented list
+ * with a guide line; a page is a muted link, and the current one is semibold with a bar at its start.
+ * Groups toggle via sidebar-controller.mjs (Sidebar.astro). Starlight's scoped sublist rules do
  * not reach this markup: their base (list reset, block links) is restated. */
 sl-sidebar-state-persist { display: contents; }
 .sidebar-pane { border-inline-end: var(--ocx-border-width) solid var(--ocx-color-border); }
@@ -151,12 +153,33 @@ sl-sidebar-state-persist { display: contents; }
 .sidebar-content ul { margin: 0; padding: 0; list-style: none; }
 .sidebar-content li { overflow-wrap: anywhere; }
 .sidebar-content .top-level > li + li { margin-top: var(--ocx-space-5); }
-.sidebar-content ul ul > li[data-zag-root] { margin-top: var(--ocx-space-3); }
+/* Heading and group row share one box; a group row's height equals a link row's. */
 .sidebar-content :is(.group-label, [data-part='trigger']) {
   display: flex; align-items: center; gap: var(--ocx-space-2); box-sizing: border-box; width: 100%;
-  padding: var(--ocx-space-3) var(--ocx-space-4); line-height: 1.4;
+  padding: var(--ocx-space-3) var(--ocx-space-4); line-height: 1.4; color: var(--ocx-color-fg);
+}
+.sidebar-content .group-label {
   font-family: var(--ocx-font-mono); font-size: var(--ocx-text-2xs); font-weight: var(--ocx-font-weight-semibold);
-  letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase; color: var(--ocx-color-fg-subtle);
+  letter-spacing: var(--ocx-tracking-caps); text-transform: uppercase;
+}
+.sidebar-content [data-part='trigger'] {
+  font-family: var(--ocx-font-sans); font-size: var(--ocx-text-base); font-weight: var(--ocx-font-weight-semibold);
+}
+/* The chevron is a mask, not an <svg>: the trigger holds bare text (DOM budget). */
+.sidebar-content [data-part='trigger']::after {
+  content: ''; flex: none; margin-inline-start: auto; inline-size: var(--ocx-icon-md); block-size: var(--ocx-icon-md);
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18l6-6l-6-6'/%3E%3C/svg%3E") center / 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18l6-6l-6-6'/%3E%3C/svg%3E") center / 100% no-repeat;
+}
+.sidebar-content [data-part='trigger'][aria-expanded='true']::after { rotate: 90deg; }
+/* Live only: first paint and live must screenshot equal (C-130c). */
+#starlight__sidebar [data-zag-state='live'] > [data-part='trigger']::after {
+  transition: rotate var(--ocx-duration-base) var(--ocx-ease-in-out);
+}
+/* Nested list: indented under a guide line. Keyed on the content part so deferred sub-lists stay plain. */
+.sidebar-content [data-part='content'] {
+  margin-inline-start: var(--ocx-space-4); border-inline-start: var(--ocx-border-width) solid var(--ocx-color-border);
 }
 .sidebar-content [data-part='trigger'] {
   margin: 0; border: 0; border-radius: var(--ocx-radius-md); background: none; text-align: start; cursor: pointer;
@@ -197,7 +220,17 @@ sl-sidebar-state-persist { display: contents; }
 .sidebar-content .sl-badge.danger { color: var(--sl-badge-danger-text); background: var(--sl-badge-danger-bg); border-color: var(--sl-badge-danger-border); }
 .sidebar-content a[aria-current='page'] > .sl-badge { color: inherit; background: transparent; border-color: currentColor; }
 .sidebar-content a:hover { color: var(--ocx-color-fg); }
-.sidebar-content a[aria-current='page'] { color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); font-weight: var(--ocx-font-weight-medium); }
+.sidebar-content a[aria-current='page'] {
+  color: var(--ocx-color-accent-fg); background: var(--ocx-color-accent-tint); font-weight: var(--ocx-font-weight-semibold);
+  border-inline-start: var(--ocx-border-width-strong) solid var(--ocx-color-focus);
+  padding-inline-start: calc(var(--ocx-space-4) - var(--ocx-border-width-strong));
+}
+/* Nested, the bar covers the guide line: the link reaches over it and its padding gives the width back. */
+.sidebar-content [data-part='content'] a[aria-current='page'] {
+  margin-inline-start: calc(var(--ocx-border-width) * -1);
+  padding-inline-start: calc(var(--ocx-space-4) - var(--ocx-border-width-strong) + var(--ocx-border-width));
+}
+@media (forced-colors: active) { .sidebar-content [data-part='trigger']::after { background-color: CanvasText; } }
 
 /* Mobile menu (C-231, design question 9 interim): below 50em the pane is a
  * full-height start sheet under the header, sliding in; the drawer's backdrop

@@ -7,6 +7,8 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 // @ts-expect-error jsdom ships no types and @types/jsdom is not a dependency
 import * as jsdom from 'jsdom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { ICONS } from '../src/icons/icons.generated.mjs';
 import { ssrApi } from '../src/components/ui/zag-runtime.mjs';
 import * as menu from '../src/starlight/mobile-menu.zag.mjs';
 import { domAttrs } from './zag-helpers.ts';
@@ -414,5 +416,26 @@ describe('C-231 MobileMenuToggle markup', () => {
       await new Promise((r) => setTimeout(r, 0));
       expect(d.activeElement).toBe(d.querySelector('#m a'));
     });
+  });
+});
+
+// C-230 look (owner decision 2026-11-13): CSS only, so this pins the source. The chevron is a mask
+// (the trigger holds bare text) and must be the registry's own path; the block uses tokens only.
+describe('C-230 sidebar look is tokens plus the registry chevron', () => {
+  const source = readFileSync(new URL('../src/starlight/starlight.css', import.meta.url), 'utf8');
+  const block = source.slice(source.indexOf('/* Sidebar (mock #1b'), source.indexOf('/* Mobile menu (C-231'));
+  const withoutData = (css: string) => css.replace(/url\("data:[^"]*"\)/g, 'url()').replace('0.25em', ''); // the badge's existing 0.25em gap
+
+  it('the trigger mask is the registry chevron-right, inline', () => {
+    const uris = [...block.matchAll(/mask: url\("(data:image\/svg\+xml,[^"]*)"\)/g)].map((m) =>
+      decodeURIComponent(m[1]!),
+    );
+    expect(uris.length).toBe(2);
+    for (const [, attr, value] of ICONS['chevron-right'].body.matchAll(/(\w+)="([^"]*)"/g))
+      for (const uri of uris) expect(uri).toContain(`${attr}='${value}'`);
+  });
+
+  it('no raw colour or length outside the data URI', () => {
+    expect(withoutData(block)).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|hsla?\(|oklch\(|\b\d+(\.\d+)?(px|rem|em)\b/i);
   });
 });

@@ -25,7 +25,7 @@ replaces the theme's for that slot only.
 | `MobileMenuFooter` | Icon theme toggle inside the mobile menu |
 | `MarkdownContent` | Wraps every page body |
 | `Search` | Search dialog on Zag, Pagefind UI loaded on first open; its script also mounts nav menu, mobile drawer, sidebar groups (one delegated controller) and toaster |
-| `Sidebar` | Grouped sidebar; nested groups are plain markup toggled by one delegated controller (no Zag machine per group), loaded on the first touch of the sidebar |
+| `Sidebar` | Grouped sidebar; nested groups (chevron, indented under a guide line) are plain markup toggled by one delegated controller (no Zag machine per group), loaded on the first touch of the sidebar |
 | `MobileMenuToggle` | The mobile menu button |
 | `PageFrame` | Header, sidebar pane and main layout |
 

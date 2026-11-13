@@ -65,7 +65,8 @@ export const PAGE_FONT_BYTES = {
  * every consumer page pays before first paint. A change that trips it moves rules into a component sheet that
  * loads with its component; raising a ceiling needs a Spec Delta row.
  */
-export const SHARED_SHEET_GZ = { starlight: 22_250, site: 20_000 };
+// Raised 2026-11-13 (owner-approved, sidebar hierarchy: chevron, indent, current-page bar): 22_250 -> 22_500, 20_000 -> 20_200.
+export const SHARED_SHEET_GZ = { starlight: 22_500, site: 20_200 };
 
 /**
  * Byte values in bytes; `heapMB` in MiB. Sizes are gzip of the response body.
