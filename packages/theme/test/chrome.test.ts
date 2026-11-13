@@ -156,10 +156,10 @@ describe('C-027 TableOfContents', () => {
 });
 
 describe('C-023 mobile menu sections', () => {
-  it('C-023: MobileMenuFooter lists docs, each ecosystem hub and install, aria-current per C-007', async () => {
+  it('C-023: MobileSections lists docs, each ecosystem hub and install, aria-current per C-007', async () => {
     // a hub whose `all` text extends its label shows the rest as screen-reader text ("more" + " to learn")
     const hubs = nav.hubs.map((h) => [h.all.startsWith(h.label) ? h.all.replace(/\s*→$/, '') : h.label, h.href]);
-    const doc = await render('MobileMenuFooter', '/integrations/bazel/x/');
+    const doc = await render('MobileSections', '/integrations/bazel/x/');
     const links = [...doc.querySelectorAll('nav.ocx-mobile-sections a')].map((a) => [
       a.textContent.trim(),
       a.getAttribute('href'),
@@ -170,14 +170,43 @@ describe('C-023 mobile menu sections', () => {
     ).toEqual(['/integrations/']);
   });
 
-  it('C-023: MobileMenuFooter carries its own ecosystem menu trigger (the header one is hidden at ≤ 640px)', async () => {
-    const doc = await render('MobileMenuFooter', '/docs/');
+  it('C-023: MobileSections carries its own ecosystem menu trigger (the header one is hidden at ≤ 640px)', async () => {
+    const doc = await render('MobileSections', '/docs/');
     const triggers = doc.querySelectorAll('nav.ocx-mobile-sections button[popovertarget]');
     expect([...triggers].map((b) => [b.getAttribute('type'), b.textContent.trim()])).toEqual([['button', 'solutions']]);
     // C-192: it names the panel the Header renders (outside the nav root, so `mount` keeps it).
     const panel = (await render('Header', '/docs/')).querySelector('.ocx-mega[popover]');
     expect(panel?.id).toBeTruthy();
     expect(triggers[0]?.getAttribute('popovertarget')).toBe(panel?.id);
+  });
+});
+
+describe('C-023 menu button on pages without a sidebar', () => {
+  it('Header renders the menu button and the drawer (sections, install) when the route has no sidebar', async () => {
+    const doc = await render('Header', '/docs/probe/splash/', { hasSidebar: false });
+    expect(doc.querySelector('button.ocx-header__menu[popovertarget="ocx-header-menu"]')).not.toBeNull();
+    const drawer = doc.querySelector('nav#ocx-header-menu[popover]');
+    const hrefs = [...(drawer?.querySelectorAll('a') ?? [])].map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(expect.arrayContaining(['/docs/', '/install/']));
+    expect(drawer?.querySelector('button[popovertarget="ocx-ecosystem-menu"]')?.textContent.trim()).toBe('solutions');
+    expect(hrefs.at(-1)).toBe('/install/');
+  });
+
+  it('Header renders neither with a sidebar (its pane carries the sections)', async () => {
+    const doc = await render('Header', '/docs/x/', { hasSidebar: true });
+    expect(doc.querySelector('.ocx-header__menu')).toBeNull();
+    expect(doc.querySelector('#ocx-header-menu')).toBeNull();
+  });
+});
+
+describe('C-023 drawer box styles', () => {
+  it('Head inlines the drawer <style> only for a route without a sidebar', async () => {
+    const hasStyle = async (hasSidebar: boolean) =>
+      (await render('Head', '/docs/x/', { hasSidebar, head: [] }))
+        .querySelector('style')
+        ?.textContent?.includes('.ocx-header__drawer');
+    expect(await hasStyle(false)).toBe(true);
+    expect(await hasStyle(true)).toBeFalsy();
   });
 });
 

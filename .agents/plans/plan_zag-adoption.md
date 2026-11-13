@@ -327,6 +327,9 @@ IDs start at C-101 / S-101 to stay clear of design §7 (C-001…C-072).
   kept; at ≥ 50em the pane is a static column with no `popover` attribute (as Starlight); focus trap, scroll lock, `inert` main
   frame, Esc, backdrop and swipe close; focus returns to the toggle; desktop renders the static
   column. JS off or load error: the SSR `popovertarget` fallback still opens the pane.
+- **C-231 (sections)** The site's section rows (docs, catalog, solutions, hubs, install) are the first block of
+  the pane, above the tree (`MobileSections.astro`, hidden at ≥ 50em); the footer keeps only the preferences. A page
+  without a sidebar gets the header's own menu button and drawer with the same rows (owner decision 2026-11-13).
 - **C-232** The ecosystem menu inside the drawer (C-023 at 390 px) and axe with both open keep
   passing (`mobile.spec.ts` behaviours).
 
@@ -807,6 +810,9 @@ Target: this plan's Component Contracts (Stage-A WP14 deferrals folded in at exe
   new `pagefindGz` ≤ `PAGEFIND_GZ_MAX` = measured 51.5 kB × 1.15 → 58 KiB, both in
   `tests/e2e/budgets.spec.ts`.
 - MODIFIED **C-110** (`SHARED_SHEET_GZ`, owner-approved 2026-11-13, sidebar hierarchy): starlight 22 250 -> 22 500 B, site 20 000 -> 20 200 B gzip. The chevron mask, the nested indent with its guide line and the current-page bar add about 330 B to the shared sheet (measured 22 488 / 20 151 B).
+- MODIFIED **C-110** (`SHARED_SHEET_GZ`, owner-approved 2026-11-13, mobile menu): starlight 22 500 -> 22 550 B gzip; the site's 20 200 B holds (measured 22 528 / 20 179 B). The row look is one rule set in `base.css`, replacing the footer's section rules; the drawer box (`drawer.css`) stays out of the sheets: Shell imports it, a sidebar-less Starlight page inlines it in its head (about 270 B gz of that page's HTML, landing 13 829 B of 14 200).
+- MODIFIED **C-112** (`domElements`, content class, owner-approved 2026-11-13, phone menu on the landing): 900 -> 925. The header's menu button and drawer add 22 nodes to the landing (measured 910).
+- MODIFIED **C-023 / C-231 / C-232** (sections first in the drawer; menu button on sidebar-less pages, owner decision 2026-11-13): the section rows head the pane above the docs tree, full width, 44 px rows, install last as a bordered button. `Header.astro` renders SiteHeader's `menu` button and drawer when the route has no sidebar, so the landing and other splash pages reach the sections at phone width.
 - MODIFIED **C-230** (sidebar look, 2026-11-13, resolves owner question 7): CSS only. Top-level headings use
   `--ocx-color-fg`; a nested trigger is a sans semibold row with a `chevron-right` mask on `::after` (rotates
   when open, transitions only in the live state, C-130c); nested `[data-part=content]` is indented under a guide

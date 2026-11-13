@@ -20,8 +20,18 @@ test('C-023 390px: ecosystem menu works with the mobile menu (sl-sidebar-pane) o
   await page.locator('.sl-menu-button').click();
   await expect.poll(() => openState(page, SIDEBAR)).toBe(true);
 
-  // The mobile menu carries the ecosystem hubs as plain links (no-JS path).
+  // The mobile menu carries the ecosystem hubs as plain links (no-JS path), as its first block: above the tree, in view.
   const sections = page.locator(`${SIDEBAR} .ocx-mobile-sections`);
+  await expect(sections).toBeInViewport();
+  expect(
+    await sections.evaluate(
+      (el) =>
+        !!(
+          el.compareDocumentPosition(el.parentElement!.querySelector('sl-sidebar-state-persist')!) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+        ),
+    ),
+  ).toBe(true);
   await expect(sections.getByRole('link', { name: 'integrations' })).toBeVisible();
   await expect(sections.getByRole('link', { name: 'apps' })).toBeVisible();
   // The pinned hub is listed like its siblings; "more" alone is no descriptive link text (Lighthouse).

@@ -1,0 +1,31 @@
+---
+// The header's section links and ecosystem menu trigger, which the header hides at ≤ 640px (C-023):
+// the first block of the mobile pane, above the docs tree, hidden at ≥ 50em like Starlight's own
+// mobile-only blocks. A trigger inside the open pane nests the menu under it, so the pane stays
+// open. Rows are styled by base.css, shared with the sidebar-less pages' drawer.
+import nav from '../nav.json';
+import { sectionLinks } from '../nav.mjs';
+import Icon from '../components/ui/Icon.astro';
+
+const links = sectionLinks(nav, Astro.url.pathname);
+---
+
+<nav class="ocx-mobile-sections md:sl-hidden" aria-label="ocx sections">
+  <ul>
+    {links.map((l) => (
+      <li>
+        {l.href ? (
+          <a href={l.href} aria-current={l.current ? 'page' : undefined}>
+            {l.label}
+            {l.hint && <span class="sr-only">{l.hint}</span>}
+          </a>
+        ) : (
+          <button type="button" popovertarget="ocx-ecosystem-menu">
+            {l.label}
+            <Icon name="chevron-down" size="md" />
+          </button>
+        )}
+      </li>
+    ))}
+  </ul>
+</nav>

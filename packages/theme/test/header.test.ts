@@ -28,7 +28,7 @@ let EcosystemMenu: Component;
 async function render(component: Component, pathname = '/docs/x/'): Promise<Document> {
   const html = await container.renderToString(component, {
     request: new Request(`https://ocx.sh${pathname}`),
-    locals: { t, starlightRoute: {} } as unknown as App.Locals,
+    locals: { t, starlightRoute: { hasSidebar: true } } as unknown as App.Locals,
   });
   return new JSDOM(html).window.document;
 }
@@ -61,7 +61,7 @@ describe('header weight', () => {
   it('ocx-sh/website#38: the Starlight Header renders within HEADER_GZ_MAX gzipped bytes', async () => {
     const html = await container.renderToString(Header, {
       request: new Request('https://ocx.sh/docs/x/'),
-      locals: { t, starlightRoute: {} } as unknown as App.Locals,
+      locals: { t, starlightRoute: { hasSidebar: true } } as unknown as App.Locals,
     });
     const gz = gzipSync(html).length;
     expect(gz).toBeLessThanOrEqual(HEADER_GZ_MAX);

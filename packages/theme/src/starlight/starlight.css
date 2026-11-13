@@ -130,7 +130,7 @@ header.header .ocx-header { width: 100%; }
 nav.sidebar:has(> :popover-open) .sl-menu-button .open-menu, nav.sidebar:not(:has(> :popover-open)) .sl-menu-button .close-menu { display: none; }
 .sl-menu-button:hover, nav.sidebar:has(> :popover-open) .sl-menu-button { background: var(--ocx-color-surface-subtle); color: var(--ocx-color-fg); }
 @media (width < 50rem) {
-  header.header .ocx-header { padding-inline-end: calc(var(--ocx-space-5) + var(--sl-menu-button-size) + var(--ocx-space-4)); }
+  [data-has-sidebar] header.header .ocx-header { padding-inline-end: calc(var(--ocx-space-5) + var(--sl-menu-button-size) + var(--ocx-space-4)); }
 }
 
 /* Pagefind results: square system (the dialog box itself lives in Search.astro). */

@@ -251,7 +251,8 @@ Props: `title` (required), `description`, `canonical` (default: the path on
 `icon` is the page's own icon href: it replaces the default `favicon.svg` (ocx
 mode) or the empty `data:,` icon (neutral mode), leaving one `rel="icon"`. In ocx
 mode `extraNav` adds the page's own header links after the `nav.json` sections
-(the longest matching link is current, and then no section is) and
+(the longest matching link is current, and then no section is; in the
+mobile drawer a link ending in `/install/` takes the install button look) and
 `extraFooterLinks` appends footer links (a `title` is a tooltip); neutral mode
 takes `nav`/`footer` instead and throws on the extras. A neutral `nav` item
 with `match: 'prefix'` on a home href (`/` or the base) stays current under
@@ -318,7 +319,10 @@ they have zero specificity and any consumer rule wins. The footer's top rule run
   `error` on `root`. `load` resolves to `{ start(root, firstEvent?) }`; a returned
   `{ api, stop }` is kept as `handle.api` and stopped on `handle.destroy()`.
 - On narrow viewports a menu button opens a native popover list of the
-  sections (or `nav`): no JavaScript, no sidebar drawer.
+  sections (or `nav`): no JavaScript, no sidebar drawer. In the Starlight
+  plugin that button and drawer exist only on pages without a sidebar
+  (`template: splash`); with a sidebar the section links are the first block
+  of its mobile pane, above the tree.
 - The theme key is shared (`starlight-theme`), so a reader's theme carries
   between sections on ocx.sh.
 

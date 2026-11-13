@@ -911,3 +911,56 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     scale: 1;
   }
 }
+
+/* ── Mobile section rows: the sidebar pane's (MobileSections) and the header drawer's (SiteHeader `menu`) ── */
+@layer ocx {
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul :is(a, button) {
+    display: flex;
+    align-items: center;
+    gap: var(--ocx-space-2);
+    box-sizing: border-box;
+    width: 100%;
+    min-height: calc(var(--ocx-space-7) + var(--ocx-space-4));
+    padding-block: 0;
+    padding-inline: calc(var(--ocx-space-4) - var(--ocx-border-width-strong)) var(--ocx-space-4);
+    background: none;
+    border: 0;
+    border-inline-start: var(--ocx-border-width-strong) solid transparent;
+    cursor: pointer;
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-sm);
+    font-weight: var(--ocx-font-weight-medium);
+    color: var(--ocx-color-fg-muted);
+    text-decoration: none;
+    transition: color var(--ocx-duration-base);
+  }
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul button svg {
+    margin-inline-start: auto;
+    color: var(--ocx-color-fg-subtle);
+  }
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul :is(a, button):hover {
+    color: var(--ocx-color-fg);
+  }
+  /* The install row reads as the header's install button. Selected by href: the shared fragment markup carries no other hook (a last-child rule would catch a consumer's own link). */
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul a[href$='/install/'] {
+    margin-block: var(--ocx-space-3) var(--ocx-space-2);
+    border: var(--ocx-border-width) solid var(--ocx-color-border);
+    border-radius: var(--ocx-radius-md);
+    padding-inline-start: calc(var(--ocx-space-4) - var(--ocx-border-width));
+  }
+  /* Current: the sidebar's current-page look (the border colour reaches only the sides that have one). */
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul a[aria-current] {
+    color: var(--ocx-color-accent-fg);
+    background: var(--ocx-color-accent-tint);
+    border-color: var(--ocx-color-focus);
+  }
+  :is(.ocx-mobile-sections, .ocx-header__drawer) ul :is(a, button):focus-visible {
+    outline: var(--ocx-focus-ring);
+    outline-offset: var(--ocx-focus-offset);
+  }
+}

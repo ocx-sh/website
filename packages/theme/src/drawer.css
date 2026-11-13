@@ -1,0 +1,18 @@
+/* The header's mobile drawer box (SiteHeader `menu`): a native popover under the header. Shell pulls it in
+ * through shell.css; a Starlight page without a sidebar inlines it in its head (starlight/Head.astro).
+ * The rows are base.css's. The layer line repeats tokens.css's so an inline copy ahead of it keeps the order. */
+@layer starlight, ocx;
+@layer ocx {
+  .ocx-header__drawer {
+    position: fixed;
+    inset: var(--ocx-header-height) 0 auto 0;
+    width: auto;
+    max-height: calc(100dvh - var(--ocx-header-height));
+    margin: 0;
+    padding: var(--ocx-space-3) var(--ocx-space-5);
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: 0;
+    border-bottom: var(--ocx-border-width) solid var(--ocx-color-border);
+  }
+}

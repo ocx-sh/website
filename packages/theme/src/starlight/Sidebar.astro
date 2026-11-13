@@ -12,6 +12,7 @@
 // nested group is its <li> (root), <button> (trigger) and <ul> (content), no wrapper <div>s.
 import type { StarlightRouteData } from '@astrojs/starlight/route-data';
 import MobileMenuFooter from 'virtual:starlight/components/MobileMenuFooter';
+import MobileSections from './MobileSections.astro';
 import { configSidebar } from 'virtual:ocx-theme/sidebar';
 import { groupKey, hash32, servedGroups } from './sidebar-groups.mjs';
 
@@ -97,6 +98,7 @@ function group(g: Group) {
 
 {top ? (
   <>
+    <MobileSections />
     <sl-sidebar-state-persist data-hash={hash} data-frag={anyDeferred ? base : undefined}>
       {anyDeferred && (
         <noscript>

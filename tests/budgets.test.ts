@@ -40,7 +40,7 @@ describe('C-110 budgets module', () => {
         totalBytes: up(112_045, KB), // #38 ratchet, lhci max (/)
         fontBytes: 42_000, // not x1.15: the simulated LCP step at 42.3 KB (budgets.mjs)
         cssBytes: up(33_284, KB),
-        domElements: 900, // up(609, 100) = 800 plus one 100 step: merged sections add 3 nodes each (budgets.mjs)
+        domElements: 925, // 900 plus the phone menu's 22 nodes, owner-approved 2026-11-13 (budgets.mjs)
         heapMB: up(3.45, 1),
       },
       showcase: {
@@ -75,7 +75,7 @@ describe('C-110 budgets module', () => {
     expect(budgetOf('/docs/probe/glyphs/').fontBytes).toBe(up(51_311, KB));
     expect(budgetOf('/docs/probe/long/').fontBytes).toBe(42_000);
     // Measured on the built dists (node gzip), rounded up to 250 B; a value only goes up with a Spec Delta.
-    expect(SHARED_SHEET_GZ).toEqual({ starlight: 22_500, site: 20_200 });
+    expect(SHARED_SHEET_GZ).toEqual({ starlight: 22_550, site: 20_200 });
   });
 
   it('classifies every gated page into exactly one class', () => {

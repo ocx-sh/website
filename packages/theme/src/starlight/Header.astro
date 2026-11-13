@@ -1,6 +1,7 @@
 ---
 // Starlight `Header` override: SiteHeader with the configured Search in its slot. Starlight already
-// wraps this in <header class="header">, which is the size container. Through the virtual module, so
+// wraps this in <header class="header">, which is the size container. A page without a sidebar gets the
+// header's own menu button and drawer (the section rows; with a sidebar they head its pane, MobileSections). Through the virtual module, so
 // the configured Search override (ours or a consumer's) renders. The rules below style Starlight's own
 // markup (<site-search>, the sidebar menu button); the header tree's are SiteHeader's.
 import Search from 'virtual:starlight/components/Search';
@@ -9,7 +10,7 @@ import { activeSection } from '../nav.mjs';
 import SiteHeader from '../components/SiteHeader.astro';
 ---
 
-<SiteHeader active={activeSection(nav, Astro.url.pathname)}>
+<SiteHeader active={activeSection(nav, Astro.url.pathname)} menu={!Astro.locals.starlightRoute.hasSidebar}>
   <Search slot="search" />
 </SiteHeader>
 

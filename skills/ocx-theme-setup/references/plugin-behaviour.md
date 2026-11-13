@@ -22,11 +22,11 @@ replaces the theme's for that slot only.
 | `MobileTableOfContents` | Starlight's markup with no script of its own (one request fewer before interaction) and its styles in `starlight.css` |
 | `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu. The glyph shows the current state (sun while light, moon while dark), right at first paint. A switch crossfades the page (a view transition, `--ocx-duration-moderate`); under reduced motion, or without the API, it flips at once. It sets `html[data-theme]` and `html.dark`; a choice that equals the OS scheme is stored as `auto`, and a page with no pinned choice follows OS changes live |
 | `ThemeProvider` | Inline pre-paint theme script, no markup |
-| `MobileMenuFooter` | Icon theme toggle inside the mobile menu |
+| `MobileMenuFooter` | Icon theme toggle inside the mobile menu (the section links head the pane, above the tree; a page without a sidebar gets the header's own menu button and drawer with the same rows) |
 | `MarkdownContent` | Wraps every page body |
 | `Search` | Search dialog on Zag, Pagefind UI loaded on first open; its script also mounts nav menu, mobile drawer, sidebar groups (one delegated controller) and toaster |
 | `Sidebar` | Grouped sidebar; nested groups (chevron, indented under a guide line) are plain markup toggled by one delegated controller (no Zag machine per group), loaded on the first touch of the sidebar |
-| `MobileMenuToggle` | The mobile menu button |
+| `MobileMenuToggle` | The mobile menu button, on pages with a sidebar (without one, the header renders its own menu button) |
 | `PageFrame` | Header, sidebar pane and main layout |
 
 Overriding `Search`: the warning text names the fix. Call

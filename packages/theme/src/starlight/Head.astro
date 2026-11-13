@@ -7,6 +7,7 @@
 import Default from '@astrojs/starlight/components/Head.astro';
 import { Font } from 'astro:assets';
 import { PLATFORM_SCRIPT } from '../head-scripts.mjs';
+import drawerCss from '../drawer.css?inline';
 // <Kbd> platform detection (owner ask 2026-09-28): sets data-platform before first paint so no
 // OS-specific key glyph flickers or waits on a client render. Defaults to non-mac when the UA
 // string doesn't say otherwise (Kbd.astro's CSS fallback matches this default). Kept comment-free:
@@ -14,6 +15,8 @@ import { PLATFORM_SCRIPT } from '../head-scripts.mjs';
 ---
 
 <script is:inline set:html={PLATFORM_SCRIPT} />
+{/* A page without a sidebar has the header's drawer (Header.astro): its box styles ride in the head, ahead of the header. */}
+{!Astro.locals.starlightRoute.hasSidebar && <style set:html={drawerCss} />}
 <Default />
 <Font
   cssVariable="--ocx-font-sans"

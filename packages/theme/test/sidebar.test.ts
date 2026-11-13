@@ -180,9 +180,13 @@ describe('C-230 Sidebar markup', () => {
     expect(await html('Sidebar', [link('Components', '/docs/components/', true)])).not.toContain('<noscript>');
   });
 
-  it("renders the mobile menu footer (MobileMenuFooter) below the list, hidden at ≥ 50rem as Starlight's", async () => {
+  it("renders the section rows (MobileSections) before the list and the preferences (MobileMenuFooter) after it, both hidden at ≥ 50rem as Starlight's", async () => {
     const d = doc(await html('Sidebar'));
-    expect(d.querySelector('.md\\:sl-hidden .ocx-mobile-sections')).not.toBeNull();
+    const sections = d.querySelector('nav.ocx-mobile-sections.md\\:sl-hidden');
+    const tree = d.querySelector('sl-sidebar-state-persist');
+    expect(sections).not.toBeNull();
+    expect(sections?.compareDocumentPosition(tree as Node)).toBe(4); // tree follows the sections
+    expect(d.querySelector('.md\\:sl-hidden .mobile-preferences')).not.toBeNull();
   });
 });
 

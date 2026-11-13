@@ -32,6 +32,7 @@ export const STARLIGHT_OVERRIDES = {
   'Header.astro': 'page chrome on every page (renders SiteHeader)',
   'MarkdownContent.astro': 'wraps every page body; not a demoable component on its own',
   'MobileMenuFooter.astro': 'page chrome inside the mobile nav on every page',
+  'MobileSections.astro': 'page chrome: the section rows heading the mobile pane, rendered by Sidebar',
   'MobileMenuToggle.astro': 'page chrome: the mobile menu button on every page with a sidebar',
   'PageFrame.astro': 'page layout frame (header, sidebar pane, main) on every page',
   'PageTitle.astro': 'page chrome on every page',

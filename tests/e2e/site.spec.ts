@@ -58,3 +58,10 @@ for (const path of pages) {
     expect(await layout(page, path)).toEqual(loaded);
   });
 }
+
+test('the landing has a menu button at phone width and no horizontal scroll', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('.ocx-header__menu')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});

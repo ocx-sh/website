@@ -66,7 +66,8 @@ export const PAGE_FONT_BYTES = {
  * loads with its component; raising a ceiling needs a Spec Delta row.
  */
 // Raised 2026-11-13 (owner-approved, sidebar hierarchy: chevron, indent, current-page bar): 22_250 -> 22_500, 20_000 -> 20_200.
-export const SHARED_SHEET_GZ = { starlight: 22_500, site: 20_200 };
+// Raised again 2026-11-13 (owner-approved, section rows first in the mobile drawer): starlight 22_500 -> 22_550 (measured 22_528 B).
+export const SHARED_SHEET_GZ = { starlight: 22_550, site: 20_200 };
 
 /**
  * Byte values in bytes; `heapMB` in MiB. Sizes are gzip of the response body.
@@ -86,7 +87,8 @@ export const BUDGETS = {
     cssBytes: 38 * KB, // lhci max 33,284 B (/) x 1.15
     // 800 until /install/ joined the merged search: each merged section adds one Pagefind filter value
     // (3 nodes), and /docs/probe/long/ measured 799 with 6 sections, 802 with 7. 900 leaves ~3 sections.
-    domElements: 900,
+    // Raised 900 -> 925 (owner-approved 2026-11-13, phone menu on the landing): the header's menu button and drawer add 22 nodes.
+    domElements: 925,
     heapMB: 4,
   },
   showcase: {
