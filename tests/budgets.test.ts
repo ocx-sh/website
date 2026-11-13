@@ -74,7 +74,7 @@ describe('C-110 budgets module', () => {
     expect(PAGE_FONT_BYTES).toEqual({ '/docs/probe/glyphs/': up(51_311, KB) });
     expect(budgetOf('/docs/probe/glyphs/').fontBytes).toBe(up(51_311, KB));
     expect(budgetOf('/docs/probe/long/').fontBytes).toBe(42_000);
-    // Measured on the built dists (node gzip), rounded up to 250 B; a value only goes up with a Spec Delta.
+    // Measured on the built dists (node gzip), rounded up to 50 B; a value only goes up with a Spec Delta.
     expect(SHARED_SHEET_GZ).toEqual({ starlight: 22_550, site: 20_200 });
   });
 

@@ -49,7 +49,8 @@ and open questions. Read it before any design or code change.** Research trail:
   licence sit next to its `NAME_MAP` entry. No licensed source exists → ask the owner; never draw one.
 - Assets never cause flicker or a broken look. UI icons and the logo are
   inlined SVG (optimized, ≤ 2 KB each), never an `<img>` or `url()` that loads
-  late. Every image has a reserved box (width/height or aspect-ratio), and the
+  late; an inline data-URI `mask` only where the DOM cannot hold an `<svg>` (Pagefind's form, the sidebar group
+  trigger), its path pinned to the icon registry by a test. Every image has a reserved box (width/height or aspect-ratio), and the
   page must look identical with images blocked (e2e enforces it). Raster images
   go through Astro `<Image>`/`<Picture>` with responsive widths and avif/webp.
   Styles for first-paint content load before that content, never inside it.

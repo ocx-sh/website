@@ -185,7 +185,9 @@ describe('C-230 Sidebar markup', () => {
     const sections = d.querySelector('nav.ocx-mobile-sections.md\\:sl-hidden');
     const tree = d.querySelector('sl-sidebar-state-persist');
     expect(sections).not.toBeNull();
-    expect(sections?.compareDocumentPosition(tree as Node)).toBe(4); // tree follows the sections
+    expect(
+      (sections?.compareDocumentPosition(tree as Node) ?? 0) & (sections?.DOCUMENT_POSITION_FOLLOWING ?? 4),
+    ).toBeTruthy(); // tree follows the sections
     expect(d.querySelector('.md\\:sl-hidden .mobile-preferences')).not.toBeNull();
   });
 });
