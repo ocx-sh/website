@@ -109,11 +109,12 @@ activity. The push and dispatch triggers still deploy; see
 | `dry-run` | no | `false` | List and plan; send no PUT or DELETE |
 | `preview` | no | empty | A preview site name from `scripts/previews/sites.mjs`; see [Previews](#previews). Not combinable with `path` |
 | `force-prune` | no | `false` | Delete stale HTML even past the [prune cap](#the-prune-cap) |
+| `force-upload` | no | `false` | Upload every file, even those the zone already holds with identical bytes; for a zone whose contents are suspect |
 
 | Output | Meaning |
 |---|---|
 | `url` | `https://ocx.sh<path>`, or the preview URL in preview mode |
-| `uploaded`, `deleted` | File counts; `0` in a dry run |
+| `uploaded`, `deleted` | File counts; `0` in a dry run. `uploaded` counts PUTs: a file whose listed checksum and length match is skipped |
 
 ## What a deploy does
 
@@ -121,6 +122,8 @@ activity. The push and dispatch triggers still deploy; see
 2. Runs the `ocx-site check` logic on `dist`. `dist/index.html` must exist;
    a `search: true` claim needs `dist/pagefind/pagefind-entry.json`.
 3. Lists the zone's current files under the path.
+   A file whose listed `Checksum` (non-empty) and `Length` equal its local SHA-256 and size is
+   skipped in every phase; a missing checksum always uploads. `404.html` is always uploaded.
 4. **Phase 1**: uploads every file except HTML and the top-level Pagefind
    entry files: hashed `_astro/` assets and Pagefind chunks first. Eight in
    parallel, SHA-256 checksum on each, three tries.

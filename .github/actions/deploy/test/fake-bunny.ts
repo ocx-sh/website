@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 // Minimal fake of the Bunny storage HTTP API for the C-322 contract tests: holds a file tree,
 // records requests, and throws on any DELETE that would remove a directory tree.
 export interface Recorded {
@@ -22,7 +24,11 @@ export interface FakeOptions {
   latencyMs?: number;
   /** never answer; reject only when the request's abort signal fires */
   hang?: boolean;
+  /** zone-relative file path → listed `Checksum` / `Length` override; `undefined` omits the field, `null` lists null */
+  listed?: Record<string, { Checksum?: string | null | undefined; Length?: number | undefined }>;
 }
+
+const sha256Upper = (body: Uint8Array | string) => createHash('sha256').update(body).digest('hex').toUpperCase();
 
 export function fakeBunny(opts: FakeOptions) {
   const files = new Map(Object.entries(opts.files));
@@ -66,7 +72,9 @@ export function fakeBunny(opts: FakeOptions) {
       const rel = path.slice(prefix.length);
       if (method === 'GET' && (rel === '' || rel.endsWith('/'))) return list(rel);
       if (method === 'PUT') {
-        files.set(rel, typeof init.body === 'string' ? init.body : Buffer.from(init.body as Uint8Array).toString());
+        const bytes = typeof init.body === 'string' ? Buffer.from(init.body) : Buffer.from(init.body as Uint8Array);
+        if (headers.Checksum !== sha256Upper(bytes)) return new Response('checksum mismatch', { status: 400 });
+        files.set(rel, bytes.toString());
         return new Response('{}', { status: 201 });
       }
       if (method === 'DELETE') {
@@ -84,17 +92,18 @@ export function fakeBunny(opts: FakeOptions) {
   }
 
   function list(dir: string): Response {
-    const entries = new Map<string, boolean>();
+    const entries = new Map<string, { isDir: boolean; file: string }>();
     for (const file of files.keys()) {
       if (!file.startsWith(dir)) continue;
       const [head, ...rest] = file.slice(dir.length).split('/');
-      if (head) entries.set(head, rest.length > 0);
+      if (head) entries.set(head, { isDir: rest.length > 0, file });
     }
-    const body = [...entries].map(([ObjectName, IsDirectory]) => ({
-      Path: `${prefix}${dir}`,
-      ObjectName,
-      IsDirectory,
-    }));
+    const body = [...entries].map(([ObjectName, { isDir, file }]) => {
+      const entry = { Path: `${prefix}${dir}`, ObjectName, IsDirectory: isDir };
+      if (isDir) return entry;
+      const stored = Buffer.from(files.get(file) ?? '');
+      return { ...entry, Checksum: sha256Upper(stored), Length: stored.length, ...opts.listed?.[file] };
+    });
     return new Response(JSON.stringify(body), { status: 200 });
   }
 

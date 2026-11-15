@@ -38,7 +38,7 @@ describe('action.yml', () => {
 
   it('has exactly the C-035 inputs', () => {
     expect(keys('inputs').sort()).toEqual(
-      ['dist', 'dry-run', 'force-prune', 'path', 'preview', 'storage-host', 'storage-key'].sort(),
+      ['dist', 'dry-run', 'force-prune', 'force-upload', 'path', 'preview', 'storage-host', 'storage-key'].sort(),
     );
   });
 

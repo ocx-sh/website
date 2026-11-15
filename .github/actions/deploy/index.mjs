@@ -62,6 +62,7 @@ export async function run(env, io = {}) {
         dryRun: flag(env, 'dry-run'),
         ...(preview && { preview }),
         forcePrune: flag(env, 'force-prune'),
+        forceUpload: flag(env, 'force-upload'),
       },
       repo,
       nav,
@@ -82,8 +83,8 @@ export async function run(env, io = {}) {
     if (env.GITHUB_STEP_SUMMARY) {
       const seconds = ((Date.now() - started) / 1000).toFixed(1);
       const counts = result.planned
-        ? `dry run: would upload ${result.planned.uploads}, delete ${result.planned.deletes}`
-        : `uploaded ${result.uploaded}, deleted ${result.deleted}`;
+        ? `dry run: would upload ${result.planned.uploads}, ${result.unchanged} unchanged, delete ${result.planned.deletes}`
+        : `uploaded ${result.uploaded}, ${result.unchanged} unchanged, deleted ${result.deleted}`;
       await appendFile(env.GITHUB_STEP_SUMMARY, `### Deploy\n\n${result.url}\n\n${counts} in ${seconds} s\n`);
     }
     return 0;

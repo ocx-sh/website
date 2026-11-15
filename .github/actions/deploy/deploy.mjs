@@ -5,7 +5,7 @@ import { check, defaultPath } from '../../../packages/theme/src/check/index.mjs'
 import { pagefindProblem } from '../../../packages/theme/src/check/pagefind.mjs';
 import { zoneName } from '../../../packages/theme/src/registry.mjs';
 import { findSite, previewUrl, previewZone } from '../../../scripts/previews/sites.mjs';
-import { listRecursive, remove, StorageError, upload, walkDist } from './storage.mjs';
+import { listRecursive, remove, sha256Hex, StorageError, upload, walkDist } from './storage.mjs';
 
 /** @typedef {import('../../../packages/theme/src/registry.mjs').Nav} Nav */
 /** @typedef {import('./storage.mjs').StorageClient} StorageClient */
@@ -19,6 +19,7 @@ import { listRecursive, remove, StorageError, upload, walkDist } from './storage
  * @property {boolean} dryRun list and plan, write nothing
  * @property {string} [preview] preview site name or slug; deploys to that site's preview zone at `/`
  * @property {boolean} forcePrune delete past the prune cap
+ * @property {boolean} [forceUpload] PUT every file, even one the zone already holds with identical bytes
  */
 
 /**
@@ -35,6 +36,7 @@ import { listRecursive, remove, StorageError, upload, walkDist } from './storage
  * @typedef {object} DeployResult
  * @property {string} url
  * @property {number} uploaded files written (0 in a dry run)
+ * @property {number} unchanged files skipped because the zone already held identical bytes (would-skip in a dry run)
  * @property {number} deleted files deleted (0 in a dry run)
  * @property {{ uploads: number, deletes: number }} [planned] dry run only
  */
@@ -188,6 +190,20 @@ async function checkPreview(files) {
 }
 
 /**
+ * Whether the zone already holds exactly these bytes: the listing has a non-empty `Checksum` equal to
+ * the body's SHA-256 (any case) and a `Length` equal to its size. Anything missing means upload.
+ * @param {StorageEntry | undefined} entry
+ * @param {Uint8Array} body
+ * @returns {boolean}
+ */
+function unchangedIn(entry, body) {
+  const sum = entry?.Checksum;
+  return (
+    typeof sum === 'string' && sum !== '' && sum.toLowerCase() === sha256Hex(body) && entry?.Length === body.length
+  );
+}
+
+/**
  * Deploy `dist` to the repo's storage zone. Throws on any failure; the message never contains the key.
  * @param {DeployOptions} options
  * @returns {Promise<DeployResult>}
@@ -208,6 +224,7 @@ export async function deploy(options) {
   const base = path.slice(1);
   const remoteOf = (/** @type {DistFile} */ f) => (f.path === '404.html' ? ERROR_PAGE : `${base}${f.path}`);
   const phases = [0, 1, 2, 3].map((n) => files.filter((f) => phaseOf(f.path) === n));
+  // Every dist file's remote path, skipped ones included: an unchanged page is never stale.
   const uploaded = new Set(files.map(remoteOf));
 
   // Step 3. ponytail: a 404 on the root listing is read as "nothing deployed here yet"; real Bunny
@@ -223,23 +240,45 @@ export async function deploy(options) {
   const { scope, stale } = planPrune({ listed, uploaded, path, repo, nav: preview ? { ...nav, claims: [] } : nav });
   const capped = pruneCap(scope.length, stale.length, inputs.forcePrune);
 
+  // `rel` is zone-relative, like `remoteOf`. 404.html maps to `bunnycdn_errors/`, outside the listing
+  // of any non-root path, so it is never found there and always uploaded.
+  const remote = new Map(listed.map(({ rel, entry }) => [rel, entry]));
+  /** @param {DistFile} f @param {Uint8Array} body */
+  const isUnchanged = (f, body) => !inputs.forceUpload && unchangedIn(remote.get(remoteOf(f)), body);
+
   if (inputs.dryRun) {
     if (capped) throw new Error(`dry run: ${capped}`);
-    for (const f of phases.flat()) log(`would PUT ${remoteOf(f)}`);
+    let uploads = 0;
+    for (const f of phases.flat()) {
+      if (isUnchanged(f, await readFile(f.absolute))) continue;
+      uploads++;
+      log(`would PUT ${remoteOf(f)}`);
+    }
     for (const s of stale) log(`would DELETE ${s.rel}`);
-    return { url, uploaded: 0, deleted: 0, planned: { uploads: files.length, deletes: stale.length } };
+    return {
+      url,
+      uploaded: 0,
+      unchanged: files.length - uploads,
+      deleted: 0,
+      planned: { uploads, deletes: stale.length },
+    };
   }
 
   // Steps 4 and 5: a barrier between phases, so every asset is written before any page, the shell pointer after all of them.
   let written = 0;
+  let unchanged = 0;
   for (const group of phases) {
     await pool(group, PARALLEL, async (f) => {
       const body = await readFile(f.absolute);
+      if (isUnchanged(f, body)) {
+        unchanged++;
+        return;
+      }
       await retrying(() => upload(client, remoteOf(f), body), sleep);
       written++;
     });
   }
-  log(`uploaded ${written} files`);
+  log(`uploaded ${written} files, ${unchanged} unchanged`);
 
   // Step 6. The uploads above stay when the cap refuses: every page is whole.
   if (capped) throw new Error(capped);
@@ -268,5 +307,5 @@ export async function deploy(options) {
     );
   }
   log(`deleted ${deleted} stale files`);
-  return { url, uploaded: written, deleted };
+  return { url, uploaded: written, unchanged, deleted };
 }

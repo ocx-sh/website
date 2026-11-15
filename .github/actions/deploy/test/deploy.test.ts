@@ -53,6 +53,7 @@ interface RunOptions {
   path?: string;
   dryRun?: boolean;
   forcePrune?: boolean;
+  forceUpload?: boolean;
   key?: string;
   fake?: Partial<FakeOptions>;
   /** wraps the fake's fetch, to inject failures */
@@ -72,6 +73,7 @@ function setup(o: RunOptions = {}) {
         ...(o.path === undefined ? {} : { path: o.path }),
         dryRun: o.dryRun ?? false,
         forcePrune: o.forcePrune ?? false,
+        forceUpload: o.forceUpload ?? false,
       },
       repo: o.repo ?? REPO,
       nav,
@@ -236,6 +238,123 @@ describe('phase barrier (C-038)', () => {
     });
     await run();
     expect(overlap).toBe(false);
+  });
+});
+
+describe('unchanged files are skipped', () => {
+  /** the zone as a previous deploy of SITE at /catalog/ left it */
+  const same = (): Record<string, string> => ({
+    ...Object.fromEntries(
+      Object.entries(SITE)
+        .filter(([k]) => k !== '404.html')
+        .map(([k, v]) => [`catalog/${k}`, v]),
+    ),
+    'bunnycdn_errors/404.html': SITE['404.html'] ?? '',
+  });
+  const putPaths = (rs: Recorded[]) => writes(rs).map(rel).sort();
+
+  it('PUTs a changed file and a file absent remotely, and skips an identical one', async () => {
+    const files = same();
+    files['catalog/guide/page.html'] = 'OLD';
+    delete files['catalog/img/logo.svg'];
+    const { fake, run, logs } = setup({ files });
+    const out = await run();
+    expect(putPaths(fake.requests)).toEqual([
+      'bunnycdn_errors/404.html',
+      'catalog/guide/page.html',
+      'catalog/img/logo.svg',
+    ]);
+    expect(out).toMatchObject({ uploaded: 3, unchanged: 3, deleted: 0 });
+    expect(logs).toContain('uploaded 3 files, 3 unchanged');
+    expect(fake.files.get('catalog/guide/page.html')).toBe('<h1>page</h1>');
+  });
+
+  it.each([
+    ['null', { Checksum: null }],
+    ['empty', { Checksum: '' }],
+    ['missing', { Checksum: undefined }],
+  ])('a %s listed Checksum means PUT', async (_name, listed) => {
+    const { fake, run } = setup({ files: same(), fake: { listed: { 'catalog/index.html': listed } } });
+    await run();
+    expect(putPaths(fake.requests)).toContain('catalog/index.html');
+  });
+
+  it('a lower-case listed Checksum still matches', async () => {
+    const sum = createHash('sha256').update('<h1>home</h1>').digest('hex');
+    const { fake, run } = setup({ files: same(), fake: { listed: { 'catalog/index.html': { Checksum: sum } } } });
+    await run();
+    expect(putPaths(fake.requests)).not.toContain('catalog/index.html');
+  });
+
+  it.each([
+    ['different', { Length: 1 }],
+    ['missing', { Length: undefined }],
+  ])('a matching Checksum with a %s Length means PUT', async (_name, listed) => {
+    const { fake, run } = setup({ files: same(), fake: { listed: { 'catalog/index.html': listed } } });
+    await run();
+    expect(putPaths(fake.requests)).toContain('catalog/index.html');
+  });
+
+  it('does not prune a skipped page, and still prunes a stale one', async () => {
+    const { fake, run } = setup({ files: { ...same(), 'catalog/gone.html': 'x' } });
+    const out = await run();
+    expect(out).toMatchObject({ unchanged: 5, deleted: 1 });
+    expect(fake.files.get('catalog/guide/page.html')).toBe('<h1>page</h1>');
+    expect(fake.files.has('catalog/gone.html')).toBe(false);
+  });
+
+  it('force-upload PUTs every file even when all are unchanged', async () => {
+    const { fake, run } = setup({ files: same(), forceUpload: true });
+    expect(await run()).toMatchObject({ uploaded: 6, unchanged: 0 });
+    expect(putPaths(fake.requests)).toHaveLength(6);
+  });
+
+  it('keeps the phase order when some files are skipped', async () => {
+    const files = same();
+    files['catalog/_astro/app.abc123.js'] = 'OLD';
+    files['catalog/index.html'] = 'OLD';
+    const { fake, run } = setup({ files, fake: { latencyMs: 3 } });
+    await run();
+    expect(writes(fake.requests).map(rel)).toEqual([
+      'catalog/_astro/app.abc123.js',
+      'bunnycdn_errors/404.html',
+      'catalog/index.html',
+    ]);
+  });
+
+  it('always PUTs 404.html under a non-root path, whose error page lies outside the listing', async () => {
+    const { fake, run } = setup({ files: same() });
+    await run();
+    expect(putPaths(fake.requests)).toEqual(['bunnycdn_errors/404.html']);
+  });
+
+  it('a dry run plans only the files it would PUT', async () => {
+    const files = same();
+    files['catalog/index.html'] = 'OLD';
+    const { fake, run, logs } = setup({ files, dryRun: true });
+    const out = await run();
+    expect(out).toMatchObject({ uploaded: 0, unchanged: 4, planned: { uploads: 2, deletes: 0 } });
+    expect(logs.filter((l) => l.startsWith('would PUT')).sort()).toEqual([
+      'would PUT bunnycdn_errors/404.html',
+      'would PUT catalog/index.html',
+    ]);
+    expect(fake.requests.every((r) => r.method === 'GET')).toBe(true);
+  });
+
+  it('a dry run with force-upload plans every file', async () => {
+    const { run } = setup({ files: same(), dryRun: true, forceUpload: true });
+    expect(await run()).toMatchObject({ unchanged: 0, planned: { uploads: 6 } });
+  });
+
+  it('rejects a PUT whose Checksum does not match the body', async () => {
+    const fake = fakeBunny({ zone: zoneName(REPO), key: KEY, files: {} });
+    const res = await fake.fetch(`https://${HOST}/${zoneName(REPO)}/x.txt`, {
+      method: 'PUT',
+      headers: { AccessKey: KEY, Checksum: 'ABC' },
+      body: 'x',
+    });
+    expect(res.status).toBe(400);
+    expect(fake.files.has('x.txt')).toBe(false);
   });
 });
 
@@ -635,6 +754,7 @@ describe('index.mjs', () => {
     ]);
     const summary = readFileSync(join(out, 'summary'), 'utf8');
     expect(summary).toContain('https://ocx.sh/catalog/');
+    expect(summary).toContain('uploaded 6, 0 unchanged, deleted 0');
     expect(summary).not.toContain(KEY);
   });
 

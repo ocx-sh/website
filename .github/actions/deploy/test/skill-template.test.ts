@@ -78,7 +78,7 @@ describe('skills/ocx-theme-deploy workflow template', () => {
     const inputs = [
       ...action.slice(action.indexOf('inputs:'), action.indexOf('outputs:')).matchAll(/^ {2}([\w-]+):/gm),
     ];
-    expect(inputs.length).toBe(7);
+    expect(inputs.length).toBe(8);
     for (const [, name] of inputs) expect(skill).toContain(`| \`${name}\` |`);
     expect(skill).toMatch(/more than half of the listed HTML files and at\s+least 10/);
     expect(skill).toContain('BUNNY_PREVIEW_KEY_<SLUG>');

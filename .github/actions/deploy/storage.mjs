@@ -18,6 +18,8 @@ import { join } from 'node:path';
  * @property {string} Path `/<zone>/<dir>/`, always ending in `/`
  * @property {string} ObjectName file or directory name, without a trailing slash
  * @property {boolean} IsDirectory
+ * @property {string | null} [Checksum] uppercase SHA-256 hex of the stored file; absent, null or empty when Bunny has none
+ * @property {number} [Length] size of the stored file in bytes
  */
 
 /**
@@ -235,6 +237,12 @@ export async function listRecursive(client, dir = '', limits = {}) {
 }
 
 /**
+ * @param {Uint8Array | string} body
+ * @returns {string} lowercase SHA-256 hex
+ */
+export const sha256Hex = (body) => createHash('sha256').update(body).digest('hex');
+
+/**
  * PUT one file with its uppercase SHA-256 hex as `Checksum`. Rejects a `remotePath` containing `..`
  * (and any empty, `.` or `\`-bearing path) before any request.
  * @param {StorageClient} client
@@ -244,7 +252,7 @@ export async function listRecursive(client, dir = '', limits = {}) {
  */
 export async function upload(client, remotePath, body) {
   const url = urlFor(client, remotePath, false);
-  const Checksum = createHash('sha256').update(body).digest('hex').toUpperCase();
+  const Checksum = sha256Hex(body).toUpperCase();
   await request(client, 'PUT', url, { Checksum }, body);
 }
 

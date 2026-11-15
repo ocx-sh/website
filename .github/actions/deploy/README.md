@@ -40,13 +40,14 @@ same checkout, so the SHA fixes all three.
 | `dry-run` | `false` | List and plan. Sends only GET requests and prints each planned PUT and DELETE. |
 | `preview` | empty | A preview site name or slug from `scripts/previews/sites.mjs`. Deploys to that site's zone `sh-ocx-preview-<slug>` at `/`. Cannot be combined with `path`. |
 | `force-prune` | `false` | Delete stale HTML even when that is more than half of the listed pages (see the prune cap below). |
+| `force-upload` | `false` | Upload every file, even those the zone already holds with identical bytes. Use it to rewrite everything when the zone's contents are suspect. |
 
 ## Outputs
 
 | Output | Meaning |
 |---|---|
 | `url` | `https://ocx.sh<path>`, or the site's preview address in preview mode |
-| `uploaded` | Files uploaded. `0` in a dry run. |
+| `uploaded` | Files uploaded (PUT). Unchanged files are skipped and not counted. `0` in a dry run. |
 | `deleted` | Stale HTML files deleted. `0` in a dry run. |
 
 ## What it does
@@ -54,11 +55,17 @@ same checkout, so the SHA fixes all three.
 1. Resolves the zone `sh-ocx-<name>` from `GITHUB_REPOSITORY` and checks that the repository
    owns `path`. Checks `dist` for links, layout and the Pagefind version (the `ocx-site check`
    rules). Requires `dist/index.html`. A failure here ends the run with zero requests.
-2. Lists `<zone>/<path>`.
-3. Uploads every file except HTML, the top-level `pagefind/` files and `_shell/v1/current.json`, 8 at a time, each with its
+2. Lists `<zone>/<path>`. Each listed file carries the `Checksum` and `Length` Bunny stores.
+   A dist file is skipped, not uploaded, only when the listing has its remote path with a
+   non-empty `Checksum` equal to the SHA-256 of the local bytes (case-insensitive) and a `Length`
+   equal to their size. No entry, or a missing, null or empty `Checksum`, or a missing or different
+   `Length`, always uploads. `404.html` goes to `bunnycdn_errors/`, outside the listing of any
+   non-root `path`, so it is always uploaded there. `force-upload: true` skips nothing. Skipped
+   files are never pruned. The log line and job summary report `N unchanged` next to the upload count.
+3. Uploads every file that is not skipped, except HTML, the top-level `pagefind/` files and `_shell/v1/current.json`, 8 at a time, each with its
    uppercase SHA-256 as `Checksum`. A network error, 5xx or 429 retries up to 3 attempts in total.
    Any other failure stops the run.
-4. Uploads the top-level `pagefind/` files, then every HTML file, then the live-header pointer
+4. Uploads, in the same way, the top-level `pagefind/` files, then every HTML file, then the live-header pointer
    `_shell/v1/current.json`, so it never names a fragment that is not up yet. `404.html` goes to
    `bunnycdn_errors/404.html`.
 5. Deletes listed `*.html` files this build did not upload. It never deletes anything else, and it

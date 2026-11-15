@@ -27,11 +27,15 @@ inputs:
     description: Delete stale HTML even when the prune would remove more than half of the listed pages.
     required: false
     default: 'false'
+  force-upload:
+    description: Upload every file, even those the zone already holds with identical bytes.
+    required: false
+    default: 'false'
 outputs:
   url:
     description: Public URL of the deployed site.
   uploaded:
-    description: Number of files uploaded.
+    description: Number of files uploaded. Files the zone already held unchanged are skipped and not counted.
   deleted:
     description: Number of stale HTML files deleted.
 runs:

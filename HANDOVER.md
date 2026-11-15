@@ -198,8 +198,8 @@ Bunny facts that bite:
 
 The reusable action (`.github/actions/deploy`) is called from each consumer.
 Its inputs are `path` (a claim path, default the repo's claim), `dist` (build dir)
-and `storage-key`, plus `preview`, `dry-run` and `force-prune`. The consumer's
-build emits Pagefind. Steps: validate `dist` → upload hashed and non-HTML files →
+and `storage-key`, plus `preview`, `dry-run`, `force-prune` and `force-upload`. The consumer's
+build emits Pagefind. Steps: validate `dist` → upload hashed and non-HTML files (skipping those the zone holds byte-identical) →
 upload the fixed-name Pagefind files and HTML → prune stale HTML only. No purge.
 
 It is a `node24` `.mjs` action. Consumers run it on `push: main`, a daily
