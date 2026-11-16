@@ -9,6 +9,15 @@ import { emit } from './ui/zag-runtime.mjs';
 
 export { connect, machine };
 
+/**
+ * Puts the panel's body in place; a panel with none (inflated, or rendered in place) is left as it is.
+ * @param {Element | null | undefined} panel `nav.ocx-mega`
+ */
+export function inflateMega(panel) {
+  const body = panel?.querySelector(':scope > template[data-mega]');
+  if (body) body.replaceWith(/** @type {HTMLTemplateElement} */ (body).content);
+}
+
 /** Machine id of the header nav (one header per page). */
 export const NAV_ID = 'ocx-nav';
 /** Machine id of the ecosystem hub rail (`tabs`). */
@@ -84,6 +93,7 @@ const rails = new WeakSet();
  */
 export function render(api, root, spread, spawn) {
   const p = parts(api);
+  inflateMega(root.querySelector(':scope > [popover]')); // the rail below reads its markup
   spread(root, p.root);
   const list = root.querySelector(LIST);
   if (list) spread(list, p.list);

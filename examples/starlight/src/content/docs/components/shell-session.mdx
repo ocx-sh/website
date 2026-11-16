@@ -9,10 +9,10 @@ import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
 
 Fences alternate by position: the first, third and so on are commands, the second, fourth and so on are outputs.
 A command with no output goes in the same fence as the next command.
-The session reads like a shell: every command line starts with an accent `$`, every output line with a `>` and the whole line is in the comment colour, whatever the output's language.
-The markers are drawn, not text: they are neither selected nor copied. A line after a trailing `\` continues the command: it keeps its indent and gets no `$`.
+Every command line starts with an accent `$`, every output line with a `>` in the comment colour, whatever the output's language.
+The markers are drawn, not text: neither selected nor copied. A line after a trailing `\` continues the command: it keeps its indent and gets no `$`; neither does a blank line or a `#` comment line.
 A command has a copy button, which copies only the command; an output has none.
-With `play` the session types itself: the player loads when the session first scrolls into view, so keep the lines short enough not to scroll sideways.
+With `play` the session types itself once it scrolls into view; keep lines short enough not to scroll sideways. With `collapsed` every output folds behind an `Output` toggle; the commands stay visible. The two cannot be combined.
 The slot holds code fences and nothing else; the build fails on anything more.
 
 <ShellSession title="Lock and build">
@@ -23,6 +23,15 @@ ocx lock
 locked 3 tools in ocx.lock
 ```
 </ShellSession>
+
+## Marked lines and numbered badges
+
+A fence takes Expressive Code's line markers, and a marked line keeps its prompt and its column: `{2}` highlights line 2, `ins={2}` and `del={2}` tint it green or red.
+A **labelled** marker, `{"1":2}` (label `1` on line 2), also draws the label as a small badge at the line's right edge, so the prose below can say "line 1".
+Highlight to draw the eye, badge to cite a line by number. A screen reader skips both: the sentence under the session carries what every marker says, so always write that legend.
+
+A script included with `<<<` takes the same meta after the language: `<<< @/_scripts/lock.sh{sh {"1":1} ins={2}}`.
+The **Marked lines** story below shows a badged session, under `play` and `collapsed` too.
 
 ## Stories
 
@@ -38,7 +47,14 @@ locked 3 tools in ocx.lock
       type: 'boolean',
       default: 'false',
       description:
-        'Type each command in a loop at 40 ms per character, its output appearing after it. Every line is laid out from the start, so the box never changes size; the loop pauses while off screen or the tab is hidden. Under reduced motion it shows the final state.',
+        'Type each command in a loop at 40 ms per character, its output after it. The box never changes size; the loop pauses off screen. Under reduced motion it shows the final state.',
+    },
+    {
+      name: 'collapsed',
+      type: 'boolean',
+      default: 'false',
+      description:
+        'Fold every output behind an Output toggle (the Collapsible disclosure); commands stay visible. Not with `play`: the build fails on both.',
     },
     {
       name: 'title',
@@ -56,5 +72,6 @@ None. The session fires no events; `play` only starts the typing loop.
 
 No APG widget pattern applies. A command's copy button is a plain button in the tab order.
 
-- <kbd>Tab</kbd>: Next command's copy button.
+- <kbd>Tab</kbd>: Next command's copy button, or the next Output toggle with `collapsed`.
+- <kbd>Enter</kbd> or <kbd>Space</kbd> on an Output toggle: Open or close that output.
 - <kbd>Enter</kbd> or <kbd>Space</kbd>: Copy that command.

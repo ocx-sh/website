@@ -69,6 +69,8 @@ const EXPORT_KEYS = [
   './shell-rev',
   './shell-render',
   './highlight',
+  './glossary',
+  './glossary/schema.json',
   './copy',
   './logo-tile',
   './command-palette',

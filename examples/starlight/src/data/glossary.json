@@ -1,0 +1,114 @@
+[
+  {
+    "id": "ocx-home",
+    "term": "OCX home",
+    "variants": ["OCX home"],
+    "definition": "The directory where OCX keeps its stores, local index, state and global toolchain: `$OCX_HOME`, or `~/.ocx` when unset.",
+    "learnMore": "components/glossary/",
+    "category": "ocx"
+  },
+  {
+    "id": "image-index",
+    "term": "image index",
+    "variants": ["image index", "image indexes", "OCI image index", "OCI Image Index"],
+    "definition": "An OCI manifest that lists one platform manifest per platform under a single tag, so each host picks its own build.",
+    "learnMore": "components/glossary/",
+    "category": "oci",
+    "avoid": ["image-index", "Image Index"]
+  },
+  {
+    "id": "sigstore",
+    "term": "Sigstore",
+    "variants": ["Sigstore"],
+    "definition": "An open signing service: Fulcio issues short-lived certificates, Rekor logs every signature, and verifiers check both.",
+    "learnMore": "components/glossary/",
+    "category": "signing"
+  },
+  {
+    "id": "fulcio",
+    "term": "Fulcio",
+    "variants": ["Fulcio"],
+    "definition": "Sigstore's certificate authority: it exchanges an OIDC token for a short-lived X.509 certificate naming the signer identity.",
+    "learnMore": "components/glossary/",
+    "category": "signing"
+  },
+  {
+    "id": "rekor",
+    "term": "Rekor",
+    "variants": ["Rekor"],
+    "definition": "Sigstore's append-only transparency log; each logged signature gets a Signed Entry Timestamp that verifiers check.",
+    "learnMore": "components/glossary/",
+    "category": "signing"
+  },
+  {
+    "id": "sbom",
+    "term": "SBOM",
+    "variants": ["SBOM", "SBOMs", "software bill of materials"],
+    "definition": "Software bill of materials: a list of the components inside a package, attached to it as a referrer.",
+    "learnMore": "components/glossary/",
+    "category": "signing"
+  },
+  {
+    "id": "cosign",
+    "term": "cosign",
+    "variants": ["cosign"],
+    "definition": "Sigstore's command-line signing tool; OCX signatures and attestations interoperate with it.",
+    "learnMore": "components/glossary/",
+    "category": "signing"
+  },
+  {
+    "id": "semver",
+    "term": "semver",
+    "variants": ["semver", "Semantic Versioning"],
+    "definition": "Semantic Versioning: versions written `MAJOR.MINOR.PATCH`, where each part signals breaking, additive or fix changes.",
+    "learnMore": "components/glossary/",
+    "category": "platform"
+  },
+  {
+    "id": "rolling-tag",
+    "term": "rolling tag",
+    "variants": ["rolling tag", "rolling tags"],
+    "definition": "A tag such as `3.28`, `3` or `latest` that moves forward to the newest matching release.",
+    "learnMore": "components/glossary/",
+    "category": "publishing",
+    "avoid": [
+      "floating tag",
+      "floating tags",
+      "moving tag",
+      "moving tags",
+      "alias tag",
+      "alias tags",
+      "rolling alias",
+      "rolling aliases",
+      "ancestor tag",
+      "cascade alias",
+      "cascade aliases"
+    ]
+  },
+  {
+    "id": "cascade",
+    "term": "cascade",
+    "variants": ["cascade", "cascades", "cascading"],
+    "definition": "Moving a new release's rolling tags along with it, so pushing `3.28.1` also moves `3.28`, `3` and `latest`.",
+    "learnMore": "components/glossary/",
+    "category": "publishing"
+  },
+  {
+    "id": "descriptor",
+    "term": "descriptor",
+    "variants": ["descriptor", "descriptors"],
+    "definition": "A small JSON record inside an OCI manifest that names other content by media type, digest and size.",
+    "learnMore": "components/glossary/",
+    "category": "oci",
+    "excludePages": ["probe/scope/"]
+  },
+  {
+    "id": "global-toolchain",
+    "term": "global toolchain",
+    "variants": ["global toolchain", "global toolchains"],
+    "definition": "The user-wide `ocx.toml` and `ocx.lock` in the OCX home, reached only with `--global` and never mixed into a project.",
+    "learnMore": "components/glossary/",
+    "category": "project",
+    "avoid": ["global tier", "global scope", "global set"]
+  }
+]

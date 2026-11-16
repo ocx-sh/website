@@ -166,15 +166,15 @@ sl-sidebar-state-persist { display: contents; }
   font-family: var(--ocx-font-sans); font-size: var(--ocx-text-base); font-weight: var(--ocx-font-weight-semibold);
 }
 /* The chevron is a mask, not an <svg>: the trigger holds bare text (DOM budget). */
-.sidebar-content [data-part='trigger']::after {
+.sidebar-content [data-part='trigger']::after, starlight-toc button::after {
   content: ''; flex: none; margin-inline-start: auto; inline-size: var(--ocx-icon-md); block-size: var(--ocx-icon-md);
   background-color: currentColor;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18l6-6l-6-6'/%3E%3C/svg%3E") center / 100% no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18l6-6l-6-6'/%3E%3C/svg%3E") center / 100% no-repeat;
 }
-.sidebar-content [data-part='trigger'][aria-expanded='true']::after { rotate: 90deg; }
+.sidebar-content [data-part='trigger'][aria-expanded='true']::after, starlight-toc [aria-expanded='true']::after { rotate: 90deg; }
 /* Live only: first paint and live must screenshot equal (C-130c). */
-#starlight__sidebar [data-zag-state='live'] > [data-part='trigger']::after {
+#starlight__sidebar [data-zag-state='live'] > [data-part='trigger']::after, starlight-toc[data-live] button::after {
   transition: rotate var(--ocx-duration-base) var(--ocx-ease-in-out);
 }
 /* Nested list: indented under a guide line. Keyed on the content part so deferred sub-lists stay plain. */
@@ -192,12 +192,12 @@ sl-sidebar-state-persist { display: contents; }
 /* Open and close: the disclosure pattern (ui/disclosure.css). The list grows while it fades in and on
  * close shrinks and fades before the UA `[hidden]` display lands. Live groups only: a group opened by
  * SSR or the pre-paint restore is final on first paint. Height needs `interpolate-size` (Chromium). */
-#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content'] {
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content'], starlight-toc[data-live] ul ul {
   interpolate-size: allow-keywords; overflow: clip; overflow-clip-margin: var(--ocx-space-2);
   transition: height var(--ocx-duration-moderate) var(--ocx-ease-in-out), opacity var(--ocx-duration-moderate) var(--ocx-ease-in-out), display var(--ocx-duration-moderate) allow-discrete;
 }
-#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content'][hidden] { height: 0; opacity: 0; }
-#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content']:not([hidden]) { @starting-style { height: 0; opacity: 0; } }
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content'][hidden], starlight-toc[data-live] ul ul[hidden] { height: 0; opacity: 0; }
+#starlight__sidebar [data-zag-root='collapsible'][data-zag-state='live'] > [data-part='content']:not([hidden]), starlight-toc[data-live] ul ul:not([hidden]) { @starting-style { height: 0; opacity: 0; } }
 .sidebar-content [data-part='trigger']:focus-visible { outline: var(--ocx-focus-ring); outline-offset: calc(var(--ocx-focus-offset) * -1); }
 .sidebar-content a {
   display: block; padding: var(--ocx-space-3) var(--ocx-space-4); line-height: 1.4; text-decoration: none;
@@ -230,7 +230,7 @@ sl-sidebar-state-persist { display: contents; }
   margin-inline-start: calc(var(--ocx-border-width) * -1);
   padding-inline-start: calc(var(--ocx-space-4) - var(--ocx-border-width-strong) + var(--ocx-border-width));
 }
-@media (forced-colors: active) { .sidebar-content [data-part='trigger']::after { background-color: CanvasText; } }
+@media (forced-colors: active) { .sidebar-content [data-part='trigger']::after, starlight-toc button::after { background-color: CanvasText; } }
 
 /* Mobile menu (C-231, design question 9 interim): below 50em the pane is a
  * full-height start sheet under the header, sliding in; the drawer's backdrop
@@ -273,7 +273,19 @@ starlight-toc a:hover { color: var(--ocx-color-fg); }
 /* The marker and the hover ink fade once the reader scrolls or points at the outline (Search.astro's
  * script sets `data-live` then): the init pass that marks the first entry stays a snap (D-R7 c). */
 starlight-toc[data-live] a { transition: color var(--ocx-duration-base), border-inline-start-color var(--ocx-duration-base); }
-starlight-toc a[aria-current='true'] { color: var(--ocx-color-accent-fg); border-inline-start-color: var(--ocx-color-focus); background: none; }
+starlight-toc a[aria-current='true'], starlight-toc li:has(> [hidden] [aria-current='true']) > a { color: var(--ocx-color-accent-fg); border-inline-start-color: var(--ocx-color-focus); background: none; }
+/* Folded sections (TableOfContents.astro): the sidebar group's chevron and motion (rules above) on a 24px button at the
+ * end of the section's title row; while a section is folded, its title carries the current row's mark (rule above). */
+starlight-toc li { position: relative; }
+/* A title row with a button is the button's height, so the 24px target sits inside it, overlapped by no row. */
+starlight-toc li:has(> button) > a { min-block-size: var(--ocx-space-6); margin-inline-end: var(--ocx-space-6); }
+starlight-toc button {
+  position: absolute; inset-block-start: 0; inset-inline-end: 0; inline-size: var(--ocx-space-6); block-size: var(--ocx-space-6);
+  padding: 0; border: 0; border-radius: var(--ocx-radius-sm); background: none; color: var(--ocx-color-fg-muted); cursor: pointer;
+}
+starlight-toc button::after { display: block; margin: auto; }
+starlight-toc button:hover { color: var(--ocx-color-fg); }
+starlight-toc button:focus-visible { outline: var(--ocx-focus-ring); outline-offset: calc(var(--ocx-focus-offset) * -1); }
 mobile-starlight-toc .toggle { border-radius: var(--ocx-radius-md); }
 
 /* Page title (mock #1b): H1 in the content column, no banner rule, no extra padding. */
@@ -462,10 +474,30 @@ starlight-file-tree :is(summary, a, .tree-entry) { border-radius: var(--ocx-radi
  * content; it takes no part in ContentPanel's `> * + *` rhythm. */
 .sl-container > link + * { margin-top: 0; }
 
-/* Prose rules are base.css's. Starlight wraps an h2 in an anchor div (its h2 is
- * inline), so the section rule moves from the h2 to the wrapper. */
-.sl-markdown-content .sl-heading-wrapper.level-h2 { margin: var(--ocx-prose-h2-margin); padding-top: var(--ocx-prose-h2-pad); border-top: var(--ocx-border-width) solid var(--ocx-color-border); }
-.sl-markdown-content .sl-heading-wrapper > h2 { margin: 0; padding-top: 0; border-top: 0; }
+/* Prose rules are base.css's. Starlight put every heading in a div (its heading inline), so the 1.5em above a heading
+ * was the div's and the heading's own margin never showed; the h2 section rule is the same rule from base.css. The other
+ * levels keep that 1.5em (the base.css margins are for pages Starlight does not lay out). */
+.sl-markdown-content :is(h1, h3, h4, h5, h6)[id] { margin: 1.5em 0 0; } /* [id]: outranks base.css's `.content main` arm */
+/* A jump to an h2 put its text where the scroll padding is, the rule and padding above it hidden behind the header:
+ * the section rule is the h2's own box now, so the jump skips it as it did. */
+.sl-markdown-content h2[id] { scroll-margin-top: calc(-1 * (var(--ocx-prose-h2-pad) + var(--ocx-border-width))); }
+
+/* Heading permalinks (markdown/heading-anchors.mjs): the heading's text is the link, its glyph a mask (Starlight's own
+ * link-alt path, pinned by a test) in the padding the link reserves, so it never wraps onto a line of its own. Shown on
+ * hover and focus where there is hover, always where there is not, as Starlight's was. */
+.sl-markdown-content .ocx-anchor {
+  --_size: 0.8275em;
+  position: relative; padding-inline-end: calc(var(--_size) + 0.25em); color: inherit; text-decoration: none;
+}
+.sl-markdown-content .ocx-anchor::after {
+  content: ''; position: absolute; inset-inline-end: 0; bottom: 0.19em; inline-size: var(--_size); block-size: var(--_size);
+  background: var(--sl-color-text-accent); mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.sl-markdown-content .ocx-anchor:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(--ocx-focus-offset); }
+@media (hover: hover) {
+  .sl-markdown-content .ocx-anchor::after { opacity: 0; }
+  .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):hover > .ocx-anchor::after, .sl-markdown-content .ocx-anchor:focus-visible::after { opacity: 1; }
+}
 
 /* Theme switch (D-R9): theme-toggle.mjs flips the scheme inside a view transition, a root crossfade
  * on the moderate duration (0s under reduced motion, so the switch is an instant flip).

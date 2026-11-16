@@ -12,6 +12,9 @@ open terminal, and on first expand for a collapsed one.
 The player's own control bar stays off (`controls: false`); a themed play/pause button, a native seek range and a
 fullscreen button replace it, wired to the player through its API (play, pause, seek, getCurrentTime, getDuration).
 
+The player fits its font to the frame width. Below 10px it keeps 10px and the terminal scrolls sideways inside its
+frame instead (a 120-column recording on a phone); record at 100 to 120 columns.
+
 Select the title bar, or focus it and press <kbd>Enter</kbd> or <kbd>Space</kbd>, to play the recording. Closing it
 pauses and rewinds.
 
@@ -46,4 +49,6 @@ pauses and rewinds.
 - <kbd>Enter</kbd> or <kbd>Space</kbd> expands or collapses a collapsed terminal; its title bar is a native button.
 - The play button and the fullscreen button are native buttons: <kbd>Enter</kbd> or <kbd>Space</kbd> activates
   whichever is focused.
+- A terminal wider than its frame is a scroll region named "Terminal output": <kbd>Tab</kbd> focuses it and the
+  arrow keys scroll it.
 - The seek range is a native `<input type="range">`: the arrow keys move it, which seeks the recording.

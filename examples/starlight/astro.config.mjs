@@ -4,6 +4,7 @@
 import starlight from '@astrojs/starlight';
 import ocxTheme from '@ocx-sh/theme/starlight';
 import { defineConfig } from 'astro/config';
+import terms from './src/data/glossary.json' with { type: 'json' };
 
 export default defineConfig({
   // A claim path; the plugin sets `site`.
@@ -15,7 +16,24 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'ocx theme example',
-      plugins: [ocxTheme()],
+      // A real-shaped glossary of twelve terms: `components/glossary-terms/` is its page (generated, see the
+      // glossary test); the probe pages are measurement fixtures and link nothing, except `probe/terms/`, which measures what linking costs.
+      plugins: [
+        ocxTheme({
+          glossary: {
+            terms,
+            page: 'components/glossary-terms/',
+            exclude: [
+              'probe/cascade/',
+              'probe/glyphs/',
+              'probe/long/',
+              'probe/outline/',
+              'probe/splash/',
+              'probe/terminal/',
+            ],
+          },
+        }),
+      ],
       // Showcase kit styles ride in the shared stylesheet (see showcase.css).
       customCss: ['./src/components/showcase/showcase.css'],
       // Probe pages carry a nested sidebar (collapsible groups), see the file.
@@ -131,6 +149,8 @@ export default defineConfig({
                 { label: 'Code', link: '/components/code/' },
                 { label: 'Code colours', link: '/components/code-colours/' },
                 { label: 'Feature sections', link: '/components/feature-section/' },
+                { label: 'Glossary', link: '/components/glossary/' },
+                { label: 'Glossary terms', link: '/components/glossary-terms/' },
                 { label: 'Hub grid', link: '/components/hub-grid/' },
                 { label: 'Key-value table', link: '/components/key-value-table/' },
                 { label: 'Markdown', link: '/components/markdown/' },

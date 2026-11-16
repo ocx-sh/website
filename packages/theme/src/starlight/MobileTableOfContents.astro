@@ -1,8 +1,10 @@
 ---
 // Starlight `MobileTableOfContents` override: the same markup without its own script (the element is defined by
-// TableOfContents.astro's entry script, toc-elements.mjs) and without scoped styles (starlight.css).
+// TableOfContents.astro's entry script, toc-elements.mjs) and without scoped styles (starlight.css). The list waits in a
+// <noscript>: with JS that is one element of inert text, which toc-elements.mjs parses in on the first open, so a page
+// does not carry a second copy of the desktop outline's rows; without JS the browser renders it as the list.
 import Icon from 'virtual:ocx-theme/starlight/../user-components/Icon.astro';
-import TableOfContentsList from 'virtual:ocx-theme/starlight/TableOfContents/TableOfContentsList.astro';
+import TocList from './TocList.astro';
 
 const { toc } = Astro.locals.starlightRoute;
 ---
@@ -19,7 +21,9 @@ const { toc } = Astro.locals.starlightRoute;
           <span class="display-current" />
         </summary>
         <div class="dropdown">
-          <TableOfContentsList toc={toc.items} isMobile />
+          <noscript>
+            <TocList toc={toc.items} />
+          </noscript>
         </div>
       </details>
     </nav>

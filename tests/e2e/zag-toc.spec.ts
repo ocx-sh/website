@@ -147,10 +147,12 @@ test.describe('390px', () => {
   test('mobile TOC end of page: the summary shows the last heading at the bottom', async ({ page }) => {
     await page.goto('/docs/probe/long/');
     const toc = page.locator('mobile-starlight-toc');
-    const last = (await toc.locator('a').last().textContent())?.trim() ?? '';
+    // The phone list is parsed in on its first open (MobileTableOfContents.astro): the rows are the desktop outline's.
+    const last = (await page.locator('starlight-toc a').last().textContent())?.trim() ?? '';
     expect(last).not.toBe('');
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect(toc.locator('.display-current')).toHaveText(last);
+    await toc.locator('summary').click();
     await expect(toc.locator('a[aria-current="true"]')).toHaveAttribute('href', '#summary');
   });
 });

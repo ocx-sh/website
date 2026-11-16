@@ -6,6 +6,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import * as jsdom from 'jsdom';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import nav from '../src/nav.json' with { type: 'json' };
+import { inflateMega } from '../src/components/navigation-menu.zag.mjs';
 import { renderShell } from '../src/shell-render.mjs';
 import { shellRev } from '../src/shell-rev.mjs';
 import { swapShell } from '../src/shell-swap.mjs';
@@ -107,9 +108,11 @@ describe('the fragment', () => {
     const baseline = parts();
     const html = (nodes: Iterable<Element>) => [...nodes].map((n) => n.outerHTML).join('');
     expect(html(doc.querySelectorAll('.ocx-header__nav > ul > li'))).toBe(html(baseline['sections']!.children));
-    expect(html(doc.querySelectorAll('.ocx-header [data-zag-root] > nav.ocx-mega'))).toBe(
-      html(baseline['mega']!.children),
-    );
+    // The page's panel ships its body in a template (inflated on first touch); inflated, it is the fragment's panel.
+    const panel = doc.querySelector('.ocx-header [data-zag-root] > nav.ocx-mega')!;
+    panel.querySelector(':scope > noscript')?.remove();
+    inflateMega(panel);
+    expect(panel.outerHTML).toBe(html(baseline['mega']!.children));
     expect(html(doc.querySelectorAll('#ocx-header-menu > ul > li'))).toBe(html(baseline['drawer']!.children));
   });
 });

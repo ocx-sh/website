@@ -75,9 +75,13 @@ const noscriptCss = `<style>@layer ocx{#starlight__sidebar [data-collapsible][hi
 const WAKE = anyDeferred
   ? `g.forEach(d=>d.querySelector('[data-defer]:not([hidden])')&&d.dispatchEvent(new Event('focusin',{bubbles:true})))`
   : 'void 0';
+// A deferred group restored open takes the links its last load saved (deferred-group.mjs), so the first frame already shows them; none saved, it loads as before.
+const FILL = anyDeferred
+  ? `const k=c.dataset.defer,x=k&&sessionStorage.getItem('ocx-frag:'+k);if(o&&x){c.insertAdjacentHTML('beforeend',x);c.removeAttribute('data-defer')}`
+  : '';
 const SCROLL = `p.closest('#starlight__sidebar').scrollTop=s.scroll`;
 const persist = groups
-  ? `(()=>{try{const p=document.currentScript.parentElement,k='sl-sidebar-state',h=p.dataset.hash,g=[...p.querySelectorAll('[data-zag-root=collapsible]')],r=()=>{try{const s=JSON.parse(sessionStorage.getItem(k)||'0');if(s?.hash===h&&Array.isArray(s.open))return s}catch{}return{hash:h,open:[]}},s=r();p.addEventListener('ocx:collapsible:change',e=>{try{const t=r();t.open[+e.target.dataset.zagId.slice(3)]=e.detail.open;sessionStorage.setItem(k,JSON.stringify(t))}catch{}});addEventListener('DOMContentLoaded',()=>'mounted'in p.dataset?${WAKE}:g.forEach(d=>d.dataset.zagState='error'));if(!matchMedia('(min-width: 50em)').matches)return;g.forEach(d=>{const o=s.open[+d.dataset.zagId.slice(3)];if(typeof o!='boolean')return;const t=d.firstElementChild,c=t.nextElementSibling;t.setAttribute('aria-expanded',o);c.hidden=!o});if(s.scroll)${SCROLL}}catch{}})()`
+  ? `(()=>{try{const p=document.currentScript.parentElement,k='sl-sidebar-state',h=p.dataset.hash,g=[...p.querySelectorAll('[data-zag-root=collapsible]')],r=()=>{try{const s=JSON.parse(sessionStorage.getItem(k)||'0');if(s?.hash===h&&Array.isArray(s.open))return s}catch{}return{hash:h,open:[]}},s=r();p.addEventListener('ocx:collapsible:change',e=>{try{const t=r();t.open[+e.target.dataset.zagId.slice(3)]=e.detail.open;sessionStorage.setItem(k,JSON.stringify(t))}catch{}});addEventListener('DOMContentLoaded',()=>'mounted'in p.dataset?${WAKE}:g.forEach(d=>d.dataset.zagState='error'));if(!matchMedia('(min-width: 50em)').matches)return;g.forEach(d=>{const o=s.open[+d.dataset.zagId.slice(3)];if(typeof o!='boolean')return;const t=d.firstElementChild,c=t.nextElementSibling;t.setAttribute('aria-expanded',o);c.hidden=!o;${FILL}});if(s.scroll)${SCROLL}}catch{}})()`
   : `(()=>{try{const p=document.currentScript.parentElement,s=JSON.parse(sessionStorage.getItem('sl-sidebar-state')||'0');if(s.hash===p.dataset.hash&&matchMedia('(min-width: 50em)').matches)${SCROLL}}catch{}})()`;
 
 /** A link's own attributes; its `class` joins ours (as Starlight's). */

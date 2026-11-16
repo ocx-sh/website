@@ -1,12 +1,14 @@
 // Public `@ocx-sh/theme/starlight` entry: the Starlight plugin (design §4.3).
 import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import sitemap from '@astrojs/sitemap';
 import { fontProviders } from 'astro/config';
 import pkg from '../../package.json' with { type: 'json' };
 import nav from '../nav.json' with { type: 'json' };
+import { validate } from '../glossary/validate.mjs';
 import { addMarkdownPlugins } from '../markdown/index.mjs';
 import { mergeTargets } from '../registry.mjs';
 import { EXPRESSIVE_CODE } from './ec.mjs';
@@ -40,8 +42,8 @@ const INDEX_WEIGHT = 1;
 const INLINE_CSS_MAX = 750;
 // Client chunk group of the modules every docs page imports from its entry scripts: the Zag trigger
 // layer (Search.astro's script, C-113), `onRoots` (every component script mounts through it; as its own
-// chunk it cost a page with one component a request, ~0.2 KB of headers, over the content script budget), Vite's preload helper (every lazy import) and Starlight's
-// `starlight-toc` and the phone TOC element (toc-elements.mjs). The TableOfContents script itself joins it, so the group chunk
+// chunk it cost a page with one component a request, ~0.2 KB of headers, over the content script budget), Vite's preload helper (every lazy import) and the two
+// outline elements (toc-elements.mjs). The TableOfContents script itself joins it, so the group chunk
 // is that entry and no 26-byte stub entry (a request, ~0.4 KB of headers) imports it. chrome.mjs stays
 // out: the chunk is the last request of the first paint, and Lighthouse's simulation gives a response
 // past three TCP segments (~4.3 KB on the wire) a second round trip, which put every page 150 ms late
@@ -50,8 +52,22 @@ const INLINE_CSS_MAX = 750;
 // (one request more, nothing breaks).
 const EVERY_PAGE = {
   name: 'zag',
-  test: /[\\/]components[\\/]ui[\\/](?:zag|lazy|roots)\.mjs$|vite[\\/]preload-helper|[\\/]TableOfContents[\\/]starlight-toc\.js$|[\\/]TableOfContents\.astro\?astro&type=script|[\\/]starlight[\\/]toc-elements\.mjs$/,
+  test: /[\\/]components[\\/]ui[\\/](?:zag|lazy|roots)\.mjs$|vite[\\/]preload-helper|[\\/]TableOfContents\.astro\?astro&type=script|[\\/]starlight[\\/]toc-elements\.mjs$/,
 };
+// The Zag foundation in two chunks. Left to the bundler, every distinct set of lazy machines importing a helper got a
+// chunk of its own (raf, overflow, tabbable, ...): ten-odd tiny files, each named once more in the preload list inside
+// every entry script that lazy-loads a machine, which grew Search and Terminal by ~250 B gzipped. One chunk for all of
+// it cost the one machine that runs at page load (Toc) ~13 KB of helpers it never calls: `zag-lib` holds what a machine
+// needs to run at all (core, store, utils, and the DOM helpers Toc imports), `zag-dom` the rest of dom-query (focus,
+// tabbable, typeahead, ...), fetched with the first machine that wants them. Machines and their heavier libraries
+// (popper, focus-trap) stay apart. A module that moves between the two only moves bytes between the requests.
+const ZAG_FOUNDATION = [
+  {
+    name: 'zag-lib',
+    test: /[\\/]@zag-js[\\/](?:core|store|types|utils|anatomy|vanilla)[\\/]|[\\/]components[\\/]ui[\\/]zag-runtime\.mjs$|[\\/]@zag-js[\\/]dom-query[\\/]dist[\\/](?:chunk-\w+|shared|node|platform|event|resize-observer|scroll|overflow)\.mjs$/,
+  },
+  { name: 'zag-dom', test: /[\\/]@zag-js[\\/]dom-query[\\/]/ },
+];
 // Every dependency the theme lazy-loads (Zag machines, the asciinema player), pre-bundled by the dev
 // server: discovered only on first hover/focus/play, Vite re-optimized and the browser got 504
 // "Outdated Optimize Dep" (no lazy component started; "The recording could not be loaded").
@@ -139,6 +155,25 @@ export function starlightInternal(rel) {
     );
   return file.replaceAll('\\', '/');
 }
+/**
+ * Starlight's own heading id plugin, by file (it depends on `@astrojs/markdown-satteri`, which the theme does not),
+ * for the permalinks the theme draws itself; `undefined` when it cannot be found: Starlight then keeps its own.
+ * @returns {Promise<import('satteri').HastPluginEntry | undefined>}
+ */
+async function starlightHeadingIds() {
+  try {
+    const from = createRequire(fileURLToPath(import.meta.resolve('@astrojs/starlight')));
+    const mod = await /** @type {Promise<{ satteriHeadingIdsPlugin?: () => import('satteri').HastPluginEntry }>} */ (
+      import(pathToFileURL(from.resolve('@astrojs/markdown-satteri')).href)
+    );
+    return typeof mod.satteriHeadingIdsPlugin === 'function' ? mod.satteriHeadingIdsPlugin() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+const HEADING_IDS = await starlightHeadingIds();
+const GLOSSARY_ID = 'virtual:ocx-theme/glossary';
+const GLOSSARY_ROUTE = fileURLToPath(new URL('../glossary/route.mjs', import.meta.url)).replaceAll('\\', '/');
 const SIDEBAR_FRAG = fileURLToPath(new URL('./frag-sidebar.astro', import.meta.url)).replaceAll('\\', '/');
 
 /**
@@ -146,6 +181,8 @@ const SIDEBAR_FRAG = fileURLToPath(new URL('./frag-sidebar.astro', import.meta.u
  * @typedef {{
  *   breadcrumbs?: false | { root?: Crumb | false },
  *   math?: boolean,
+ *   glossary?: import('../markdown/glossary.mjs').GlossaryOptions,
+ *   foldOutline?: boolean,
  * }} OcxThemeOptions
  */
 
@@ -155,12 +192,25 @@ const SIDEBAR_FRAG = fileURLToPath(new URL('./frag-sidebar.astro', import.meta.u
  * `false` drops it, `{ root: { label, href } }` adds a root crumb.
  * `math`: also render `$…$` and `$$…$$` as math (```` ```math ```` fences always render). Off by
  * default: prose with two shell variables (`$HOME` and `$PATH`) would turn into a formula.
+ * `glossary`: links the first usage of each glossary term in the prose of every page to the glossary page, with its
+ * definition in a popover (`terms`, `page`, `exclude`, `frequency`: `GlossaryOptions`); off unless given.
+ * `foldOutline`: an "On this page" outline of 10 rows or more folds each section's subsections under its title, the
+ * section being read open (default on); `false` keeps every outline flat.
  * @param {OcxThemeOptions} [options]
  * @returns {import('@astrojs/starlight/types').StarlightPlugin}
  */
-export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
+export default function ocxTheme({ breadcrumbs = {}, math = false, glossary, foldOutline = true } = {}) {
+  if (glossary) {
+    const problems = validate(glossary.terms);
+    if (problems.length) throw new Error(`@ocx-sh/theme: invalid glossary:\n${problems.join('\n')}`);
+  }
+  // The popover's data: `{id: [term, definition]}`, served at `<base>glossary.json`.
+  const definitions = JSON.stringify(
+    Object.fromEntries((glossary?.terms ?? []).map((t) => [t.id, [t.term, t.definition]])),
+  );
+  const glossaryKey = glossary && createHash('sha256').update(JSON.stringify(glossary)).digest('hex').slice(0, 16);
   // Defaults live in the route middleware, which reads this.
-  const runtime = { breadcrumbs };
+  const runtime = { breadcrumbs, foldOutline };
   return {
     name: '@ocx-sh/theme',
     hooks: {
@@ -174,6 +224,14 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
         // Starlight reads trailingSlash before plugin-added integrations run, so it is checked, not set.
         if (astroConfig.trailingSlash !== 'always')
           throw new Error(`@ocx-sh/theme: trailingSlash must be 'always', got '${astroConfig.trailingSlash}'`);
+
+        // The theme draws the heading permalinks itself, one element each (markdown/heading-anchors.mjs): Starlight's
+        // `headingLinks` is switched off, which also drops its anchor stylesheet. Unless the consumer switched them off
+        // or the processor is not Sätteri.
+        const anchors =
+          HEADING_IDS !== undefined &&
+          config.markdown?.headingLinks !== false &&
+          astroConfig.markdown?.processor?.name === 'satteri';
 
         const ec = config.expressiveCode;
         const expressiveCode = ec === false ? false : mergeEc(ec === true || ec === undefined ? {} : ec);
@@ -212,12 +270,21 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
                   base: own,
                   math,
                   smartypants: astro.markdown.smartypants !== false,
+                  headingIds: anchors ? HEADING_IDS : undefined,
+                  glossary,
                 });
                 // Astro keys its content cache on this config minus integrations and functions: without the
                 // EC hash and the theme version in it, a changed EC config or a theme upgrade keeps serving
                 // cached .md pages (stale ec.<hash>.css links, old widget markup) until .astro is cleared.
                 // A visitor-less Sätteri plugin carries both, pushed the way Starlight adds its own.
-                md.hastPlugins.push({ name: '@ocx-sh/theme/cache-key', ecKey, version: pkg.version, math });
+                // The glossary's hash joins it: editing a definition or a variant re-renders the pages that link it.
+                md.hastPlugins.push({
+                  name: '@ocx-sh/theme/cache-key',
+                  ecKey,
+                  version: pkg.version,
+                  math,
+                  glossaryKey,
+                });
               }
               // Starlight's default favicon is `/favicon.svg`; the logo fills it unless the consumer has one.
               if (config.favicon === undefined && !existsSync(new URL('favicon.svg', astro.publicDir)))
@@ -225,6 +292,7 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
               // `frag/` belongs to fragment routes (Deferred): a docs entry there would collide with them.
               if (existsSync(new URL('content/docs/frag/', astro.srcDir)))
                 throw new Error('@ocx-sh/theme: src/content/docs/frag/ is reserved for fragment routes; rename it.');
+              if (glossary) injectRoute({ pattern: '/glossary.json', entrypoint: GLOSSARY_ROUTE, prerender: true });
               if (singleLocale)
                 injectRoute({ pattern: '/frag/sidebar/[key]', entrypoint: SIDEBAR_FRAG, prerender: true });
               updateConfig({
@@ -239,7 +307,7 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
                       name: '@ocx-sh/theme/options',
                       /** @param {string} id */
                       resolveId: (id) =>
-                        id === OPTIONS_ID || id === SIDEBAR_ID
+                        id === OPTIONS_ID || id === SIDEBAR_ID || id === GLOSSARY_ID
                           ? `\0${id}`
                           : id.startsWith(INTERNALS_ID)
                             ? starlightInternal(id.slice(INTERNALS_ID.length))
@@ -248,13 +316,15 @@ export default function ocxTheme({ breadcrumbs = {}, math = false } = {}) {
                       load: (id) =>
                         id === `\0${OPTIONS_ID}`
                           ? `export default ${JSON.stringify(runtime)};`
-                          : id === `\0${SIDEBAR_ID}`
-                            ? singleLocale
-                              ? `import config from 'virtual:starlight/user-config';
+                          : id === `\0${GLOSSARY_ID}`
+                            ? `export default ${definitions};`
+                            : id === `\0${SIDEBAR_ID}`
+                              ? singleLocale
+                                ? `import config from 'virtual:starlight/user-config';
 import { getSidebarFromConfig } from ${JSON.stringify(NAVIGATION)};
 export const configSidebar = () => getSidebarFromConfig(config.sidebar, '/__ocx__/', undefined);`
-                              : 'export const configSidebar = () => [];'
-                            : undefined,
+                                : 'export const configSidebar = () => [];'
+                              : undefined,
                     },
                   ],
                   // Astro deep-merges this, so a consumer's own include list is kept (arrays concat).
@@ -282,7 +352,7 @@ export const configSidebar = () => getSidebarFromConfig(config.sidebar, '/__ocx_
                     environments: {
                       client: {
                         build: {
-                          rolldownOptions: { output: { codeSplitting: { groups: [EVERY_PAGE] } } },
+                          rolldownOptions: { output: { codeSplitting: { groups: [EVERY_PAGE, ...ZAG_FOUNDATION] } } },
                         },
                       },
                     },
@@ -361,6 +431,7 @@ export const configSidebar = () => getSidebarFromConfig(config.sidebar, '/__ocx_
             ...config.components,
           },
           expressiveCode,
+          ...(anchors && { markdown: { ...config.markdown, headingLinks: false } }),
           pagefind: pagefind === false ? false : { ...(pagefind === true ? {} : pagefind), mergeIndex: merged },
         });
       },

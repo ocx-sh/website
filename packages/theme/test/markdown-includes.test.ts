@@ -81,3 +81,48 @@ test('a code include whose file holds a fence gets a longer fence', async () => 
   writeFileSync(join(srcDir, 'fenced.md'), 'a\n```sh\nb\n```\n');
   assert.match(await run(srcDir, '<<< @/fenced.md{md}\n'), /<code class="language-md">a\n```sh\nb\n```\n<\/code>/);
 });
+
+const FENCE_INFO = /<code class="language-sh"[^>]*>/;
+
+test('fence meta after the language rides along in the info string', async () => {
+  const srcDir = site();
+  const meta = '{"1":1} ins={2}';
+  const html = await run(srcDir, `<<< @/_scripts/demo.sh{sh ${meta}}\n`);
+  // The info string is `sh {"1":1} ins={2}`: the language class is the first word, the rest is the fence's meta.
+  assert.match(html, FENCE_INFO);
+  assert.match(html, /#!\/bin\/sh\necho demo\n/);
+  // The tree the plugin hands over is the proof: a code node whose lang and meta are what a hand-written fence has.
+  const seen: { lang: string | null | undefined; meta: string | null | undefined }[] = [];
+  await markdownToHtml(`<<< @/_scripts/demo.sh{sh ${meta}}\n`, {
+    mdastPlugins: [
+      includes({ srcDir }),
+      { name: 'probe', code: (node) => void seen.push({ lang: node.lang, meta: node.meta }) },
+    ],
+    fileURL: pathToFileURL(join(srcDir, 'docs', 'page.md')),
+  });
+  assert.deepEqual(
+    seen.map(({ lang, meta: m }) => [lang, m]),
+    [['sh', meta]],
+  );
+});
+
+test('the language-only forms stay byte-identical', async () => {
+  const srcDir = site();
+  assert.equal(
+    await run(srcDir, '<<< @/_scripts/demo.sh{sh}\n'),
+    '<pre><code class="language-sh">#!/bin/sh\necho demo\n</code></pre>',
+  );
+  assert.equal(await run(srcDir, '<<< @/_scripts/demo.sh\n'), '<pre><code>#!/bin/sh\necho demo\n</code></pre>');
+});
+
+test('the MDX-escaped spelling reaches the plugin as the plain one, meta included', async () => {
+  const srcDir = site();
+  const escaped = String.raw`\<\<\< @/_scripts/demo.sh\{sh {"1":1} ins={2}\}`;
+  const html = await run(srcDir, `${escaped}\n`);
+  assert.match(html, FENCE_INFO);
+  assert.match(html, /#!\/bin\/sh\necho demo\n/);
+  assert.equal(
+    await run(srcDir, String.raw`\<\<\< @/_scripts/demo.sh\{sh\}` + '\n'),
+    '<pre><code class="language-sh">#!/bin/sh\necho demo\n</code></pre>',
+  );
+});

@@ -1,0 +1,68 @@
+---
+title: Glossary
+description: Terms in prose link to one glossary page and show their definition on hover or focus, with no markup written per usage.
+---
+
+import Stories from '../../../components/showcase/Stories.astro';
+
+The `glossary` option of the Starlight plugin turns the first usage of each glossary term in a page's prose into one link, `<a class="ocx-term" href="…/#id">`, to the term's entry on the glossary page. Nothing is written per usage: authors write plain prose and never link a term by hand. Hover a dashed term or Tab to it, and its definition opens in a popup; Escape closes the popup, and the pointer may move onto it. Without script a term is the plain link, and so it stays if the definition cannot be fetched.
+
+The terms of this site are twelve rows of real glossary data; its glossary page is [Glossary terms](../glossary-terms/). Try them here: Sigstore signs a release, Fulcio issues the certificate, Rekor logs it, and cosign checks it. A rolling tag follows the newest build, a cascade moves it, and an SBOM lists what the image index holds. The OCX home keeps the global toolchain, which uses semver to order a descriptor.
+
+## Stories
+
+<Stories of="glossary" />
+
+## Options
+
+Set on the plugin: `ocxTheme({ glossary: { terms, page, exclude, frequency } })`.
+
+| Option | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `terms` | `GlossaryTerm[]` | required | The glossary rows. Validated at config time: a bad row fails the build and names the row. |
+| `page` | `string` | required | The glossary page's route under the site base, such as `reference/glossary/`. Term links target its `{#id}` anchors, and the page itself links nothing. |
+| `exclude` | `string[]` | `[]` | Route prefixes whose pages link nothing, such as `changelog/`. |
+| `frequency` | `'page' \| 'section' \| 'all'` | `'page'` | Which usages link: the first of each term per page, the first per `##` section (text before the first `##` is a section of its own), or every one. |
+
+## Data
+
+One JSON array, checked by `validate` from `@ocx-sh/theme/glossary` and described by `@ocx-sh/theme/glossary/schema.json`.
+
+| Field | Meaning |
+| --- | --- |
+| `id` | The anchor of the term's entry: lowercase words joined by hyphens. |
+| `term` | The canonical name: the entry heading and the popup title. |
+| `variants` | Every form that links, inflections included (no stemming). A form with an uppercase letter matches exactly, an all-lowercase one in any case. The longest form wins: `image index` over `index`. |
+| `definition` | At most 25 words; a `code` span between backticks renders as code in the popup. |
+| `learnMore` | A docs route ending in `/` with an optional `#fragment`, or an `http(s)` URL. |
+| `category` | The section of the glossary page. |
+| `avoid` | Optional. Synonyms the docs must not use for the term. The theme ignores them; a consumer's lint reports them with `matcher(terms, { match: 'avoid' })`. |
+| `except` | Optional. Phrases that hold a variant but are not the term (`package manager`): they match first and link nothing. |
+
+The build serves the popup data at `<base>glossary.json` as `{ "<id>": ["<term>", "<definition>"] }`; the page script fetches it once, on the first hover or focus of a term.
+
+## What is never linked
+
+A term is matched in the prose of a page and nowhere else: not in headings, link text, alt text, inline code, code blocks, raw HTML, an aside's title, the attributes of a component (`<Node name="entrypoints/">`) or the content of a component other than `Steps`, `Tabs`, `TabItem`, `Aside` and `details`. A form never matches inside a longer name: `multi-platform`, `index.ocx.sh`, `$OCX_HOME`, `--platform` and `metadata.json` hold no term.
+
+## Tooling
+
+`@ocx-sh/theme/glossary` exports three functions for a consumer's own scripts and lint:
+
+- `matcher(terms, { match?: 'variants' | 'avoid' })` returns `find(text)`, the hits `{ id, text, start, end }` the plugin links, or with `match: 'avoid'` the banned synonyms.
+- `validate(terms)` returns the problems in the data, one line each; an empty array is sound data.
+- `glossaryMarkdown(terms, { categories, base, titles })` returns the body of the glossary page. This site's [Glossary terms](../glossary-terms/) page is its output, kept current by a test.
+
+## Behaviour
+
+| Interaction | Result |
+| --- | --- |
+| Focus (Tab) | Opens the popup at once. |
+| Hover | Opens it after 400 ms; the pointer may move onto the popup. |
+| Escape | Closes it; focus stays on the term. |
+| Blur, or the pointer leaving (while the term is not focused) | Closes it. |
+| Scroll | Closes a popup opened by hover. |
+| Another term | Closes the first: one popup is open at a time. |
+| No script, or the definitions fail to load | The term is the plain link to its glossary entry. |
+
+The open term carries `aria-describedby` only while its popup is open. The popup holds the term and its definition and nothing interactive; the learn-more link lives on the glossary page.

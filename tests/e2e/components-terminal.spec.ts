@@ -353,3 +353,108 @@ test('Terminal: control bar sits at the bottom, seek focus ring is inset, fullsc
     await expect.poll(() => c.evaluate(() => document.fullscreenElement === null)).toBe(true);
   }
 });
+
+// A 120-column cast. The player fits the font to the frame width; below FLOOR px the terminal keeps FLOOR and
+// scrolls sideways inside its frame instead of shrinking (unreadable) or clipping (cut-off lines).
+const WIDE_PAGE = `${STORY}wide/`;
+const FLOOR = 10; // px, TERMINAL_FLOOR_PX in terminal.mjs
+const wideOpen = (page: Page) => open(page);
+const wideCollapsed = (page: Page) => collapsed(page);
+
+/** The terminal's font and how far its right edge sticks out of every clipping ancestor after scrolling them to the end. */
+async function measureTerminal(page: Page, terminal: ReturnType<typeof open>) {
+  await expect(terminal.locator('.ap-term')).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  return terminal.evaluate(async (root) => {
+    const term = root.querySelector<HTMLElement>('.ap-term')!;
+    const frame = root.querySelector<HTMLElement>('.ocx-terminal__player')!;
+    const clippers: HTMLElement[] = [];
+    for (let e = term.parentElement; e && e !== root; e = e.parentElement) {
+      if (getComputedStyle(e).overflowX !== 'visible') clippers.push(e);
+    }
+    for (const c of clippers) c.scrollLeft = c.scrollWidth;
+    await new Promise((r) => requestAnimationFrame(r));
+    const box = term.getBoundingClientRect();
+    return {
+      cols: (JSON.parse(root.dataset['options']!) as { cols: number }).cols,
+      font: parseFloat(getComputedStyle(term).fontSize),
+      frame: frame.clientWidth,
+      termWidth: box.width,
+      overshoot: Math.max(0, ...clippers.map((c) => box.right - c.getBoundingClientRect().right)),
+      scrollers: clippers.filter((c) => c.scrollWidth > c.clientWidth).length,
+    };
+  });
+}
+
+test('Terminal: a 120-column cast on a narrow frame keeps a readable font and scrolls, never clipped', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(WIDE_PAGE);
+  await wideOpen(page).hover(); // loads the player
+  const m = await measureTerminal(page, wideOpen(page));
+  expect(m.cols).toBe(120);
+  expect(m.font, 'no smaller than the floor').toBeGreaterThanOrEqual(FLOOR - 0.05);
+  expect(m.overshoot, 'last column reachable by scrolling').toBeLessThanOrEqual(1);
+  expect(m.scrollers, 'the overflow is scrollable').toBeGreaterThan(0);
+
+  // Keyboard: the scroll region is focusable, named, and ArrowRight scrolls it without the player seeking.
+  const region = wideOpen(page).getByRole('region', { name: /terminal/i });
+  await expect(region).toHaveAttribute('tabindex', '0');
+  await region.evaluate((el) => ((el as HTMLElement).scrollLeft = 0));
+  await region.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(() => region.evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+  await expect(wideOpen(page).locator('.ocx-terminal__current')).toHaveText(/^0?0:00$/);
+});
+
+test('Terminal: a collapsed 120-column cast opened on a narrow frame keeps the floor and is not clipped', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(WIDE_PAGE);
+  await toggle(page).click();
+  const m = await measureTerminal(page, wideCollapsed(page));
+  expect(m.font).toBeGreaterThanOrEqual(FLOOR - 0.05);
+  expect(m.overshoot).toBeLessThanOrEqual(1);
+});
+
+test('Terminal: above the floor nothing is clipped and the player is created width-fitted', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  for (const url of [OPEN_PAGE, WIDE_PAGE]) {
+    await page.goto(url);
+    await wideOpen(page).hover();
+    const m = await measureTerminal(page, wideOpen(page));
+    expect(m.font, url).toBeGreaterThan(FLOOR);
+    expect(m.overshoot, url).toBeLessThanOrEqual(1);
+  }
+});
+
+for (const width of [390, 1400]) {
+  test(`Terminal: a 120-column player takes the height the open terminal reserved, no layout shift (${width}px)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addInitScript(() => {
+      const w = window as unknown as { __cls: number };
+      w.__cls = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[])
+          if (!e.hadRecentInput) w.__cls += e.value;
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await page.goto(WIDE_PAGE, { waitUntil: 'domcontentloaded' });
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      (window as unknown as { __cls: number }).__cls = 0;
+    });
+    const area = wideOpen(page).locator('.ocx-terminal__player');
+    const reserved = await area.evaluate((el) => el.getBoundingClientRect().height);
+    await wideOpen(page).hover();
+    await expect(wideOpen(page).locator('.ap-player')).toBeVisible();
+    await page.waitForTimeout(500);
+    const after = await area.evaluate((el) => el.getBoundingClientRect().height);
+    expect(Math.abs(after - reserved), 'player height matches the reserved height').toBeLessThanOrEqual(2);
+    expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBe(0);
+  });
+}

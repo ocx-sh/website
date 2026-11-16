@@ -17,6 +17,15 @@ export const COMPONENT_EXEMPT = {
   'ui/ScrollMount.astro': { parent: 'ScrollFade.astro', page: 'components/scroll-fade' },
   // The number stepper's script, rendered by Input only for a stepped number field, so a text or
   // search Input keeps ~400 B gz of inline script out of its page.
+  // The mount script of a folded session, rendered by ShellSession only with `collapsed`, so an unfolded session
+  // keeps it off its page.
+  // The glossary term link's style and popup loader for a chromeless page (a story canvas renders it itself); a
+  // Starlight page gets both from MarkdownContent and chrome.mjs. Documented on the glossary page.
+  'TermStyle.astro': { parent: 'starlight/MarkdownContent.astro', page: 'components/glossary' },
+  'ShellSessionFoldScript.astro': { parent: 'ShellSession.astro', page: 'components/shell-session' },
+  // The mount script of a playing session, rendered by ShellSession only with `play`: a plain, folded or marked
+  // session ships no script of its own (Expressive Code's copy button needs none of it).
+  'ShellSessionPlayScript.astro': { parent: 'ShellSession.astro', page: 'components/shell-session' },
   'ui/NumberStepperScript.astro': { parent: 'ui/Input.astro', page: 'components/input' },
 };
 
@@ -40,6 +49,7 @@ export const STARLIGHT_OVERRIDES = {
   'Sidebar.astro': 'page chrome: the sidebar navigation on every page with a sidebar',
   'MobileTableOfContents.astro': 'page chrome on every page with headings, on a phone',
   'TableOfContents.astro': 'page chrome on every page with headings',
+  'TocList.astro': 'the row list inside both outlines (TableOfContents, MobileTableOfContents), not a page component',
   'ThemeProvider.astro': 'inline pre-paint theme script, no markup',
   'ThemeSelect.astro': 'page chrome on every page',
 };

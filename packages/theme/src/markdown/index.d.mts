@@ -2,9 +2,13 @@
  * Adds the theme's plugins to a Sätteri processor's options, in place: replacing the processor
  * would drop the consumer's own options and every plugin Starlight already added.
  * @param {SatteriOptions} options
- * @param {{ srcDir: string, docsDir: string, base: string, math: boolean, smartypants: boolean }} site
+ * @param {{ srcDir: string, docsDir: string, base: string, math: boolean, smartypants: boolean,
+ *   headingIds?: import('satteri').HastPluginEntry | undefined,
+ *   glossary?: import('./glossary.mjs').GlossaryOptions | undefined }} site
  *   `docsDir` is the docs collection's directory, `base` its site path; `math` parses `$…$` and
- *   `$$…$$`; `smartypants` is Astro's `markdown.smartypants`.
+ *   `$$…$$`; `smartypants` is Astro's `markdown.smartypants`; `headingIds` is Starlight's heading id plugin, given
+ *   only when the theme owns the permalinks (starlight/index.mjs): docs pages then get ids and `headingAnchors`;
+ *   `glossary` links the glossary's terms.
  */
 export function addMarkdownPlugins(options: SatteriOptions, site: {
     srcDir: string;
@@ -12,6 +16,8 @@ export function addMarkdownPlugins(options: SatteriOptions, site: {
     base: string;
     math: boolean;
     smartypants: boolean;
+    headingIds?: import("satteri").HastPluginEntry | undefined;
+    glossary?: import("./glossary.mjs").GlossaryOptions | undefined;
 }): void;
 /**
  * Sätteri hast plugin: a heading ending in the escaped `\{#id\}` gets that id. MDX editors parse an

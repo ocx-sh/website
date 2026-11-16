@@ -334,9 +334,10 @@ describe('WP14a Skeleton', () => {
   it('WP14a Skeleton: a terminal src sizes it from the cast header, explicit cols/rows win, rows cap at 24', async () => {
     const min = async (props: Record<string, unknown>) =>
       (await skel({ variant: 'terminal', ...props }))?.getAttribute('style') ?? '';
-    // getting-started-install.cast is 100 x 8: (8 * 20 + 22) / (100 * 9 + 22).
+    // getting-started-install.cast is 100 x 8: (8 * 20 + 22) / (100 * 9 + 22), no less than the 10px font floor's
+    // height (10 * 182 / 15).
     const fromCast = await min({ src: '/casts/fixture/getting-started-install.cast' });
-    expect(fromCast).toContain('calc(100cqi * 182 / 922 + 32px)');
+    expect(fromCast).toContain('calc(max(100cqi * 182 / 922, 121.33px) + 32px)');
     expect(await min({ cols: 100, rows: 8 })).toBe(fromCast);
     expect(await min({ src: '/casts/fixture/getting-started-install.cast', cols: 80, rows: 10 })).toContain(
       '222 / 742',

@@ -116,6 +116,27 @@ Hint fetches plain text on the first show (never before), caches it by URL and
 replaces `label`, which stays when the fetch fails; event `ocx:hint:fill`
 `{ ok }`. Rich fetched content belongs in a `Popover`, not a Hint.
 
+### Glossary terms
+
+A site that defines the same words on many pages does not write a `Tooltip` per use: it sets the `glossary`
+plugin option (`ocx-theme-setup`, section "Glossary") and the theme links the terms.
+
+- **Authoring rule: write plain prose; never hand-link a term.** The plugin matches the glossary's `variants` in the
+  text of every page, so a hand-written link or `<Tooltip>` for a glossary term is a second, competing mechanism.
+- One usage is one element, `<a class="ocx-term" href="<glossary page>#<id>">text</a>`, with no data attribute and no
+  `title`. The definition is not in the page: `term-tip.mjs` loads on the first hover or focus of a term, fetches
+  `<base>glossary.json` (`{id: [term, definition]}`) once and fills one shared popup (`role="tooltip"`,
+  `popover="manual"`, CSS anchor positioning).
+- Behaviour (WCAG 1.4.13): focus opens at once, hover after 400 ms; the pointer may move onto the popup; Escape closes it
+  and focus stays on the term; blur and pointer leave close it (a focused term keeps it); a scroll closes a hover-opened
+  one; one popup at a time; `aria-describedby` is on the open term only. Without script, or when the fetch fails, a
+  term is the plain link.
+- Never linked: headings, link text, alt text, inline code, code, raw HTML, an aside's title, a component's attributes
+  (`<Node name="entrypoints/">`) and the content of any component except `Steps`, `Tabs`, `TabItem`, `Aside`, `details`.
+- On a Starlight page the theme's `MarkdownContent` inlines the link style once when the page has a term link, and the
+  every-page script (`chrome.mjs`) loads the popup on the first touch of a term: a term page ships no script of its own.
+  `TermStyle.astro` is the same style plus its own loader for a chromeless page (a story canvas renders `<TermStyle />`).
+
 ## Disclosure
 
 **`Accordion.astro`** with **`AccordionItem.astro`** children:

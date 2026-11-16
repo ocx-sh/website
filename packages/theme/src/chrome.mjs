@@ -16,10 +16,35 @@ export function mountChrome(doc) {
   // for every CycleButton on the page, so neither ThemeSelect nor CycleButton ships a script.
   wireThemeToggles(doc);
 
+  // A glossary term loads its popup on the first hover or focus of one. Equal to components/term-touch.mjs, which
+  // TermStyle.astro runs on pages without this script (a story canvas): a module both load is a chunk of its own.
+  const terms = ['pointerover', 'focusin'];
+  /** @param {Event} event */
+  const term = (event) => {
+    if (!(event.target instanceof Element) || !event.target.closest('a.ocx-term')) return;
+    for (const type of terms) doc.removeEventListener(type, term);
+    import('./components/term-tip.mjs').then(
+      (m) => m.start(doc, event),
+      () => {},
+    );
+  };
+  for (const type of terms) doc.addEventListener(type, term, { passive: true });
+
   // The header section nav (C-192) loads on the first pointerenter/focusin on the nav (C-113).
   const nav = doc.querySelector('.ocx-header [data-zag-root="navigation-menu"]');
   if (nav instanceof HTMLElement) {
     mount(nav, { load: () => import('./components/navigation-menu.zag.mjs') });
+    // The ecosystem menu's body waits in a template (the machine moves it in when it starts); a native open, the phone
+    // menu's trigger or a failed machine, moves it in as the popover opens: `inflateMega` in components/navigation-menu.zag.mjs, inlined here: a shared module costs a chunk.
+    // `?.` skips its argument too: no template, no read. The emptied template stays: `before` is shorter, and a second pass inserts nothing.
+    nav.addEventListener(
+      'beforetoggle',
+      () =>
+        nav
+          .querySelector('template')
+          ?.before(/** @type {HTMLTemplateElement} */ (nav.querySelector('template')).content),
+      true,
+    ); // no bubbling
     // The live header (r10): after load, swap in the root site's current nav when this page's baked one is older.
     syncShell(doc, nav);
   }

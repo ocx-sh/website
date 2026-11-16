@@ -15,11 +15,11 @@ replaces the theme's for that slot only.
 | Slot | What the theme's version does |
 |---|---|
 | `Head` | Starlight's head plus preloads of the four core font files, and `html[data-platform]` set before paint (Kbd reads it) |
-| `Header` | Brand, sections, ecosystem mega-menu, install button, GitHub and theme icons; rendered at build time from `nav.json` |
+| `Header` | Brand, sections, ecosystem mega-menu, install button, GitHub and theme icons; rendered at build time from `nav.json`. The menu's body sits in a `<template>` until the nav is touched or the panel opens; JS off, the panel lists one link per hub |
 | `Footer` | `nav.json` footer links, licence and copyright line |
 | `PageTitle` | Breadcrumb trail (the `breadcrumbs` option) and the H1; nothing on a `template: splash` page, which supplies its own `<h1 id="_top">` (with a `hero`, Starlight renders it) |
-| `TableOfContents` | Adds "edit this page" and "report an issue" links; its one script also defines the phone TOC element |
-| `MobileTableOfContents` | Starlight's markup with no script of its own (one request fewer before interaction) and its styles in `starlight.css` |
+| `TableOfContents` | Adds "edit this page" and "report an issue" links; its one script defines both outline elements (Starlight's `starlight-toc` script is not loaded: the theme's inline scroll spy replaces its observer). Rows are `li > a` holding the text (`TocList.astro`; Starlight's wrap it in a span), `--depth` on the `ul`. Folds long outlines (`foldOutline`) |
+| `MobileTableOfContents` | Starlight's markup with no script of its own (one request fewer before interaction), the same rows, held in a `<noscript>` and parsed in on the first open (one element until then, the full list without JS) |
 | `ThemeSelect` | Icon toggle (a CycleButton) shared with the mobile menu. The glyph shows the current state (sun while light, moon while dark), right at first paint. A switch crossfades the page (a view transition, `--ocx-duration-moderate`); under reduced motion, or without the API, it flips at once. It sets `html[data-theme]` and `html.dark`; a choice that equals the OS scheme is stored as `auto`, and a page with no pinned choice follows OS changes live |
 | `ThemeProvider` | Inline pre-paint theme script, no markup |
 | `MobileMenuFooter` | Icon theme toggle inside the mobile menu (the section links head the pane, above the tree; a page without a sidebar gets the header's own menu button and drawer with the same rows) |
@@ -104,6 +104,11 @@ The injected integration also:
   Starlight's `favicon` exists;
 - registers the route middleware that computes the breadcrumb trail into
   `starlightRoute.ocxTrail`;
-- serves the plugin options to that middleware as `virtual:ocx-theme/options`.
+- serves the plugin options to that middleware as `virtual:ocx-theme/options`;
+- draws the heading permalinks itself and sets Starlight's `markdown.headingLinks` to `false` (unless you set it to `false`
+  or the Markdown processor is not Sätteri): a docs heading is `<h2 id="x"><a class="ocx-anchor" href="#x">Title</a></h2>`,
+  one element, named by its text, with the glyph in CSS (shown on hover and keyboard focus where there is hover, always
+  where there is not). A heading that already holds a link keeps its id and gets no permalink. Starlight's
+  `.sl-heading-wrapper`, `.sl-anchor-link` and `.sl-anchor-icon` are gone: restyle `.ocx-anchor`.
 
-The theme reads these Starlight files by path (no export key), so Starlight is pinned to the peer range and a build fails naming it if one moved: `utils/navigation.js`, `components-internals/TableOfContents/{starlight-toc.js,TableOfContentsList.astro}`, `user-components/Icon.astro`.
+The theme reads these Starlight files by path (no export key), so Starlight is pinned to the peer range and a build fails naming it if one moved: `utils/navigation.js`, `components-internals/Icons.js` (a test only: the permalink glyph is its `link-alt` path), `user-components/Icon.astro`.

@@ -2,10 +2,15 @@
 // mega panel (its Content, a popover) at desktop width. Mobile-width coexistence with the sidebar
 // pane lives in mobile.spec.ts.
 import { expect, test, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { expectNoLeak } from './helpers/leak.ts';
 
 // At 390 px the header container is ≤ 640 px, which hides the section nav
 // (and the menu trigger) by design; mobile.spec.ts covers that width.
+const navJson = JSON.parse(readFileSync(new URL('../../packages/theme/src/nav.json', import.meta.url), 'utf8')) as {
+  hubs: { all: string; href: string }[];
+};
+
 test.beforeEach(({ page: _page }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile', 'header nav is hidden at ≤ 640px; see mobile.spec.ts');
 });
@@ -257,10 +262,62 @@ test.describe('JS disabled', () => {
     await expect(page.locator('a.ocx-header__install')).toHaveAttribute('href', '/install/');
     await expect(page.locator('.ocx-header [aria-current="page"]')).toHaveCount(1);
     await expect(nav.locator('a[data-ocx-section="docs"]')).toHaveAttribute('aria-current', 'page');
-    // The popover is native: it still opens without JS, on the first hub.
+    // The popover is native: it still opens without JS. Its body waits in a template that needs script, so it holds one
+    // plain link per hub, each to the page that lists that hub's destinations.
     await trigger(page).click();
     await expect.poll(() => isOpen(page)).toBe(true);
-    await expect(panel(page, 'integrations')).toBeVisible();
-    await expect(page.locator('.ocx-mega__rail a.ocx-mega__hub-link[href="/apps/"]')).toBeVisible();
+    const links = menu(page).getByRole('link');
+    await expect(links).toHaveText(navJson.hubs.map((h) => h.all.replace(/\s*→$/, '')));
+    await expect(links).toHaveCount(navJson.hubs.length);
+    for (const [i, h] of navJson.hubs.entries()) await expect(links.nth(i)).toHaveAttribute('href', h.href);
+    await expect(menu(page).locator('.ocx-mega__tab')).toHaveCount(0);
+  });
+});
+
+// DOM weight: the ecosystem menu's body ships in one <template> (EcosystemMenu.astro `defer`) and moves in on the first touch
+// of the nav or the first open, so a page pays one element for it, not ~130.
+const headerElements = (page: Page) => page.locator('.ocx-header').evaluate((el) => el.querySelectorAll('*').length);
+test.describe('ecosystem menu body (deferred into a template)', () => {
+  test('the page ships it in one template: the header is under 60 elements, the panel has no body', async ({
+    page,
+  }) => {
+    await page.goto('/docs/probe/long/');
+    expect(await headerElements(page)).toBeLessThan(60);
+    await expect(menu(page).locator('.ocx-mega__body')).toHaveCount(0);
+    await expect(menu(page).locator(':scope > template[data-mega]')).toHaveCount(1);
+  });
+
+  test('hovering the nav moves it in (the machine starts and finds the rail), and it works', async ({ page }) => {
+    await page.goto('/docs/probe/long/');
+    await page.locator('nav.ocx-header__nav').hover();
+    await expect(page.locator('.ocx-header [data-zag-root="navigation-menu"]')).toHaveAttribute(
+      'data-zag-state',
+      'live',
+    );
+    await expect(menu(page).locator('.ocx-mega__body')).toHaveCount(1);
+    await expect(menu(page).locator(':scope > template')).toHaveCount(0);
+    await trigger(page).click();
+    await expect(menu(page).getByRole('tab', { name: 'integrations', exact: true })).toBeVisible();
+    await menu(page).getByRole('tab', { name: 'apps', exact: true }).click(); // the rail machine runs: tabs switch
+    await expect(page.locator('.ocx-mega__panel[data-ocx-hub="apps"]')).toBeVisible();
+  });
+
+  test('keyboard focus on the nav moves it in as well', async ({ page }) => {
+    await page.goto('/docs/probe/long/');
+    await trigger(page).focus();
+    await expect(menu(page).locator('.ocx-mega__body')).toHaveCount(1);
+  });
+
+  test('a failed machine load still shows the body when the native popover opens', async ({ page }) => {
+    await page.route(CHUNK, (r) => r.abort());
+    await page.goto('/docs/probe/long/');
+    await page.locator('nav.ocx-header__nav').hover();
+    await expect(page.locator('.ocx-header [data-zag-root="navigation-menu"]')).toHaveAttribute(
+      'data-zag-state',
+      'error',
+    );
+    await trigger(page).click();
+    await expect(menu(page).getByRole('tab', { name: 'integrations', exact: true })).toBeVisible();
+    await expect(page.locator('.ocx-mega__panel[data-ocx-hub="integrations"]')).toBeVisible();
   });
 });

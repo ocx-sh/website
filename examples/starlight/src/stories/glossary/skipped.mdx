@@ -1,0 +1,20 @@
+---
+title: What is never linked
+description: Terms in code, headings, links, image text and a second usage on the same page stay plain.
+height: 360
+prose: true
+---
+
+import TermStyle from '@ocx-sh/theme/components/TermStyle.astro';
+
+<TermStyle />
+
+### A heading with Sigstore in it
+
+The first usage links: Sigstore. The second usage on the page stays text: Sigstore.
+
+Inline code stays as written: `Sigstore`, and so does a [link to Sigstore](https://www.sigstore.dev/) and the name `multi-semver`, `semver.json` and --semver.
+
+```sh
+cosign verify --certificate-identity Sigstore
+```

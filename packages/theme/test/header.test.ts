@@ -330,6 +330,46 @@ describe('C-023 EcosystemMenu markup', () => {
   );
 });
 
+describe('ecosystem menu deferral (page elements)', () => {
+  const panelOf = (doc: Document) => doc.querySelector('.ocx-header .ocx-mega')!;
+  const body = (el: Element) => el.querySelector<HTMLTemplateElement>(':scope > template[data-mega]')?.content;
+
+  it('the page header holds the menu body in one template: the panel has a noscript and a template, no elements', async () => {
+    const panel = panelOf(await render(Header));
+    expect([...panel.children].map((c) => c.localName)).toEqual(['noscript', 'template']);
+    expect(panel.querySelector('.ocx-mega__body')).toBeNull();
+    expect(body(panel)?.querySelectorAll('.ocx-mega__tab')).toHaveLength(nav.hubs.length);
+  });
+
+  it('the whole Starlight header stays under 60 elements (it was 179 with the body inline)', async () => {
+    const doc = await render(Header);
+    expect(doc.querySelectorAll('.ocx-header *').length).toBeLessThan(60);
+  });
+
+  it("JS off, the panel offers one plain link per hub page, each hub page listing that hub's destinations", async () => {
+    const links = [...panelOf(await render(Header)).querySelectorAll('noscript a')]; // jsdom runs no scripts: noscript is markup
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(nav.hubs.map((h) => h.href));
+    expect(links.map((a) => a.textContent)).toEqual(nav.hubs.map((h) => h.all.replace(/\s*→$/, '')));
+  });
+
+  it('inflated, the deferred body is exactly what the in-place render holds', async () => {
+    const deferred = panelOf(await render(Header));
+    const inPlace = (await render(EcosystemMenu)).querySelector('.ocx-mega')!;
+    deferred.querySelector(':scope > noscript')?.remove();
+    nm.inflateMega(deferred);
+    expect(deferred.outerHTML).toBe(inPlace.outerHTML);
+  });
+
+  it('inflateMega is idempotent and leaves a panel without a template alone', async () => {
+    const panel = panelOf(await render(Header));
+    nm.inflateMega(panel);
+    const once = panel.innerHTML;
+    nm.inflateMega(panel);
+    expect(panel.innerHTML).toBe(once);
+    expect(() => nm.inflateMega(null)).not.toThrow();
+  });
+});
+
 describe('C-105 navigation-menu.zag readDom', () => {
   it('passes the stable content ids and surfaces value changes as ocx:navigation-menu:change', () => {
     const { window } = new JSDOM('<nav></nav>');

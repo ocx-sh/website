@@ -438,8 +438,48 @@ describe('WP13.1 Terminal client', () => {
     await h.toggle();
     await vi.waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
     expect(h.create.mock.calls[0]?.[0]).toEqual({ data: CAST });
-    expect(h.create.mock.calls[0]?.[1]).toBe(h.root.querySelector('.ocx-terminal__player'));
+    expect(h.create.mock.calls[0]?.[1]).toBe(h.root.querySelector('.ocx-terminal__screen'));
     expect(h.fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe('font floor', () => {
+    // jsdom lays nothing out: stub the frame width and the 9px-per-column cell the probe measures (100ch = 900).
+    async function withFrame(width: number, props: Props) {
+      const h = await mount({ src: '/casts/x.cast', collapsed: true, ...props });
+      const win = h.root.ownerDocument.defaultView as unknown as Win;
+      Object.defineProperty(h.root, 'clientWidth', { value: width });
+      Object.defineProperty(win.HTMLElement.prototype, 'offsetWidth', { configurable: true, get: () => 900 });
+      await h.toggle();
+      await vi.waitFor(() => expect(h.create).toHaveBeenCalledTimes(1));
+      return h;
+    }
+
+    it('keeps the floor size and scrolls when fitting the width would render below it (a 120-column cast on a phone)', async () => {
+      const h = await withFrame(340, { cols: 120, rows: 24 });
+      expect(createOpts(h)).toMatchObject({ fit: false, terminalFontSize: '10px' });
+      const screen = h.root.querySelector('.ocx-terminal__screen');
+      expect(screen?.getAttribute('role')).toBe('region');
+      expect(screen?.getAttribute('aria-label')).toBe('Terminal output');
+      expect(screen?.getAttribute('tabindex')).toBe('0');
+    });
+
+    it('leaves the width-fitted player alone above the floor (a 102-column cast in a docs column)', async () => {
+      const h = await withFrame(758, { cols: 102, rows: 24 });
+      expect(createOpts(h)).toMatchObject({ fit: 'width' });
+      expect(createOpts(h)).not.toHaveProperty('terminalFontSize');
+    });
+
+    it('takes the column count from the cast header when no cols prop is given', async () => {
+      // getting-started-install.cast is 100 columns wide (the build reads it into the options): 15 x 340 / 922 = 5.5px
+      const h = await withFrame(340, { src: '/casts/fixture/getting-started-install.cast' });
+      expect(createOpts(h)).toMatchObject({ fit: false, terminalFontSize: '10px' });
+    });
+
+    it('never floors a terminal that does not fit to the width', async () => {
+      const h = await withFrame(340, { cols: 120, rows: 24, fit: 'none' });
+      expect(createOpts(h)).toMatchObject({ fit: false });
+      expect(createOpts(h)).not.toHaveProperty('terminalFontSize');
+    });
   });
 
   it('WP13.1 Terminal: player gets the ocx theme, the mono token font, and its native controls stay off (WP13.2)', async () => {

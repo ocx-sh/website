@@ -71,6 +71,8 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ToggleGroup.astro` | 2 to 5 always-visible options, one or several selected | [actions-forms](references/actions-forms.md) |
 | `ui/Input.astro` | A text, search, url, email, password or number field with hint and error | [actions-forms](references/actions-forms.md) |
 | `ui/InputGroup.astro` | Box around a control with `start` and `end` addons | [actions-forms](references/actions-forms.md) |
+| `ShellSessionFoldScript.astro` | The mount script of a folded `ShellSession`, rendered by it only with `collapsed`; never import it | [content](references/content-navigation.md) |
+| `ShellSessionPlayScript.astro` | The mount script of a playing `ShellSession`, rendered by it only with `play`; never import it | [content](references/content-navigation.md) |
 | `ui/NumberStepperScript.astro` | The number stepper's script, rendered by `Input`; never import it | [actions-forms](references/actions-forms.md) |
 | `ui/SearchField.astro` | Search box with icon and clear button | [actions-forms](references/actions-forms.md) |
 | `ui/Label.astro` | A standalone field label | [actions-forms](references/actions-forms.md) |
@@ -91,6 +93,7 @@ Import path = `@ocx-sh/theme/components/` + the file below.
 | `ui/Menu.astro` | A trigger with a panel of navigation links | [overlays](references/overlays-disclosure.md) |
 | `ui/ActionMenu.astro` | A list of commands (APG menu), or a context menu | [overlays](references/overlays-disclosure.md) |
 | `Tooltip.astro` | A term in prose with a definition popup | [overlays](references/overlays-disclosure.md) |
+| `TermStyle.astro` | The inline style and popup loader of a glossary term link for a page without the theme's Starlight chrome (a story canvas); a Starlight page gets both from `MarkdownContent` and `chrome.mjs` | [overlays](references/overlays-disclosure.md) |
 | `ui/Hint.astro` | A short label for an icon button (`src`: text fetched on first show) | [overlays](references/overlays-disclosure.md) |
 | `Accordion.astro` + `AccordionItem.astro` | Stacked sections, one or several open | [overlays](references/overlays-disclosure.md) |
 | `Collapsible.astro` | One show/hide region | [overlays](references/overlays-disclosure.md) |
@@ -162,7 +165,7 @@ Mermaid fences stay highlighted code. `Collapsible`, `Tabs` and other components
 | Navigate somewhere | `Link`, or `Button href` for a call to action | `Button` with a click handler |
 | Choose one of 2 to 5 visible options | `ToggleGroup` (UI state) or `RadioGroup` (form field) | `Select` |
 | Choose one of many | `Select` (fixed list) or `Combobox` (type to filter) | `RadioGroup` |
-| Explain a term in running text | `Tooltip` | `Hint` |
+| Explain a term in running text | The `glossary` option (every term of a site, no markup), or `Tooltip` for one-off | `Hint` |
 | Name an icon-only button | `Hint` around the button, plus its `aria-label` | `Tooltip` |
 | Links in a dropdown | `Menu` | `ActionMenu` |
 | Commands in a dropdown | `ActionMenu` | `Menu` |

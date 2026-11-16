@@ -9,6 +9,8 @@ export function starlightInternal(rel: string): string;
  * @typedef {{
  *   breadcrumbs?: false | { root?: Crumb | false },
  *   math?: boolean,
+ *   glossary?: import('../markdown/glossary.mjs').GlossaryOptions,
+ *   foldOutline?: boolean,
  * }} OcxThemeOptions
  */
 /**
@@ -17,10 +19,14 @@ export function starlightInternal(rel: string): string;
  * `false` drops it, `{ root: { label, href } }` adds a root crumb.
  * `math`: also render `$…$` and `$$…$$` as math (```` ```math ```` fences always render). Off by
  * default: prose with two shell variables (`$HOME` and `$PATH`) would turn into a formula.
+ * `glossary`: links the first usage of each glossary term in the prose of every page to the glossary page, with its
+ * definition in a popover (`terms`, `page`, `exclude`, `frequency`: `GlossaryOptions`); off unless given.
+ * `foldOutline`: an "On this page" outline of 10 rows or more folds each section's subsections under its title, the
+ * section being read open (default on); `false` keeps every outline flat.
  * @param {OcxThemeOptions} [options]
  * @returns {import('@astrojs/starlight/types').StarlightPlugin}
  */
-export default function ocxTheme({ breadcrumbs, math }?: OcxThemeOptions): import("@astrojs/starlight/types").StarlightPlugin;
+export default function ocxTheme({ breadcrumbs, math, glossary, foldOutline }?: OcxThemeOptions): import("@astrojs/starlight/types").StarlightPlugin;
 export { withoutFragments };
 export type Crumb = {
     label: string;
@@ -31,6 +37,8 @@ export type OcxThemeOptions = {
         root?: Crumb | false;
     };
     math?: boolean;
+    glossary?: import("../markdown/glossary.mjs").GlossaryOptions;
+    foldOutline?: boolean;
 };
 export type EcOptions = import("@astrojs/starlight/expressive-code").StarlightExpressiveCodeOptions;
 export type Output = {

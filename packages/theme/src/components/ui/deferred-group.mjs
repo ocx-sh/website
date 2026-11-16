@@ -24,7 +24,13 @@ export function fillDeferred(root) {
         // The fragment body is the group's one `<ul>`: its items go in as markup, so no node wrapper is created per link.
         const open = html.indexOf('>', html.indexOf('<ul'));
         list.replaceChildren();
-        list.insertAdjacentHTML('beforeend', html.slice(open + 1, html.lastIndexOf('</ul>')));
+        const items = html.slice(open + 1, html.lastIndexOf('</ul>'));
+        list.insertAdjacentHTML('beforeend', items);
+        try {
+          sessionStorage.setItem(`ocx-frag:${list.dataset['defer']}`, items); // the next page restores it pre-paint
+        } catch {
+          // storage blocked or full: the next page loads the links as before
+        }
         list.removeAttribute('data-defer');
         list.removeAttribute('data-failed');
       })

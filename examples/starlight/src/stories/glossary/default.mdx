@@ -1,0 +1,13 @@
+---
+title: Terms in prose
+description: Hover a dashed term, or Tab to it; Escape closes the popup.
+height: 320
+prose: true
+---
+
+import TermStyle from '@ocx-sh/theme/components/TermStyle.astro';
+
+<TermStyle />
+
+A release is signed with Sigstore, and its certificate comes from Fulcio. Every entry lands in Rekor. Publishing under a rolling tag keeps the
+newest build reachable, and a cascade moves that tag when a new patch ships. The object stores sit under the OCX home.

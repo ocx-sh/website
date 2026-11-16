@@ -1,0 +1,84 @@
+---
+// The outline's list, for both TOCs. Starlight's own list wraps every row's text in a span and repeats a scoped class
+// and a `--depth` style on every ul, li, a and span; here the ul carries `--depth` (its rows inherit it) and the link
+// holds the text, so a page spends two elements a row, not three, in each of its two outlines. The rules are
+// Starlight's, as one global block (a scoped sheet would stamp its class on every element again), in its layer.
+// `fold` (desktop outline, top level only): a section with subsections gets its disclosure button after the link,
+// `hidden` until TableOfContents.astro's pre-paint script folds the outline, so without JS every row shows.
+export interface Item {
+  slug: string;
+  text: string;
+  children: Item[];
+}
+export interface Props {
+  toc: Item[];
+  depth?: number;
+  fold?: boolean;
+}
+
+const { toc, depth = 0, fold = false } = Astro.props;
+---
+
+<ul style={`--depth:${depth}`}>
+  {toc.map((h) => (
+    <li>
+      <a href={'#' + h.slug}>{h.text}</a>
+      {fold && h.children.length > 0 && <button type="button" aria-label={`Subsections of ${h.text}`} hidden />}
+      {h.children.length > 0 && <Astro.self toc={h.children} depth={depth + 1} />}
+    </li>
+  ))}
+</ul>
+
+<style is:global>
+  @layer starlight.core {
+    :is(starlight-toc, mobile-starlight-toc) ul {
+      padding: 0;
+      list-style: none;
+    }
+    :is(starlight-toc, mobile-starlight-toc) a {
+      --pad-inline: 0.5rem;
+      display: block;
+      border-radius: 0.25rem;
+      padding-block: 0.25rem;
+      padding-inline: calc(1rem * var(--depth) + var(--pad-inline)) var(--pad-inline);
+      line-height: 1.25;
+    }
+    :is(starlight-toc, mobile-starlight-toc) a[aria-current='true'] {
+      color: var(--sl-color-text-accent);
+    }
+    mobile-starlight-toc a {
+      --pad-inline: 1rem;
+      display: flex;
+      justify-content: space-between;
+      gap: var(--pad-inline);
+      border-top: 1px solid var(--sl-color-gray-6);
+      border-radius: 0;
+      padding-block: 0.5rem;
+      color: var(--sl-color-text);
+      font-size: var(--sl-text-sm);
+      text-decoration: none;
+      outline-offset: var(--sl-outline-offset-inside);
+    }
+    mobile-starlight-toc .dropdown > ul > li:first-child > a {
+      border-top: 0;
+    }
+    mobile-starlight-toc a[aria-current='true'],
+    mobile-starlight-toc a[aria-current='true']:hover,
+    mobile-starlight-toc a[aria-current='true']:focus {
+      color: var(--sl-color-white);
+      background-color: unset;
+    }
+    mobile-starlight-toc a[aria-current='true']::after {
+      content: '';
+      width: 1rem;
+      background-color: var(--sl-color-text-accent);
+      /* Starlight's check mark, its base64 SVG decoded and percent-encoded (the same file, ~170 B less gzipped:
+         the markup shares its words with the sidebar chevron in the same sheet) */
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M10.914 4.206a.583.583 0 0 0-.828 0L5.74 8.557 3.914 6.726a.596.596 0 0 0-.828.857l2.24 2.24a.583.583 0 0 0 .828 0l4.76-4.76a.583.583 0 0 0 0-.857Z'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M10.914 4.206a.583.583 0 0 0-.828 0L5.74 8.557 3.914 6.726a.596.596 0 0 0-.828.857l2.24 2.24a.583.583 0 0 0 .828 0l4.76-4.76a.583.583 0 0 0 0-.857Z'/%3E%3C/svg%3E");
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      flex-shrink: 0;
+    }
+  }
+</style>

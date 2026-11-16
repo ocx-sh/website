@@ -1,7 +1,7 @@
 ---
-title: Line continuation
-description: A command split with a trailing backslash; the continued line keeps its indent and gets no second $.
-height: 260
+title: Line continuation and comments
+description: A trailing backslash, an open quote or a heredoc continues a command without a second $; a comment or blank line gets no $.
+height: 560
 order: 4
 block: true
 toaster: true
@@ -12,10 +12,23 @@ import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
 
 <ShellSession>
 ```sh
+# Run node from the registry, without the network
 ocx --offline package exec \
   ocx.sh/nodejs/node:24 -- node --version
 ```
 ```text
 v24.22.1
+```
+</ShellSession>
+
+<ShellSession>
+```sh
+export OCX_EXTRA_CA_CERTS="-----BEGIN CERTIFICATE-----
+MIIBszCCAVmgAwIBAgIUQ0
+-----END CERTIFICATE-----"
+ocx lock
+```
+```text
+Locked 3 packages.
 ```
 </ShellSession>
