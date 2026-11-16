@@ -66,6 +66,7 @@ describe('S-114 Bunny dev up, offline', () => {
       await onboardMain({ argv: ['ocx-sh/rules_ocx'], env, baseUrl, ...io }),
       await onboardMain({ argv: ['ocx-sh/ocx-sdk-python'], env, baseUrl, ...io }),
       await onboardMain({ argv: ['ocx-sh/find_ocx'], env, baseUrl, ...io }),
+      await onboardMain({ argv: ['ocx-sh/devcontainer-features'], env, baseUrl, ...io }),
       await onboardMain({ argv: ['ocx-sh/ocx'], env, baseUrl, ...io }),
       await onboardMain({ argv: ['ocx-sh/index'], env, baseUrl, ...io }),
       await onboardMain({ argv: ['ocx-sh/catalog'], env, baseUrl, ...io }),
@@ -89,7 +90,7 @@ describe('S-114 Bunny dev up, offline', () => {
     codes.push(await verifyMain({ argv: ['--zone', 'dev'], fetch, ...io }));
 
     expect(errs.join('')).toBe('');
-    expect(codes).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(codes).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
     // the storage zone onboard made is the pull zone's origin, and the plan is live in full
     const storage = api.state.storageZones.find((z) => z.Name === 'sh-ocx-website')!;

@@ -161,6 +161,7 @@ describe('rule set and limits', () => {
   it('origin rules follow, longest claimed path first, legacy.json order breaking ties', () => {
     expect(originIds('prod')).toEqual(
       [
+        'repo-devcontainer-features',
         'repo-ocx-sdk-python',
         'repo-rules-ocx',
         'repo-find-ocx',
@@ -175,8 +176,8 @@ describe('rule set and limits', () => {
     expect(ids('preview:ocx')).toHaveLength(2);
   });
 
-  it('commits 19 prod and 18 dev rules, prod within the plan ceiling', () => {
-    expect([planRules('prod').length, planRules('dev').length]).toEqual([19, 18]);
+  it('commits 20 prod and 19 dev rules, prod within the plan ceiling', () => {
+    expect([planRules('prod').length, planRules('dev').length]).toEqual([20, 19]);
     expect(planRules('prod').length).toBeLessThanOrEqual(PLAN_CEILING);
   });
 
@@ -271,7 +272,7 @@ describe('rule set and limits', () => {
       // Header rules precede every origin rule, so the /catalog redirect or a later origin rule never shadows them.
       const order = rules.map((r) => r.Description);
       const lastHeader = Math.max(...['catalog-sandbox', 'catalog-nosniff'].map((id) => order.indexOf(`ocx:${id}`)));
-      expect(lastHeader).toBeLessThan(order.indexOf('ocx:repo-ocx-sdk-python'));
+      expect(lastHeader).toBeLessThan(order.indexOf('ocx:repo-devcontainer-features'));
     }
     expect(planRules('preview:ocx').map((r) => r.Description)).not.toContain('ocx:catalog-sandbox');
   });
@@ -489,7 +490,7 @@ describe('against the recorded edge rules', () => {
   it("plans an OriginStorage rule the way the recorded one reads: Id in parameter 1 is apply's, the name in parameter 2", () => {
     const planned = planRules('dev').find((r) => r.ActionType === ACTION.OriginStorage)!;
     expect(Object.keys(planned).filter((k) => !(k in storage))).toEqual([]);
-    expect(planned.ActionParameter2).toBe(storageZoneName('ocx-sh/ocx-sdk.python'));
+    expect(planned.ActionParameter2).toBe(storageZoneName('ocx-sh/devcontainer-features'));
     expect(storage.ActionParameter2).toBe('sh-ocx-m0-scratch');
     expect(storage.ActionParameter1).toMatch(/^\d+$/);
   });

@@ -362,7 +362,7 @@ describe('an OriginStorage rule names a storage zone that exists', () => {
     });
     const { code, err } = await go(api, { legacy: committed });
     expect(code).toBe(1);
-    expect(err).toContain('ocx:repo-ocx-sdk-python: no storage zone named sh-ocx-ocx-sdk-python');
+    expect(err).toContain('ocx:repo-devcontainer-features: no storage zone named sh-ocx-devcontainer-features');
     expect(writes(api)).toEqual([]);
   });
 });

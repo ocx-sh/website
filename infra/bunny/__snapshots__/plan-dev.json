@@ -246,6 +246,25 @@
     {
       "ActionType": 17,
       "ActionParameter1": "",
+      "ActionParameter2": "sh-ocx-devcontainer-features",
+      "TriggerMatchingType": 0,
+      "Enabled": true,
+      "Description": "ocx:repo-devcontainer-features",
+      "Triggers": [
+        {
+          "Type": 0,
+          "PatternMatchingType": 0,
+          "Parameter1": "",
+          "PatternMatches": [
+            "https://sh-ocx-dev.b-cdn.net/integrations/devcontainer",
+            "https://sh-ocx-dev.b-cdn.net/integrations/devcontainer/*"
+          ]
+        }
+      ]
+    },
+    {
+      "ActionType": 17,
+      "ActionParameter1": "",
       "ActionParameter2": "sh-ocx-ocx-sdk-python",
       "TriggerMatchingType": 0,
       "Enabled": true,
