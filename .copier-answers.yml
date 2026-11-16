@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v0.1.1-2-g8280d8f
+_commit: v0.1.1-7-g3fca0c0
 _src_path: https://github.com/ocx-sh/conventions.git
 bazel: false
 deep_os:
@@ -8,6 +8,7 @@ languages:
 - typescript
 profile: full
 repo_name: website
+repo_owner: ocx-sh
 site:
     deploy: false
     dir: site
