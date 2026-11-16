@@ -55,7 +55,7 @@ beforeAll(async () => {
 
 // Every docs page inlines this header, so its gzip bytes come out of the 14,200 B page HTML budget
 // (tests/budgets.mjs HTML_GZ_MAX); one byte past Lighthouse's first round trip costs performance 100.
-const HEADER_GZ_MAX = 4290; // measured 4190 (16,522 B raw) + 100 B slack
+const HEADER_GZ_MAX = 4443; // measured 4343 + 100 B slack
 
 describe('header weight', () => {
   it('ocx-sh/website#38: the Starlight Header renders within HEADER_GZ_MAX gzipped bytes', async () => {

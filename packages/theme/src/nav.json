@@ -61,6 +61,7 @@
     { "path": "/integrations/bazel/", "repo": "ocx-sh/rules_ocx", "search": true },
     { "path": "/integrations/python/", "repo": "ocx-sh/ocx-sdk-python", "search": true },
     { "path": "/integrations/cmake/", "repo": "ocx-sh/find_ocx", "search": true },
+    { "path": "/integrations/devcontainer/", "repo": "ocx-sh/devcontainer-features", "search": true },
     { "path": "/apps/catalog/", "repo": "ocx-sh/catalog", "search": true },
     { "path": "/learn/", "repo": "ocx-sh/marketing", "search": false }
   ],
@@ -82,6 +83,15 @@
       "meta": "find_ocx",
       "desc": "find_package() for ocx-managed tools.",
       "href": "/integrations/cmake/"
+    },
+    {
+      "id": "devcontainer",
+      "hub": "integrations",
+      "category": "build",
+      "label": "Dev Containers",
+      "meta": "devcontainer-features",
+      "desc": "A Dev Container Feature that installs ocx.",
+      "href": "/integrations/devcontainer/"
     },
     {
       "id": "gradle",
