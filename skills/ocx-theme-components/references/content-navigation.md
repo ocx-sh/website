@@ -7,7 +7,7 @@ Import path prefix: `@ocx-sh/theme/components/`.
 
 Contents: [Terminal](#terminal) · [ShellSession](#shellsession) · [FeatureSection](#featuresection) · [KeyValueTable](#keyvaluetable) · [TileGrid](#tilegrid) · [Scroll effects](#scroll-effects) ·
 [HubGrid](#hubgrid) ·
-[Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Sidebar](#sidebar) · [Toc](#toc) · [Icon](#icon) ·
+[Kbd](#kbd) · [Breadcrumbs](#breadcrumbs) · [Sidebar](#sidebar) · [Toc](#toc) · [Page outline](#page-outline) · [Icon](#icon) ·
 [Logo](#logo) · [Chrome](#chrome) · [Starlight built-ins](#starlight-built-ins)
 
 ## Terminal
@@ -26,7 +26,13 @@ player is created.
 | `fit` | `width` (default), `height`, `both`, `none` |
 | `collapsed` | Chrome only; its button expands the player (a Zag collapsible) |
 
-Record casts from a real command run; do not hand-write them.
+Record casts from a real command run; do not hand-write them, and record at 100 to 120 columns.
+
+The player fits the font to the frame width. Below 10px (the smallest type step, 10.5px, rounded down) it keeps
+10px instead and the terminal scrolls sideways inside its frame, a focusable region named "Terminal output" that
+the arrow keys scroll; a wider terminal is never clipped. A 120-column cast fits at 10px or more from about 740px of
+frame, so a phone scrolls it; fewer columns scroll less. Decided when the player loads, from `cols` (the cast header's
+when the prop is absent; a cast fetched from elsewhere needs `cols`, or it fits to the width as before).
 
 ## ShellSession
 
@@ -51,12 +57,40 @@ locked 3 tools in ocx.lock
 |---|---|
 | `title` | Optional title bar, also the group's accessible name |
 | `play` | Types each command in a loop (40 ms per character), its output after it; pauses off screen, still under reduced motion; the box keeps its size |
+| `collapsed` | Folds every output behind an `Output` toggle (a `Collapsible`); commands stay visible. Not with `play`: the build fails on both |
 
 The slot holds code fences only; the build fails on an empty slot or on any
 other content. The look is a shell: each command line gets an accent `$`, each
 output line a `>`, and output text is the comment colour whatever its language.
-The markers are drawn, never copied; a line after a trailing `\` continues the command and gets no `$`, its indent unchanged. A
+The markers are drawn, never copied; a line after a trailing `\` continues the command and gets no `$`, its indent unchanged; so does a blank line or a `#` comment line in a `sh`, `bash`, `zsh`, `shell`, `console` or PowerShell command, so a comment never reads as a command. In the same shell fences a line that starts inside a quoted string an earlier line left open (a multi-line `export X="-----BEGIN …"`) and a heredoc body with its terminator are continuations too (a `#` comment's apostrophe opens no quote); in PowerShell so is a line after one ending in a backtick or `|`, and every line inside a `{` or `(` block left open, the closing `}` or `)` line included. A
 command copies only its own text; an output has no copy button. Do not give the fences titles: the session's title replaces theirs.
+
+**Marked lines.** A fence takes Expressive Code's markers and the line keeps its `$` or `>`, its text in the
+session's one column: `{2}` highlights, `ins={2}` and `del={2}` tint green and red. A labelled marker, `{"1":2}`
+(label `1` on line 2), also draws the label as a badge at the line's right edge. Highlight to draw the eye to one
+line; badge when the prose must refer to a line by number. The badge is decorative (generated content, not in the
+accessibility tree, never typed by `play`, never copied; under `play` it shows once its line is typed), so
+**always write the legend in the prose under the session** ("Line 1 downloads the package"): colour and badge carry
+no meaning alone. Keep numbered lines short; the badge sits at the line's end, not the visible box's.
+
+````mdx
+<ShellSession>
+```sh {"1":1} {"2":2}
+ocx install cmake:3.31
+ocx select cmake:3.31
+```
+```text {2}
+downloaded 1 package
+selected cmake:3.31
+```
+</ShellSession>
+
+Line 1 downloads the package. Line 2 points `current` at it.
+````
+
+A `<<<` include takes the same meta after the language, so a tested doc script can be marked:
+`<<< @/_scripts/x.sh{sh {"1":1} ins={2}}` (fence `sh {"1":1} ins={2}`); in `.mdx` write
+`\<\<\< @/_scripts/x.sh\{sh {"1":1} ins={2}\}`. `{sh}` alone is unchanged.
 
 ## FeatureSection
 
@@ -152,6 +186,34 @@ page, not Starlight's page TOC. `items` (required,
 starts; it starts when scrolled into view, one of two `visible` triggers (the other is the `play` of `ShellSession`).
 Event `ocx:toc:change`.
 
+## Page outline
+
+Starlight's "On this page" outline, which the theme renders (`TableOfContents.astro`, `TocList.astro`); no component to
+place. Plugin option `foldOutline` (default `true`; `false` keeps every outline flat).
+
+- **What folds.** An outline of 10 rows or more (Overview and every heading row counted) folds each top-level section
+  that has subsections; a section without subsections has no control, and a shorter outline stays flat: ten rows stand
+  about 240 px tall, a glance. Example page: `probe/outline/` in the example site (five sections, seven subsections).
+- **What is open.** The section being read: it opens as the page scrolls into it and folds when the reading moves on.
+  A section the reader opened or closed by hand stays that way for the page's life, and a section holding the keyboard
+  focus never folds under it. A jump (`page/#heading`) opens its section before first paint; nothing else changes at
+  load, so first paint is final. While a section is folded, its title carries the current row's mark.
+- **Controls.** One `<button type="button" aria-expanded aria-label="Subsections of <title>">` after the section's
+  link, a 24 px target at the end of the row, with the sidebar group's chevron and motion (none under reduced motion).
+  The title stays a link. A folded list is `hidden`, so its rows are out of the tab order and the accessibility tree.
+- **Without JS** the buttons stay `hidden` and every row shows: the server renders the open outline, and the inline
+  script that follows it folds it before first paint.
+- **Phone outline.** Never folds. Its list waits in a `<noscript>` (one element; the full list without JS) and is
+  parsed in on the first open, so a page carries one copy of the rows, not two. A test or script that reads
+  `mobile-starlight-toc a` before the first open finds none: open the summary first.
+- **Scripts.** The fold lives in the outline's inline script (about 130 B gzipped, only on an outline that folds);
+  both outline elements are defined in `starlight/toc-elements.mjs`, and Starlight's own `starlight-toc` script, whose
+  observer the theme's scroll spy made redundant, is not loaded.
+- **Decision** (2026-11-16, theme repo ADR 0003): one `<button>` per section
+  (1 element) rather than `<details>/<summary>` (2 elements per section, and a summary cannot hold the title link
+  without nesting a link in a button); folding at load done by the inline script rather than `chrome.mjs`, which runs
+  after first paint and would shift the outline.
+
 ## Icon
 
 **`ui/Icon.astro`**: `name` (required, a registry name, type-checked),
@@ -174,7 +236,15 @@ edit its paths or its `fill`, or draw a wordmark SVG: colour comes from CSS.
 
 **`EcosystemMenu.astro`** is the header's ecosystem mega-menu, rendered by the
 theme's `Header` from `nav.json`. It is exported for the header only; never
-place it in page content.
+place it in page content. The page's panel is `nav.ocx-mega#ocx-ecosystem-menu`
+holding a `<noscript>` (one link per hub, to the page that lists its
+destinations: what JS off shows) and one `<template data-mega>` with the body
+(rail, panels, strip). The body moves into the panel on the first touch of the
+header nav (the machine starts) or the panel's first open (`beforetoggle`,
+which covers the phone menu's `popovertarget` and a failed machine load), so
+the page pays one element for it, not ~130. `defer` is the prop: the live-header
+fragment renders it off, with the body in place. A test or a consumer script that
+reads `.ocx-mega__*` before the first touch finds nothing: touch the nav first.
 
 ## Starlight built-ins
 

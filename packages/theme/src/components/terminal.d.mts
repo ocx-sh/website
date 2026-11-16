@@ -24,6 +24,9 @@ export type PlayerOptions = {
     speed: number;
     idleTimeLimit: number;
     loop: boolean;
+    /**
+     * (`terminalFontSize` is added at create when the width-fitted font would fall below `TERMINAL_FLOOR_PX`.)
+     */
     fit: "width" | "height" | "both" | false;
 };
 /**

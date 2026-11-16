@@ -1,0 +1,12 @@
+---
+// The script of a folded ShellSession (`collapsed`), a component of its own so only a page that renders one
+// loads it: Astro bundles a component's script when the component renders, not when it is imported.
+---
+
+<script>
+  import { onRoots } from './ui/roots.mjs';
+  import { mount } from './ui/zag.mjs';
+  onRoots('.ocx-shell-session [data-zag-root]', (root) => {
+    mount(root, { load: () => import('./collapsible.zag.mjs') });
+  });
+</script>

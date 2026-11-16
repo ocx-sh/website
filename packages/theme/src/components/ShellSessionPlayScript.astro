@@ -1,0 +1,14 @@
+---
+// The script of a playing ShellSession (`play`), a component of its own so only a page that renders one
+// loads it: Astro bundles a component's script when the component renders, not when it is imported.
+---
+
+<script>
+  import { onRoots } from './ui/roots.mjs';
+  import { mount } from './ui/lazy.mjs';
+
+  onRoots('.ocx-shell-session[data-ocx-play]', (root) => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    mount(root, { load: () => import('./shell-session-play.mjs'), trigger: 'visible', replay: false });
+  });
+</script>

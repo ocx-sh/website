@@ -1,4 +1,5 @@
 // Client + build-time logic for Terminal.astro (asciinema cast player).
+import { TERMINAL_FLOOR_PX } from './terminal-floor.mjs';
 import { mount } from './ui/zag.mjs';
 
 // Same set as `INTERACTION` in ui/zag.mjs: an open player loads on first hover/focus/touch.
@@ -15,6 +16,7 @@ const INTERACTION = ['pointerenter', 'focusin', 'touchstart'];
  * @property {number} idleTimeLimit
  * @property {boolean} loop
  * @property {'width' | 'height' | 'both' | false} fit
+ * (`terminalFontSize` is added at create when the width-fitted font would fall below `TERMINAL_FLOOR_PX`.)
  */
 
 /**
@@ -34,6 +36,28 @@ const INTERACTION = ['pointerenter', 'focusin', 'touchstart'];
  * @typedef {object} PlayerModule
  * @property {(src: { data: string }, el: HTMLElement, opts: Record<string, unknown>) => Player} create
  */
+
+// asciinema-player 3.15.1 lays the terminal out at this font size and scales it; its 0.75em borders measure about 22px.
+const PLAYER_FONT_PX = 15;
+const PLAYER_BORDERS_PX = 22;
+
+/**
+ * Whether fitting `cols` columns to `width` px would render below the floor, with the real mono cell width
+ * (measured like the player does: `ch` at its base font). False when there is nothing to measure.
+ * @param {HTMLElement} host an element to measure in
+ * @param {number} width frame width in px
+ * @param {number | undefined} cols
+ * @returns {boolean}
+ */
+function belowFloor(host, width, cols) {
+  if (!cols || !width) return false;
+  const probe = document.createElement('span');
+  probe.style.cssText = `position:absolute;visibility:hidden;font:${PLAYER_FONT_PX}px var(--ocx-font-mono);width:100ch`;
+  host.append(probe);
+  const cell = probe.offsetWidth / 100;
+  probe.remove();
+  return cell > 0 && (PLAYER_FONT_PX * width) / (cell * cols + PLAYER_BORDERS_PX) < TERMINAL_FLOOR_PX;
+}
 
 let seq = 0;
 /** Deterministic per-build element id (never random: reproducible output). */
@@ -247,6 +271,8 @@ function wireControls(root, player) {
  */
 export function mountTerminal(root, loadPlayer = loadDefault) {
   const area = /** @type {HTMLElement} */ (root.querySelector('.ocx-terminal__player'));
+  // The player mounts here, apart from the start overlay and control bar: this is the part that scrolls sideways.
+  const screen = /** @type {HTMLElement} */ (root.querySelector('.ocx-terminal__screen'));
   /** @type {unknown} */
   const parsed = JSON.parse(root.dataset['options'] ?? '{}');
   const opts = /** @type {PlayerOptions} */ (parsed);
@@ -276,8 +302,16 @@ export function mountTerminal(root, loadPlayer = loadDefault) {
     // Wait for the web fonts too: the player measures its cell size from the mono font once, at create.
     (player ??= Promise.all([loadPlayer(), fetchCast(), document.fonts?.ready])
       .then(([m, d]) => {
-        const p = m.create({ data: d }, area, {
+        // Fit-width would render below the floor: keep the floor size and scroll (see TERMINAL_FLOOR_PX).
+        const floored = opts.fit === 'width' && belowFloor(screen, root.clientWidth, opts.cols);
+        // A scroll region must be focusable and named (as the theme's tables are). Always, not only when floored:
+        // the player lays glyphs out on whole pixels, so a width-fitted terminal can still overshoot its frame.
+        screen.setAttribute('role', 'region');
+        screen.setAttribute('aria-label', 'Terminal output');
+        screen.tabIndex = 0;
+        const p = m.create({ data: d }, screen, {
           ...opts,
+          ...(floored && { fit: false, terminalFontSize: `${TERMINAL_FLOOR_PX}px` }),
           autoPlay,
           preload: true, // the data is already here (create waits for it): show 00:00, not --:--, before play
           theme: 'ocx',

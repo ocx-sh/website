@@ -1,0 +1,49 @@
+/* A folded ShellSession (`collapsed`): each output is one more entry of the fused surface, inside the theme's
+   Collapsible look (ui/collapsible.css, on every page). Inlined by ShellSession.astro only for a session that
+   folds, so no other page carries it. The entry inside the fold wears what a direct child of the session wears. */
+@layer ocx {
+  .ocx-shell-session-fold {
+    background: var(--ocx-color-code-bg);
+  }
+  .ocx-shell-session-fold .ocx-collapsible__trigger {
+    padding-inline: var(--ocx-space-4);
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+    color: var(--ocx-color-code-comment);
+  }
+  /* Icon.astro's rules for the chevron: story pages carry no chrome, so its sheet is not there to lend them. */
+  .ocx-shell-session-fold .ocx-collapsible__chevron {
+    flex-shrink: 0;
+    inline-size: var(--ocx-icon-md);
+    block-size: var(--ocx-icon-md);
+    stroke-width: var(--ocx-icon-stroke);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .ocx-shell-session-fold .ocx-collapsible__chevron * {
+    vector-effect: non-scaling-stroke;
+  }
+  .ocx-shell-session-fold .ocx-collapsible__content {
+    padding: 0;
+  }
+  .ocx-shell-session-fold .expressive-code {
+    --ec-brdWd: 0px;
+    --ec-brdRad: 0px;
+    --ec-codePadBlk: 0px;
+    margin: 0;
+  }
+  .ocx-shell-session > .ocx-shell-session-fold:last-child pre {
+    padding-block-end: var(--ocx-space-5);
+  }
+  .ocx-shell-session-fold .copy {
+    display: none;
+  }
+  .ocx-shell-session-fold .code::before {
+    content: '> ';
+    color: inherit;
+  }
+  .ocx-shell-session-fold .code,
+  .ocx-shell-session-fold .code span {
+    color: var(--ocx-color-code-comment);
+  }
+}

@@ -1,0 +1,29 @@
+---
+title: Output folded away
+description: With collapsed, every output sits behind an Output toggle; the commands stay visible and the reader opens an output on demand.
+height: 300
+order: 5
+block: true
+toaster: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession collapsed>
+```sh
+ocx lock
+```
+```text
+locked 3 tools in ocx.lock
+resolved node 24.9.0
+resolved pnpm 11.22.0
+resolved task 3.45.4
+```
+```sh
+ocx exec -- node --version
+```
+```text
+v24.9.0
+```
+</ShellSession>

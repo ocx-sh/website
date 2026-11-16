@@ -9,6 +9,12 @@ declare module 'virtual:starlight/components/MobileMenuFooter' {
   export default MobileMenuFooter;
 }
 
+// The glossary option's popover data, built by the plugin (glossary/route.mjs serves it).
+declare module 'virtual:ocx-theme/glossary' {
+  const definitions: Record<string, [term: string, definition: string]>;
+  export default definitions;
+}
+
 // Vite `?inline`: a stylesheet as a string, never emitted into the page's CSS (toast.zag.mjs).
 declare module '*.css?inline' {
   const css: string;

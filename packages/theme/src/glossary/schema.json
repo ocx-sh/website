@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ocx.sh/schemas/glossary.json",
+  "title": "OCX theme glossary",
+  "description": "The terms the docs link to a glossary page and explain in a popover. `validate` from @ocx-sh/theme/glossary also checks what a schema cannot: unique ids and forms, and the 25-word limit on a definition.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "term", "variants", "definition", "learnMore", "category"],
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "description": "The anchor of the term's entry on the glossary page.",
+        "type": "string",
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
+      "term": {
+        "description": "The canonical name: the entry heading and the popover title.",
+        "type": "string",
+        "minLength": 1
+      },
+      "variants": {
+        "description": "Every form of the term that links to it, inflections included (no stemming). A form with an uppercase letter matches exactly, a lowercase one in any case.",
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": "string", "minLength": 1 }
+      },
+      "definition": { "description": "At most 25 words.", "type": "string", "minLength": 1 },
+      "learnMore": {
+        "description": "A docs route ending in a slash with an optional fragment, or an http(s) URL.",
+        "type": "string",
+        "pattern": "^(?:https?://\\S+|[a-z0-9][\\w./-]*/(?:#[\\w-]+)?)$"
+      },
+      "category": { "description": "The glossary page section.", "type": "string", "minLength": 1 },
+      "avoid": {
+        "description": "Synonyms the docs must not use for this term; a consumer's lint reports them.",
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      },
+      "except": {
+        "description": "Phrases containing a variant that are not the term (`package manager` for `package`): they match first and link nothing.",
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      },
+      "excludePages": {
+        "description": "Docs route prefixes (`integration/github-actions/`) on whose pages this term is never linked, because the bare word means something else there. Other terms, longer forms containing the word included, still link.",
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

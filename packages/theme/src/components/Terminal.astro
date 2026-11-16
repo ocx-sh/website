@@ -9,6 +9,7 @@ import { publicDir } from 'astro:config/server';
 import { withBase } from './base-url.mjs';
 import { terminalSize } from './cast-size.mjs';
 import { connect, machine } from './collapsible.zag.mjs';
+import { TERMINAL_FLOOR_PX } from './terminal-floor.mjs';
 import { nextTerminalId } from './terminal.mjs';
 import Button from './ui/Button.astro';
 import Icon from './ui/Icon.astro';
@@ -54,7 +55,8 @@ const { cols, rows } = terminalSize(src, publicDir, colsProp, rowsProp);
 const id = nextTerminalId();
 const options = { cols, rows, autoPlay, speed, idleTimeLimit, loop, fit: fit === 'none' ? false : fit };
 // ponytail: reserve only when both sizes are known (props or the cast header).
-const reserve = fit === 'width' && cols && rows ? `--_cols: ${cols}; --_rows: ${rows}` : undefined;
+const reserve =
+  fit === 'width' && cols && rows ? `--_cols: ${cols}; --_rows: ${rows}; --_floor: ${TERMINAL_FLOOR_PX}px` : undefined;
 const startLabel = `Play ${title ?? 'terminal recording'}`;
 const Chrome = collapsed ? 'button' : 'div';
 // ponytail: the Zag root attributes live here, not in the template: an open terminal is no Zag root,
@@ -100,6 +102,7 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
         </button>
       </div>
     )}
+    <div class="ocx-terminal__screen"></div>
     <div class="ocx-terminal__controls" hidden>
       <Button iconOnly aria-label="Play" size="s" variant="ghost" class="ocx-terminal__play">
         <Icon name="play" class="ocx-terminal__play-icon" />
@@ -278,8 +281,34 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
      * that box to the container width, then adds its 32px control bar. Numbers are asciinema-player 3.15.1's,
      * not ours; re-measure on upgrade. Guarded by e2e "CLS is 0 on load and while the open player loads".
      * Skeleton's sized `terminal` variant repeats this calc (its --_min); change both together. */
+    /* Below the font floor (terminal.mjs) the terminal keeps the floor size instead of shrinking: its height is
+     * the floor's. */
     .ocx-terminal__player[style*='--_rows'] {
-      min-height: calc(100cqi * (var(--_rows) * 20 + 22) / (var(--_cols) * 9 + 22) + 32px);
+      min-height: calc(
+        max(
+            100cqi * (var(--_rows) * 20 + 22) / (var(--_cols) * 9 + 22),
+            var(--_floor) * (var(--_rows) * 20 + 22) / 15
+          ) +
+          32px
+      );
+    }
+    /* The player mounts in this scroll region. A terminal wider than its frame (the font floor, or the player's
+     * whole-pixel glyph advance rounding up) scrolls instead of being clipped: the player may neither clip nor
+     * shrink, and the wrapper's centring would put the overflow out of reach on the left. Table's focus ring. */
+    .ocx-terminal__screen {
+      overflow-x: auto;
+    }
+    .ocx-terminal__screen:focus-visible {
+      outline: var(--ocx-focus-ring);
+      outline-offset: var(--ocx-focus-offset-inset);
+    }
+    .ocx-terminal__screen .ap-wrapper {
+      justify-content: flex-start;
+    }
+    .ocx-terminal__screen .ap-player {
+      flex: none;
+      max-width: none;
+      overflow: visible;
     }
     .ocx-terminal__player .ap-player {
       border-radius: 0;
@@ -422,6 +451,16 @@ const style = [zagStyle, reserve].filter(Boolean).join('; ') || undefined;
       min-height: 0;
       display: flex;
       flex-direction: column;
+    }
+    .ocx-terminal:fullscreen .ocx-terminal__screen {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Fullscreen scales from the player's own 15px base, not the floor size set at create. */
+    .ocx-terminal:fullscreen .ap-player {
+      font-size: 15px !important;
     }
     .ocx-terminal:fullscreen .ap-wrapper {
       flex: 1;

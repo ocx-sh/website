@@ -3,12 +3,22 @@
 // popover the machine shows and hides (JS off: the trigger's `popovertarget` opens it). The rail
 // is a vertical Zag `tabs` (automatic activation) that navigation-menu.zag.mjs starts with the
 // nav; `:has(:hover, :focus-within)` previews an item's name, meta and `desc` in the strip.
+// `defer` (the page header): the body ships inside a <template> that `inflateMega` (navigation-menu.zag.mjs) moves in on the first
+// touch of the nav or the first open, so a page pays one element for it, not ~130. JS off, the popover shows
+// a <noscript> link per hub: each hub's page lists the same destinations. The live-header fragment renders
+// the body in place (`defer` off): what it swaps in has no template to inflate.
 import * as tabs from './tabs.zag.mjs';
 import { NAV_ID, RAIL_ID, connect, ids, lean, machine, parts } from './navigation-menu.zag.mjs';
 import Icon from './ui/Icon.astro';
 import { ssrApi, ssrAttrs } from './ui/zag-runtime.mjs';
 import nav from '../nav.json';
 
+export interface Props {
+  /** Ship the panel body in a `<template>` (see above). */
+  defer?: boolean;
+}
+
+const { defer = false } = Astro.props;
 const MAX_CATEGORIES = 4;
 const MAX_ITEMS = 5;
 
@@ -20,79 +30,91 @@ const hubs = nav.hubs.map((h) => ({
   }),
 }));
 const section = nav.sections.find((s) => !('href' in s))?.id ?? 'ecosystem';
+const Wrap = defer ? 'template' : Fragment;
 const content = parts(ssrApi(machine, connect, { id: NAV_ID, ids })).content(section);
 const rail = ssrApi(tabs.machine, tabs.connect, { id: RAIL_ID, orientation: 'vertical', defaultValue: hubs[0]?.id });
 ---
 
 {/* A nav landmark named by its trigger (aria-labelledby, from Zag). */}
 <nav class="ocx-mega" popover {...ssrAttrs(lean(content, { nav: true }))}>
-  <div class="ocx-mega__body" {...ssrAttrs(lean(rail.getRootProps()))}>
-    <div class="ocx-mega__rail">
-      <div {...ssrAttrs(lean(rail.getListProps()))}>
-        {hubs.map((h) => (
-          <button
-            class="ocx-mega__tab"
-            data-pin={h.pinned ? '' : undefined}
-            {...ssrAttrs(lean(rail.getTriggerProps({ value: h.id })))}
-          >
-            {h.label}
-          </button>
-        ))}
-      </div>
-      <div class="ocx-mega__hub-links">
-        {hubs.map((h) => (
-          <a
-            class="ocx-mega__hub-link"
-            data-pin={h.pinned ? '' : undefined}
-            href={h.href}
-            aria-label={h.all.replace(/\s*→$/, '')}
-          >
-            <Icon name="arrow-right" />
-          </a>
-        ))}
-      </div>
-    </div>
-    {hubs.map((h) => (
-      <div class="ocx-mega__panel" data-ocx-hub={h.id} {...ssrAttrs(lean(rail.getContentProps({ value: h.id })))}>
-        {h.categories.map((c) => (
-          <div class="ocx-mega__category">
-            <p class="ocx-mega__category-label">{c.label}</p>
-            <ul class="ocx-mega__items">
-              {c.items.map((e) => (
-                <li>
-                  {e.href ? (
-                    <a class="ocx-mega__link" href={e.href} aria-describedby={`om${nav.entries.indexOf(e)}`}>
-                      {e.label}
-                      <Icon name="arrow-right" />
-                    </a>
-                  ) : (
-                    <span class="ocx-mega__link">{e.label}</span>
-                  )}
-                  <span class="ocx-mega__preview" data-meta={e.meta} aria-hidden="true">
-                    {e.label}
-                    <span class="ocx-mega__desc" id={e.href ? `om${nav.entries.indexOf(e)}` : undefined}>
-                      {e.desc}
-                    </span>
-                  </span>
-                </li>
-              ))}
-              {c.more > 0 && (
-                <li>
-                  <a class="ocx-mega__more" href={h.href}>{`${c.more} more →`}</a>
-                </li>
-              )}
-            </ul>
-          </div>
-        ))}
-      </div>
-    ))}
-    <p class="ocx-mega__strip">
+  {defer && (
+    <noscript>
       {hubs.map((h) => (
-        <span class="ocx-mega__blurb" data-ocx-hub={h.id}>
-          {h.label}
-          <span class="ocx-mega__desc-line">{h.blurb}</span>
-        </span>
+        <a class="ocx-mega__more" href={h.href}>
+          {h.all.replace(/\s*→$/, '')}
+        </a>
       ))}
-    </p>
-  </div>
+    </noscript>
+  )}
+  <Wrap {...(defer ? { 'data-mega': '' } : {})}>
+    <div class="ocx-mega__body" {...ssrAttrs(lean(rail.getRootProps()))}>
+      <div class="ocx-mega__rail">
+        <div {...ssrAttrs(lean(rail.getListProps()))}>
+          {hubs.map((h) => (
+            <button
+              class="ocx-mega__tab"
+              data-pin={h.pinned ? '' : undefined}
+              {...ssrAttrs(lean(rail.getTriggerProps({ value: h.id })))}
+            >
+              {h.label}
+            </button>
+          ))}
+        </div>
+        <div class="ocx-mega__hub-links">
+          {hubs.map((h) => (
+            <a
+              class="ocx-mega__hub-link"
+              data-pin={h.pinned ? '' : undefined}
+              href={h.href}
+              aria-label={h.all.replace(/\s*→$/, '')}
+            >
+              <Icon name="arrow-right" />
+            </a>
+          ))}
+        </div>
+      </div>
+      {hubs.map((h) => (
+        <div class="ocx-mega__panel" data-ocx-hub={h.id} {...ssrAttrs(lean(rail.getContentProps({ value: h.id })))}>
+          {h.categories.map((c) => (
+            <div class="ocx-mega__category">
+              <p class="ocx-mega__category-label">{c.label}</p>
+              <ul class="ocx-mega__items">
+                {c.items.map((e) => (
+                  <li>
+                    {e.href ? (
+                      <a class="ocx-mega__link" href={e.href} aria-describedby={`om${nav.entries.indexOf(e)}`}>
+                        {e.label}
+                        <Icon name="arrow-right" />
+                      </a>
+                    ) : (
+                      <span class="ocx-mega__link">{e.label}</span>
+                    )}
+                    <span class="ocx-mega__preview" data-meta={e.meta} aria-hidden="true">
+                      {e.label}
+                      <span class="ocx-mega__desc" id={e.href ? `om${nav.entries.indexOf(e)}` : undefined}>
+                        {e.desc}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+                {c.more > 0 && (
+                  <li>
+                    <a class="ocx-mega__more" href={h.href}>{`${c.more} more →`}</a>
+                  </li>
+                )}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ))}
+      <p class="ocx-mega__strip">
+        {hubs.map((h) => (
+          <span class="ocx-mega__blurb" data-ocx-hub={h.id}>
+            {h.label}
+            <span class="ocx-mega__desc-line">{h.blurb}</span>
+          </span>
+        ))}
+      </p>
+    </div>
+  </Wrap>
 </nav>

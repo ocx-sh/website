@@ -54,7 +54,11 @@ test('a deferred group the visitor opened reopens on the next page, loaded into 
   await page.goto(PAGE);
   await page.locator(`${FORMS} > [data-part="trigger"]`).click();
   await expect(page.getByRole('link', { name: 'Combobox', exact: true })).toBeVisible();
-  // Slow fragments: the group is open and empty for a moment, which is when a shift would show.
+  // No saved links (a first visit to the group in this tab) and slow fragments: the group is open and empty for a
+  // moment, which is when a shift would show.
+  await page.evaluate(() =>
+    Object.keys(sessionStorage).forEach((k) => k.startsWith('ocx-frag:') && sessionStorage.removeItem(k)),
+  );
   await page.route('**/frag/sidebar/**', async (route) => {
     await new Promise((r) => setTimeout(r, 600));
     await route.continue();
@@ -87,4 +91,52 @@ test.describe('without JavaScript', () => {
     await expect(page.getByRole('link', { name: 'Combobox', exact: true })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Button', exact: true })).toBeVisible();
   });
+});
+
+test('another open group keeps its links through a page change: no frame shows it open and empty', async ({ page }) => {
+  const group = (name: string) =>
+    `${PANE} [data-zag-root="collapsible"]:has(> [data-part="trigger"]:text-is("${name}"))`;
+  await page.goto(PAGE);
+  await page.waitForLoadState('networkidle');
+  for (const name of ['Forms', 'Overlays']) await page.locator(`${group(name)} > [data-part="trigger"]`).click();
+  const link = page.locator(`${group('Overlays')} a`).first();
+  await expect(link).toBeVisible();
+  const href = (await link.getAttribute('href'))!;
+  // Slow fragments and a frame-by-frame record of the Forms group on the next page.
+  await page.route('**/frag/sidebar/**', async (route) => {
+    await new Promise((r) => setTimeout(r, 600));
+    await route.continue();
+  });
+  await page.addInitScript((name) => {
+    const w = window as unknown as { __frames: { open: boolean; links: number; h: number }[] };
+    w.__frames = [];
+    const tick = () => {
+      const g = [...document.querySelectorAll('#starlight__sidebar [data-zag-root="collapsible"]')].find(
+        (el) => el.firstElementChild?.textContent?.trim() === name,
+      );
+      if (g) {
+        const list = g.querySelector(':scope > [data-part="content"]') as HTMLElement;
+        w.__frames.push({
+          open: !list.hidden,
+          links: list.querySelectorAll('a').length,
+          h: g.getBoundingClientRect().height,
+        });
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  }, 'Forms');
+  await link.click();
+  await expect(page).toHaveURL(new RegExp(`${href}$`));
+  await expect(page.locator(`${group('Forms')} a`).first()).toBeAttached();
+  await page.waitForTimeout(300);
+  const frames = await page.evaluate(
+    () => (window as unknown as { __frames: { open: boolean; links: number; h: number }[] }).__frames,
+  );
+  expect(frames.length).toBeGreaterThan(0);
+  expect(
+    frames.filter((f) => f.open && f.links === 0),
+    'frames with Forms open and empty',
+  ).toEqual([]);
+  expect(new Set(frames.map((f) => Math.round(f.h))).size, 'Forms changed height between frames').toBe(1);
 });

@@ -136,13 +136,14 @@ describe('ocxTheme plugin', () => {
   });
 
   it.each([
-    [undefined, { breadcrumbs: {} }],
-    [{ breadcrumbs: false as const }, { breadcrumbs: false }],
-    [{ breadcrumbs: { root: false as const } }, { breadcrumbs: { root: false } }],
+    [undefined, { breadcrumbs: {}, foldOutline: true }],
+    [{ breadcrumbs: false as const }, { breadcrumbs: false, foldOutline: true }],
+    [{ breadcrumbs: { root: false as const } }, { breadcrumbs: { root: false }, foldOutline: true }],
     [
       { breadcrumbs: { root: { label: 'home', href: '/x/' } } },
-      { breadcrumbs: { root: { label: 'home', href: '/x/' } } },
+      { breadcrumbs: { root: { label: 'home', href: '/x/' } }, foldOutline: true },
     ],
+    [{ foldOutline: false }, { breadcrumbs: {}, foldOutline: false }],
   ])('C-025: options %j reach the runtime as %j (virtual:ocx-theme/options)', async (options, runtime) => {
     const { addIntegration, astroConfig } = await setup({}, {}, options);
     const plugin = (await injected(addIntegration, astroConfig)).vite?.plugins?.[0];
@@ -158,7 +159,12 @@ describe('ocxTheme plugin', () => {
     options: {
       features: {} as Record<string, unknown>,
       mdastPlugins: [{ name: 'starlight-asides' }] as { name: string }[],
-      hastPlugins: [{ name: 'starlight-heading-ids' }] as { name: string; ecKey?: string; version?: string }[],
+      hastPlugins: [{ name: 'starlight-heading-ids' }] as {
+        name: string;
+        ecKey?: string;
+        version?: string;
+        glossaryKey?: string;
+      }[],
     },
   });
   const run = async (config: Partial<StarlightUserConfig> = {}, options?: Parameters<typeof ocxTheme>[0]) => {
@@ -187,6 +193,37 @@ describe('ocxTheme plugin', () => {
 
   it('the content cache key carries the theme version, so an upgrade re-renders cached Markdown', async () => {
     expect((await run()).hastPlugins.at(-1)?.version).toBe(pkg.version);
+  });
+
+  it('the glossary option: its data keys the content cache, serves glossary.json, and a bad row fails the build', async () => {
+    const row = (definition: string) => ({
+      id: 'alpha',
+      term: 'Alpha',
+      variants: ['alpha'],
+      definition,
+      learnMore: 'guide/',
+      category: 'core',
+    });
+    const glossary = (definition: string) => ({ glossary: { terms: [row(definition)], page: 'glossary/' } });
+    const key = async (definition: string) => (await run({}, glossary(definition))).hastPlugins.at(-1)?.glossaryKey;
+    const base = await key('First.');
+    expect(base).toMatch(/^[0-9a-f]{16}$/);
+    expect(await key('First.')).toBe(base);
+    expect(await key('Second.')).not.toBe(base);
+    expect((await run()).hastPlugins.at(-1)?.glossaryKey).toBeUndefined();
+    expect((await run({}, glossary('First.'))).mdastPlugins.map((p) => p.name)).toContain('@ocx-sh/theme/glossary');
+
+    const { addIntegration, astroConfig } = await setup({}, {}, glossary('First.'));
+    const injectRoute = vi.fn<AstroSetup['injectRoute']>();
+    const { vite } = await injected(addIntegration, astroConfig, injectRoute);
+    expect(injectRoute.mock.calls.map(([r]) => r.pattern)).toContain('/glossary.json');
+    const virtual = vite?.plugins?.find((p) => p.resolveId('virtual:ocx-theme/glossary'));
+    const id = virtual?.resolveId('virtual:ocx-theme/glossary') ?? '';
+    expect(virtual?.load(id)).toBe('export default {"alpha":["Alpha","First."]};');
+
+    await expect(
+      setup({}, {}, { glossary: { terms: [{ ...row('x'), id: 'Bad Id' }], page: 'glossary/' } }),
+    ).rejects.toThrow(/glossary/);
   });
 
   it("the Markdown widgets join Sätteri around Starlight's asides, which render the directives they make", async () => {
@@ -276,17 +313,42 @@ describe('ocxTheme plugin', () => {
     expect((await injected(addIntegration, own)).vite?.build).toBeUndefined();
   });
 
-  it('every-page chunk: the trigger layer, the preload helper and starlight-toc share one client chunk; a consumer split wins', async () => {
+  it('every-page chunk: the trigger layer, the preload helper and the outline elements share one client chunk; a consumer split wins', async () => {
     const { addIntegration, astroConfig } = await setup();
     const split = (await injected(addIntegration, astroConfig)).vite?.environments?.client?.build?.rolldownOptions
       ?.output?.codeSplitting;
-    const [group] = split?.groups ?? [];
+    const [group, lib, dom] = split?.groups ?? [];
     expect(group?.name).toBe('zag');
+    // The Zag foundation is two chunks, not a dozen tiny ones (each a name in every preload list): `zag-lib` is what the
+    // Toc machine that runs at page load needs, `zag-dom` the rest of dom-query, fetched with the first machine that wants it.
+    expect([lib?.name, dom?.name]).toEqual(['zag-lib', 'zag-dom']);
+    const dq = (file: string) =>
+      `/w/node_modules/.pnpm/@zag-js+dom-query@1.44.0/node_modules/@zag-js/dom-query/dist/${file}`;
+    for (const id of [
+      '/w/node_modules/@zag-js/core/dist/state.mjs',
+      '/w/node_modules/@zag-js/utils/dist/array.mjs',
+      dq('event.mjs'),
+      dq('overflow.mjs'),
+    ])
+      expect(lib?.test.test(id), id).toBe(true);
+    for (const id of [dq('raf.mjs'), dq('tabbable.mjs')]) {
+      expect(lib?.test.test(id), id).toBe(false);
+      expect(dom?.test.test(id), id).toBe(true);
+    }
+    // The runtime and the packages it imports ride with the foundation: one request fewer on the first interaction.
+    for (const id of [
+      '/w/packages/theme/src/components/ui/zag-runtime.mjs',
+      '/w/node_modules/@zag-js/vanilla/dist/machine.mjs',
+      '/w/node_modules/@zag-js/anatomy/dist/create-anatomy.mjs',
+    ])
+      expect(lib?.test.test(id), id).toBe(true);
+    for (const id of ['/w/node_modules/@zag-js/tooltip/dist/index.mjs', '/w/src/components/tooltip.zag.mjs'])
+      expect([lib?.test.test(id), dom?.test.test(id)], id).toEqual([false, false]);
     for (const id of [
       '/w/packages/theme/src/components/ui/zag.mjs',
       '/w/packages/theme/src/components/ui/lazy.mjs',
       '\0vite/preload-helper.js',
-      '/w/node_modules/@astrojs/starlight/dist/components-internals/TableOfContents/starlight-toc.js',
+      '/w/packages/theme/src/starlight/toc-elements.mjs',
     ])
       expect(group?.test.test(id), id).toBe(true);
     for (const id of ['/w/packages/theme/src/components/ui/zag-runtime.mjs', '/w/src/components/tabs.zag.mjs'])
@@ -587,6 +649,8 @@ describe('C-031: package surface (declared)', () => {
         './shell-rev',
         './shell-render',
         './highlight',
+        './glossary',
+        './glossary/schema.json',
         './markdown',
       ].sort(),
     );
@@ -678,21 +742,13 @@ describe('C-107 override stubs', () => {
 });
 
 describe('Starlight internals read by file (the CI tripwire for a Starlight bump)', () => {
-  const FILES = [
-    'TableOfContents/starlight-toc.js',
-    'TableOfContents/TableOfContentsList.astro',
-    '../user-components/Icon.astro',
-    '../utils/navigation.js',
-  ];
+  const FILES = ['../user-components/Icon.astro', '../utils/navigation.js'];
 
   it.each(FILES)('%s exists in the installed Starlight', (rel) => {
     expect(existsSync(starlightInternal(rel))).toBe(true);
   });
 
-  it('starlight-toc.js still exports StarlightTOC, and navigation.js getSidebarFromConfig', () => {
-    expect(readFileSync(starlightInternal('TableOfContents/starlight-toc.js'), 'utf8')).toMatch(
-      /export \{[^}]*StarlightTOC/,
-    );
+  it('navigation.js still exports getSidebarFromConfig', () => {
     expect(readFileSync(starlightInternal('../utils/navigation.js'), 'utf8')).toMatch(/getSidebarFromConfig/);
   });
 

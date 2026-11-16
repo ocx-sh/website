@@ -1,0 +1,14 @@
+/* A glossary term in prose (`a.ocx-term`, written by the glossary plugin). Inlined once (MarkdownContent.astro, TermStyle.astro), only on a
+   page that links a term, so no other page's shared sheet carries it. A dashed underline in the muted text colour
+   says "defined here" and tells it from an ordinary link; the colour stays the prose's own. */
+@layer ocx {
+  a.ocx-term {
+    color: inherit;
+    text-decoration: underline dashed var(--ocx-color-fg-subtle);
+    text-decoration-thickness: var(--ocx-border-width);
+    text-underline-offset: 0.2em;
+  }
+  a.ocx-term:hover {
+    text-decoration-style: solid;
+  }
+}

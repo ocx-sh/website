@@ -33,6 +33,8 @@ const pkg = () => ({
     './shell-rev': { types: './src/shell-rev.d.mts', default: './src/shell-rev.mjs' },
     './shell-render': { types: './src/shell-render.d.mts', default: './src/shell-render.mjs' },
     './highlight': { types: './src/highlight.d.mts', default: './src/highlight.mjs' },
+    './glossary': { types: './src/glossary/index.d.mts', default: './src/glossary/index.mjs' },
+    './glossary/schema.json': './src/glossary/schema.json',
     './copy': { types: './src/components/copy.d.mts', default: './src/components/copy.mjs' },
     './logo-tile': { types: './src/components/ui/logo-tile.d.mts', default: './src/components/ui/logo-tile.mjs' },
     './command-palette': {
@@ -95,6 +97,9 @@ const FILES = [
   'src/shell-render.mjs',
   'src/shell-render.d.mts',
   'src/highlight.mjs',
+  'src/glossary/index.mjs',
+  'src/glossary/index.d.mts',
+  'src/glossary/schema.json',
   'src/highlight.d.mts',
 ];
 

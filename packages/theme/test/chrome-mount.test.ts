@@ -27,6 +27,32 @@ describe('mountChrome', () => {
     expect(document.querySelector('[data-zag-root="navigation-menu"]')?.getAttribute('data-zag-state')).toBe('idle');
   });
 
+  const megaNav = () => {
+    document.body.innerHTML =
+      '<div class="ocx-header"><div data-zag-root="navigation-menu" data-zag-state="idle"><nav class="ocx-mega" popover>' +
+      '<template data-mega><div class="ocx-mega__body">body</div></template></nav></div></div>';
+    mountChrome(document);
+    return document.querySelector('.ocx-mega')!;
+  };
+
+  it('the ecosystem menu keeps its body in the template until the panel first toggles, then moves it in', () => {
+    const mega = megaNav();
+    expect([mega.querySelector('template'), mega.querySelector('.ocx-mega__body')]).toEqual([expect.anything(), null]);
+    mega.dispatchEvent(new Event('beforetoggle'));
+    expect(mega.querySelector(':scope > .ocx-mega__body')?.textContent).toBe('body');
+    expect(mega.querySelector('template')?.content.childNodes.length).toBe(0); // emptied, left in place
+    mega.dispatchEvent(new Event('beforetoggle')); // a second toggle inserts nothing
+    expect(mega.querySelectorAll('.ocx-mega__body')).toHaveLength(1);
+  });
+
+  it('a page whose header holds no template (the live-header fragment) toggles without error', () => {
+    document.body.innerHTML =
+      '<div class="ocx-header"><div data-zag-root="navigation-menu" data-zag-state="idle"><nav class="ocx-mega" popover>' +
+      '<div class="ocx-mega__body">body</div></nav></div></div>';
+    mountChrome(document);
+    expect(() => document.querySelector('.ocx-mega')!.dispatchEvent(new Event('beforetoggle'))).not.toThrow();
+  });
+
   const sidebar = () => {
     document.body.innerHTML =
       '<nav id="starlight__sidebar"><ul><li data-zag-root="collapsible" data-zag-state="idle">' +

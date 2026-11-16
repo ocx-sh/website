@@ -1,0 +1,51 @@
+/* The glossary popover (term-tip.mjs adds this sheet on the first hover or focus of a term). One popup, shared by
+   every term: `popover="manual"` in the top layer, placed on the open term by CSS anchor positioning (the term
+   carries `anchor-name` while open), flipped below it when there is no room above. */
+@layer ocx {
+  .ocx-term-tip {
+    position: fixed;
+    position-anchor: --ocx-term-tip;
+    position-area: top;
+    position-try-fallbacks: flip-block;
+    inset: auto;
+    margin: 0 0 var(--ocx-space-3);
+    max-width: min(300px, calc(100vw - var(--ocx-space-5) * 2));
+    padding: var(--ocx-space-3) var(--ocx-space-4);
+    overflow: visible;
+    color: var(--ocx-color-fg);
+    background: var(--ocx-color-surface);
+    border: 0;
+    border-radius: var(--ocx-radius-lg);
+    filter: drop-shadow(var(--ocx-shadow-overlay));
+    font-family: var(--ocx-font-sans);
+    font-size: var(--ocx-text-base);
+    font-weight: var(--ocx-font-weight-regular);
+    line-height: var(--ocx-prose-lh);
+    text-align: start;
+    /* Fade and a 4px slide in and out; the allow-discrete pair keeps the top-layer popup rendered through the exit.
+       tokens.css zeroes the duration under reduced motion. */
+    opacity: 0;
+    translate: 0 var(--ocx-space-2);
+    transition:
+      opacity var(--ocx-duration-enter) var(--ocx-ease-out),
+      translate var(--ocx-duration-enter) var(--ocx-ease-out),
+      display var(--ocx-duration-enter) allow-discrete,
+      overlay var(--ocx-duration-enter) allow-discrete;
+  }
+  .ocx-term-tip:popover-open {
+    opacity: 1;
+    translate: none;
+    @starting-style {
+      opacity: 0;
+      translate: 0 var(--ocx-space-2);
+    }
+  }
+  .ocx-term-tip strong {
+    display: block;
+    font-weight: var(--ocx-font-weight-semibold);
+  }
+  .ocx-term-tip code {
+    font-family: var(--ocx-font-mono);
+    font-size: var(--ocx-text-xs);
+  }
+}

@@ -67,6 +67,8 @@ export const PAGE_FONT_BYTES = {
  */
 // Raised 2026-11-13 (owner-approved, sidebar hierarchy: chevron, indent, current-page bar): 22_250 -> 22_500, 20_000 -> 20_200.
 // Raised again 2026-11-13 (owner-approved, section rows first in the mobile drawer): starlight 22_500 -> 22_550 (measured 22_528 B).
+// 2026-11-16: the TOC hierarchy rule (+50 B starlight, +50 B site, awaiting the owner's confirmation) is absorbed: Starlight's anchor
+// stylesheet is gone (the theme draws heading permalinks itself), measured 22_508 B starlight, 20_175 B site, back at 22_550 / 20_200.
 export const SHARED_SHEET_GZ = { starlight: 22_550, site: 20_200 };
 
 /**

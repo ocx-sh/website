@@ -97,6 +97,11 @@
       "types": "./src/highlight.d.mts",
       "default": "./src/highlight.mjs"
     },
+    "./glossary": {
+      "types": "./src/glossary/index.d.mts",
+      "default": "./src/glossary/index.mjs"
+    },
+    "./glossary/schema.json": "./src/glossary/schema.json",
     "./shell-render": {
       "types": "./src/shell-render.d.mts",
       "default": "./src/shell-render.mjs"

@@ -69,7 +69,7 @@ and open questions. Read it before any design or code change.** Research trail:
   every-page script: overriding `Search` drops them (the plugin warns).
 - Sidebar: a collapsed nested group without the current page ships empty (`data-defer`) and the sidebar controller (`starlight/sidebar-controller.mjs`, loaded by `chrome.mjs` on the first
   touch of the sidebar; it imports no Zag) loads its links from `frag/sidebar/<key>/` on the first touch of its group; the key is the group's labels and hrefs, `_all` is the no-JS list. A group the visitor left open reopens
-  pre-paint into reserved space (`--n` links) and loads at once.
+  pre-paint with the links its last load saved in `sessionStorage` (`ocx-frag:<key>`), or into reserved space (`--n` links) and loads at once when none are saved.
 - Component page scripts mount through `onRoots` (`ui/roots.mjs`), never by scanning `document` once (`Tree` handles
   `ocx:inserted` itself: its script must stay import-free to be inlined, a shared import makes it a request),
   so markup that arrives after load works: `deferral-contract.test.ts` enforces it and

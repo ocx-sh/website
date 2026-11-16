@@ -1,10 +1,10 @@
 ---
 name: ocx-theme-setup
-description: Adding the @ocx-sh/theme Starlight plugin to an Astro site that joins ocx.sh, covering the ocxTheme() plugin options (breadcrumbs, root crumb, math), Sätteri as the required Markdown processor, the base path that must be a nav.json claim, trailingSlash, site, fonts, favicon, customCss order, the Starlight component overrides, what overriding Search drops, Expressive Code and Pagefind merge settings, the VitePress CSS adapter, and the ocx-site check CLI. Use when installing or upgrading @ocx-sh/theme, writing or debugging astro.config.mjs for an ocx.sh section, when a build fails with "is not a claim path", "trailingSlash must be 'always'" or "site ... is not https://ocx.sh", when overriding a Starlight component such as Header, Search or Sidebar, when fonts, breadcrumbs or search merging look wrong, or when a new repo needs a path on ocx.sh. Not for picking or using individual components (ocx-theme-components) or deploying (ocx-theme-deploy).
+description: Adding the @ocx-sh/theme Starlight plugin to an Astro site that joins ocx.sh, covering the ocxTheme() plugin options (breadcrumbs, root crumb, math, glossary, foldOutline), Sätteri as the required Markdown processor, the base path that must be a nav.json claim, trailingSlash, site, fonts, favicon, customCss order, the Starlight component overrides, what overriding Search drops, Expressive Code and Pagefind merge settings, the VitePress CSS adapter, and the ocx-site check CLI. Use when installing or upgrading @ocx-sh/theme, writing or debugging astro.config.mjs for an ocx.sh section, when a build fails with "is not a claim path", "trailingSlash must be 'always'" or "site ... is not https://ocx.sh", when overriding a Starlight component such as Header, Search or Sidebar, when fonts, breadcrumbs or search merging look wrong, when linking glossary terms with popups, or when a new repo needs a path on ocx.sh. Not for picking or using individual components (ocx-theme-components) or deploying (ocx-theme-deploy).
 license: Apache-2.0
 metadata:
   summary: Wire @ocx-sh/theme into an Astro Starlight site on ocx.sh - base path, plugin options, overrides, fonts, search merge
-  keywords: ocx,ocx-sh,astro,starlight,starlight-plugin,theme,astro-config,base-path,trailing-slash,pagefind,expressive-code,fonts,breadcrumbs,overrides,vitepress,markdown,satteri,math
+  keywords: ocx,ocx-sh,astro,starlight,starlight-plugin,theme,astro-config,base-path,trailing-slash,pagefind,expressive-code,fonts,breadcrumbs,overrides,vitepress,markdown,satteri,math,glossary
 ---
 
 # ocx-theme-setup
@@ -108,17 +108,66 @@ the build. Hard failures, all thrown in the plugin's `config:setup`:
 
 ## 4. Plugin options
 
-`ocxTheme(options)` takes two options:
+`ocxTheme(options)` takes four options:
 
 | Option | Default | Effect |
 |---|---|---|
 | `breadcrumbs` | `{}` (on, no root crumb) | The trail above every page title: section or hub, ecosystem entry, sidebar groups, page. `false` drops it. Splash pages never show one |
 | `breadcrumbs.root` | absent | `{ label, href }` prepends a root crumb (e.g. `{ label: 'ocx.sh', href: '/' }`); `false` or absent means none |
 | `math` | `false` | Also render `$…$` and `$$…$$` as math. ```` ```math ```` fences render either way. Off by default because prose naming two shell variables (`$HOME` and `$PATH`) would become a formula |
+| `glossary` | absent (off) | Links the glossary's terms in every page's prose to a glossary page and shows their definition on hover or focus. Section "Glossary" below |
+| `foldOutline` | `true` | An "On this page" outline of 10 rows or more folds each section's subsections under its title; the section being read opens as the page scrolls. `false` keeps every outline flat. Behaviour: `ocx-theme-components`, `references/content-navigation.md` § Page outline |
 
 ```js
 plugins: [ocxTheme({ breadcrumbs: { root: { label: 'ocx.sh', href: '/' } } })];
 ```
+
+### Glossary
+
+```js
+import terms from './src/data/glossary.json' with { type: 'json' };
+plugins: [ocxTheme({ glossary: { terms, page: 'reference/glossary/', exclude: ['changelog/'], frequency: 'page' } })];
+```
+
+| Option | Default | Effect |
+|---|---|---|
+| `glossary.terms` | required | The rows (below). `validate(terms)` runs at config time: an invalid row fails the build and names the row |
+| `glossary.page` | required | The glossary page's route under the base (`reference/glossary/`). Links target its `{#id}` anchors; the page links none of its own terms |
+| `glossary.exclude` | `[]` | Route prefixes whose pages link nothing (`changelog/`) |
+| `glossary.frequency` | `'page'` | Which usages link: `'page'` the first of each term per page, `'section'` the first per `##` section (text before the first `##` counts as one), `'all'` every usage |
+
+**Choosing `frequency`.** Every link is one element and one tab stop. `all` adds a tab stop and a screen-reader "link"
+announcement per usage and costs DOM on dense pages (a dense page can gain hundreds of elements); `page` is the
+convention encyclopaedias use and the cheapest. Start with `page`; widen to `section` only after measuring the built
+pages against the DOM budget (`task build`, then the Lighthouse `dom-size` audit), because a link per usage can fail a gated page.
+
+**Authoring rule: write plain prose; never hand-link a term.** No page is edited for the links; a hand-written link or
+`<Tooltip>` for a glossary term fights the plugin. To change what a word links to, edit its row, not the page.
+
+**Data format**, a JSON array (schema: `@ocx-sh/theme/glossary/schema.json`; the row type is `GlossaryTerm`):
+
+| Field | Required | Meaning |
+|---|---|---|
+| `id` | yes | Lowercase words joined by hyphens: the `{#id}` anchor of the entry on the glossary page |
+| `term` | yes | The canonical name: the entry heading and the popup title |
+| `variants` | yes | Every form that links, inflections spelled out (no stemming). A form with an uppercase letter matches exactly (`OCI`); an all-lowercase one in any case. The longest form wins (`image index` over `index`) |
+| `definition` | yes | At most 25 words; `` `code` `` renders as code in the popup |
+| `learnMore` | yes | A docs route ending in `/` with an optional `#fragment`, or an `http(s)` URL |
+| `category` | yes | The glossary page section |
+| `avoid` | no | Banned synonyms for the term, reported by a consumer's lint; the plugin ignores them |
+| `except` | no | Phrases holding a variant that are not the term (`package manager`): they match first and link nothing |
+| `excludePages` | no | Docs route prefixes (`integration/github-actions/`, normalised like the plugin option `exclude`) on whose pages the term never links. Its `except` phrases still apply there and other terms, a longer form containing the word included (`image index` where `index` is excluded), still link. Not in `glossary.json`. Use `except` when a qualifier word sits next to the term (`Git repository`); use `excludePages` when the bare word means something else on a whole page |
+
+The build serves the popup data at `<base>glossary.json` as `{ "<id>": ["<term>", "<definition>"] }`. A form never matches
+inside a longer name: `multi-platform`, `index.ocx.sh`, `$OCX_HOME`, `--platform` and `metadata.json` hold no term.
+
+**The glossary page and the lint** use `@ocx-sh/theme/glossary`:
+
+| Export | Use |
+|---|---|
+| `glossaryMarkdown(terms, { categories, base, titles })` | The body of the generated glossary page: `## Category {#category}` sections of `### Term {#id}` entries. Write the frontmatter yourself, commit the file and drift-check it |
+| `matcher(terms, { match })` | `find(text)` returns the hits `{ id, text, start, end }`; with `match: 'avoid'` it finds banned synonyms in source prose, with the plugin's own boundary rules |
+| `validate(terms)` | The problems in the data, one line each; `[]` is sound. Run it in a test |
 
 ## 5. What the plugin sets for you
 
@@ -174,7 +223,7 @@ site that skips it keeps its baked header for good.
 - **Edit this page**: the link shows only when the route has an `editUrl`. For generated pages
   set `editUrl` in each page's frontmatter to the true source file (not the gitignored output),
   or set Starlight's `editLink.baseUrl` for hand-written ones. There is no theme option.
-- **VitePress-style sources** (`{#id}` headings, `./x.md#a` links, `<<< @/path{lang}` and
+- **VitePress-style sources** (`{#id}` headings, `./x.md#a` links, `<<< @/path{lang}` (Expressive Code meta may follow the language: `{sh {"1":1} ins={2}}`) and
   `<!--@include: path-->` includes) work as written: the plugin handles them on Sätteri. `@/` names
   `src/`; links resolve against `src/content/docs/` and the base. In `.mdx`, `{#id}` and the escaped
   `\{#id\}` (which MDX editors accept) both set the id. `@ocx-sh/theme/remark` is gone (0.2.2): drop it,

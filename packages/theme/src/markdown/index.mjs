@@ -2,6 +2,9 @@
 // Copyright 2026 The OCX Authors
 
 // The theme's Markdown transforms, added to the consumer's Sätteri processor by the Starlight plugin.
+import { pathToFileURL } from 'node:url';
+import { headingAnchors } from './heading-anchors.mjs';
+import { glossary } from './glossary.mjs';
 import { includes } from './includes.mjs';
 import { math } from './math.mjs';
 import { mdLinks } from './md-links.mjs';
@@ -44,9 +47,13 @@ export const headingIds = {
  * Adds the theme's plugins to a Sätteri processor's options, in place: replacing the processor
  * would drop the consumer's own options and every plugin Starlight already added.
  * @param {SatteriOptions} options
- * @param {{ srcDir: string, docsDir: string, base: string, math: boolean, smartypants: boolean }} site
+ * @param {{ srcDir: string, docsDir: string, base: string, math: boolean, smartypants: boolean,
+ *   headingIds?: import('satteri').HastPluginEntry | undefined,
+ *   glossary?: import('./glossary.mjs').GlossaryOptions | undefined }} site
  *   `docsDir` is the docs collection's directory, `base` its site path; `math` parses `$…$` and
- *   `$$…$$`; `smartypants` is Astro's `markdown.smartypants`.
+ *   `$$…$$`; `smartypants` is Astro's `markdown.smartypants`; `headingIds` is Starlight's heading id plugin, given
+ *   only when the theme owns the permalinks (starlight/index.mjs): docs pages then get ids and `headingAnchors`;
+ *   `glossary` links the glossary's terms.
  */
 export function addMarkdownPlugins(options, site) {
   options.features.headingAttributes ??= true;
@@ -57,8 +64,19 @@ export function addMarkdownPlugins(options, site) {
   // Starlight's asides plugin is already in the list and renders the directives `widgets` makes, so
   // these go first; includes ahead of widgets so included text gets the widgets too.
   options.mdastPlugins.unshift(includes({ srcDir: site.srcDir }), widgets);
+  if (site.glossary) options.mdastPlugins.push(glossary({ ...site.glossary, root: site.docsDir, base: site.base }));
   options.mdastPlugins.push(mdLinks({ root: site.docsDir, base: site.base }), math);
   // headingIds first: Starlight's heading anchors read the heading text.
   options.hastPlugins.unshift(headingIds);
+  // Starlight's own, in its place: its ids (it reads them to build its links), then the permalink, for docs pages only.
+  if (site.headingIds) {
+    const { headingIds: ids } = site;
+    options.hastPlugins.splice(
+      1,
+      0,
+      (/** @type {{ fileURL?: URL | undefined }} */ { fileURL }) =>
+        String(fileURL ?? '').startsWith(pathToFileURL(site.docsDir).href) && [ids, headingAnchors],
+    );
+  }
   options.hastPlugins.push(taskLabels);
 }

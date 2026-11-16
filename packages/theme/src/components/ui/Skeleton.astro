@@ -10,6 +10,7 @@
 // in its HTML, and the sheet is there before the first skeleton paints.
 import { publicDir } from 'astro:config/server';
 import { terminalSize } from '../cast-size.mjs';
+import { TERMINAL_FLOOR_PX } from '../terminal-floor.mjs';
 
 export interface Props {
   variant?: 'text' | 'circle' | 'rect' | 'card' | 'list' | 'table' | 'code' | 'terminal';
@@ -69,7 +70,7 @@ const style = {
   // <style>: it keeps this sheet under the plugin's inline-CSS cap (an external sheet costs Lighthouse 0.01).
   terminal:
     term?.cols && term.rows
-      ? `--_lines: ${lines}; --_min: calc(100cqi * ${term.rows * 20 + 22} / ${term.cols * 9 + 22} + 32px)`
+      ? `--_lines: ${lines}; --_min: calc(max(100cqi * ${term.rows * 20 + 22} / ${term.cols * 9 + 22}, ${+((TERMINAL_FLOOR_PX * (term.rows * 20 + 22)) / 15).toFixed(2)}px) + 32px)`
       : `--_lines: ${lines}`,
   list: `--_rows: ${rows}`,
   table: `--_rows: ${rows}; --_cols: ${columns}`,

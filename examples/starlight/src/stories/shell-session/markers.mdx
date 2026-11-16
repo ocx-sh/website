@@ -1,0 +1,51 @@
+---
+title: Marked lines and numbered badges
+description: A line marker highlights a line; a labelled marker adds a numbered badge for the prose below to cite.
+height: 760
+order: 6
+block: true
+toaster: true
+---
+
+import '@ocx-sh/theme/starlight.css?story';
+import ShellSession from '@ocx-sh/theme/components/ShellSession.astro';
+
+<ShellSession>
+```sh {"1":1} {"2":2}
+ocx install cmake:3.31
+ocx select cmake:3.31
+```
+```text {2} ins={3} del={4}
+resolved cmake 3.31.1
+downloaded 1 package
+selected cmake:3.31
+removed cmake:3.30
+```
+```sh ins={1}
+ocx exec -- cmake --version
+```
+```text {"A":1}
+cmake version 3.31.1
+```
+</ShellSession>
+
+Line 1 downloads the package. Line 2 points `current` at it.
+
+<ShellSession play>
+```sh {"1":1}
+ocx lock
+```
+```text {1}
+locked 3 tools in ocx.lock
+```
+</ShellSession>
+
+<ShellSession collapsed>
+```sh
+ocx lock
+```
+```text {"1":2}
+locked 3 tools in ocx.lock
+resolved node 24.9.0
+```
+</ShellSession>

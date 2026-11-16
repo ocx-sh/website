@@ -1,0 +1,15 @@
+---
+// The style of a glossary term link and the script that loads its popup, for a page without the theme's Starlight
+// chrome (a story canvas renders it itself). MarkdownContent.astro inlines the same style on a Starlight page, whose
+// every-page script (chrome.mjs) carries the loader. A <style>
+// of its own, never part of the shared sheet: that sheet is at its ceiling and most pages link no term. A page without
+// a term renders none of this.
+import css from './term-link.css?inline';
+---
+
+<style is:inline set:html={css}></style>
+
+<script>
+  import { watch } from './term-touch.mjs';
+  watch(document);
+</script>

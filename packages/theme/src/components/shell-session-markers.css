@@ -1,0 +1,47 @@
+/* Marked lines of a ShellSession (Expressive Code markers: `{2}`, `ins=`, `del=`, `{"1":2}`). Inlined by
+   ShellSession.astro only when a line is marked, so no other session carries it. */
+@layer ocx {
+  /* EC draws a marker's label as the line's ::before, out of the flow and over the prompt; starlight.css does the
+     same for ins and del and widens the padding of the whole block. A marked line keeps its prompt in the flow, and
+     the block its own padding, so the prompt column holds. */
+  .ocx-shell-session .ec-line.highlight .code::before {
+    position: static;
+    display: inline;
+    inline-size: auto;
+    padding: 0;
+    background: none;
+  }
+  .ocx-shell-session > .expressive-code:has(.ec-line.ins, .ec-line.del) .ec-line .code {
+    --ec-codePadInl: var(--ocx-space-5);
+    padding-inline-end: var(--ec-codePadInl);
+  }
+  .ocx-shell-session > .expressive-code:has(.ec-line.ins, .ec-line.del) :nth-child(1 of .ec-line) .code {
+    padding-inline-end: calc(2rem + var(--ec-codePadInl));
+  }
+  /* A labelled marker is a badge at the line's inline end, left of the copy button (8px in from the edge); the
+     line's text stops before it. Drawn, not text: no `play` typing, no copy, and `/ ''` keeps it out of the
+     accessibility tree: the prose legend carries the meaning. While `play` types the line (`data-cur`) the cursor
+     has the end of the line. Inverted fg on surface: contrast holds in both schemes whatever the marker colour. */
+  .ocx-shell-session .ec-line.tm-label .code.code:not([data-cur]) {
+    padding-inline-end: calc(var(--ec-codePadInl) + var(--ocx-shell-btn) + var(--ocx-space-3) + 6ch);
+  }
+  .ocx-shell-session .ec-line.tm-label .code:not([data-cur])::after {
+    content: var(--tmLabel);
+    content: var(--tmLabel) / '';
+    position: absolute;
+    inset-inline-end: calc(var(--ocx-shell-btn) + var(--ocx-space-3) + var(--ocx-space-2));
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    box-sizing: border-box;
+    min-inline-size: 2ch;
+    padding-inline: var(--ocx-space-1);
+    border-radius: var(--ocx-radius-sm);
+    font-size: var(--ocx-text-xs);
+    font-weight: var(--ocx-font-weight-semibold);
+    line-height: 1.5;
+    text-align: center;
+    color: var(--ocx-color-surface);
+    background: var(--ocx-color-fg);
+    user-select: none;
+  }
+}

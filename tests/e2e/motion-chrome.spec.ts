@@ -88,6 +88,25 @@ test('R6 TOC: the current marker fades to the next entry on scroll; reduced moti
   await expect(page.locator(`${toc} a[aria-current="true"]`)).toHaveAttribute('href', '#_top');
 });
 
+test('R6 TOC fold: a section opens and closes with the sidebar group motion; reduced motion snaps', async ({
+  page,
+}) => {
+  test.skip(narrow(page), 'the desktop outline (right sidebar) only');
+  await page.goto('/docs/probe/outline/');
+  const toc = 'starlight-toc';
+  const click = `document.querySelector('${toc} button').click()`;
+  await page.locator(toc).hover(); // the outline goes live on the first pointer (Search.astro)
+  await expect(page.locator(toc)).toHaveAttribute('data-live', '');
+  expect(await probe(page, toc, click)).toEqual(expect.arrayContaining(['rotate', 'height', 'opacity']));
+  await settle(page);
+  expect(await probe(page, toc, click)).toEqual(expect.arrayContaining(['rotate', 'height', 'opacity']));
+  await settle(page);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await probe(page, toc, click)).toEqual([]);
+  await expect(page.locator(`${toc} button`).first()).toHaveAttribute('aria-expanded', 'true');
+});
+
 test('R6 prose <details>: the content box grows and shrinks; reduced motion snaps', async ({ page }) => {
   await page.goto(LONG);
   // No fixture page carries a prose <details>: one goes into the content after load.

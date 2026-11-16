@@ -613,6 +613,13 @@ a.ocx-card:focus-visible { outline: var(--ocx-focus-ring); outline-offset: var(-
     }
   }
 
+  /* JS off: the body stays in its <template>; one link per hub (EcosystemMenu.astro `defer`). */
+  .ocx-mega > noscript {
+    display: flex;
+    flex-direction: column;
+    padding: var(--ocx-space-2);
+  }
+
   .ocx-mega__body {
     display: grid;
     grid-template-columns: var(--_rail) minmax(0, 1fr);

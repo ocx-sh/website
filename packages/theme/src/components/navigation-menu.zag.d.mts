@@ -1,4 +1,9 @@
 /**
+ * Puts the panel's body in place; a panel with none (inflated, or rendered in place) is left as it is.
+ * @param {Element | null | undefined} panel `nav.ocx-mega`
+ */
+export function inflateMega(panel: Element | null | undefined): void;
+/**
  * Spreads the live parts, shows or hides each Content popover with the machine's value, and
  * starts the rail on the first paint.
  * @param {import('@zag-js/navigation-menu').Api} api
