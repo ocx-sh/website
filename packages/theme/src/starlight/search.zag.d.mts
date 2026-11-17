@@ -6,7 +6,7 @@
  */
 /** @typedef {{ url: string, sub_results: { url: string }[] }} PagefindResult */
 /**
- * The PagefindUI options Starlight 0.42.4's `Search.astro` builds, unchanged.
+ * The PagefindUI options Starlight 0.42.4's `Search.astro` builds, plus an always-open `section` filter.
  * @param {Record<string, unknown>} config Starlight's `pagefind` config (`virtual:starlight/pagefind-config`)
  * @param {PagefindContext} context
  * @returns {Record<string, unknown>}
