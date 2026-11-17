@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Claim /integrations/devcontainer/ for ocx-sh/devcontainer-features *(nav)*
 
+### Fixed
+
+- The section filter in search stays open with more than six sections *(theme)*
+
 ## [0.6.0] - 2026-11-16
 
 ### Added
