@@ -143,6 +143,10 @@ describe('C-210 Pagefind options', () => {
     expect(mod.pagefindOptions({}, { ...context, base: '/' })['bundlePath']).toBe('/pagefind/');
   });
 
+  it('keeps the section filter open however many sections are merged', () => {
+    expect(mod.pagefindOptions({}, context)['openFilters']).toEqual(['section']);
+  });
+
   it.each([
     [false, '/docs/a/', '/docs/a/#h'],
     [true, '/docs/a', '/docs/a#h'],

@@ -20,7 +20,7 @@ export { connect, machine };
 /** @typedef {{ url: string, sub_results: { url: string }[] }} PagefindResult */
 
 /**
- * The PagefindUI options Starlight 0.42.4's `Search.astro` builds, unchanged.
+ * The PagefindUI options Starlight 0.42.4's `Search.astro` builds, plus an always-open `section` filter.
  * @param {Record<string, unknown>} config Starlight's `pagefind` config (`virtual:starlight/pagefind-config`)
  * @param {PagefindContext} context
  * @returns {Record<string, unknown>}
@@ -36,6 +36,8 @@ export function pagefindOptions(config, { base, translations, stripTrailingSlash
     showImages: false,
     translations,
     showSubResults: true,
+    // Pagefind UI collapses a lone filter with more than 6 values; the merged sections outgrew that.
+    openFilters: ['section'],
     /** @param {PagefindResult} result */
     processResult: (result) => {
       result.url = formatURL(result.url);
